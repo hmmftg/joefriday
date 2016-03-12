@@ -131,7 +131,7 @@ func GetInfo() (*Info, error) {
 
 		// grab the numbers
 		for _, v = range line[pos:] {
-			if v == 0x20 || v == joe.LF {
+			if v == 0x20 || v == joe.CR {
 				break
 			}
 			val = append(val, v)
@@ -247,7 +247,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 				if l == 16 {
 					break
 				}
-				line, err = out.ReadBytes(joe.CR)
+				line, err = out.ReadBytes(joe.LF)
 				if err != nil {
 					if err == io.EOF {
 						break
@@ -256,7 +256,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 					continue
 				}
 				l++
-				if l > 8 || l < 15 {
+				if l > 8 && l < 15 {
 					continue
 				}
 				// first grab the key name (everything up to the ':')
@@ -279,7 +279,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 
 				// grab the numbers
 				for _, v = range line[pos:] {
-					if v == 0x20 || v == joe.LF {
+					if v == 0x20 || v == joe.CR {
 						break
 					}
 					val = append(val, v)
@@ -343,7 +343,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 }
 
 func (d *Data) String() string {
-	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, d.Timestamp()).UTC(), d.MemTotal(), d.MemFree(), d.MemAvailable(), d.Active(), d.Inactive(), d.Cached(), d.Buffers(), d.SwapTotal(), d.SwapCached(), d.SwapFree())
+	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, d.Timestamp()).UTC(), d.MemTotal(), d.MemFree(), d.MemAvailable(), d.Active(), d.Inactive(), d.Cached(), d.Buffers(), d.SwapTotal(), d.SwapCached(), d.SwapFree())
 }
 
 func meminfo(buff *bytes.Buffer) error {
