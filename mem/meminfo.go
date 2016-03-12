@@ -39,11 +39,6 @@ type Info struct {
 	Inactive     int
 	SwapTotal    int
 	SwapFree     int
-	Dirty        int
-	Writeback    int
-	Mapped       int
-	Shmem        int
-	Slab         int
 }
 
 // Serialize serializes the Info using flatbuffers.
@@ -61,11 +56,6 @@ func (i *Info) Serialize() []byte {
 	DataAddInactive(bldr, int64(i.Inactive))
 	DataAddSwapTotal(bldr, int64(i.SwapTotal))
 	DataAddSwapFree(bldr, int64(i.SwapFree))
-	DataAddDirty(bldr, int64(i.Dirty))
-	DataAddWriteback(bldr, int64(i.Writeback))
-	DataAddMapped(bldr, int64(i.Mapped))
-	DataAddShmem(bldr, int64(i.Shmem))
-	DataAddSlab(bldr, int64(i.Slab))
 	bldr.Finish(DataEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
@@ -87,27 +77,34 @@ func Deserialize(p []byte) *Info {
 	info.Inactive = int(data.Inactive())
 	info.SwapTotal = int(data.SwapTotal())
 	info.SwapFree = int(data.SwapFree())
-	info.Dirty = int(data.Dirty())
-	info.Writeback = int(data.Writeback())
-	info.Mapped = int(data.Mapped())
-	info.Shmem = int(data.Shmem())
-	info.Slab = int(data.Slab())
 	return info
 }
 
-// Info returns some of the results of /proc/meminfo.
+// GetInfo returns some of the results of /proc/meminfo.
 func GetInfo() (*Info, error) {
 	var out bytes.Buffer
+	var l, i int
+	var name string
+	var err error
+	var v byte
+	line := make([]byte, 0, 50)
 	t := time.Now().UTC().UnixNano()
-	err := meminfo(&out)
+	err = meminfo(&out)
 	if err != nil {
 		return nil, err
 	}
 	inf := &Info{Timestamp: t}
 	var pos int
-	var valBuff bytes.Buffer
+	val := make([]byte, 0, 32)
 	for {
-		line, err := out.ReadBytes(joe.LF)
+		if l == 16 {
+			break
+		}
+		l++
+		if l > 8 || l < 15 {
+			continue
+		}
+		line, err = out.ReadBytes(joe.LF)
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -115,20 +112,17 @@ func GetInfo() (*Info, error) {
 			return nil, fmt.Errorf("error reading output bytes: %s", err)
 		}
 		// first grab the key name (everything up to the ':')
-		for i, v := range line {
+		for i, v = range line {
 			if v == 0x3A {
 				pos = i + 1
 				break
 			}
-			err = valBuff.WriteByte(v)
-			if err != nil {
-				return nil, fmt.Errorf("write byte to buffer: %s", err)
-			}
+			val = append(val, v)
 		}
-		name := valBuff.String()
-		valBuff.Reset()
+		name = string(val[:])
+		val = val[:0]
 		// skip all spaces
-		for i, v := range line[pos:] {
+		for i, v = range line[pos:] {
 			if v != 0x20 {
 				pos += i
 				break
@@ -136,22 +130,19 @@ func GetInfo() (*Info, error) {
 		}
 
 		// grab the numbers
-		for _, v := range line[pos:] {
+		for _, v = range line[pos:] {
 			if v == 0x20 || v == joe.LF || v == joe.CR {
 				break
 			}
-			err = valBuff.WriteByte(v)
-			if err != nil {
-				return nil, fmt.Errorf("write byte to buffer: %s", err)
-			}
+			val = append(val, v)
 		}
 		// any conversion error results in 0
 
-		i, err := strconv.Atoi(valBuff.String())
+		i, err = strconv.Atoi(string(val[:]))
 		if err != nil {
 			return nil, fmt.Errorf("%s: %s", name, err)
 		}
-		valBuff.Reset()
+		val = val[:0]
 		if name == "MemTotal" {
 			inf.MemTotal = i
 			continue
@@ -190,26 +181,6 @@ func GetInfo() (*Info, error) {
 		}
 		if name == "SwapFree" {
 			inf.SwapFree = i
-			continue
-		}
-		if name == "Dirty" {
-			inf.Dirty = i
-			continue
-		}
-		if name == "Writeback" {
-			inf.Writeback = i
-			continue
-		}
-		if name == "Mapped" {
-			inf.Mapped = i
-			continue
-		}
-		if name == "Shmem" {
-			inf.Shmem = i
-			continue
-		}
-		if name == "Slab" {
-			inf.Slab = i
 			continue
 		}
 	}

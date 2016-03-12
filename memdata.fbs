@@ -13,11 +13,6 @@ table Data {
 	Inactive: long;
 	SwapTotal: long;
 	SwapFree: long;
-	Dirty: long;
-	Writeback: long;
-	Mapped: long;
-	Shmem: long;
-	Slab: long;
 }
 
 root_type Data;

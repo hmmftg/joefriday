@@ -109,47 +109,7 @@ func (rcv *Data) SwapFree() int64 {
 	return 0
 }
 
-func (rcv *Data) Dirty() int64 {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(26))
-	if o != 0 {
-		return rcv._tab.GetInt64(o + rcv._tab.Pos)
-	}
-	return 0
-}
-
-func (rcv *Data) Writeback() int64 {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(28))
-	if o != 0 {
-		return rcv._tab.GetInt64(o + rcv._tab.Pos)
-	}
-	return 0
-}
-
-func (rcv *Data) Mapped() int64 {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(30))
-	if o != 0 {
-		return rcv._tab.GetInt64(o + rcv._tab.Pos)
-	}
-	return 0
-}
-
-func (rcv *Data) Shmem() int64 {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(32))
-	if o != 0 {
-		return rcv._tab.GetInt64(o + rcv._tab.Pos)
-	}
-	return 0
-}
-
-func (rcv *Data) Slab() int64 {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(34))
-	if o != 0 {
-		return rcv._tab.GetInt64(o + rcv._tab.Pos)
-	}
-	return 0
-}
-
-func DataStart(builder *flatbuffers.Builder) { builder.StartObject(16) }
+func DataStart(builder *flatbuffers.Builder) { builder.StartObject(11) }
 func DataAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
 func DataAddMemTotal(builder *flatbuffers.Builder, MemTotal int64) { builder.PrependInt64Slot(1, MemTotal, 0) }
 func DataAddMemFree(builder *flatbuffers.Builder, MemFree int64) { builder.PrependInt64Slot(2, MemFree, 0) }
@@ -161,9 +121,4 @@ func DataAddActive(builder *flatbuffers.Builder, Active int64) { builder.Prepend
 func DataAddInactive(builder *flatbuffers.Builder, Inactive int64) { builder.PrependInt64Slot(8, Inactive, 0) }
 func DataAddSwapTotal(builder *flatbuffers.Builder, SwapTotal int64) { builder.PrependInt64Slot(9, SwapTotal, 0) }
 func DataAddSwapFree(builder *flatbuffers.Builder, SwapFree int64) { builder.PrependInt64Slot(10, SwapFree, 0) }
-func DataAddDirty(builder *flatbuffers.Builder, Dirty int64) { builder.PrependInt64Slot(11, Dirty, 0) }
-func DataAddWriteback(builder *flatbuffers.Builder, Writeback int64) { builder.PrependInt64Slot(12, Writeback, 0) }
-func DataAddMapped(builder *flatbuffers.Builder, Mapped int64) { builder.PrependInt64Slot(13, Mapped, 0) }
-func DataAddShmem(builder *flatbuffers.Builder, Shmem int64) { builder.PrependInt64Slot(14, Shmem, 0) }
-func DataAddSlab(builder *flatbuffers.Builder, Slab int64) { builder.PrependInt64Slot(15, Slab, 0) }
 func DataEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }
