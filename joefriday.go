@@ -14,6 +14,18 @@
 // Package joefriday gets facts.
 package joefriday
 
+import "fmt"
+
 const LF = '\n'
 const CR = '\r'
 const CRLF = "\r\n"
+
+type Error struct {
+	Type string
+	Op   string
+	Err  error
+}
+
+func (e Error) Error() string {
+	return fmt.Sprintf("%s: %q: %s", e.Type, e.Op, e.Err)
+}

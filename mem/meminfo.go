@@ -87,7 +87,6 @@ func GetInfo() (*Info, error) {
 	var name string
 	var err error
 	var v byte
-	line := make([]byte, 0, 50)
 	t := time.Now().UTC().UnixNano()
 	err = meminfo(&out)
 	if err != nil {
@@ -95,14 +94,11 @@ func GetInfo() (*Info, error) {
 	}
 	inf := &Info{Timestamp: t}
 	var pos int
+	line := make([]byte, 0, 50)
 	val := make([]byte, 0, 32)
 	for {
 		if l == 16 {
 			break
-		}
-		l++
-		if l > 8 || l < 15 {
-			continue
 		}
 		line, err = out.ReadBytes(joe.LF)
 		if err != nil {
@@ -110,6 +106,10 @@ func GetInfo() (*Info, error) {
 				break
 			}
 			return nil, fmt.Errorf("error reading output bytes: %s", err)
+		}
+		l++
+		if l > 8 && l < 15 {
+			continue
 		}
 		// first grab the key name (everything up to the ':')
 		for i, v = range line {
@@ -131,13 +131,12 @@ func GetInfo() (*Info, error) {
 
 		// grab the numbers
 		for _, v = range line[pos:] {
-			if v == 0x20 || v == joe.LF || v == joe.CR {
+			if v == 0x20 || v == joe.LF {
 				break
 			}
 			val = append(val, v)
 		}
 		// any conversion error results in 0
-
 		i, err = strconv.Atoi(string(val[:]))
 		if err != nil {
 			return nil, fmt.Errorf("%s: %s", name, err)
@@ -196,6 +195,151 @@ func GetData() ([]byte, error) {
 		return nil, err
 	}
 	return inf.Serialize(), nil
+}
+
+// DataTicker gathers the meminfo on a ticker, whose interval is defined by
+// the received duration, and sends the results to the channel.  The output
+// is Flatbuffers serialized Data.  Any error encountered during processing
+// is sent to the error channel.  Processing will continue
+//
+// Either closing the done channel or sending struct{} to the done channel
+// will result in function exit.  The out channel is closed on exit.
+//
+// This pre-allocates the builder and everything other than the []byte that
+// gets sent to the out channel to reduce allocations, as this is expected
+// to be both a frequent and a long-running process.  Doing so reduces
+// byte allocations per tick just ~ 42%.
+func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errCh chan error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	defer close(outCh)
+	// predeclare some vars
+	var out bytes.Buffer
+	var l, i, pos int
+	var t int64
+	var err error
+	var v byte
+	var name string
+	// premake some temp slices
+	line := make([]byte, 0, 50)
+	val := make([]byte, 0, 32)
+	// just reset the bldr at the end of every ticker
+	bldr := fb.NewBuilder(0)
+
+	// ticker
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			cmd := exec.Command("cat", "/proc/meminfo")
+			cmd.Stdout = &out
+			// The current timestamp is always in UTC
+			t = time.Now().UTC().UnixNano()
+			err = cmd.Run()
+			if err != nil {
+				errCh <- joe.Error{Type: "mem", Op: "cat /proc/meminfo", Err: err}
+				continue
+			}
+			DataStart(bldr)
+			DataAddTimestamp(bldr, t)
+			for {
+				if l == 16 {
+					break
+				}
+				line, err = out.ReadBytes(joe.CR)
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					errCh <- joe.Error{Type: "mem", Op: "read command results", Err: err}
+					continue
+				}
+				l++
+				if l > 8 || l < 15 {
+					continue
+				}
+				// first grab the key name (everything up to the ':')
+				for i, v = range line {
+					if v == 0x3A {
+						pos = i + 1
+						break
+					}
+					val = append(val, v)
+				}
+				name = string(val[:])
+				val = val[:0]
+				// skip all spaces
+				for i, v = range line[pos:] {
+					if v != 0x20 {
+						pos += i
+						break
+					}
+				}
+
+				// grab the numbers
+				for _, v = range line[pos:] {
+					if v == 0x20 || v == joe.LF {
+						break
+					}
+					val = append(val, v)
+				}
+				// any conversion error results in 0
+				i, err = strconv.Atoi(string(val[:]))
+				if err != nil {
+					errCh <- joe.Error{Type: "mem", Op: "convert to int", Err: err}
+					continue
+				}
+				val = val[:0]
+				if name == "MemTotal" {
+					DataAddMemTotal(bldr, int64(i))
+					continue
+				}
+				if name == "MemFree" {
+					DataAddMemFree(bldr, int64(i))
+					continue
+				}
+				if name == "MemAvailable" {
+					DataAddMemAvailable(bldr, int64(i))
+					continue
+				}
+				if name == "Buffers" {
+					DataAddBuffers(bldr, int64(i))
+					continue
+				}
+				if name == "Cached" {
+					DataAddMemAvailable(bldr, int64(i))
+					continue
+				}
+				if name == "SwapCached" {
+					DataAddSwapCached(bldr, int64(i))
+					continue
+				}
+				if name == "Active" {
+					DataAddActive(bldr, int64(i))
+					continue
+				}
+				if name == "Inactive" {
+					DataAddInactive(bldr, int64(i))
+					continue
+				}
+				if name == "SwapTotal" {
+					DataAddSwapTotal(bldr, int64(i))
+					continue
+				}
+				if name == "SwapFree" {
+					DataAddSwapFree(bldr, int64(i))
+					continue
+				}
+			}
+			bldr.Finish(DataEnd(bldr))
+			data := bldr.Bytes[bldr.Head():]
+			outCh <- data
+			bldr.Reset()
+			out.Reset()
+			l = 0
+		}
+	}
 }
 
 func meminfo(buff *bytes.Buffer) error {

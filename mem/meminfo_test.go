@@ -1,6 +1,7 @@
 package mem
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -15,6 +16,7 @@ func TestGetInfo(t *testing.T) {
 	if reflect.DeepEqual(inf, Info{}) {
 		t.Errorf("expected %v to not be equal to the zero value of Info, it was", inf)
 	}
+	fmt.Printf("%#v\n", inf)
 }
 
 func TestGetData(t *testing.T) {
@@ -64,17 +66,5 @@ func TestGetData(t *testing.T) {
 	}
 	if inf.SwapFree != int(data.SwapFree()) {
 		t.Errorf("got %d; want %d", inf.SwapFree, data.SwapFree())
-	}
-	if inf.Writeback != int(data.Writeback()) {
-		t.Errorf("got %d; want %d", inf.Writeback, data.Writeback())
-	}
-	if inf.Mapped != int(data.Mapped()) {
-		t.Errorf("got %d; want %d", inf.Mapped, data.Mapped())
-	}
-	if inf.Shmem != int(data.Shmem()) {
-		t.Errorf("got %d; want %d", inf.Shmem, data.Shmem())
-	}
-	if inf.Slab != int(data.Slab()) {
-		t.Errorf("got %d; want %d", inf.Slab, data.Slab())
 	}
 }

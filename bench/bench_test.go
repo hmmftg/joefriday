@@ -21,6 +21,14 @@ func BenchmarkJoeFridayMemInfo(b *testing.B) {
 	_ = inf
 }
 
+func BenchmarkJoeFridayMemData(b *testing.B) {
+	var data []byte
+	for i := 0; i < b.N; i++ {
+		data, _ = joemem.GetData()
+	}
+	_ = data
+}
+
 func BenchmarkGohaiMem(b *testing.B) {
 	type Collector interface {
 		Name() string
