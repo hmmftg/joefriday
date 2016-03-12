@@ -1,8 +1,8 @@
 joefriday
 =========
 
-| "All we want are the facts, ma'am"  
-|   - Joe Friday
+> "All we want are the facts, ma'am"  
+>   - Joe Friday
 
 ### mem
 `mem` gathers info via `/proc/meminfo`.
