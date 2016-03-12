@@ -1,0 +1,23 @@
+// memdata.fbs
+namespace mem;
+
+table Data {
+	Timestamp: long;
+	MemTotal: long;
+	MemFree: long;
+	MemAvailable: long;
+	Buffers: long;
+	Cached: long;
+	SwapCached: long;
+	Active: long;
+	Inactive: long;
+	SwapTotal: long;
+	SwapFree: long;
+	Dirty: long;
+	Writeback: long;
+	Mapped: long;
+	Shmem: long;
+	Slab: long;
+}
+
+root_type Data;
