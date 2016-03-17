@@ -7,6 +7,7 @@
 package bench
 
 import (
+	"bufio"
 	"testing"
 
 	"github.com/DataDog/gohai/memory"
@@ -17,6 +18,15 @@ func BenchmarkJoeFridayMemInfo(b *testing.B) {
 	var inf *joemem.Info
 	for i := 0; i < b.N; i++ {
 		inf, _ = joemem.GetInfo()
+	}
+	_ = inf
+}
+
+func BenchmarkJoeFridayMemInfoR(b *testing.B) {
+	var inf *joemem.Info
+	var r bufio.Reader
+	for i := 0; i < b.N; i++ {
+		inf, _ = joemem.GetInfoR(&r)
 	}
 	_ = inf
 }

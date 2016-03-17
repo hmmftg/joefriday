@@ -16,9 +16,11 @@
 package mem
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strconv"
 	"time"
@@ -82,16 +84,17 @@ func Deserialize(p []byte) *Info {
 
 // GetInfo returns some of the results of /proc/meminfo.
 func GetInfo() (*Info, error) {
-	var out bytes.Buffer
 	var l, i int
 	var name string
 	var err error
 	var v byte
 	t := time.Now().UTC().UnixNano()
-	err = meminfo(&out)
+	f, err := os.Open("/proc/meminfo")
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
+	buf := bufio.NewReader(f)
 	inf := &Info{Timestamp: t}
 	var pos int
 	line := make([]byte, 0, 50)
@@ -100,7 +103,116 @@ func GetInfo() (*Info, error) {
 		if l == 16 {
 			break
 		}
-		line, err = out.ReadBytes(joe.LF)
+		line, err = buf.ReadSlice(joe.LF)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("error reading output bytes: %s", err)
+		}
+		l++
+		if l > 8 && l < 15 {
+			continue
+		}
+		// first grab the key name (everything up to the ':')
+		for i, v = range line {
+			if v == 0x3A {
+				pos = i + 1
+				break
+			}
+			val = append(val, v)
+		}
+		name = string(val[:])
+		val = val[:0]
+		// skip all spaces
+		for i, v = range line[pos:] {
+			if v != 0x20 {
+				pos += i
+				break
+			}
+		}
+
+		// grab the numbers
+		for _, v = range line[pos:] {
+			if v == 0x20 || v == joe.CR {
+				break
+			}
+			val = append(val, v)
+		}
+		// any conversion error results in 0
+		i, err = strconv.Atoi(string(val[:]))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s", name, err)
+		}
+		val = val[:0]
+		if name == "MemTotal" {
+			inf.MemTotal = i
+			continue
+		}
+		if name == "MemFree" {
+			inf.MemFree = i
+			continue
+		}
+		if name == "MemAvailable" {
+			inf.MemAvailable = i
+			continue
+		}
+		if name == "Buffers" {
+			inf.Buffers = i
+			continue
+		}
+		if name == "Cached" {
+			inf.MemAvailable = i
+			continue
+		}
+		if name == "SwapCached" {
+			inf.SwapCached = i
+			continue
+		}
+		if name == "Active" {
+			inf.Active = i
+			continue
+		}
+		if name == "Inactive" {
+			inf.Inactive = i
+			continue
+		}
+		if name == "SwapTotal" {
+			inf.SwapTotal = i
+			continue
+		}
+		if name == "SwapFree" {
+			inf.SwapFree = i
+			continue
+		}
+	}
+	return inf, nil
+}
+
+// GetInfoR accepts a *bufio.Reader and returns some of the results of
+// /proc/meminfo.  This is mainly here for benchmark purposes.
+// TODO: decide whether this should be kept around.
+func GetInfoR(buf *bufio.Reader) (*Info, error) {
+	var l, i int
+	var name string
+	var err error
+	var v byte
+	t := time.Now().UTC().UnixNano()
+	f, err := os.Open("/proc/meminfo")
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	buf.Reset(f)
+	inf := &Info{Timestamp: t}
+	var pos int
+	line := make([]byte, 0, 50)
+	val := make([]byte, 0, 32)
+	for {
+		if l == 16 {
+			break
+		}
+		line, err = buf.ReadSlice(joe.LF)
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -217,7 +329,6 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 	var out bytes.Buffer
 	var l, i, pos int
 	var t int64
-	var err error
 	var v byte
 	var name string
 	// premake some temp slices
@@ -225,29 +336,28 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
 	bldr := fb.NewBuilder(0)
-
+	var buf bufio.Reader
 	// ticker
 	for {
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
-			cmd := exec.Command("cat", "/proc/meminfo")
-			cmd.Stdout = &out
-			// The current timestamp is always in UTC
-			t = time.Now().UTC().UnixNano()
-			err = cmd.Run()
+			f, err := os.Open("/proc/meminfo")
 			if err != nil {
 				errCh <- joe.Error{Type: "mem", Op: "cat /proc/meminfo", Err: err}
 				continue
 			}
+			// The current timestamp is always in UTC
+			t = time.Now().UTC().UnixNano()
+			buf.Reset(f)
 			DataStart(bldr)
 			DataAddTimestamp(bldr, t)
 			for {
 				if l == 16 {
 					break
 				}
-				line, err = out.ReadBytes(joe.LF)
+				line, err = buf.ReadSlice(joe.LF)
 				if err != nil {
 					if err == io.EOF {
 						break
@@ -332,6 +442,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 					continue
 				}
 			}
+			f.Close()
 			bldr.Finish(DataEnd(bldr))
 			data := bldr.Bytes[bldr.Head():]
 			outCh <- data
