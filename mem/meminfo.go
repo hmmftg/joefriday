@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strconv"
 	"time"
 
@@ -45,21 +44,21 @@ type Info struct {
 
 // Serialize serializes the Info using flatbuffers.
 func (i *Info) Serialize() []byte {
-	bldr := fb.NewBuilder(0)
-	DataStart(bldr)
-	DataAddTimestamp(bldr, int64(i.Timestamp))
-	DataAddMemTotal(bldr, int64(i.MemTotal))
-	DataAddMemFree(bldr, int64(i.MemFree))
-	DataAddMemAvailable(bldr, int64(i.MemAvailable))
-	DataAddBuffers(bldr, int64(i.Buffers))
-	DataAddCached(bldr, int64(i.Cached))
-	DataAddSwapCached(bldr, int64(i.SwapCached))
-	DataAddActive(bldr, int64(i.Active))
-	DataAddInactive(bldr, int64(i.Inactive))
-	DataAddSwapTotal(bldr, int64(i.SwapTotal))
-	DataAddSwapFree(bldr, int64(i.SwapFree))
-	bldr.Finish(DataEnd(bldr))
-	return bldr.Bytes[bldr.Head():]
+	builder := fb.NewBuilder(0)
+	DataStart(builder)
+	DataAddTimestamp(builder, int64(i.Timestamp))
+	DataAddMemTotal(builder, int64(i.MemTotal))
+	DataAddMemFree(builder, int64(i.MemFree))
+	DataAddMemAvailable(builder, int64(i.MemAvailable))
+	DataAddBuffers(builder, int64(i.Buffers))
+	DataAddCached(builder, int64(i.Cached))
+	DataAddSwapCached(builder, int64(i.SwapCached))
+	DataAddActive(builder, int64(i.Active))
+	DataAddInactive(builder, int64(i.Inactive))
+	DataAddSwapTotal(builder, int64(i.SwapTotal))
+	DataAddSwapFree(builder, int64(i.SwapFree))
+	builder.Finish(DataEnd(builder))
+	return builder.Bytes[builder.Head():]
 }
 
 // Deserialize deserializes bytes representing flatbuffers serialized Data
@@ -189,118 +188,7 @@ func GetInfo() (*Info, error) {
 	return inf, nil
 }
 
-// GetInfoR accepts a *bufio.Reader and returns some of the results of
-// /proc/meminfo.  This is mainly here for benchmark purposes.
-// TODO: decide whether this should be kept around.
-func GetInfoR(buf *bufio.Reader) (*Info, error) {
-	var l, i int
-	var name string
-	var err error
-	var v byte
-	t := time.Now().UTC().UnixNano()
-	f, err := os.Open("/proc/meminfo")
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	buf.Reset(f)
-	inf := &Info{Timestamp: t}
-	var pos int
-	line := make([]byte, 0, 50)
-	val := make([]byte, 0, 32)
-	for {
-		if l == 16 {
-			break
-		}
-		line, err = buf.ReadSlice(joe.LF)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, fmt.Errorf("error reading output bytes: %s", err)
-		}
-		l++
-		if l > 8 && l < 15 {
-			continue
-		}
-		// first grab the key name (everything up to the ':')
-		for i, v = range line {
-			if v == 0x3A {
-				pos = i + 1
-				break
-			}
-			val = append(val, v)
-		}
-		name = string(val[:])
-		val = val[:0]
-		// skip all spaces
-		for i, v = range line[pos:] {
-			if v != 0x20 {
-				pos += i
-				break
-			}
-		}
-
-		// grab the numbers
-		for _, v = range line[pos:] {
-			if v == 0x20 || v == joe.CR {
-				break
-			}
-			val = append(val, v)
-		}
-		// any conversion error results in 0
-		i, err = strconv.Atoi(string(val[:]))
-		if err != nil {
-			return nil, fmt.Errorf("%s: %s", name, err)
-		}
-		val = val[:0]
-		if name == "MemTotal" {
-			inf.MemTotal = i
-			continue
-		}
-		if name == "MemFree" {
-			inf.MemFree = i
-			continue
-		}
-		if name == "MemAvailable" {
-			inf.MemAvailable = i
-			continue
-		}
-		if name == "Buffers" {
-			inf.Buffers = i
-			continue
-		}
-		if name == "Cached" {
-			inf.MemAvailable = i
-			continue
-		}
-		if name == "SwapCached" {
-			inf.SwapCached = i
-			continue
-		}
-		if name == "Active" {
-			inf.Active = i
-			continue
-		}
-		if name == "Inactive" {
-			inf.Inactive = i
-			continue
-		}
-		if name == "SwapTotal" {
-			inf.SwapTotal = i
-			continue
-		}
-		if name == "SwapFree" {
-			inf.SwapFree = i
-			continue
-		}
-	}
-	return inf, nil
-}
-
 // GetData returns the current meminfo as flatbuffer serialized bytes.
-// TODO: Benchmark to see if we should just create the flatbuffers w/o
-// doing the intermediate step of to the data structure.
 func GetData() ([]byte, error) {
 	inf, err := GetInfo()
 	if err != nil {
@@ -455,10 +343,4 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 
 func (d *Data) String() string {
 	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, d.Timestamp()).UTC(), d.MemTotal(), d.MemFree(), d.MemAvailable(), d.Active(), d.Inactive(), d.Cached(), d.Buffers(), d.SwapTotal(), d.SwapCached(), d.SwapFree())
-}
-
-func meminfo(buff *bytes.Buffer) error {
-	cmd := exec.Command("cat", "/proc/meminfo")
-	cmd.Stdout = buff
-	return cmd.Run()
 }
