@@ -7,34 +7,79 @@
 package bench
 
 import (
-	"bufio"
 	"testing"
 
 	"github.com/DataDog/gohai/memory"
-	joemem "github.com/mohae/joefriday/mem"
 )
 
-func BenchmarkJoeFridayMemInfo(b *testing.B) {
-	var inf *joemem.Info
+func BenchmarkJoeFridayMemInfoCatProcInfo(b *testing.B) {
+	var inf *MemInfo
 	for i := 0; i < b.N; i++ {
-		inf, _ = joemem.GetInfo()
+		inf, _ = GetMemInfoCat()
 	}
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemInfoR(b *testing.B) {
-	var inf *joemem.Info
-	var r bufio.Reader
-	for i := 0; i < b.N; i++ {
-		inf, _ = joemem.GetInfoR(&r)
-	}
-	_ = inf
-}
-
-func BenchmarkJoeFridayMemData(b *testing.B) {
+func BenchmarkJoeFridayMemDataCatProcInfo(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
-		data, _ = joemem.GetData()
+		data, _ = GetMemDataCat()
+	}
+	_ = data
+}
+
+func BenchmarkJoeFridayMemDataCatProcInfoReuseBuilder(b *testing.B) {
+	var data []byte
+	for i := 0; i < b.N; i++ {
+		data, _ = GetMemDataCatReuseBldr()
+	}
+	_ = data
+}
+
+func BenchmarkJoeFridayMemInfoReadProcInfo(b *testing.B) {
+	var inf *MemInfo
+	for i := 0; i < b.N; i++ {
+		inf, _ = GetMemInfoRead()
+	}
+	_ = inf
+}
+
+func BenchmarkJoeFridayMemDataReadProcInfo(b *testing.B) {
+	var data []byte
+	for i := 0; i < b.N; i++ {
+		data, _ = GetMemDataRead()
+	}
+	_ = data
+}
+
+func BenchmarkJoeFridayMemDataReadProcInfoReuseBuilder(b *testing.B) {
+	var data []byte
+	for i := 0; i < b.N; i++ {
+		data, _ = GetMemDataReadReuseBldr()
+	}
+	_ = data
+}
+
+func BenchmarkJoeFridayMemInfoReadReuseRProcInfo(b *testing.B) {
+	var inf *MemInfo
+	for i := 0; i < b.N; i++ {
+		inf, _ = GetMemInfoReadReuseR()
+	}
+	_ = inf
+}
+
+func BenchmarkJoeFridayMemDataReadReuseRProcInfo(b *testing.B) {
+	var data []byte
+	for i := 0; i < b.N; i++ {
+		data, _ = GetMemDataReadReuseR()
+	}
+	_ = data
+}
+
+func BenchmarkJoeFridayMemDataReadReuseRProcInfoReuseBuilder(b *testing.B) {
+	var data []byte
+	for i := 0; i < b.N; i++ {
+		data, _ = GetMemDataReuseRReuseBldr()
 	}
 	_ = data
 }
