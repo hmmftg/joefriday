@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/DataDog/gohai/memory"
+	"github.com/cloudfoundry/gosigar"
 )
 
 func BenchmarkJoeFridayMemInfoCatProcInfo(b *testing.B) {
@@ -95,4 +96,12 @@ func BenchmarkGohaiMem(b *testing.B) {
 		c, _ = collector.Collect()
 	}
 	_ = c
+}
+
+func BenchmarkGoSigarMem(b *testing.B) {
+	var mem sigar.Mem
+	for i := 0; i < b.N; i++ {
+		mem.Get()
+	}
+	_ = mem
 }
