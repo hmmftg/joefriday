@@ -81,6 +81,10 @@ func Deserialize(p []byte) *Info {
 	return info
 }
 
+func (d *Info) String() string {
+	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, d.Timestamp).UTC(), d.MemTotal, d.MemFree, d.MemAvailable, d.Active, d.Inactive, d.Cached, d.Buffers, d.SwapTotal, d.SwapCached, d.SwapFree)
+}
+
 // GetInfo returns some of the results of /proc/meminfo.
 func GetInfo() (*Info, error) {
 	var l, i int
