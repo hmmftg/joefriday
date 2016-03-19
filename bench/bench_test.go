@@ -14,7 +14,7 @@ import (
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
 
-func BenchmarkJoeFridayMemInfoCatProcInfo(b *testing.B) {
+func BenchmarkJoeFridayMemInfoCat(b *testing.B) {
 	var inf *MemInfo
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoCat()
@@ -22,7 +22,15 @@ func BenchmarkJoeFridayMemInfoCatProcInfo(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemDataCatProcInfo(b *testing.B) {
+func BenchmarkJoeFridayMemInfoCatToJSON(b *testing.B) {
+	var inf []byte
+	for i := 0; i < b.N; i++ {
+		inf, _ = GetMemInfoCatToJSON()
+	}
+	_ = inf
+}
+
+func BenchmarkJoeFridayMemInfoCatToFlatbuffers(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataCat()
@@ -30,7 +38,7 @@ func BenchmarkJoeFridayMemDataCatProcInfo(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemDataCatProcInfoReuseBuilder(b *testing.B) {
+func BenchmarkJoeFridayMemInfoCatToFlatbuffersReuseBuilder(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataCatReuseBldr()
@@ -38,7 +46,7 @@ func BenchmarkJoeFridayMemDataCatProcInfoReuseBuilder(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoReadProcInfo(b *testing.B) {
+func BenchmarkJoeFridayMemInfoRead(b *testing.B) {
 	var inf *MemInfo
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoRead()
@@ -46,7 +54,15 @@ func BenchmarkJoeFridayMemInfoReadProcInfo(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemDataReadProcInfo(b *testing.B) {
+func BenchmarkJoeFridayMemInfoReadToJSON(b *testing.B) {
+	var inf []byte
+	for i := 0; i < b.N; i++ {
+		inf, _ = GetMemInfoReadToJSON()
+	}
+	_ = inf
+}
+
+func BenchmarkJoeFridayMemInfoReadToFlatbuffers(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataRead()
@@ -54,7 +70,7 @@ func BenchmarkJoeFridayMemDataReadProcInfo(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemDataReadProcInfoReuseBuilder(b *testing.B) {
+func BenchmarkJoeFridayMemInfoReadToFlatbuffersReuseBuilder(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataReadReuseBldr()
@@ -62,7 +78,7 @@ func BenchmarkJoeFridayMemDataReadProcInfoReuseBuilder(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoReadReuseRProcInfo(b *testing.B) {
+func BenchmarkJoeFridayMemInfoReadReuseBufioReader(b *testing.B) {
 	var inf *MemInfo
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoReadReuseR()
@@ -70,7 +86,15 @@ func BenchmarkJoeFridayMemInfoReadReuseRProcInfo(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemDataReadReuseRProcInfo(b *testing.B) {
+func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToJSON(b *testing.B) {
+	var inf []byte
+	for i := 0; i < b.N; i++ {
+		inf, _ = GetMemInfoReadReuseRToJSON()
+	}
+	_ = inf
+}
+
+func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToFlatbuffers(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataReadReuseR()
@@ -78,10 +102,26 @@ func BenchmarkJoeFridayMemDataReadReuseRProcInfo(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemDataReadReuseRProcInfoReuseBuilder(b *testing.B) {
+func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToFlatbuffersReuseBuilder(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataReuseRReuseBldr()
+	}
+	_ = data
+}
+
+func BenchmarkJoeFridayMemInfoToFlatbuffersReuseBldrReuseBuilder(b *testing.B) {
+	var data []byte
+	for i := 0; i < b.N; i++ {
+		data, _ = GetMemInfoToFlatbuffersReuseBldr()
+	}
+	_ = data
+}
+
+func BenchmarkJoeFridayMemInfoToFlatbuffersMinAllocs(b *testing.B) {
+	var data []byte
+	for i := 0; i < b.N; i++ {
+		data, _ = GetMemInfoToFlatbuffersMinAllocs()
 	}
 	_ = data
 }
