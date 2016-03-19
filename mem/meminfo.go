@@ -1,4 +1,4 @@
-// Copyright 2016 The JoeFriday authors.
+// Copyright 2016 Joel Scoble and The JoeFriday authors.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -17,9 +17,9 @@ package mem
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -223,19 +223,21 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 	var v byte
 	var name string
 	// premake some temp slices
-	line := make([]byte, 0, 64)
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
 	bldr := fb.NewBuilder(0)
-	var buf bufio.Reader
+	// Some hopes to jump through to ensure we don't get a ErrBufferFull; which was
+	// occuring with var buf bufio.Reader (which works in the bench code)
+	var bs []byte
+	tmp := bytes.NewBuffer(bs)
+	buf := bufio.NewReaderSize(tmp, 1536)
+	tmp = nil
 	// ticker
 	for {
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
-			d, _ := ioutil.ReadFile("/proc/meminfo")
-			fmt.Println(string(d))
 			// The current timestamp is always in UTC
 			t = time.Now().UTC().UnixNano()
 			f, err := os.Open("/proc/meminfo")
@@ -250,18 +252,14 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 				if l == 16 {
 					break
 				}
-				fmt.Println(l)
-				line, _, err = buf.ReadLine()
+				line, err := buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
-						fmt.Println(err)
 						break
 					}
 					errCh <- joe.Error{Type: "mem", Op: "read command results", Err: err}
-					fmt.Println(line)
 					break
 				}
-				fmt.Println(line)
 				l++
 				if l > 8 && l < 15 {
 					continue
@@ -344,8 +342,6 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 			data := bldr.Bytes[bldr.Head():]
 			outCh <- data
 			bldr.Reset()
-			fmt.Println("meminfo")
-			time.Sleep(time.Second)
 			l = 0
 		}
 	}
