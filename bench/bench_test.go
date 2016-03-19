@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/DataDog/gohai/memory"
+	"github.com/EricLagergren/go-gnulib/sysinfo"
 	"github.com/cloudfoundry/gosigar"
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
@@ -153,4 +154,14 @@ func BenchmarkGopsutilMem(b *testing.B) {
 		mem, _ = gopsutilmem.VirtualMemory()
 	}
 	_ = mem
+}
+
+func BenchmarkGnulibSysinfo(b *testing.B) {
+	var memA, memT int64
+	for i := 0; i < b.N; i++ {
+		memA = sysinfo.PhysmemAvailable()
+		memT = sysinfo.PhysmemTotal()
+	}
+	_ = memA
+	_ = memT
 }
