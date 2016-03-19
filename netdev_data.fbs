@@ -1,0 +1,37 @@
+// netdev_data.fbs
+namespace net;
+
+table Data {
+	Timestamp:long;
+	Interfaces:[IFace];
+}
+
+table IFace {
+	Name:string;
+	RCum:Receive;
+	TCum:Transmit;
+}
+
+table Receive {
+	Bytes:long;
+	Packets:long;
+	Errs:long;
+	Drop:long;
+	FIFO:long;
+	Frame:long;
+	Compressed:long;
+	Multicast:long;
+}
+
+table Transmit {
+	Bytes:long;
+	Packets:long;
+	Errs:long;
+	Drop:long;
+	FIFO:long;
+	Colls:long;
+	Carrier:long;
+	Compressed:long;
+}
+
+root_type Data;
