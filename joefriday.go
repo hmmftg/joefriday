@@ -16,10 +16,6 @@ package joefriday
 
 import "fmt"
 
-const LF = '\n'
-const CR = '\r'
-const CRLF = "\r\n"
-
 type Error struct {
 	Type string
 	Op   string

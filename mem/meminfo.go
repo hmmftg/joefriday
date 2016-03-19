@@ -17,9 +17,9 @@ package mem
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -102,7 +102,7 @@ func GetInfo() (*Info, error) {
 		if l == 16 {
 			break
 		}
-		line, err = buf.ReadSlice(joe.LF)
+		line, err = buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -133,7 +133,7 @@ func GetInfo() (*Info, error) {
 
 		// grab the numbers
 		for _, v = range line[pos:] {
-			if v == 0x20 || v == joe.CR {
+			if v == 0x20 || v == '\r' {
 				break
 			}
 			val = append(val, v)
@@ -214,13 +214,12 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 	defer ticker.Stop()
 	defer close(outCh)
 	// predeclare some vars
-	var out bytes.Buffer
 	var l, i, pos int
 	var t int64
 	var v byte
 	var name string
 	// premake some temp slices
-	line := make([]byte, 0, 50)
+	line := make([]byte, 0, 64)
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
 	bldr := fb.NewBuilder(0)
@@ -231,13 +230,15 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 		case <-done:
 			return
 		case <-ticker.C:
-			f, err := os.Open("/proc/meminfo")
-			if err != nil {
-				errCh <- joe.Error{Type: "mem", Op: "cat /proc/meminfo", Err: err}
-				continue
-			}
+			d, _ := ioutil.ReadFile("/proc/meminfo")
+			fmt.Println(string(d))
 			// The current timestamp is always in UTC
 			t = time.Now().UTC().UnixNano()
+			f, err := os.Open("/proc/meminfo")
+			if err != nil {
+				errCh <- joe.Error{Type: "mem", Op: "open /proc/meminfo", Err: err}
+				continue
+			}
 			buf.Reset(f)
 			DataStart(bldr)
 			DataAddTimestamp(bldr, t)
@@ -245,14 +246,18 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 				if l == 16 {
 					break
 				}
-				line, err = buf.ReadSlice(joe.LF)
+				fmt.Println(l)
+				line, _, err = buf.ReadLine()
 				if err != nil {
 					if err == io.EOF {
+						fmt.Println(err)
 						break
 					}
 					errCh <- joe.Error{Type: "mem", Op: "read command results", Err: err}
-					continue
+					fmt.Println(line)
+					break
 				}
+				fmt.Println(line)
 				l++
 				if l > 8 && l < 15 {
 					continue
@@ -277,7 +282,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 
 				// grab the numbers
 				for _, v = range line[pos:] {
-					if v == 0x20 || v == joe.CR {
+					if v == 0x20 || v == '\r' {
 						break
 					}
 					val = append(val, v)
@@ -335,7 +340,8 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 			data := bldr.Bytes[bldr.Head():]
 			outCh <- data
 			bldr.Reset()
-			out.Reset()
+			fmt.Println("meminfo")
+			time.Sleep(time.Second)
 			l = 0
 		}
 	}

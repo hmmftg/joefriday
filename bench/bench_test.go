@@ -11,6 +11,7 @@ import (
 
 	"github.com/DataDog/gohai/memory"
 	"github.com/cloudfoundry/gosigar"
+	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
 
 func BenchmarkJoeFridayMemInfoCatProcInfo(b *testing.B) {
@@ -102,6 +103,14 @@ func BenchmarkGoSigarMem(b *testing.B) {
 	var mem sigar.Mem
 	for i := 0; i < b.N; i++ {
 		mem.Get()
+	}
+	_ = mem
+}
+
+func BenchmarkGopsutilMem(b *testing.B) {
+	var mem *gopsutilmem.VirtualMemoryStat
+	for i := 0; i < b.N; i++ {
+		mem, _ = gopsutilmem.VirtualMemory()
 	}
 	_ = mem
 }

@@ -14,7 +14,6 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/mem"
 )
 
@@ -115,7 +114,7 @@ func GetMemInfoCat() (*MemInfo, error) {
 		if l == 16 {
 			break
 		}
-		line, err = out.ReadBytes(joe.LF)
+		line, err = out.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -146,7 +145,7 @@ func GetMemInfoCat() (*MemInfo, error) {
 
 		// grab the numbers
 		for _, v = range line[pos:] {
-			if v == 0x20 || v == joe.CR {
+			if v == 0x20 || v == '\r' {
 				break
 			}
 			val = append(val, v)
@@ -246,7 +245,7 @@ func GetMemInfoRead() (*MemInfo, error) {
 		if l == 16 {
 			break
 		}
-		line, err = buf.ReadSlice(joe.LF)
+		line, err = buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -277,7 +276,7 @@ func GetMemInfoRead() (*MemInfo, error) {
 
 		// grab the numbers
 		for _, v = range line[pos:] {
-			if v == 0x20 || v == joe.CR {
+			if v == 0x20 || v == '\r' {
 				break
 			}
 			val = append(val, v)
@@ -371,7 +370,7 @@ func GetMemInfoReadReuseR() (*MemInfo, error) {
 		if l == 16 {
 			break
 		}
-		line, err = buf.ReadSlice(joe.LF)
+		line, err = buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -402,7 +401,7 @@ func GetMemInfoReadReuseR() (*MemInfo, error) {
 
 		// grab the numbers
 		for _, v = range line[pos:] {
-			if v == 0x20 || v == joe.CR {
+			if v == 0x20 || v == '\r' {
 				break
 			}
 			val = append(val, v)
