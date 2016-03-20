@@ -15,7 +15,7 @@ import (
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
 
-func BenchmarkJoeFridayMemInfoCat(b *testing.B) {
+func BenchmarkOSExecCatMemInfo(b *testing.B) {
 	var inf *MemInfo
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoCat()
@@ -23,7 +23,7 @@ func BenchmarkJoeFridayMemInfoCat(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemInfoCatToJSON(b *testing.B) {
+func BenchmarkOSExecCatMemInfoToJSON(b *testing.B) {
 	var inf []byte
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoCatToJSON()
@@ -31,7 +31,7 @@ func BenchmarkJoeFridayMemInfoCatToJSON(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemInfoCatToFlatbuffers(b *testing.B) {
+func BenchmarkOSExecCatMemInfoToFlatbuffers(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataCat()
@@ -39,7 +39,7 @@ func BenchmarkJoeFridayMemInfoCatToFlatbuffers(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoCatToFlatbuffersReuseBuilder(b *testing.B) {
+func BenchmarkOSExecCatMemInfoToFlatbuffersReuseBuilder(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataCatReuseBldr()
@@ -47,7 +47,7 @@ func BenchmarkJoeFridayMemInfoCatToFlatbuffersReuseBuilder(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoRead(b *testing.B) {
+func BenchmarkReadMemInfo(b *testing.B) {
 	var inf *MemInfo
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoRead()
@@ -55,7 +55,7 @@ func BenchmarkJoeFridayMemInfoRead(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemInfoReadToJSON(b *testing.B) {
+func BenchmarkReadMemInfoToJSON(b *testing.B) {
 	var inf []byte
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoReadToJSON()
@@ -63,7 +63,7 @@ func BenchmarkJoeFridayMemInfoReadToJSON(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemInfoReadToFlatbuffers(b *testing.B) {
+func BenchmarkReadMemInfoToFlatbuffers(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataRead()
@@ -71,7 +71,7 @@ func BenchmarkJoeFridayMemInfoReadToFlatbuffers(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoReadToFlatbuffersReuseBuilder(b *testing.B) {
+func BenchmarkReadMemInfoToFlatbuffersReuseBuilder(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataReadReuseBldr()
@@ -79,7 +79,7 @@ func BenchmarkJoeFridayMemInfoReadToFlatbuffersReuseBuilder(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoReadReuseBufioReader(b *testing.B) {
+func BenchmarkReadMemInfoReuseBufio(b *testing.B) {
 	var inf *MemInfo
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoReadReuseR()
@@ -87,7 +87,7 @@ func BenchmarkJoeFridayMemInfoReadReuseBufioReader(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToJSON(b *testing.B) {
+func BenchmarkReadMemInfoToJSONReuseBufio(b *testing.B) {
 	var inf []byte
 	for i := 0; i < b.N; i++ {
 		inf, _ = GetMemInfoReadReuseRToJSON()
@@ -95,7 +95,7 @@ func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToJSON(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToFlatbuffers(b *testing.B) {
+func BenchmarkReadMemInfoToFlatbuffersReuseBufio(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataReadReuseR()
@@ -103,7 +103,7 @@ func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToFlatbuffers(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToFlatbuffersReuseBuilder(b *testing.B) {
+func BenchmarkReadMemDataToFlatbuffersReuseBufioReuseBuilder(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemDataReuseRReuseBldr()
@@ -111,7 +111,7 @@ func BenchmarkJoeFridayMemInfoReadReuseBufioReaderToFlatbuffersReuseBuilder(b *t
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoToFlatbuffersReuseBldrReuseBuilder(b *testing.B) {
+func BenchmarkReadMemInfoToFlatbuffersReuseBufioReuseBuilder(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemInfoToFlatbuffersReuseBldr()
@@ -119,7 +119,7 @@ func BenchmarkJoeFridayMemInfoToFlatbuffersReuseBldrReuseBuilder(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkJoeFridayMemInfoToFlatbuffersMinAllocs(b *testing.B) {
+func BenchmarkReadMemInfoToFlatbuffersMinAllocs(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemInfoToFlatbuffersMinAllocs()
