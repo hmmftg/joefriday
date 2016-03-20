@@ -127,7 +127,7 @@ func BenchmarkReadMemInfoToFlatbuffersMinAllocs(b *testing.B) {
 	_ = data
 }
 
-func BenchmarkGohaiMem(b *testing.B) {
+func BenchmarkDataDogGohaiMem(b *testing.B) {
 	type Collector interface {
 		Name() string
 		Collect() (interface{}, error)
@@ -140,7 +140,7 @@ func BenchmarkGohaiMem(b *testing.B) {
 	_ = c
 }
 
-func BenchmarkGoSigarMem(b *testing.B) {
+func BenchmarkCloudFoundryGoSigarMem(b *testing.B) {
 	var mem sigar.Mem
 	for i := 0; i < b.N; i++ {
 		mem.Get()
@@ -148,7 +148,7 @@ func BenchmarkGoSigarMem(b *testing.B) {
 	_ = mem
 }
 
-func BenchmarkGopsutilMem(b *testing.B) {
+func BenchmarkShirouGopsutilMem(b *testing.B) {
 	var mem *gopsutilmem.VirtualMemoryStat
 	for i := 0; i < b.N; i++ {
 		mem, _ = gopsutilmem.VirtualMemory()
@@ -156,7 +156,7 @@ func BenchmarkGopsutilMem(b *testing.B) {
 	_ = mem
 }
 
-func BenchmarkGnulibSysinfo(b *testing.B) {
+func BenchmarkEricLagergrenGnulibSysinfo(b *testing.B) {
 	var memA, memT int64
 	for i := 0; i < b.N; i++ {
 		memA = sysinfo.PhysmemAvailable()
