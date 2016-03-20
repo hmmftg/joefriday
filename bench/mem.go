@@ -9,13 +9,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
 
-	fb "github.com/google/flatbuffers/go"
+	"github.com/SermoDigital/helpers"
 	"github.com/mohae/joefriday/mem"
+
+	fb "github.com/google/flatbuffers/go"
 )
 
 var bldr = fb.NewBuilder(0)
@@ -99,6 +102,84 @@ func Deserialize(p []byte) *MemInfo {
 	info.SwapTotal = data.SwapTotal()
 	info.SwapFree = data.SwapFree()
 	return info
+}
+
+var (
+	memTotal     = []byte("MemTotal")
+	memFree      = []byte("MemFree")
+	memAvailable = []byte("MemAvailable")
+	buffers      = []byte("Buffers")
+	cached       = []byte("Cached")
+	swapCached   = []byte("SwapCached")
+	active       = []byte("Active")
+	inactive     = []byte("Inactive")
+	swapTotal    = []byte("SwapTotal")
+	swapFree     = []byte("SwapFree")
+)
+
+// GetInfo returns some of the results of /proc/meminfo.
+func GetInfo() (*MemInfo, error) {
+	buf, err := ioutil.ReadFile("/proc/meminfo")
+	if err != nil {
+		return nil, err
+	}
+
+	f := MemInfo{
+		Timestamp: time.Now().UTC().UnixNano(),
+	}
+	for p := 0; ; {
+		// Skip to the colon.
+		o := bytes.IndexByte(buf[p:], ':')
+		if o < 0 {
+			break
+		}
+		i := p + o
+		name := buf[p:i]
+
+		for _, c := range buf[i+1:] {
+			i++
+			if c != ' ' {
+				break
+			}
+		}
+		p = i
+		for _, c := range buf[i:] {
+			if c > '9' || c < '0' {
+				break
+			}
+			i++
+		}
+		v, err := helpers.ParseUint(buf[p:i])
+		if err != nil {
+			return nil, err
+		}
+		// Skip to the end.
+		p = i + bytes.IndexByte(buf[i:], '\n') + 1
+
+		switch {
+		case bytes.Equal(name, memTotal):
+			f.MemTotal = int64(v)
+		case bytes.Equal(name, memFree):
+			f.MemFree = int64(v)
+		case bytes.Equal(name, memAvailable):
+			f.MemAvailable = int64(v)
+		case bytes.Equal(name, buffers):
+			f.Buffers = int64(v)
+		case bytes.Equal(name, cached):
+			f.Cached = int64(v)
+		case bytes.Equal(name, swapCached):
+			f.SwapCached = int64(v)
+		case bytes.Equal(name, active):
+			f.Active = int64(v)
+		case bytes.Equal(name, inactive):
+			f.Inactive = int64(v)
+		case bytes.Equal(name, swapTotal):
+			f.SwapTotal = int64(v)
+		case bytes.Equal(name, swapFree):
+			f.SwapFree = int64(v)
+		}
+	}
+	return &f, nil
 }
 
 // cat /proc/meminfo.  This is mainly here for benchmark purposes.
