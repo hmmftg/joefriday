@@ -15,14 +15,6 @@ import (
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
 
-func BenchmarkEricLagergrenMemInfo(b *testing.B) {
-	var inf *MemInfo
-	for i := 0; i < b.N; i++ {
-		inf, _ = GetInfo()
-	}
-	_ = inf
-}
-
 func BenchmarkJoeFridayMemInfoCat(b *testing.B) {
 	var inf *MemInfo
 	for i := 0; i < b.N; i++ {

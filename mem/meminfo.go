@@ -20,12 +20,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/SermoDigital/helpers"
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
@@ -88,82 +85,111 @@ func (d *Info) String() string {
 	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, d.Timestamp).UTC(), d.MemTotal, d.MemFree, d.MemAvailable, d.Active, d.Inactive, d.Cached, d.Buffers, d.SwapTotal, d.SwapCached, d.SwapFree)
 }
 
-var (
-	memTotal     = []byte("MemTotal")
-	memFree      = []byte("MemFree")
-	memAvailable = []byte("MemAvailable")
-	buffers      = []byte("Buffers")
-	cached       = []byte("Cached")
-	swapCached   = []byte("SwapCached")
-	active       = []byte("Active")
-	inactive     = []byte("Inactive")
-	swapTotal    = []byte("SwapTotal")
-	swapFree     = []byte("SwapFree")
-)
-
 // GetInfo returns some of the results of /proc/meminfo.
 func GetInfo() (*Info, error) {
-	buf, err := ioutil.ReadFile("/proc/meminfo")
+	var l, i int
+	var name string
+	var err error
+	var v byte
+	t := time.Now().UTC().UnixNano()
+	f, err := os.Open("/proc/meminfo")
 	if err != nil {
 		return nil, err
 	}
-
-	f := Info{
-		Timestamp: time.Now().UTC().UnixNano(),
-	}
-	for p := 0; ; {
-		// Skip to the colon.
-		o := bytes.IndexByte(buf[p:], ':')
-		if o < 0 {
+	defer f.Close()
+	buf := bufio.NewReader(f)
+	inf := &Info{Timestamp: t}
+	var pos int
+	line := make([]byte, 0, 50)
+	val := make([]byte, 0, 32)
+	for {
+		if l == 16 {
 			break
 		}
-		i := p + o
-		name := buf[p:i]
-
-		for _, c := range buf[i+1:] {
-			i++
-			if c != ' ' {
-				break
-			}
-		}
-		p = i
-		for _, c := range buf[i:] {
-			if c > '9' || c < '0' {
-				break
-			}
-			i++
-		}
-		v, err := helpers.ParseUint(buf[p:i])
+		line, err = buf.ReadSlice('\n')
 		if err != nil {
-			return nil, err
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("error reading output bytes: %s", err)
 		}
-		// Skip to the end.
-		p = i + bytes.IndexByte(buf[i:], '\n') + 1
+		l++
+		if l > 8 && l < 15 {
+			continue
+		}
+		// first grab the key name (everything up to the ':')
+		for i, v = range line {
+			if v == 0x3A {
+				pos = i + 1
+				break
+			}
+			val = append(val, v)
+		}
+		name = string(val[:])
+		val = val[:0]
+		// skip all spaces
+		for i, v = range line[pos:] {
+			if v != 0x20 {
+				pos += i
+				break
+			}
+		}
 
-		switch {
-		case bytes.Equal(name, memTotal):
-			f.MemTotal = int(v)
-		case bytes.Equal(name, memFree):
-			f.MemFree = int(v)
-		case bytes.Equal(name, memAvailable):
-			f.MemAvailable = int(v)
-		case bytes.Equal(name, buffers):
-			f.Buffers = int(v)
-		case bytes.Equal(name, cached):
-			f.Cached = int(v)
-		case bytes.Equal(name, swapCached):
-			f.SwapCached = int(v)
-		case bytes.Equal(name, active):
-			f.Active = int(v)
-		case bytes.Equal(name, inactive):
-			f.Inactive = int(v)
-		case bytes.Equal(name, swapTotal):
-			f.SwapTotal = int(v)
-		case bytes.Equal(name, swapFree):
-			f.SwapFree = int(v)
+		// grab the numbers
+		for _, v = range line[pos:] {
+			if v == 0x20 || v == '\r' {
+				break
+			}
+			val = append(val, v)
+		}
+		// any conversion error results in 0
+		i, err = strconv.Atoi(string(val[:]))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s", name, err)
+		}
+		val = val[:0]
+		if name == "MemTotal" {
+			inf.MemTotal = i
+			continue
+		}
+		if name == "MemFree" {
+			inf.MemFree = i
+			continue
+		}
+		if name == "MemAvailable" {
+			inf.MemAvailable = i
+			continue
+		}
+		if name == "Buffers" {
+			inf.Buffers = i
+			continue
+		}
+		if name == "Cached" {
+			inf.MemAvailable = i
+			continue
+		}
+		if name == "SwapCached" {
+			inf.SwapCached = i
+			continue
+		}
+		if name == "Active" {
+			inf.Active = i
+			continue
+		}
+		if name == "Inactive" {
+			inf.Inactive = i
+			continue
+		}
+		if name == "SwapTotal" {
+			inf.SwapTotal = i
+			continue
+		}
+		if name == "SwapFree" {
+			inf.SwapFree = i
+			continue
 		}
 	}
-	return &f, nil
+	return inf, nil
 }
 
 // GetData returns the current meminfo as flatbuffer serialized bytes.
