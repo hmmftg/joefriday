@@ -158,7 +158,7 @@ func (inf Info) String() string {
 	return buf.String()
 }
 
-// GetInfo returns some of the results of /proc/meminfo.
+// GetInfo returns some of the results of /proc/net/dev
 func GetInfo() (*Info, error) {
 	var l, i, pos, fieldNum, fieldVal int
 	var v byte
@@ -301,9 +301,8 @@ func GetData() ([]byte, error) {
 	return inf.Serialize(), nil
 }
 
-/*
-// DataTicker gathers the meminfo on a ticker, whose interval is defined by
-// the received duration, and sends the results to the channel.  The output
+// DataTicker gathers the net/dev data on a ticker, whose interval is defined
+// by the received duration, and sends the results to the channel.  The output
 // is Flatbuffers serialized Data.  Any error encountered during processing
 // is sent to the error channel.  Processing will continue
 //
@@ -312,60 +311,60 @@ func GetData() ([]byte, error) {
 //
 // This pre-allocates the builder and everything other than the []byte that
 // gets sent to the out channel to reduce allocations, as this is expected
-// to be both a frequent and a long-running process.  Doing so reduces
-// byte allocations per tick just ~ 42%.
+// to be both a frequent and a long-running process.
 func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errCh chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	defer close(outCh)
 	// predeclare some vars
-	var l, i, pos int
-	var t int64
+	var l, i, pos, fieldNum, fieldVal int
 	var v byte
-	var name string
+	var t int64
+	var iData Iface
 	// premake some temp slices
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
 	bldr := fb.NewBuilder(0)
-	// Some hopes to jump through to ensure we don't get a ErrBufferFull; which was
-	// occuring with var buf bufio.Reader (which works in the bench code)
+	// Some hopes to jump through to ensure we don't get a ErrBufferFull.
 	var bs []byte
 	tmp := bytes.NewBuffer(bs)
-	buf := bufio.NewReaderSize(tmp, 1536)
+	// If there are a lot of interfaces, and a high volume of bytes being
+	// processed this could be inadequate
+	// TODO: revisit this sizing/maybe make it configurable?
+	buf := bufio.NewReaderSize(tmp, 4096)
 	tmp = nil
+	inf := &Info{Interfaces: make([]Iface, 0, 4)}
 	// ticker
 	for {
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
-			// The current timestamp is always in UTC
 			t = time.Now().UTC().UnixNano()
-			f, err := os.Open("/proc/meminfo")
+			f, err := os.Open("/proc/net/dev")
 			if err != nil {
-				errCh <- joe.Error{Type: "mem", Op: "open /proc/meminfo", Err: err}
-				continue
+				return
 			}
+			defer f.Close()
 			buf.Reset(f)
-			DataStart(bldr)
-			DataAddTimestamp(bldr, t)
+			inf.Interfaces = inf.Interfaces[:0]
+			// there's always at least 2 interfaces (I think)
+			inf.Timestamp = t
 			for {
-				if l == 16 {
-					break
-				}
 				line, err := buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
 						break
 					}
-					errCh <- joe.Error{Type: "mem", Op: "read command results", Err: err}
+					errCh <- fmt.Errorf("/proc/mem/dev: read output bytes: %s", err)
 					break
 				}
 				l++
-				if l > 8 && l < 15 {
+				if l < 3 {
 					continue
 				}
-				// first grab the key name (everything up to the ':')
+
+				// first grab the interface name (everything up to the ':')
 				for i, v = range line {
 					if v == 0x3A {
 						pos = i + 1
@@ -373,82 +372,149 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 					}
 					val = append(val, v)
 				}
-				name = string(val[:])
+				iData.Name = string(val[:])
 				val = val[:0]
-				// skip all spaces
-				for i, v = range line[pos:] {
-					if v != 0x20 {
-						pos += i
-						break
+				fieldNum = 0
+				// process the rest of the line
+				for {
+					fieldNum++
+					// skip all spaces
+					for i, v = range line[pos:] {
+						if v != 0x20 {
+							pos += i
+							break
+						}
 					}
-				}
 
-				// grab the numbers
-				for _, v = range line[pos:] {
-					if v == 0x20 || v == '\r' {
+					// grab the numbers
+					for i, v = range line[pos:] {
+						if v == 0x20 || v == '\n' {
+							pos += i
+							break
+						}
+						val = append(val, v)
+					}
+					// any conversion error results in 0
+					fieldVal, err = strconv.Atoi(string(val[:]))
+					if err != nil {
+						errCh <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iData.Name, err)
+						continue
+					}
+					val = val[:0]
+					if fieldNum == 1 {
+						iData.RBytes = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 2 {
+						iData.RPackets = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 3 {
+						iData.RErrs = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 4 {
+						iData.RDrop = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 5 {
+						iData.RFIFO = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 6 {
+						iData.RFrame = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 7 {
+						iData.RCompressed = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 8 {
+						iData.RMulticast = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 9 {
+						iData.TBytes = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 10 {
+						iData.TPackets = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 11 {
+						iData.TErrs = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 12 {
+						iData.TDrop = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 13 {
+						iData.TFIFO = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 14 {
+						iData.TColls = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 15 {
+						iData.TCarrier = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 16 {
+						iData.TCompressed = int64(fieldVal)
 						break
 					}
-					val = append(val, v)
 				}
-				// any conversion error results in 0
-				i, err = strconv.Atoi(string(val[:]))
-				if err != nil {
-					errCh <- joe.Error{Type: "mem", Op: "convert to int", Err: err}
-					continue
-				}
-				val = val[:0]
-				if name == "MemTotal" {
-					DataAddMemTotal(bldr, int64(i))
-					continue
-				}
-				if name == "MemFree" {
-					DataAddMemFree(bldr, int64(i))
-					continue
-				}
-				if name == "MemAvailable" {
-					DataAddMemAvailable(bldr, int64(i))
-					continue
-				}
-				if name == "Buffers" {
-					DataAddBuffers(bldr, int64(i))
-					continue
-				}
-				if name == "Cached" {
-					DataAddMemAvailable(bldr, int64(i))
-					continue
-				}
-				if name == "SwapCached" {
-					DataAddSwapCached(bldr, int64(i))
-					continue
-				}
-				if name == "Active" {
-					DataAddActive(bldr, int64(i))
-					continue
-				}
-				if name == "Inactive" {
-					DataAddInactive(bldr, int64(i))
-					continue
-				}
-				if name == "SwapTotal" {
-					DataAddSwapTotal(bldr, int64(i))
-					continue
-				}
-				if name == "SwapFree" {
-					DataAddSwapFree(bldr, int64(i))
-					continue
-				}
+				inf.Interfaces = append(inf.Interfaces, iData)
 			}
 			f.Close()
-			bldr.Finish(DataEnd(bldr))
-			data := bldr.Bytes[bldr.Head():]
+			data := Serialize(inf, bldr)
 			outCh <- data
-			bldr.Reset()
 			l = 0
 		}
 	}
 }
 
-func (d *Data) String() string {
-	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, d.Timestamp()).UTC(), d.MemTotal(), d.MemFree(), d.MemAvailable(), d.Active(), d.Inactive(), d.Cached(), d.Buffers(), d.SwapTotal(), d.SwapCached(), d.SwapFree())
+// Serialize serializes the Info using Flatbuffers.  This version uses an
+// existing flatbuffers.Builder to save on allocations.  If the builder is
+// not going to be reused, Info.Serialize() should probably be used.
+func Serialize(inf *Info, bldr *fb.Builder) []byte {
+	bldr.Reset()
+	ifaces := make([]fb.UOffsetT, len(inf.Interfaces))
+	names := make([]fb.UOffsetT, len(inf.Interfaces))
+	for i := 0; i < len(inf.Interfaces); i++ {
+		names[i] = bldr.CreateString(inf.Interfaces[i].Name)
+	}
+	for i := 0; i < len(inf.Interfaces); i++ {
+		IFaceStart(bldr)
+		IFaceAddName(bldr, names[i])
+		IFaceAddRBytes(bldr, inf.Interfaces[i].RBytes)
+		IFaceAddRPackets(bldr, inf.Interfaces[i].RPackets)
+		IFaceAddRErrs(bldr, inf.Interfaces[i].RErrs)
+		IFaceAddRDrop(bldr, inf.Interfaces[i].RDrop)
+		IFaceAddRFIFO(bldr, inf.Interfaces[i].RFIFO)
+		IFaceAddRFrame(bldr, inf.Interfaces[i].RFrame)
+		IFaceAddRCompressed(bldr, inf.Interfaces[i].RCompressed)
+		IFaceAddRMulticast(bldr, inf.Interfaces[i].RMulticast)
+		IFaceAddTBytes(bldr, inf.Interfaces[i].TBytes)
+		IFaceAddTPackets(bldr, inf.Interfaces[i].TPackets)
+		IFaceAddTErrs(bldr, inf.Interfaces[i].TErrs)
+		IFaceAddTDrop(bldr, inf.Interfaces[i].TDrop)
+		IFaceAddTFIFO(bldr, inf.Interfaces[i].TFIFO)
+		IFaceAddTColls(bldr, inf.Interfaces[i].TColls)
+		IFaceAddTCarrier(bldr, inf.Interfaces[i].TCarrier)
+		IFaceAddTCompressed(bldr, inf.Interfaces[i].TCompressed)
+		ifaces[i] = IFaceEnd(bldr)
+	}
+	DataStartInterfacesVector(bldr, len(ifaces))
+	for i := len(inf.Interfaces) - 1; i >= 0; i-- {
+		bldr.PrependUOffsetT(ifaces[i])
+	}
+	ifacesV := bldr.EndVector(len(ifaces))
+	DataStart(bldr)
+	DataAddTimestamp(bldr, inf.Timestamp)
+	DataAddInterfaces(bldr, ifacesV)
+	bldr.Finish(DataEnd(bldr))
+	return bldr.Bytes[bldr.Head():]
 }
-*/

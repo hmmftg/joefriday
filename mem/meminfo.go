@@ -211,8 +211,7 @@ func GetData() ([]byte, error) {
 //
 // This pre-allocates the builder and everything other than the []byte that
 // gets sent to the out channel to reduce allocations, as this is expected
-// to be both a frequent and a long-running process.  Doing so reduces
-// byte allocations per tick just ~ 42%.
+// to be both a frequent and a long-running process.
 func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errCh chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -226,8 +225,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
 	bldr := fb.NewBuilder(0)
-	// Some hopes to jump through to ensure we don't get a ErrBufferFull; which was
-	// occuring with var buf bufio.Reader (which works in the bench code)
+	// Some hopes to jump through to ensure we don't get a ErrBufferFull.
 	var bs []byte
 	tmp := bytes.NewBuffer(bs)
 	buf := bufio.NewReaderSize(tmp, 1536)

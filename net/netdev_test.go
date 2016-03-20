@@ -1,8 +1,11 @@
 package net
 
 import (
-	"fmt"
 	"testing"
+	"time"
+
+	fb "github.com/google/flatbuffers/go"
+	json "github.com/mohae/customjson"
 )
 
 func TestGetInfo(t *testing.T) {
@@ -68,6 +71,41 @@ func TestGetInfo(t *testing.T) {
 			t.Errorf("%d: TCompressed: got %d; want %d", i, infD.Interfaces[i].TCompressed, inf.Interfaces[i].TCompressed)
 		}
 	}
-	fmt.Println(infD)
+}
 
+func TestData(t *testing.T) {
+	inf, _ := GetInfo()
+	bldr := fb.NewBuilder(0)
+	b := Serialize(inf, bldr)
+	infD := Deserialize(b)
+	if json.MarshalToString(inf) != json.MarshalToString(infD) {
+		t.Errorf("serialize/deserialize flatbuffers: got %v, want %v", infD, inf)
+	}
+}
+
+func TestDataTicker(t *testing.T) {
+	results := make(chan []byte)
+	errs := make(chan error)
+	done := make(chan struct{})
+	go DataTicker(time.Second, results, done, errs)
+	var x int
+	for {
+		if x > 0 {
+			close(done)
+			break
+		}
+		select {
+		case b, ok := <-results:
+			if !ok {
+				break
+			}
+			inf := Deserialize(b)
+			if len(inf.Interfaces) < 2 {
+				t.Errorf("expected at least 2 interfaces, got %d", len(inf.Interfaces))
+			}
+		case err := <-errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+		x++
+	}
 }
