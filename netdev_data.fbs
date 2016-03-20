@@ -8,30 +8,22 @@ table Data {
 
 table IFace {
 	Name:string;
-	RCum:Receive;
-	TCum:Transmit;
-}
-
-table Receive {
-	Bytes:long;
-	Packets:long;
-	Errs:long;
-	Drop:long;
-	FIFO:long;
-	Frame:long;
-	Compressed:long;
-	Multicast:long;
-}
-
-table Transmit {
-	Bytes:long;
-	Packets:long;
-	Errs:long;
-	Drop:long;
-	FIFO:long;
-	Colls:long;
-	Carrier:long;
-	Compressed:long;
+	RBytes:long;
+	RPackets:long;
+	RErrs:long;
+	RDrop:long;
+	RFIFO:long;
+	RFrame:long;
+	RCompressed:long;
+	RMulticast:long;
+	TBytes:long;
+	TPackets:long;
+	TErrs:long;
+	TDrop:long;
+	TFIFO:long;
+	TColls:long;
+	TCarrier:long;
+	TCompressed:long;
 }
 
 root_type Data;

@@ -36,77 +36,62 @@ type Info struct {
 // Iface: contains information for a given network interface; names as
 // such to prevent collision with the Flatbuffers struct.
 type Iface struct {
-	Name string
-	RCum Received
-	TCum Transmitted
-}
-
-// Received: data related to receive; named as such to prevent collision
-// with the Flatbuffers struct.
-type Received struct {
-	Bytes      int64
-	Packets    int64
-	Errs       int64
-	Drop       int64
-	FIFO       int64
-	Frame      int64
-	Compressed int64
-	Multicast  int64
-}
-
-// Transmitted: data related to transmit; named as such to prevent collision
-// with the Flatbuffers struct.
-type Transmitted struct {
-	Bytes      int64
-	Packets    int64
-	Errs       int64
-	Drop       int64
-	FIFO       int64
-	Colls      int64
-	Carrier    int64
-	Compressed int64
+	Name        string
+	RBytes      int64
+	RPackets    int64
+	RErrs       int64
+	RDrop       int64
+	RFIFO       int64
+	RFrame      int64
+	RCompressed int64
+	RMulticast  int64
+	TBytes      int64
+	TPackets    int64
+	TErrs       int64
+	TDrop       int64
+	TFIFO       int64
+	TColls      int64
+	TCarrier    int64
+	TCompressed int64
 }
 
 // Serialize serializes the Info using flatbuffers.
-func (i *Info) Serialize() []byte {
-	ifaces := make([]fb.UOffsetT, 0, len(i.Interfaces))
-
+func (inf *Info) Serialize() []byte {
 	bldr := fb.NewBuilder(0)
-	for _, v := range i.Interfaces {
-		ReceiveStart(bldr)
-		ReceiveAddBytes(bldr, v.RCum.Bytes)
-		ReceiveAddPackets(bldr, v.RCum.Packets)
-		ReceiveAddErrs(bldr, v.RCum.Errs)
-		ReceiveAddDrop(bldr, v.RCum.Drop)
-		ReceiveAddFIFO(bldr, v.RCum.FIFO)
-		ReceiveAddFrame(bldr, v.RCum.Frame)
-		ReceiveAddCompressed(bldr, v.RCum.Compressed)
-		ReceiveAddMulticast(bldr, v.RCum.Multicast)
-		r := ReceiveEnd(bldr)
-		TransmitStart(bldr)
-		TransmitAddBytes(bldr, v.TCum.Bytes)
-		TransmitAddPackets(bldr, v.TCum.Packets)
-		TransmitAddErrs(bldr, v.TCum.Errs)
-		TransmitAddDrop(bldr, v.TCum.Drop)
-		TransmitAddFIFO(bldr, v.TCum.FIFO)
-		TransmitAddColls(bldr, v.TCum.Colls)
-		TransmitAddCarrier(bldr, v.TCum.Carrier)
-		TransmitAddCompressed(bldr, v.TCum.Compressed)
-		t := ReceiveEnd(bldr)
-		n := bldr.CreateString(v.Name)
+	ifaces := make([]fb.UOffsetT, len(inf.Interfaces))
+	names := make([]fb.UOffsetT, len(inf.Interfaces))
+	for i := 0; i < len(inf.Interfaces); i++ {
+		names[i] = bldr.CreateString(inf.Interfaces[i].Name)
+	}
+	for i := 0; i < len(inf.Interfaces); i++ {
 		IFaceStart(bldr)
-		IFaceAddName(bldr, n)
-		IFaceAddRCum(bldr, r)
-		IFaceAddTCum(bldr, t)
-		ifaces = append(ifaces, IFaceEnd(bldr))
+		IFaceAddName(bldr, names[i])
+		IFaceAddRBytes(bldr, inf.Interfaces[i].RBytes)
+		IFaceAddRPackets(bldr, inf.Interfaces[i].RPackets)
+		IFaceAddRErrs(bldr, inf.Interfaces[i].RErrs)
+		IFaceAddRDrop(bldr, inf.Interfaces[i].RDrop)
+		IFaceAddRFIFO(bldr, inf.Interfaces[i].RFIFO)
+		IFaceAddRFrame(bldr, inf.Interfaces[i].RFrame)
+		IFaceAddRCompressed(bldr, inf.Interfaces[i].RCompressed)
+		IFaceAddRMulticast(bldr, inf.Interfaces[i].RMulticast)
+		IFaceAddTBytes(bldr, inf.Interfaces[i].TBytes)
+		IFaceAddTPackets(bldr, inf.Interfaces[i].TPackets)
+		IFaceAddTErrs(bldr, inf.Interfaces[i].TErrs)
+		IFaceAddTDrop(bldr, inf.Interfaces[i].TDrop)
+		IFaceAddTFIFO(bldr, inf.Interfaces[i].TFIFO)
+		IFaceAddTColls(bldr, inf.Interfaces[i].TColls)
+		IFaceAddTCarrier(bldr, inf.Interfaces[i].TCarrier)
+		IFaceAddTCompressed(bldr, inf.Interfaces[i].TCompressed)
+		ifaces[i] = IFaceEnd(bldr)
 	}
 	DataStartInterfacesVector(bldr, len(ifaces))
-	for i := len(i.Interfaces) - 1; i >= 0; i-- {
+	for i := len(inf.Interfaces) - 1; i >= 0; i-- {
 		bldr.PrependUOffsetT(ifaces[i])
 	}
-	bldr.EndVector(len(ifaces))
+	ifacesV := bldr.EndVector(len(ifaces))
 	DataStart(bldr)
-	DataAddTimestamp(bldr, i.Timestamp)
+	DataAddTimestamp(bldr, inf.Timestamp)
+	DataAddInterfaces(bldr, ifacesV)
 	bldr.Finish(DataEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
@@ -118,59 +103,56 @@ func Deserialize(p []byte) *Info {
 	data := GetRootAsData(p, 0)
 	// get the # of interfaces
 	iLen := data.InterfacesLength()
-	info := &Info{Timestamp: data.Timestamp(), Interfaces: make([]Iface, 0, iLen)}
+	info := &Info{Timestamp: data.Timestamp(), Interfaces: make([]Iface, iLen)}
 	iFace := &IFace{}
 	iface := Iface{}
-	r := &Receive{}
-	t := &Transmit{}
 	for i := 0; i < iLen; i++ {
 		if data.Interfaces(iFace, i) {
-			r = iFace.RCum(r)
-			iface.RCum.Bytes = r.Bytes()
-			iface.RCum.Packets = r.Packets()
-			iface.RCum.Errs = r.Errs()
-			iface.RCum.Drop = r.Drop()
-			iface.RCum.FIFO = r.FIFO()
-			iface.RCum.Frame = r.Frame()
-			iface.RCum.Compressed = r.Compressed()
-			iface.RCum.Multicast = r.Multicast()
-			t = iFace.TCum(t)
-			iface.TCum.Bytes = t.Bytes()
-			iface.TCum.Packets = t.Packets()
-			iface.TCum.Errs = t.Errs()
-			iface.TCum.Drop = t.Drop()
-			iface.TCum.FIFO = t.FIFO()
-			iface.TCum.Colls = t.Colls()
-			iface.TCum.Carrier = t.Carrier()
-			iface.TCum.Compressed = t.Compressed()
+			iface.Name = string(iFace.Name())
+			iface.RBytes = iFace.RBytes()
+			iface.RPackets = iFace.RPackets()
+			iface.RErrs = iFace.RErrs()
+			iface.RDrop = iFace.RDrop()
+			iface.RFIFO = iFace.RFIFO()
+			iface.RFrame = iFace.RFrame()
+			iface.RCompressed = iFace.RCompressed()
+			iface.RMulticast = iFace.RMulticast()
+			iface.TBytes = iFace.TBytes()
+			iface.TPackets = iFace.TPackets()
+			iface.TErrs = iFace.TErrs()
+			iface.TDrop = iFace.TDrop()
+			iface.TFIFO = iFace.TFIFO()
+			iface.TColls = iFace.TColls()
+			iface.TCarrier = iFace.TCarrier()
+			iface.TCompressed = iFace.TCompressed()
 		}
-		info.Interfaces = append(info.Interfaces, iface)
+		info.Interfaces[i] = iface
 	}
 	return info
 }
 
-func (i Info) String() string {
+func (inf Info) String() string {
 	var buf bytes.Buffer
-	buf.WriteString(time.Unix(0, i.Timestamp).UTC().String())
+	buf.WriteString(time.Unix(0, inf.Timestamp).UTC().String())
 	buf.WriteByte('\n')
-	for _, v := range i.Interfaces {
-		buf.WriteString(joe.Column(8, v.Name))
-		buf.WriteString(joe.Int64Column(22, v.RCum.Bytes))
-		buf.WriteString(joe.Int64Column(22, v.RCum.Packets))
-		buf.WriteString(joe.Int64Column(22, v.RCum.Errs))
-		buf.WriteString(joe.Int64Column(22, v.RCum.Drop))
-		buf.WriteString(joe.Int64Column(22, v.RCum.FIFO))
-		buf.WriteString(joe.Int64Column(22, v.RCum.Frame))
-		buf.WriteString(joe.Int64Column(22, v.RCum.Compressed))
-		buf.WriteString(joe.Int64Column(22, v.RCum.Multicast))
-		buf.WriteString(joe.Int64Column(22, v.TCum.Bytes))
-		buf.WriteString(joe.Int64Column(22, v.TCum.Packets))
-		buf.WriteString(joe.Int64Column(22, v.TCum.Errs))
-		buf.WriteString(joe.Int64Column(22, v.TCum.Drop))
-		buf.WriteString(joe.Int64Column(22, v.TCum.FIFO))
-		buf.WriteString(joe.Int64Column(22, v.TCum.Colls))
-		buf.WriteString(joe.Int64Column(22, v.TCum.Carrier))
-		buf.WriteString(joe.Int64Column(22, v.TCum.Compressed))
+	for i := 0; i < len(inf.Interfaces); i++ {
+		buf.WriteString(joe.Column(8, inf.Interfaces[i].Name))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].RBytes))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].RPackets))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].RErrs))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].RDrop))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].RFIFO))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].RFrame))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].RCompressed))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].RMulticast))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].TBytes))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].TPackets))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].TErrs))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].TDrop))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].TFIFO))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].TColls))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].TCarrier))
+		buf.WriteString(joe.Int64Column(22, inf.Interfaces[i].TCompressed))
 		buf.WriteByte('\n')
 	}
 	return buf.String()
@@ -241,67 +223,67 @@ func GetInfo() (*Info, error) {
 			}
 			val = val[:0]
 			if fieldNum == 1 {
-				iData.RCum.Bytes = int64(fieldVal)
+				iData.RBytes = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 2 {
-				iData.RCum.Packets = int64(fieldVal)
+				iData.RPackets = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 3 {
-				iData.RCum.Errs = int64(fieldVal)
+				iData.RErrs = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 4 {
-				iData.RCum.Drop = int64(fieldVal)
+				iData.RDrop = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 5 {
-				iData.RCum.FIFO = int64(fieldVal)
+				iData.RFIFO = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 6 {
-				iData.RCum.Frame = int64(fieldVal)
+				iData.RFrame = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 7 {
-				iData.RCum.Compressed = int64(fieldVal)
+				iData.RCompressed = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 8 {
-				iData.RCum.Multicast = int64(fieldVal)
+				iData.RMulticast = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 9 {
-				iData.RCum.Bytes = int64(fieldVal)
+				iData.TBytes = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 10 {
-				iData.RCum.Packets = int64(fieldVal)
+				iData.TPackets = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 11 {
-				iData.TCum.Errs = int64(fieldVal)
+				iData.TErrs = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 12 {
-				iData.TCum.Drop = int64(fieldVal)
+				iData.TDrop = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 13 {
-				iData.TCum.FIFO = int64(fieldVal)
+				iData.TFIFO = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 14 {
-				iData.TCum.Colls = int64(fieldVal)
+				iData.TColls = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 15 {
-				iData.TCum.Carrier = int64(fieldVal)
+				iData.TCarrier = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 16 {
-				iData.TCum.Compressed = int64(fieldVal)
+				iData.TCompressed = int64(fieldVal)
 				break
 			}
 		}
