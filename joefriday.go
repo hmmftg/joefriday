@@ -14,7 +14,10 @@
 // Package joefriday gets facts.
 package joefriday
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type Error struct {
 	Type string
@@ -24,4 +27,20 @@ type Error struct {
 
 func (e Error) Error() string {
 	return fmt.Sprintf("%s: %q: %s", e.Type, e.Op, e.Err)
+}
+
+// Column returns a right justified string of width w.
+func Column(w int, s string) string {
+	pad := w - len(s)
+	padding := make([]byte, pad)
+	for i := 0; i < pad; i++ {
+		padding[i] = 0x20
+	}
+	return fmt.Sprintf("%s%s", string(padding), s)
+}
+
+// Int64Column takes an int64 and returns a right justified string of width w.
+func Int64Column(w int, v int64) string {
+	s := strconv.FormatInt(v, 10)
+	return Column(w, s)
 }

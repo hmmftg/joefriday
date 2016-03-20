@@ -17,6 +17,7 @@ package net
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -24,6 +25,7 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
+	joe "github.com/mohae/joefriday"
 )
 
 type Info struct {
@@ -67,9 +69,45 @@ type Transmitted struct {
 
 // Serialize serializes the Info using flatbuffers.
 func (i *Info) Serialize() []byte {
+	ifaces := make([]fb.UOffsetT, 0, len(i.Interfaces))
+
 	bldr := fb.NewBuilder(0)
+	for _, v := range i.Interfaces {
+		ReceiveStart(bldr)
+		ReceiveAddBytes(bldr, v.RCum.Bytes)
+		ReceiveAddPackets(bldr, v.RCum.Packets)
+		ReceiveAddErrs(bldr, v.RCum.Errs)
+		ReceiveAddDrop(bldr, v.RCum.Drop)
+		ReceiveAddFIFO(bldr, v.RCum.FIFO)
+		ReceiveAddFrame(bldr, v.RCum.Frame)
+		ReceiveAddCompressed(bldr, v.RCum.Compressed)
+		ReceiveAddMulticast(bldr, v.RCum.Multicast)
+		r := ReceiveEnd(bldr)
+		TransmitStart(bldr)
+		TransmitAddBytes(bldr, v.TCum.Bytes)
+		TransmitAddPackets(bldr, v.TCum.Packets)
+		TransmitAddErrs(bldr, v.TCum.Errs)
+		TransmitAddDrop(bldr, v.TCum.Drop)
+		TransmitAddFIFO(bldr, v.TCum.FIFO)
+		TransmitAddColls(bldr, v.TCum.Colls)
+		TransmitAddCarrier(bldr, v.TCum.Carrier)
+		TransmitAddCompressed(bldr, v.TCum.Compressed)
+		t := ReceiveEnd(bldr)
+		n := bldr.CreateString(v.Name)
+		IFaceStart(bldr)
+		IFaceAddName(bldr, n)
+		IFaceAddRCum(bldr, r)
+		IFaceAddTCum(bldr, t)
+		ifaces = append(ifaces, IFaceEnd(bldr))
+	}
+	DataStartInterfacesVector(bldr, len(ifaces))
+	for i := len(i.Interfaces) - 1; i >= 0; i-- {
+		bldr.PrependUOffsetT(ifaces[i])
+	}
+	bldr.EndVector(len(ifaces))
 	DataStart(bldr)
 	DataAddTimestamp(bldr, i.Timestamp)
+	bldr.Finish(DataEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
@@ -78,9 +116,64 @@ func (i *Info) Serialize() []byte {
 // Data, it is a programmer error and a panic will occur.
 func Deserialize(p []byte) *Info {
 	data := GetRootAsData(p, 0)
-	info := &Info{}
-	info.Timestamp = data.Timestamp()
+	// get the # of interfaces
+	iLen := data.InterfacesLength()
+	info := &Info{Timestamp: data.Timestamp(), Interfaces: make([]Iface, 0, iLen)}
+	iFace := &IFace{}
+	iface := Iface{}
+	r := &Receive{}
+	t := &Transmit{}
+	for i := 0; i < iLen; i++ {
+		if data.Interfaces(iFace, i) {
+			r = iFace.RCum(r)
+			iface.RCum.Bytes = r.Bytes()
+			iface.RCum.Packets = r.Packets()
+			iface.RCum.Errs = r.Errs()
+			iface.RCum.Drop = r.Drop()
+			iface.RCum.FIFO = r.FIFO()
+			iface.RCum.Frame = r.Frame()
+			iface.RCum.Compressed = r.Compressed()
+			iface.RCum.Multicast = r.Multicast()
+			t = iFace.TCum(t)
+			iface.TCum.Bytes = t.Bytes()
+			iface.TCum.Packets = t.Packets()
+			iface.TCum.Errs = t.Errs()
+			iface.TCum.Drop = t.Drop()
+			iface.TCum.FIFO = t.FIFO()
+			iface.TCum.Colls = t.Colls()
+			iface.TCum.Carrier = t.Carrier()
+			iface.TCum.Compressed = t.Compressed()
+		}
+		info.Interfaces = append(info.Interfaces, iface)
+	}
 	return info
+}
+
+func (i Info) String() string {
+	var buf bytes.Buffer
+	buf.WriteString(time.Unix(0, i.Timestamp).UTC().String())
+	buf.WriteByte('\n')
+	for _, v := range i.Interfaces {
+		buf.WriteString(joe.Column(8, v.Name))
+		buf.WriteString(joe.Int64Column(22, v.RCum.Bytes))
+		buf.WriteString(joe.Int64Column(22, v.RCum.Packets))
+		buf.WriteString(joe.Int64Column(22, v.RCum.Errs))
+		buf.WriteString(joe.Int64Column(22, v.RCum.Drop))
+		buf.WriteString(joe.Int64Column(22, v.RCum.FIFO))
+		buf.WriteString(joe.Int64Column(22, v.RCum.Frame))
+		buf.WriteString(joe.Int64Column(22, v.RCum.Compressed))
+		buf.WriteString(joe.Int64Column(22, v.RCum.Multicast))
+		buf.WriteString(joe.Int64Column(22, v.TCum.Bytes))
+		buf.WriteString(joe.Int64Column(22, v.TCum.Packets))
+		buf.WriteString(joe.Int64Column(22, v.TCum.Errs))
+		buf.WriteString(joe.Int64Column(22, v.TCum.Drop))
+		buf.WriteString(joe.Int64Column(22, v.TCum.FIFO))
+		buf.WriteString(joe.Int64Column(22, v.TCum.Colls))
+		buf.WriteString(joe.Int64Column(22, v.TCum.Carrier))
+		buf.WriteString(joe.Int64Column(22, v.TCum.Compressed))
+		buf.WriteByte('\n')
+	}
+	return buf.String()
 }
 
 // GetInfo returns some of the results of /proc/meminfo.
@@ -217,7 +310,6 @@ func GetInfo() (*Info, error) {
 	return inf, nil
 }
 
-/*
 // GetData returns the current meminfo as flatbuffer serialized bytes.
 func GetData() ([]byte, error) {
 	inf, err := GetInfo()
@@ -227,6 +319,7 @@ func GetData() ([]byte, error) {
 	return inf.Serialize(), nil
 }
 
+/*
 // DataTicker gathers the meminfo on a ticker, whose interval is defined by
 // the received duration, and sends the results to the channel.  The output
 // is Flatbuffers serialized Data.  Any error encountered during processing

@@ -19,7 +19,6 @@ func TestGetInfo(t *testing.T) {
 	fmt.Printf("%#v\n", inf)
 }
 
-/*
 func TestGetData(t *testing.T) {
 	p, err := GetData()
 	if err != nil {
@@ -32,5 +31,9 @@ func TestGetData(t *testing.T) {
 	if inf.Timestamp != data.Timestamp() {
 		t.Errorf("got %d; want %d", inf.Timestamp, data.Timestamp())
 	}
+	fmt.Println("info:\n", inf.String())
+	for _, v := range inf.Interfaces {
+		fmt.Println("bytes", v.RCum.Bytes)
+	}
+
 }
-*/
