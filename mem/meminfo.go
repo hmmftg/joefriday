@@ -30,16 +30,16 @@ import (
 
 type Info struct {
 	Timestamp    int64
-	MemTotal     int
-	MemFree      int
-	MemAvailable int
-	Buffers      int
-	Cached       int
-	SwapCached   int
-	Active       int
-	Inactive     int
-	SwapTotal    int
-	SwapFree     int
+	MemTotal     int64
+	MemFree      int64
+	MemAvailable int64
+	Buffers      int64
+	Cached       int64
+	SwapCached   int64
+	Active       int64
+	Inactive     int64
+	SwapTotal    int64
+	SwapFree     int64
 }
 
 // Serialize serializes the Info using flatbuffers.
@@ -68,16 +68,16 @@ func Deserialize(p []byte) *Info {
 	data := GetRootAsData(p, 0)
 	info := &Info{}
 	info.Timestamp = data.Timestamp()
-	info.MemTotal = int(data.MemTotal())
-	info.MemFree = int(data.MemFree())
-	info.MemAvailable = int(data.MemAvailable())
-	info.Buffers = int(data.Buffers())
-	info.Cached = int(data.Cached())
-	info.SwapCached = int(data.SwapCached())
-	info.Active = int(data.Active())
-	info.Inactive = int(data.Inactive())
-	info.SwapTotal = int(data.SwapTotal())
-	info.SwapFree = int(data.SwapFree())
+	info.MemTotal = data.MemTotal()
+	info.MemFree = data.MemFree()
+	info.MemAvailable = data.MemAvailable()
+	info.Buffers = data.Buffers()
+	info.Cached = data.Cached()
+	info.SwapCached = data.SwapCached()
+	info.Active = data.Active()
+	info.Inactive = data.Inactive()
+	info.SwapTotal = data.SwapTotal()
+	info.SwapFree = data.SwapFree()
 	return info
 }
 
@@ -149,43 +149,43 @@ func GetInfo() (*Info, error) {
 		}
 		val = val[:0]
 		if name == "MemTotal" {
-			inf.MemTotal = i
+			inf.MemTotal = int64(i)
 			continue
 		}
 		if name == "MemFree" {
-			inf.MemFree = i
+			inf.MemFree = int64(i)
 			continue
 		}
 		if name == "MemAvailable" {
-			inf.MemAvailable = i
+			inf.MemAvailable = int64(i)
 			continue
 		}
 		if name == "Buffers" {
-			inf.Buffers = i
+			inf.Buffers = int64(i)
 			continue
 		}
 		if name == "Cached" {
-			inf.MemAvailable = i
+			inf.MemAvailable = int64(i)
 			continue
 		}
 		if name == "SwapCached" {
-			inf.SwapCached = i
+			inf.SwapCached = int64(i)
 			continue
 		}
 		if name == "Active" {
-			inf.Active = i
+			inf.Active = int64(i)
 			continue
 		}
 		if name == "Inactive" {
-			inf.Inactive = i
+			inf.Inactive = int64(i)
 			continue
 		}
 		if name == "SwapTotal" {
-			inf.SwapTotal = i
+			inf.SwapTotal = int64(i)
 			continue
 		}
 		if name == "SwapFree" {
-			inf.SwapFree = i
+			inf.SwapFree = int64(i)
 			continue
 		}
 	}
