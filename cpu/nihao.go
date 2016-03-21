@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
 )
 
@@ -45,6 +46,131 @@ type Inf struct {
 	CacheAlignment  string  `json:"cache_alignment"`
 	AddressSizes    string  `json:"address_sizes"`
 	PowerManagement string  `json:"power_management"`
+}
+
+// Serialize serializes Processors using Flatbuffers.
+func (p *Processors) Serialize() []byte {
+	bldr := fb.NewBuilder(0)
+	infos := make([]fb.UOffsetT, len(p.Infos))
+	vendorIDs := make([]fb.UOffsetT, len(p.Infos))
+	cpuFamilies := make([]fb.UOffsetT, len(p.Infos))
+	models := make([]fb.UOffsetT, len(p.Infos))
+	modelNames := make([]fb.UOffsetT, len(p.Infos))
+	steppings := make([]fb.UOffsetT, len(p.Infos))
+	microcodes := make([]fb.UOffsetT, len(p.Infos))
+	cpuMHzs := make([]fb.UOffsetT, len(p.Infos))
+	cacheSizes := make([]fb.UOffsetT, len(p.Infos))
+	fpus := make([]fb.UOffsetT, len(p.Infos))
+	fpuExceptions := make([]fb.UOffsetT, len(p.Infos))
+	cpuIDLevels := make([]fb.UOffsetT, len(p.Infos))
+	wps := make([]fb.UOffsetT, len(p.Infos))
+	flags := make([]fb.UOffsetT, len(p.Infos))
+	clFlushSizes := make([]fb.UOffsetT, len(p.Infos))
+	cacheAlignments := make([]fb.UOffsetT, len(p.Infos))
+	addressSizes := make([]fb.UOffsetT, len(p.Infos))
+	powerManagements := make([]fb.UOffsetT, len(p.Infos))
+	// create the strings
+	for i := 0; i < len(p.Infos); i++ {
+		vendorIDs[i] = bldr.CreateString(p.Infos[i].VendorID)
+		cpuFamilies[i] = bldr.CreateString(p.Infos[i].CPUFamily)
+		models[i] = bldr.CreateString(p.Infos[i].Model)
+		modelNames[i] = bldr.CreateString(p.Infos[i].ModelName)
+		steppings[i] = bldr.CreateString(p.Infos[i].Stepping)
+		microcodes[i] = bldr.CreateString(p.Infos[i].Microcode)
+		cpuMHzs[i] = bldr.CreateString(p.Infos[i].CPUMHz)
+		cacheSizes[i] = bldr.CreateString(p.Infos[i].CacheSize)
+		fpus[i] = bldr.CreateString(p.Infos[i].FPU)
+		fpuExceptions[i] = bldr.CreateString(p.Infos[i].FPUException)
+		cpuIDLevels[i] = bldr.CreateString(p.Infos[i].CPUIDLevel)
+		wps[i] = bldr.CreateString(p.Infos[i].WP)
+		flags[i] = bldr.CreateString(p.Infos[i].Flags)
+		clFlushSizes[i] = bldr.CreateString(p.Infos[i].CLFlushSize)
+		cacheAlignments[i] = bldr.CreateString(p.Infos[i].CacheAlignment)
+		addressSizes[i] = bldr.CreateString(p.Infos[i].AddressSizes)
+		powerManagements[i] = bldr.CreateString(p.Infos[i].PowerManagement)
+	}
+	// create the Infos
+	for i := 0; i < len(p.Infos); i++ {
+		InfoStart(bldr)
+		InfoAddProcessor(bldr, p.Infos[i].Processor)
+		InfoAddVendorID(bldr, vendorIDs[i])
+		InfoAddCPUFamily(bldr, cpuFamilies[i])
+		InfoAddModel(bldr, models[i])
+		InfoAddModelName(bldr, modelNames[i])
+		InfoAddStepping(bldr, steppings[i])
+		InfoAddMicrocode(bldr, microcodes[i])
+		InfoAddCPUMHz(bldr, cpuMHzs[i])
+		InfoAddCacheSize(bldr, cacheSizes[i])
+		InfoAddPhysicalID(bldr, p.Infos[i].PhysicalID)
+		InfoAddSiblings(bldr, p.Infos[i].Siblings)
+		InfoAddCoreID(bldr, p.Infos[i].CoreID)
+		InfoAddCPUCores(bldr, p.Infos[i].CPUCores)
+		InfoAddApicID(bldr, p.Infos[i].ApicID)
+		InfoAddInitialApicID(bldr, p.Infos[i].InitialApicID)
+		InfoAddFPU(bldr, fpus[i])
+		InfoAddFPUException(bldr, fpuExceptions[i])
+		InfoAddCPUIDLevel(bldr, cpuIDLevels[i])
+		InfoAddWP(bldr, wps[i])
+		InfoAddFlags(bldr, flags[i])
+		InfoAddBogoMIPS(bldr, p.Infos[i].BogoMIPS)
+		InfoAddCLFlushSize(bldr, clFlushSizes[i])
+		InfoAddCacheAlignment(bldr, cacheAlignments[i])
+		InfoAddAddressSizes(bldr, addressSizes[i])
+		InfoAddPowerManagement(bldr, powerManagements[i])
+		infos[i] = InfoEnd(bldr)
+	}
+	// Process the Info vector
+	ProcsStartInfosVector(bldr, len(infos))
+	for i := len(p.Infos) - 1; i >= 0; i-- {
+		bldr.PrependUOffsetT(infos[i])
+	}
+	infosV := bldr.EndVector(len(infos))
+	ProcsStart(bldr)
+	ProcsAddTimestamp(bldr, p.Timestamp)
+	ProcsAddInfos(bldr, infosV)
+	bldr.Finish(ProcsEnd(bldr))
+	return bldr.Bytes[bldr.Head():]
+}
+
+func Deserialize(p []byte) *Processors {
+	procs := GetRootAsProcs(p, 0)
+	iLen := procs.InfosLength()
+	processors := &Processors{}
+	info := &Info{}
+	inf := Inf{}
+	processors.Timestamp = procs.Timestamp()
+	for i := 0; i < iLen; i++ {
+		if !procs.Infos(info, i) {
+			continue
+		}
+		inf.Processor = info.Processor()
+		inf.VendorID = string(info.VendorID())
+		inf.CPUFamily = string(info.CPUFamily())
+		inf.Model = string(info.Model())
+		inf.ModelName = string(info.ModelName())
+		inf.Stepping = string(info.Stepping())
+		inf.Microcode = string(info.Microcode())
+		inf.CPUMHz = string(info.CPUMHz())
+		inf.CacheSize = string(info.CacheSize())
+		inf.PhysicalID = info.PhysicalID()
+		inf.Siblings = info.Siblings()
+		inf.CoreID = info.CoreID()
+		inf.CPUCores = info.CPUCores()
+		inf.ApicID = info.ApicID()
+		inf.InitialApicID = info.InitialApicID()
+		inf.FPU = string(info.FPU())
+		inf.FPUException = string(info.FPUException())
+		inf.CPUIDLevel = string(info.CPUIDLevel())
+		inf.WP = string(info.WP())
+		inf.Flags = string(info.Flags())
+		inf.BogoMIPS = info.BogoMIPS()
+		inf.CLFlushSize = string(info.CLFlushSize())
+		inf.CacheAlignment = string(info.CacheAlignment())
+		inf.AddressSizes = string(info.AddressSizes())
+		inf.PowerManagement = string(info.PowerManagement())
+		processors.Infos = append(processors.Infos, inf)
+	}
+	return processors
 }
 
 // NiHao gets the processor information from /proc/cpuinfo
