@@ -89,7 +89,6 @@ func (d *Info) String() string {
 func GetInfo() (*Info, error) {
 	var l, i int
 	var name string
-	var err error
 	var v byte
 	t := time.Now().UTC().UnixNano()
 	f, err := os.Open("/proc/meminfo")
@@ -100,13 +99,12 @@ func GetInfo() (*Info, error) {
 	buf := bufio.NewReader(f)
 	inf := &Info{Timestamp: t}
 	var pos int
-	line := make([]byte, 0, 50)
 	val := make([]byte, 0, 32)
 	for {
 		if l == 16 {
 			break
 		}
-		line, err = buf.ReadSlice('\n')
+		line, err := buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
