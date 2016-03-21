@@ -29,17 +29,17 @@ import (
 )
 
 type Info struct {
-	Timestamp    int64
-	MemTotal     int64
-	MemFree      int64
-	MemAvailable int64
-	Buffers      int64
-	Cached       int64
-	SwapCached   int64
-	Active       int64
-	Inactive     int64
-	SwapTotal    int64
-	SwapFree     int64
+	Timestamp    int64 `json:"timestamp"`
+	MemTotal     int64 `json:"mem_total"`
+	MemFree      int64 `json:"mem_free"`
+	MemAvailable int64 `json:"mem_available"`
+	Buffers      int64 `json:"buffers"`
+	Cached       int64 `json:"cached"`
+	SwapCached   int64 `json:"swap_cached"`
+	Active       int64 `json:"active"`
+	Inactive     int64 `json:"inactive"`
+	SwapTotal    int64 `json:"swap_total"`
+	SwapFree     int64 `json:"swap_free"`
 }
 
 // Serialize serializes the Info using flatbuffers.

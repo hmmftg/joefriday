@@ -29,30 +29,30 @@ import (
 )
 
 type Info struct {
-	Timestamp  int64
-	Interfaces []Iface
+	Timestamp  int64   `json:"timestamp"`
+	Interfaces []Iface `json:"interfaces"`
 }
 
 // Iface: contains information for a given network interface; names as
 // such to prevent collision with the Flatbuffers struct.
 type Iface struct {
-	Name        string
-	RBytes      int64
-	RPackets    int64
-	RErrs       int64
-	RDrop       int64
-	RFIFO       int64
-	RFrame      int64
-	RCompressed int64
-	RMulticast  int64
-	TBytes      int64
-	TPackets    int64
-	TErrs       int64
-	TDrop       int64
-	TFIFO       int64
-	TColls      int64
-	TCarrier    int64
-	TCompressed int64
+	Name        string `json:"name"`
+	RBytes      int64  `json:"receive_bytes"`
+	RPackets    int64  `json:"receive_packets"`
+	RErrs       int64  `json:"receive_errs"`
+	RDrop       int64  `json:"receive_drop"`
+	RFIFO       int64  `json:"recieve_fifo"`
+	RFrame      int64  `json:"receive_frame"`
+	RCompressed int64  `json:"receive_compressed"`
+	RMulticast  int64  `json:"receive_multicast"`
+	TBytes      int64  `json:"transmit_bytes"`
+	TPackets    int64  `json:"transmit_packets"`
+	TErrs       int64  `json:"transmit_errs"`
+	TDrop       int64  `json:"transmit_drop"`
+	TFIFO       int64  `json:"transmit_fifo"`
+	TColls      int64  `json:"transmit_colls"`
+	TCarrier    int64  `json:"transmit_carrier"`
+	TCompressed int64  `json:"transmit_compressed"`
 }
 
 // Serialize serializes the Info using flatbuffers.
