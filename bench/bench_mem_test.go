@@ -156,12 +156,20 @@ func BenchmarkShirouGopsutilMem(b *testing.B) {
 	_ = mem
 }
 
-func BenchmarkEricLagergrenGnulibSysinfo(b *testing.B) {
-	var memA, memT int64
+func BenchmarkEricLagergrenGnulibSysinfoPhysmemAvailable(b *testing.B) {
+	var mem int64
 	for i := 0; i < b.N; i++ {
-		memA = sysinfo.PhysmemAvailable()
-		memT = sysinfo.PhysmemTotal()
+		mem = sysinfo.PhysmemAvailable()
+
 	}
-	_ = memA
-	_ = memT
+	_ = mem
+}
+
+func BenchmarkEricLagergrenGnulibSysinfoPhysmemTotal(b *testing.B) {
+	var mem int64
+	for i := 0; i < b.N; i++ {
+		mem = sysinfo.PhysmemTotal()
+
+	}
+	_ = mem
 }
