@@ -14,7 +14,7 @@ table Info {
 	ModelName:string;
 	Stepping:string;
 	Microcode:string;
-	CPUMHz:string;
+	CPUMHz:float;
 	CacheSize:string;
 	PhysicalID:short;
 	Siblings:short;

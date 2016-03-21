@@ -28,7 +28,7 @@ type Inf struct {
 	ModelName       string  `json:"model_name"`
 	Stepping        string  `json:"stepping"`
 	Microcode       string  `json:"microcode"`
-	CPUMHz          string  `json:"cpu_mhz"`
+	CPUMHz          float32 `json:"cpu_mhz"`
 	CacheSize       string  `json:"cache_size"`
 	PhysicalID      int16   `json:"physical_id"`
 	Siblings        int16   `json:"siblings"`
@@ -58,7 +58,6 @@ func (p *Processors) Serialize() []byte {
 	modelNames := make([]fb.UOffsetT, len(p.Infos))
 	steppings := make([]fb.UOffsetT, len(p.Infos))
 	microcodes := make([]fb.UOffsetT, len(p.Infos))
-	cpuMHzs := make([]fb.UOffsetT, len(p.Infos))
 	cacheSizes := make([]fb.UOffsetT, len(p.Infos))
 	fpus := make([]fb.UOffsetT, len(p.Infos))
 	fpuExceptions := make([]fb.UOffsetT, len(p.Infos))
@@ -77,7 +76,6 @@ func (p *Processors) Serialize() []byte {
 		modelNames[i] = bldr.CreateString(p.Infos[i].ModelName)
 		steppings[i] = bldr.CreateString(p.Infos[i].Stepping)
 		microcodes[i] = bldr.CreateString(p.Infos[i].Microcode)
-		cpuMHzs[i] = bldr.CreateString(p.Infos[i].CPUMHz)
 		cacheSizes[i] = bldr.CreateString(p.Infos[i].CacheSize)
 		fpus[i] = bldr.CreateString(p.Infos[i].FPU)
 		fpuExceptions[i] = bldr.CreateString(p.Infos[i].FPUException)
@@ -99,7 +97,7 @@ func (p *Processors) Serialize() []byte {
 		InfoAddModelName(bldr, modelNames[i])
 		InfoAddStepping(bldr, steppings[i])
 		InfoAddMicrocode(bldr, microcodes[i])
-		InfoAddCPUMHz(bldr, cpuMHzs[i])
+		InfoAddCPUMHz(bldr, p.Infos[i].CPUMHz)
 		InfoAddCacheSize(bldr, cacheSizes[i])
 		InfoAddPhysicalID(bldr, p.Infos[i].PhysicalID)
 		InfoAddSiblings(bldr, p.Infos[i].Siblings)
@@ -150,7 +148,7 @@ func Deserialize(p []byte) *Processors {
 		inf.ModelName = string(info.ModelName())
 		inf.Stepping = string(info.Stepping())
 		inf.Microcode = string(info.Microcode())
-		inf.CPUMHz = string(info.CPUMHz())
+		inf.CPUMHz = info.CPUMHz()
 		inf.CacheSize = string(info.CacheSize())
 		inf.PhysicalID = info.PhysicalID()
 		inf.Siblings = info.Siblings()
@@ -224,7 +222,6 @@ func NiHao() (*Processors, error) {
 			cpu = Inf{Processor: int16(i)}
 			continue
 		}
-		fmt.Println(string(value))
 		if name == "vendor_id" {
 			cpu.VendorID = value
 			continue
@@ -250,7 +247,11 @@ func NiHao() (*Processors, error) {
 			continue
 		}
 		if name == "cpu MHz" {
-			cpu.CPUMHz = value
+			f, err := strconv.ParseFloat(value, 32)
+			if err != nil {
+				return nil, joe.Error{Type: "cpuinfo", Op: "nihao: cpu MHz", Err: err}
+			}
+			cpu.CPUMHz = float32(f)
 			continue
 		}
 		if name == "cache size" {
