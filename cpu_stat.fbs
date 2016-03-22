@@ -1,0 +1,27 @@
+// cpu_stat.fbs
+namespace cpu;
+
+table StatsFlat {
+    ClkTck:short;
+    Timestamp:long;
+    Ctxt:long;
+    BTime:long;
+    Processes:long;
+    CPUs:[StatFlat];
+}
+
+table StatFlat {
+    CPU:string;
+    User:long;
+    Nice:long;
+    System:long;
+    Idle:long;
+    IOWait:long;
+    IRQ:long;
+    SoftIRQ:long;
+    Steal:long;
+    Quest:long;
+    QuestNice:long;
+}
+
+root_type StatsFlat;
