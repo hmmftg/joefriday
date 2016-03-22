@@ -1,0 +1,14 @@
+// platform_version.fbs
+namespace platform;
+
+table KernelFB {
+    Version:string;
+    CompileUser:string;
+    GCC:string;
+    OSGCC:string;
+    Type:string;
+    CompileDate:string;
+    Arch:string;
+}
+
+root_type KernelFB;

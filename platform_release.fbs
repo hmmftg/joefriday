@@ -1,0 +1,14 @@
+// platform_release.fbs
+namespace platform;
+
+table ReleaseFB {
+    ID:string;
+    IDLike:string;
+    PrettyName:string;
+    Version:string;
+    VersionID:string;
+    HomeURL:string;
+    BugReportURL:string;
+}
+
+root_type ReleaseFB;
