@@ -72,3 +72,49 @@ func TestSerializeDeserializeStats(t *testing.T) {
 		}
 	}
 }
+
+func TestSerializeDeserializeUtilization(t *testing.T) {
+	Init()
+	u, err := GetUtilization()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+		return
+	}
+	b := u.SerializeFlat()
+	uD := DeserializeUtilizationFlat(b)
+	if u.Timestamp != uD.Timestamp {
+		t.Errorf("Timestamp: got %s; want %s", uD.Timestamp, u.Timestamp)
+	}
+	if u.CtxtDelta != uD.CtxtDelta {
+		t.Errorf("CtxtDelta: got %s; want %s", uD.CtxtDelta, u.CtxtDelta)
+	}
+	if u.BTimeDelta != uD.BTimeDelta {
+		t.Errorf("BTimeDelta: got %s; want %s", uD.BTimeDelta, u.BTimeDelta)
+	}
+	if u.Processes != uD.Processes {
+		t.Errorf("Processes: got %s; want %s", uD.Processes, u.Processes)
+	}
+	for i := 0; i < len(u.CPUs); i++ {
+		if u.CPUs[i].CPU != uD.CPUs[i].CPU {
+			t.Errorf("CPU %d: CPU: got %s; want %s", i, uD.CPUs[i].CPU, u.CPUs[i].CPU)
+		}
+		if u.CPUs[i].Usage != uD.CPUs[i].Usage {
+			t.Errorf("CPU %d: Usage: got %s; want %s", i, uD.CPUs[i].Usage, u.CPUs[i].Usage)
+		}
+		if u.CPUs[i].User != uD.CPUs[i].User {
+			t.Errorf("CPU %d: User: got %s; want %s", i, uD.CPUs[i].User, u.CPUs[i].User)
+		}
+		if u.CPUs[i].Nice != uD.CPUs[i].Nice {
+			t.Errorf("CPU %d: Nice: got %s; want %s", i, uD.CPUs[i].Nice, u.CPUs[i].Nice)
+		}
+		if u.CPUs[i].System != uD.CPUs[i].System {
+			t.Errorf("CPU %d: System: got %s; want %s", i, uD.CPUs[i].System, u.CPUs[i].System)
+		}
+		if u.CPUs[i].Idle != uD.CPUs[i].Idle {
+			t.Errorf("CPU %d: Idle: got %s; want %s", i, uD.CPUs[i].Idle, u.CPUs[i].Idle)
+		}
+		if u.CPUs[i].IOWait != uD.CPUs[i].IOWait {
+			t.Errorf("CPU %d: IOWait: got %s; want %s", i, uD.CPUs[i].IOWait, u.CPUs[i].IOWait)
+		}
+	}
+}

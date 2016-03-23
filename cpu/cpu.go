@@ -266,3 +266,144 @@ func GetStats() (Stats, error) {
 	}
 	return stats, nil
 }
+
+// Utilization holds information about cpu utilization.
+type Utilization struct {
+	Timestamp int64 `json:"timestamp"`
+	// time since last reboot, in seconds
+	BTimeDelta int32 `json:"btime_delta"`
+	// context switches since last snapshot
+	CtxtDelta int64 `json:"ctxt_delta"`
+	// current number of Processes
+	Processes int32 `json:"processes"`
+	// cpu specific utilization information
+	CPUs []Util `json:"cpus"`
+}
+
+// Util holds utilization information for a CPU.
+type Util struct {
+	CPU       string  `json:"cpu"`
+	Usage     float32 `json:"total"`
+	User      float32 `json:"user"`
+	Nice      float32 `json:"nice"`
+	System    float32 `json:"system"`
+	Idle      float32 `json:"idle"`
+	IOWait    float32 `json:"io_wait"`
+	IRQ       float32 `json:"irq"`
+	SoftIRQ   float32 `json:"soft_irq"`
+	Steal     float32 `json:"steal"`
+	Quest     float32 `json:"quest"`
+	QuestNice float32 `json:"quest_nice"`
+}
+
+// SerializeFlat serializes Utilization into Flatbuffer serialized bytes.
+func (u Utilization) SerializeFlat() []byte {
+	bldr := fb.NewBuilder(0)
+	utils := make([]fb.UOffsetT, len(u.CPUs))
+	cpus := make([]fb.UOffsetT, len(u.CPUs))
+	for i := 0; i < len(cpus); i++ {
+		cpus[i] = bldr.CreateString(u.CPUs[i].CPU)
+	}
+	for i := 0; i < len(utils); i++ {
+		UtilFlatStart(bldr)
+		UtilFlatAddCPU(bldr, cpus[i])
+		UtilFlatAddUsage(bldr, u.CPUs[i].Usage)
+		UtilFlatAddUser(bldr, u.CPUs[i].User)
+		UtilFlatAddNice(bldr, u.CPUs[i].Nice)
+		UtilFlatAddSystem(bldr, u.CPUs[i].System)
+		UtilFlatAddIdle(bldr, u.CPUs[i].Idle)
+		UtilFlatAddIOWait(bldr, u.CPUs[i].IOWait)
+		utils[i] = UtilFlatEnd(bldr)
+	}
+	UtilizationFlatStartCPUsVector(bldr, len(utils))
+	for i := len(utils) - 1; i >= 0; i-- {
+		bldr.PrependUOffsetT(utils[i])
+	}
+	utilsV := bldr.EndVector(len(utils))
+	UtilizationFlatStart(bldr)
+	UtilizationFlatAddTimestamp(bldr, u.Timestamp)
+	UtilizationFlatAddBTimeDelta(bldr, u.BTimeDelta)
+	UtilizationFlatAddCtxtDelta(bldr, u.CtxtDelta)
+	UtilizationFlatAddProcesses(bldr, u.Processes)
+	UtilizationFlatAddCPUs(bldr, utilsV)
+	bldr.Finish(UtilizationFlatEnd(bldr))
+	return bldr.Bytes[bldr.Head():]
+}
+
+// DeserializeUtilizationFlat deserializes Flatbuffer serialized bytes into
+// Utilization.
+func DeserializeUtilizationFlat(p []byte) Utilization {
+	var u Utilization
+	uF := &UtilFlat{}
+	data := GetRootAsUtilizationFlat(p, 0)
+	u.Timestamp = data.Timestamp()
+	u.CtxtDelta = data.CtxtDelta()
+	u.BTimeDelta = data.BTimeDelta()
+	u.Processes = data.Processes()
+	len := data.CPUsLength()
+	u.CPUs = make([]Util, len)
+	for i := 0; i < len; i++ {
+		var util Util
+		if data.CPUs(uF, i) {
+			util.CPU = string(uF.CPU())
+			util.Usage = uF.Usage()
+			util.User = uF.User()
+			util.Nice = uF.Nice()
+			util.System = uF.System()
+			util.Idle = uF.Idle()
+			util.IOWait = uF.IOWait()
+		}
+		u.CPUs[i] = util
+	}
+	return u
+}
+
+// GetUtilization returns the cpu utilization.  Utilization calculations
+// requires two pieces of data.  This func gets a snapshot of /proc/stat,
+// sleeps for a second, takes another snapshot and calcualtes the utilization
+// from the two snapshots.  If ongoing utilitzation information is desired,
+// the UtilizationTicker should be used; it's better suited for ongoing
+// utilization information being; using less cpu cycles and generating less
+// garbage.
+func GetUtilization() (Utilization, error) {
+	stat1, err := GetStats()
+	if err != nil {
+		return Utilization{}, err
+	}
+	time.Sleep(time.Second)
+	stat2, err := GetStats()
+	if err != nil {
+		return Utilization{}, err
+	}
+
+	return calculateUtilization(1, stat1, stat2), nil
+}
+
+// usage = ()(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
+func calculateUtilization(seconds int, s1, s2 Stats) Utilization {
+	u := Utilization{
+		Timestamp:  s2.Timestamp,
+		BTimeDelta: int32(s2.Timestamp/1000000000 - s2.BTime),
+		CtxtDelta:  s2.Ctxt - s1.Ctxt,
+		Processes:  int32(s2.Processes),
+		CPUs:       make([]Util, len(s2.CPUs)),
+	}
+	var dUser, dNice, dSys, dIdle, tot float32
+	// Rest of the calculations are per core
+	for i := 0; i < len(s2.CPUs); i++ {
+		v := Util{CPU: s2.CPUs[i].CPU}
+		dUser = float32(s2.CPUs[i].User - s1.CPUs[i].User)
+		dNice = float32(s2.CPUs[i].Nice - s1.CPUs[i].Nice)
+		dSys = float32(s2.CPUs[i].System - s1.CPUs[i].System)
+		dIdle = float32(s2.CPUs[i].Idle - s1.CPUs[i].Idle)
+		tot = dUser + dNice + dSys + dIdle
+		v.Usage = (dUser + dNice + dSys) / tot * float32(s2.ClkTck)
+		v.User = dUser / tot * float32(s2.ClkTck)
+		v.Nice = dNice / tot * float32(s2.ClkTck)
+		v.System = dSys / tot * float32(s2.ClkTck)
+		v.Idle = dIdle / tot * float32(s2.ClkTck)
+		v.IOWait = float32(s2.CPUs[i].IOWait-s1.CPUs[i].IOWait) / tot * float32(s2.ClkTck)
+		u.CPUs[i] = v
+	}
+	return u
+}
