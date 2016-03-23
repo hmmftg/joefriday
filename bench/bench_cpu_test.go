@@ -86,3 +86,42 @@ func BenchmarkCPUDeSerializeStatsFlat(b *testing.B) {
 	}
 	_ = val
 }
+
+func BenchmarkCPUUtilizationSerializeFlat(b *testing.B) {
+	var val cpu.Utilization
+	var p []byte
+	b.StopTimer()
+	val, _ = cpu.GetUtilization()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		p = val.SerializeFlat()
+	}
+	_ = p
+}
+
+func BenchmarkCPUUtilizationSerializeFlatBuilder(b *testing.B) {
+	var val cpu.Utilization
+	var p []byte
+	bldr := fb.NewBuilder(0)
+	b.StopTimer()
+	val, _ = cpu.GetUtilization()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		bldr.Reset()
+		p = val.SerializeFlatBuilder(bldr)
+	}
+	_ = p
+}
+
+func BenchmarkCPUDeSerializeUtilizationFlat(b *testing.B) {
+	var val cpu.Utilization
+	var p []byte
+	b.StopTimer()
+	val, _ = cpu.GetUtilization()
+	p = val.SerializeFlat()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		val = cpu.DeserializeUtilizationFlat(p)
+	}
+	_ = val
+}
