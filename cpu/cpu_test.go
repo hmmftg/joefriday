@@ -131,7 +131,6 @@ func TestUtilizationTicker(t *testing.T) {
 
 	ticker := time.NewTicker(time.Duration(2) * time.Second)
 	defer ticker.Stop()
-	defer close(out)
 	defer close(errs)
 
 	go UtilizationTicker(time.Second, out, done, errs)
@@ -159,6 +158,47 @@ testloop:
 				}
 				// only check IDLE: this may fail if on a really busy system
 				// but Usage may fail on a non-busy system.
+				if fmt.Sprintf("%.1f", v.Idle) == "0.0" {
+					t.Errorf("%d: expected Idle to have a non-zero value; it wasn't", i)
+				}
+			}
+		}
+	}
+}
+
+func TestUtilizationFlatTicker(t *testing.T) {
+	out := make(chan []byte)
+	done := make(chan struct{})
+	errs := make(chan error)
+
+	ticker := time.NewTicker(time.Duration(1) * time.Second)
+	defer ticker.Stop()
+	defer close(errs)
+	go UtilizationFlatTicker(time.Duration(200)*time.Millisecond, out, done, errs)
+
+testloop:
+	for {
+		select {
+		case <-ticker.C:
+			done <- struct{}{}
+			break testloop
+		case err := <-errs:
+			t.Errorf("unexpected error: %s", err)
+		case b := <-out:
+			u := DeserializeUtilizationFlat(b)
+			if u.Timestamp == 0 {
+				t.Errorf("expected a timestamp got 0")
+				continue
+			}
+			if len(u.CPUs) == 0 {
+				t.Errorf("expected CPU data, got none")
+				continue
+			}
+			for i, v := range u.CPUs {
+				if v.CPU == "" {
+					t.Errorf("%d: expected CPU to have a CPU ID, got none", i)
+					continue
+				}
 				if fmt.Sprintf("%.1f", v.Idle) == "0.0" {
 					t.Errorf("%d: expected Idle to have a non-zero value; it wasn't", i)
 				}

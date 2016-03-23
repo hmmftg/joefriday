@@ -568,6 +568,33 @@ tick:
 	}
 }
 
+// UtilizationFlatTicker processes CPU utilization information on a ticker
+// The generated utilization data serialized with flatbuffers and is sent to
+// the outCh.  Any errors encountered are sent to the errCh.  Processing ends
+// when either a done signal is received or the done channel is closed.
+//
+// It is the callers responsibility to close the done and errs channels.
+//
+// TODO: better handle errors, e.g. restore cur from prior so that there
+// isn't the possibility of temporarily having bad data, just a missed
+// collection interval.
+func UtilizationFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errs chan error) {
+	out := make(chan Utilization)
+	defer close(outCh)
+	go UtilizationTicker(interval, out, done, errs)
+	bldr := fb.NewBuilder(0)
+	var u Utilization
+	for {
+		select {
+		case <-done:
+			return
+		case u = <-out:
+			bldr.Reset()
+			outCh <- u.SerializeFlatBuilder(bldr)
+		}
+	}
+}
+
 // usage = ()(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
 func calculateUtilization(s1, s2 Stats) Utilization {
 	u := Utilization{
