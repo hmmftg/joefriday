@@ -1,6 +1,10 @@
 package cpu
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+	"time"
+)
 
 func TestInit(t *testing.T) {
 	err := Init()
@@ -115,6 +119,50 @@ func TestSerializeDeserializeUtilization(t *testing.T) {
 		}
 		if u.CPUs[i].IOWait != uD.CPUs[i].IOWait {
 			t.Errorf("CPU %d: IOWait: got %s; want %s", i, uD.CPUs[i].IOWait, u.CPUs[i].IOWait)
+		}
+	}
+}
+
+func TestUtilizationTicker(t *testing.T) {
+	Init()
+	out := make(chan Utilization)
+	done := make(chan struct{})
+	errs := make(chan error)
+
+	ticker := time.NewTicker(time.Duration(2) * time.Second)
+	defer ticker.Stop()
+	defer close(out)
+	defer close(errs)
+
+	go UtilizationTicker(time.Second, out, done, errs)
+testloop:
+	for {
+		select {
+		case <-ticker.C:
+			close(done)
+			break testloop
+		case err := <-errs:
+			t.Errorf("unexpected error: %s", err)
+		case u := <-out:
+			if u.Timestamp == 0 {
+				t.Errorf("expected a timestamp got 0")
+				continue
+			}
+			if len(u.CPUs) == 0 {
+				t.Errorf("expected CPU data, got none")
+				continue
+			}
+			for i, v := range u.CPUs {
+				if v.CPU == "" {
+					t.Errorf("%d: expected CPU to have a CPU ID, got none", i)
+					continue
+				}
+				// only check IDLE: this may fail if on a really busy system
+				// but Usage may fail on a non-busy system.
+				if fmt.Sprintf("%.1f", v.Idle) == "0.0" {
+					t.Errorf("%d: expected Idle to have a non-zero value; it wasn't", i)
+				}
+			}
 		}
 	}
 }

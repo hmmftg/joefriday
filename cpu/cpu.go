@@ -13,7 +13,7 @@ import (
 	joe "github.com/mohae/joefriday"
 )
 
-var CLK_TCK int // the ticks per clock cycle
+var CLK_TCK int16 // the ticks per clock cycle
 
 // Init: set's the CLK_TCK.
 func Init() error {
@@ -28,10 +28,11 @@ func Init() error {
 	if err != nil {
 		return joe.Error{Type: "cpu", Op: "read conf CLK_TCK output", Err: err}
 	}
-	CLK_TCK, err = strconv.Atoi(string(b[:len(b)-1]))
+	v, err := strconv.Atoi(string(b[:len(b)-1]))
 	if err != nil {
 		return joe.Error{Type: "cpu", Op: "processing conf CLK_TCK output", Err: err}
 	}
+	CLK_TCK = int16(v)
 	return nil
 }
 
@@ -132,7 +133,7 @@ func DeserializeStatsFlat(p []byte) Stats {
 
 // GetStats gets the output of /proc/stat.
 func GetStats() (Stats, error) {
-	stats := Stats{Timestamp: time.Now().UTC().UnixNano(), CPUs: []Stat{}}
+	stats := Stats{ClkTck: CLK_TCK, Timestamp: time.Now().UTC().UnixNano(), CPUs: []Stat{}}
 	f, err := os.Open("/proc/stat")
 	if err != nil {
 		return stats, err
@@ -377,6 +378,187 @@ func GetUtilization() (Utilization, error) {
 	}
 
 	return calculateUtilization(stat1, stat2), nil
+}
+
+// UtilizationTicker processes CPU utilization information on a ticker.  The
+// generated utilization data is sent to the outCh.  Any errors encountered
+// are sent to the errCh.  Processing ends when either a done signal is
+// received or the done channel is closed.
+//
+// It is the callers responsibility to close the done and errs channels.
+//
+// TODO: better handle errors, e.g. restore cur from prior so that there
+// isn't the possibility of temporarily having bad data, just a missed
+// collection interval.
+func UtilizationTicker(interval time.Duration, outCh chan Utilization, done chan struct{}, errs chan error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	defer close(outCh)
+	// predeclare some vars
+	var i, j, pos, val, fieldNum int
+	var v byte
+	var name string
+	var stop bool
+	var prior Stats
+	// first get stats as the baseline
+	cur, err := GetStats()
+	if err != nil {
+		errs <- err
+	}
+	// Some hopes to jump through to ensure we don't get a ErrBufferFull.
+	// TODO: should bufio.Scanner be used instead?
+	var bs []byte
+	tmp := bytes.NewBuffer(bs)
+	buf := bufio.NewReaderSize(tmp, 4096)
+	tmp = nil
+	// ticker
+tick:
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			prior.Ctxt = cur.Ctxt
+			prior.BTime = cur.BTime
+			prior.Processes = cur.Processes
+			if len(prior.CPUs) != len(cur.CPUs) {
+				prior.CPUs = make([]Stat, len(cur.CPUs))
+			}
+			copy(prior.CPUs, cur.CPUs)
+			cur.Timestamp = time.Now().UTC().UnixNano()
+			f, err := os.Open("/proc/stat")
+			if err != nil {
+				errs <- joe.Error{Type: "cpu", Op: "utilization ticker", Err: err}
+				continue tick
+			}
+			defer f.Close()
+			cur.CPUs = cur.CPUs[:0]
+			buf.Reset(f)
+			// read each line until eof
+			for {
+				line, err := buf.ReadSlice('\n')
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					errs <- joe.Error{Type: "cpu stat", Op: "reading /proc/stat output", Err: err}
+					break
+				}
+				// Get everything up to the first space, this is the key.  Not all keys are processed.
+				for i, v = range line {
+					if v == 0x20 {
+						name = string(line[:i])
+						pos = i + 1
+						break
+					}
+				}
+				// skip the intr line
+				if name == "intr" {
+					continue
+				}
+				if name[:3] == "cpu" {
+					j = 0
+					// skip over any remaining spaces
+					for i, v = range line[pos:] {
+						if v != 0x20 {
+							break
+						}
+						j++
+					}
+					stat := Stat{CPU: name}
+					fieldNum = 0
+					pos, j = j+pos, j+pos
+					// space is the field separator
+					for i, v = range line[pos:] {
+						if v == '\n' {
+							stop = true
+						}
+						if v == 0x20 || stop {
+							fieldNum++
+							val, err = strconv.Atoi(string(line[j : pos+i]))
+							if err != nil {
+								errs <- joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+								continue
+							}
+							j = pos + i + 1
+							if fieldNum == 1 {
+								stat.User = int64(val)
+								continue
+							}
+							if fieldNum == 2 {
+								stat.Nice = int64(val)
+								continue
+							}
+							if fieldNum == 3 {
+								stat.System = int64(val)
+								continue
+							}
+							if fieldNum == 4 {
+								stat.Idle = int64(val)
+								continue
+							}
+							if fieldNum == 5 {
+								stat.IOWait = int64(val)
+								continue
+							}
+							if fieldNum == 6 {
+								stat.IRQ = int64(val)
+								continue
+							}
+							if fieldNum == 7 {
+								stat.SoftIRQ = int64(val)
+								continue
+							}
+							if fieldNum == 8 {
+								stat.Steal = int64(val)
+								continue
+							}
+							if fieldNum == 9 {
+								stat.Quest = int64(val)
+								continue
+							}
+							if fieldNum == 10 {
+								stat.QuestNice = int64(val)
+								continue
+							}
+						}
+					}
+					cur.CPUs = append(cur.CPUs, stat)
+					stop = false
+					continue
+				}
+				if name == "ctxt" {
+					// rest of the line is the data
+					val, err = strconv.Atoi(string(line[pos : len(line)-1]))
+					if err != nil {
+						errs <- joe.Error{Type: "cpu stat", Op: "convert ctxt data", Err: err}
+					}
+					cur.Ctxt = int64(val)
+					continue
+				}
+				if name == "btime" {
+					// rest of the line is the data
+					val, err = strconv.Atoi(string(line[pos : len(line)-1]))
+					if err != nil {
+						errs <- joe.Error{Type: "cpu stat", Op: "convert btime data", Err: err}
+					}
+					cur.BTime = int64(val)
+					continue
+				}
+				if name == "processes" {
+					// rest of the line is the data
+					val, err = strconv.Atoi(string(line[pos : len(line)-1]))
+					if err != nil {
+						errs <- joe.Error{Type: "cpu stat", Op: "convert processes data", Err: err}
+					}
+					cur.Processes = int64(val)
+					continue
+				}
+			}
+			f.Close()
+			outCh <- calculateUtilization(prior, cur)
+		}
+	}
 }
 
 // usage = ()(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
