@@ -376,11 +376,11 @@ func GetUtilization() (Utilization, error) {
 		return Utilization{}, err
 	}
 
-	return calculateUtilization(1, stat1, stat2), nil
+	return calculateUtilization(stat1, stat2), nil
 }
 
 // usage = ()(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
-func calculateUtilization(seconds int, s1, s2 Stats) Utilization {
+func calculateUtilization(s1, s2 Stats) Utilization {
 	u := Utilization{
 		Timestamp:  s2.Timestamp,
 		BTimeDelta: int32(s2.Timestamp/1000000000 - s2.BTime),
