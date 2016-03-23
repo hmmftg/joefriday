@@ -297,9 +297,16 @@ type Util struct {
 	QuestNice float32 `json:"quest_nice"`
 }
 
-// SerializeFlat serializes Utilization into Flatbuffer serialized bytes.
+/// SerializeFlat serializes Utilization into Flatbuffer serialized bytes.
 func (u Utilization) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
+	return u.SerializeFlatBuilder(bldr)
+}
+
+// SerializeFlatBuilder serializes Utilization into Flatbuffer serialized
+// bytes using the received builder.  It is assumed that the passed builder
+// is in a usable state.
+func (u *Utilization) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	utils := make([]fb.UOffsetT, len(u.CPUs))
 	cpus := make([]fb.UOffsetT, len(u.CPUs))
 	for i := 0; i < len(cpus); i++ {
