@@ -61,8 +61,13 @@ type Stat struct {
 }
 
 // SerializeFlat serializes Stats into Flatbuffer serialized bytes.
-func (s Stats) SerializeFlat() []byte {
+func (s *Stats) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
+	return s.SerializeFlatBuilder(bldr)
+}
+
+// SerializeFlat serializes Stats into Flatbuffer serialized bytes.
+func (s *Stats) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	stats := make([]fb.UOffsetT, len(s.CPUs))
 	cpus := make([]fb.UOffsetT, len(s.CPUs))
 	for i := 0; i < len(cpus); i++ {
@@ -298,7 +303,7 @@ type Util struct {
 }
 
 /// SerializeFlat serializes Utilization into Flatbuffer serialized bytes.
-func (u Utilization) SerializeFlat() []byte {
+func (u *Utilization) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
 	return u.SerializeFlatBuilder(bldr)
 }
