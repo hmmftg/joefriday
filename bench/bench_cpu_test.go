@@ -7,37 +7,37 @@ import (
 	"github.com/mohae/joefriday/cpu"
 )
 
-func BenchmarkCPUNiHao(b *testing.B) {
-	var procs *cpu.Processors
+func BenchmarkCPUGetFacts(b *testing.B) {
+	var val *cpu.Facts
 	for i := 0; i < b.N; i++ {
-		procs, _ = cpu.NiHao()
+		val, _ = cpu.GetFacts()
 	}
-	_ = procs
+	_ = val
 }
 
-func BenchmarkCPUProcessorsSerialize(b *testing.B) {
-	var procs *cpu.Processors
+func BenchmarkCPUFactsSerializeSlat(b *testing.B) {
+	var val *cpu.Facts
 	var p []byte
 	b.StopTimer()
-	procs, _ = cpu.NiHao()
+	val, _ = cpu.GetFacts()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		p = procs.Serialize()
+		p = val.SerializeFlat()
 	}
 	_ = p
 }
 
-func BenchmarkCPUProcessorsDeSerialize(b *testing.B) {
-	var procs *cpu.Processors
+func BenchmarkCPUFactsDeSerialize(b *testing.B) {
+	var val *cpu.Facts
 	var p []byte
 	b.StopTimer()
-	procs, _ = cpu.NiHao()
-	p = procs.Serialize()
+	val, _ = cpu.GetFacts()
+	p = val.SerializeFlat()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		procs = cpu.Deserialize(p)
+		val = cpu.DeserializeFlat(p)
 	}
-	_ = procs
+	_ = val
 }
 
 func BenchmarkCPUStats(b *testing.B) {
