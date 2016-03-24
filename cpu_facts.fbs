@@ -1,12 +1,12 @@
-// cpu_nihao.fbs
+// cpu_facts.fbs
 namespace cpu;
 
-table Procs {
+table FactsFB {
 	Timestamp:long;
-	Infos:[Info];
+	CPUs:[FactFB];
 }
 
-table Info {
+table FactFB {
 	Processor:short;
 	VendorID:string;
 	CPUFamily:string;
@@ -34,4 +34,4 @@ table Info {
 	PowerManagement:string;
 }
 
-root_type Procs;
+root_type FactsFB;
