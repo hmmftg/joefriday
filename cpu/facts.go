@@ -52,6 +52,14 @@ type Fact struct {
 // SerializeFlat serializes Facts using Flatbuffers.
 func (f *Facts) SerializeFlat() []byte {
 	bldr := flat.NewBuilder(0)
+	return f.SerializeFlatBuilder(bldr)
+}
+
+// SerializeFlatBuilder serializes the Facts using Flatbuffers.  The passed
+// builder is used.  It is expected that the builder is ready to use (the
+// caller is responsible for either creating a new builder or resetting an
+// existing one.)
+func (f *Facts) SerializeFlatBuilder(bldr *flat.Builder) []byte {
 	factFlats := make([]flat.UOffsetT, len(f.CPUs))
 	vendorIDs := make([]flat.UOffsetT, len(f.CPUs))
 	cpuFamilies := make([]flat.UOffsetT, len(f.CPUs))

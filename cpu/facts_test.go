@@ -7,7 +7,7 @@ func TestFactsSerialize(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	factsD := Deserialize(facts.Serialize())
+	factsD := DeserializeFlat(facts.SerializeFlat())
 	if factsD.Timestamp != facts.Timestamp {
 		t.Errorf("timestamp: got %d; want %d", factsD.Timestamp, facts.Timestamp)
 	}
