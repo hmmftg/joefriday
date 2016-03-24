@@ -223,7 +223,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
 	bldr := fb.NewBuilder(0)
-	// Some hopes to jump through to ensure we don't get a ErrBufferFull.
+	// Some hoops to jump through to ensure we don't get a ErrBufferFull.
 	var bs []byte
 	tmp := bytes.NewBuffer(bs)
 	buf := bufio.NewReaderSize(tmp, 1536)

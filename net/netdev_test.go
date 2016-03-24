@@ -126,3 +126,63 @@ func TestGetUsage(t *testing.T) {
 		}
 	}
 }
+
+func TestUsageTicker(t *testing.T) {
+	results := make(chan Usage)
+	errs := make(chan error)
+	done := make(chan struct{})
+	go UsageTicker(time.Second, results, done, errs)
+	var x int
+	for {
+		if x > 0 {
+			close(done)
+			break
+		}
+		select {
+		case u, ok := <-results:
+			if !ok {
+				break
+			}
+			if len(u.Interfaces) < 2 {
+				t.Errorf("expected at least 2 interfaces, got %d", len(u.Interfaces))
+			}
+			for i, v := range u.Interfaces {
+				if v.Name == "" {
+					t.Errorf("%d: expected name to have a value; was empty", i)
+				}
+			}
+		case err := <-errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+		x++
+	}
+}
+
+/*
+func TestUsageTicker(t *testing.T) {
+	results := make(chan Usage)
+	errs := make(chan error)
+	done := make(chan struct{})
+	go UsageTicker(time.Second, results, done, errs)
+	var x int
+	for {
+		if x > 0 {
+			close(done)
+			break
+		}
+		select {
+		case b, ok := <-results:
+			if !ok {
+				break
+			}
+			inf := Deserialize(b)
+			if len(inf.Interfaces) < 2 {
+				t.Errorf("expected at least 2 interfaces, got %d", len(inf.Interfaces))
+			}
+		case err := <-errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+		x++
+	}
+}
+*/

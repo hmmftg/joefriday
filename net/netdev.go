@@ -541,6 +541,179 @@ func GetUsage(t time.Duration) (Usage, error) {
 	return calculateUsage(snap1, snap2), nil
 }
 
+func UsageTicker(period time.Duration, out chan Usage, done chan struct{}, errs chan error) {
+	ticker := time.NewTicker(period)
+	defer ticker.Stop()
+	defer close(out)
+	// predeclare some vars
+	var i, l, pos, fieldNum, fieldVal int
+	var v byte
+	var iData Iface
+	val := make([]byte, 0, 32)
+	prior := &Info{}
+	// first get Info as the baseline
+	cur, err := GetInfo()
+	if err != nil {
+		errs <- err
+	}
+	// Some hoops to jump through to ensure we don't get a ErrBufferFull.
+	// TODO: should bufio.Scanner be used instead?
+	var bs []byte
+	tmp := bytes.NewBuffer(bs)
+	buf := bufio.NewReaderSize(tmp, 4096)
+	tmp = nil
+	// ticker
+tick:
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			prior.Timestamp = cur.Timestamp
+			if len(prior.Interfaces) != len(cur.Interfaces) {
+				prior.Interfaces = make([]Iface, len(cur.Interfaces))
+			}
+			copy(prior.Interfaces, cur.Interfaces)
+			cur.Timestamp = time.Now().UTC().UnixNano()
+			f, err := os.Open("/proc/net/dev")
+			if err != nil {
+				errs <- joe.Error{Type: "net", Op: "usage ticker", Err: err}
+				continue tick
+			}
+			defer f.Close()
+			cur.Interfaces = cur.Interfaces[:0]
+			buf.Reset(f)
+			// read each line until eof
+			for {
+				line, err := buf.ReadSlice('\n')
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					errs <- fmt.Errorf("/proc/mem/dev: read output bytes: %s", err)
+					break
+				}
+				l++
+				if l < 3 {
+					continue
+				}
+
+				// skip leading spaces
+				for i, v = range line {
+					if v != 0x20 {
+						pos = i
+						break
+					}
+				}
+				// first grab the interface name (everything up to the ':')
+				for i, v = range line[pos:] {
+					if v == 0x3A {
+						iData.Name = string(line[pos : pos+i])
+						pos += i + 1
+						break
+					}
+				}
+				fieldNum = 0
+				// process the rest of the line
+				for {
+					fieldNum++
+					// skip all spaces
+					for i, v = range line[pos:] {
+						if v != 0x20 {
+							pos += i
+							break
+						}
+					}
+
+					// grab the numbers
+					for i, v = range line[pos:] {
+						if v == 0x20 || v == '\n' {
+							val = line[pos : pos+i]
+							pos += i + 1
+							break
+						}
+					}
+					// any conversion error results in 0
+					fieldVal, err = strconv.Atoi(string(val[:]))
+					if err != nil {
+						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iData.Name, err)
+						continue
+					}
+					val = val[:0]
+					if fieldNum == 1 {
+						iData.RBytes = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 2 {
+						iData.RPackets = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 3 {
+						iData.RErrs = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 4 {
+						iData.RDrop = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 5 {
+						iData.RFIFO = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 6 {
+						iData.RFrame = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 7 {
+						iData.RCompressed = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 8 {
+						iData.RMulticast = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 9 {
+						iData.TBytes = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 10 {
+						iData.TPackets = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 11 {
+						iData.TErrs = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 12 {
+						iData.TDrop = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 13 {
+						iData.TFIFO = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 14 {
+						iData.TColls = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 15 {
+						iData.TCarrier = int64(fieldVal)
+						continue
+					}
+					if fieldNum == 16 {
+						iData.TCompressed = int64(fieldVal)
+						break
+					}
+				}
+				cur.Interfaces = append(cur.Interfaces, iData)
+			}
+			f.Close()
+			out <- calculateUsage(prior, cur)
+			l = 0
+		}
+	}
+}
+
 func calculateUsage(prior, cur *Info) Usage {
 	u := Usage{Timestamp: cur.Timestamp, Interfaces: make([]Iface, len(cur.Interfaces))}
 	for i := 0; i < len(cur.Interfaces); i++ {

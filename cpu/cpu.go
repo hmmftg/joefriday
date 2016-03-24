@@ -417,7 +417,7 @@ func UtilizationTicker(interval time.Duration, outCh chan Utilization, done chan
 	if err != nil {
 		errs <- err
 	}
-	// Some hopes to jump through to ensure we don't get a ErrBufferFull.
+	// Some hoops to jump through to ensure we don't get a ErrBufferFull.
 	// TODO: should bufio.Scanner be used instead?
 	var bs []byte
 	tmp := bytes.NewBuffer(bs)
