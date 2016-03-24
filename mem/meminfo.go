@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"time"
 
-	fb "github.com/google/flatbuffers/go"
+	flat "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
 )
 
@@ -43,46 +43,49 @@ type Info struct {
 }
 
 // Serialize serializes the Info using flatbuffers.
-func (i *Info) Serialize() []byte {
-	builder := fb.NewBuilder(0)
-	DataStart(builder)
-	DataAddTimestamp(builder, int64(i.Timestamp))
-	DataAddMemTotal(builder, int64(i.MemTotal))
-	DataAddMemFree(builder, int64(i.MemFree))
-	DataAddMemAvailable(builder, int64(i.MemAvailable))
-	DataAddBuffers(builder, int64(i.Buffers))
-	DataAddCached(builder, int64(i.Cached))
-	DataAddSwapCached(builder, int64(i.SwapCached))
-	DataAddActive(builder, int64(i.Active))
-	DataAddInactive(builder, int64(i.Inactive))
-	DataAddSwapTotal(builder, int64(i.SwapTotal))
-	DataAddSwapFree(builder, int64(i.SwapFree))
-	builder.Finish(DataEnd(builder))
-	return builder.Bytes[builder.Head():]
+func (i *Info) SerializeFlat() []byte {
+	bldr := flat.NewBuilder(0)
+	return i.SerializeFlatBuilder(bldr)
 }
 
-// Deserialize deserializes bytes representing flatbuffers serialized Data
-// into *Info.  If the bytes are not from flatbuffers serialization of
-// Data, it is a programmer error and a panic will occur.
-func Deserialize(p []byte) *Info {
-	data := GetRootAsData(p, 0)
+func (i *Info) SerializeFlatBuilder(bldr *flat.Builder) []byte {
+	InfoFlatStart(bldr)
+	InfoFlatAddTimestamp(bldr, int64(i.Timestamp))
+	InfoFlatAddMemTotal(bldr, int64(i.MemTotal))
+	InfoFlatAddMemFree(bldr, int64(i.MemFree))
+	InfoFlatAddMemAvailable(bldr, int64(i.MemAvailable))
+	InfoFlatAddBuffers(bldr, int64(i.Buffers))
+	InfoFlatAddCached(bldr, int64(i.Cached))
+	InfoFlatAddSwapCached(bldr, int64(i.SwapCached))
+	InfoFlatAddActive(bldr, int64(i.Active))
+	InfoFlatAddInactive(bldr, int64(i.Inactive))
+	InfoFlatAddSwapTotal(bldr, int64(i.SwapTotal))
+	InfoFlatAddSwapFree(bldr, int64(i.SwapFree))
+	bldr.Finish(InfoFlatEnd(bldr))
+	return bldr.Bytes[bldr.Head():]
+}
+
+// DeserializeInfoFlat deserializes bytes serialized with Flatbuffers from
+// InfoFlat into *Info.
+func DeserializeInfoFlat(p []byte) *Info {
+	infoFlat := GetRootAsInfoFlat(p, 0)
 	info := &Info{}
-	info.Timestamp = data.Timestamp()
-	info.MemTotal = data.MemTotal()
-	info.MemFree = data.MemFree()
-	info.MemAvailable = data.MemAvailable()
-	info.Buffers = data.Buffers()
-	info.Cached = data.Cached()
-	info.SwapCached = data.SwapCached()
-	info.Active = data.Active()
-	info.Inactive = data.Inactive()
-	info.SwapTotal = data.SwapTotal()
-	info.SwapFree = data.SwapFree()
+	info.Timestamp = infoFlat.Timestamp()
+	info.MemTotal = infoFlat.MemTotal()
+	info.MemFree = infoFlat.MemFree()
+	info.MemAvailable = infoFlat.MemAvailable()
+	info.Buffers = infoFlat.Buffers()
+	info.Cached = infoFlat.Cached()
+	info.SwapCached = infoFlat.SwapCached()
+	info.Active = infoFlat.Active()
+	info.Inactive = infoFlat.Inactive()
+	info.SwapTotal = infoFlat.SwapTotal()
+	info.SwapFree = infoFlat.SwapFree()
 	return info
 }
 
-func (d *Info) String() string {
-	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, d.Timestamp).UTC(), d.MemTotal, d.MemFree, d.MemAvailable, d.Active, d.Inactive, d.Cached, d.Buffers, d.SwapTotal, d.SwapCached, d.SwapFree)
+func (i *Info) String() string {
+	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp).UTC(), i.MemTotal, i.MemFree, i.MemAvailable, i.Active, i.Inactive, i.Cached, i.Buffers, i.SwapTotal, i.SwapCached, i.SwapFree)
 }
 
 // GetInfo returns some of the results of /proc/meminfo.
@@ -190,27 +193,28 @@ func GetInfo() (*Info, error) {
 	return inf, nil
 }
 
-// GetData returns the current meminfo as flatbuffer serialized bytes.
-func GetData() ([]byte, error) {
+// GetInfoFlat returns the current meminfo as flatbuffer serialized bytes.
+func GetInfoFlat() ([]byte, error) {
 	inf, err := GetInfo()
 	if err != nil {
 		return nil, err
 	}
-	return inf.Serialize(), nil
+	return inf.SerializeFlat(), nil
 }
 
-// DataTicker gathers the meminfo on a ticker, whose interval is defined by
-// the received duration, and sends the results to the channel.  The output
-// is Flatbuffers serialized Data.  Any error encountered during processing
-// is sent to the error channel.  Processing will continue
+// InfoFlatTicker gathers the meminfo on a ticker, whose interval is defined
+// by the received duration, and sends the results to the channel.  The
+// output is a Flatbuffers serialization of InfoFlat.  Any error encountered
+// during processing is sent to the error channel; processing will continue.
 //
-// Either closing the done channel or sending struct{} to the done channel
-// will result in function exit.  The out channel is closed on exit.
+// To stop processing and exit; send a signal on the done channel.  This
+// will cause the function to stop the ticker, close the out channel and
+// return.
 //
 // This pre-allocates the builder and everything other than the []byte that
 // gets sent to the out channel to reduce allocations, as this is expected
 // to be both a frequent and a long-running process.
-func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errCh chan error) {
+func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errCh chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	defer close(outCh)
@@ -222,7 +226,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 	// premake some temp slices
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
-	bldr := fb.NewBuilder(0)
+	bldr := flat.NewBuilder(0)
 	// Some hoops to jump through to ensure we don't get a ErrBufferFull.
 	var bs []byte
 	tmp := bytes.NewBuffer(bs)
@@ -242,8 +246,8 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 				continue
 			}
 			buf.Reset(f)
-			DataStart(bldr)
-			DataAddTimestamp(bldr, t)
+			InfoFlatStart(bldr)
+			InfoFlatAddTimestamp(bldr, t)
 			for {
 				if l == 16 {
 					break
@@ -293,56 +297,56 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 				}
 				val = val[:0]
 				if name == "MemTotal" {
-					DataAddMemTotal(bldr, int64(i))
+					InfoFlatAddMemTotal(bldr, int64(i))
 					continue
 				}
 				if name == "MemFree" {
-					DataAddMemFree(bldr, int64(i))
+					InfoFlatAddMemFree(bldr, int64(i))
 					continue
 				}
 				if name == "MemAvailable" {
-					DataAddMemAvailable(bldr, int64(i))
+					InfoFlatAddMemAvailable(bldr, int64(i))
 					continue
 				}
 				if name == "Buffers" {
-					DataAddBuffers(bldr, int64(i))
+					InfoFlatAddBuffers(bldr, int64(i))
 					continue
 				}
 				if name == "Cached" {
-					DataAddMemAvailable(bldr, int64(i))
+					InfoFlatAddMemAvailable(bldr, int64(i))
 					continue
 				}
 				if name == "SwapCached" {
-					DataAddSwapCached(bldr, int64(i))
+					InfoFlatAddSwapCached(bldr, int64(i))
 					continue
 				}
 				if name == "Active" {
-					DataAddActive(bldr, int64(i))
+					InfoFlatAddActive(bldr, int64(i))
 					continue
 				}
 				if name == "Inactive" {
-					DataAddInactive(bldr, int64(i))
+					InfoFlatAddInactive(bldr, int64(i))
 					continue
 				}
 				if name == "SwapTotal" {
-					DataAddSwapTotal(bldr, int64(i))
+					InfoFlatAddSwapTotal(bldr, int64(i))
 					continue
 				}
 				if name == "SwapFree" {
-					DataAddSwapFree(bldr, int64(i))
+					InfoFlatAddSwapFree(bldr, int64(i))
 					continue
 				}
 			}
 			f.Close()
-			bldr.Finish(DataEnd(bldr))
-			data := bldr.Bytes[bldr.Head():]
-			outCh <- data
+			bldr.Finish(InfoFlatEnd(bldr))
+			inf := bldr.Bytes[bldr.Head():]
+			outCh <- inf
 			bldr.Reset()
 			l = 0
 		}
 	}
 }
 
-func (d *Data) String() string {
-	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, d.Timestamp()).UTC(), d.MemTotal(), d.MemFree(), d.MemAvailable(), d.Active(), d.Inactive(), d.Cached(), d.Buffers(), d.SwapTotal(), d.SwapCached(), d.SwapFree())
+func (i *InfoFlat) String() string {
+	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp()).UTC(), i.MemTotal(), i.MemFree(), i.MemAvailable(), i.Active(), i.Inactive(), i.Cached(), i.Buffers(), i.SwapTotal(), i.SwapCached(), i.SwapFree())
 }
