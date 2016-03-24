@@ -109,3 +109,20 @@ func TestDataTicker(t *testing.T) {
 		x++
 	}
 }
+
+func TestGetUsage(t *testing.T) {
+	u, err := GetUsage(time.Duration(100) * time.Millisecond)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if u.Timestamp == 0 {
+		t.Error("expected timestamp to have a non-zero value, it didn't")
+	}
+	// just check names because we can't guarantee any butes were passed
+	// during the test.
+	for i, v := range u.Interfaces {
+		if v.Name == "" {
+			t.Errorf("%d: expected the interface to have a name, it was empty", i)
+		}
+	}
+}

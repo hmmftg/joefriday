@@ -518,3 +518,49 @@ func Serialize(inf *Info, bldr *fb.Builder) []byte {
 	bldr.Finish(DataEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
+
+// Usage holds the difference between network IO snapshots.
+type Usage struct {
+	Timestamp  int64   `json:"timestamp"`
+	Interfaces []Iface `json:"interfaces"`
+}
+
+// Usage gets the number of recieve/transmit information for the given
+
+func GetUsage(t time.Duration) (Usage, error) {
+	snap1, err := GetInfo()
+	if err != nil {
+		return Usage{}, err
+	}
+	time.Sleep(t)
+	snap2, err := GetInfo()
+	if err != nil {
+		return Usage{}, err
+	}
+
+	return calculateUsage(snap1, snap2), nil
+}
+
+func calculateUsage(prior, cur *Info) Usage {
+	u := Usage{Timestamp: cur.Timestamp, Interfaces: make([]Iface, len(cur.Interfaces))}
+	for i := 0; i < len(cur.Interfaces); i++ {
+		u.Interfaces[i].Name = cur.Interfaces[i].Name
+		u.Interfaces[i].RBytes = cur.Interfaces[i].RBytes - prior.Interfaces[i].RBytes
+		u.Interfaces[i].RPackets = cur.Interfaces[i].RPackets - prior.Interfaces[i].RPackets
+		u.Interfaces[i].RErrs = cur.Interfaces[i].RErrs - prior.Interfaces[i].RErrs
+		u.Interfaces[i].RDrop = cur.Interfaces[i].RDrop - prior.Interfaces[i].RDrop
+		u.Interfaces[i].RFIFO = cur.Interfaces[i].RFIFO - prior.Interfaces[i].RFIFO
+		u.Interfaces[i].RFrame = cur.Interfaces[i].RFrame - prior.Interfaces[i].RFrame
+		u.Interfaces[i].RCompressed = cur.Interfaces[i].RCompressed - prior.Interfaces[i].RCompressed
+		u.Interfaces[i].RMulticast = cur.Interfaces[i].RMulticast - prior.Interfaces[i].RMulticast
+		u.Interfaces[i].TBytes = cur.Interfaces[i].TBytes - prior.Interfaces[i].TBytes
+		u.Interfaces[i].TPackets = cur.Interfaces[i].TPackets - prior.Interfaces[i].TPackets
+		u.Interfaces[i].TErrs = cur.Interfaces[i].TErrs - prior.Interfaces[i].TErrs
+		u.Interfaces[i].TDrop = cur.Interfaces[i].TDrop - prior.Interfaces[i].TDrop
+		u.Interfaces[i].TFIFO = cur.Interfaces[i].TFIFO - prior.Interfaces[i].TFIFO
+		u.Interfaces[i].TColls = cur.Interfaces[i].TColls - prior.Interfaces[i].TColls
+		u.Interfaces[i].TCarrier = cur.Interfaces[i].TCarrier - prior.Interfaces[i].TCarrier
+		u.Interfaces[i].TCompressed = cur.Interfaces[i].TCompressed - prior.Interfaces[i].TCompressed
+	}
+	return u
+}
