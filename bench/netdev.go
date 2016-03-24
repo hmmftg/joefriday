@@ -17,6 +17,7 @@ var iData net.Iface
 var fieldNum, fieldVal int
 var bs []byte
 var inf = &net.Info{Interfaces: make([]net.Iface, 0, 4)}
+var t int64
 
 func init() {
 	tmp := bytes.NewBuffer(bs)

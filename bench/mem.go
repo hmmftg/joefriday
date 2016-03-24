@@ -612,33 +612,34 @@ func GetMemInfoToFlatbuffersReuseBldr() ([]byte, error) {
 }
 
 var l, i, pos int
-var name string
 var v byte
-var t int64
-var val = make([]byte, 0, 32)
+var f *os.File
+var err error
+var line []byte
+var name string
+var val = make([]byte, 0, 20)
 
 func GetMemInfoToFlatbuffersMinAllocs() ([]byte, error) {
-	t = time.Now().UTC().UnixNano()
-	f, err := os.Open("/proc/meminfo")
+	f, err = os.Open("/proc/meminfo")
 	if err != nil {
-		return nil, err
+		goto fclose
 	}
 	bldr.Reset()
-	defer f.Close()
 	buf.Reset(f)
 	mem.InfoFlatStart(bldr)
-	mem.InfoFlatAddTimestamp(bldr, t)
+	mem.InfoFlatAddTimestamp(bldr, time.Now().UTC().UnixNano())
 
 	for {
 		if l == 16 {
 			break
 		}
-		line, err := buf.ReadSlice('\n')
+		line, err = buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return nil, fmt.Errorf("error reading output bytes: %s", err)
+			err = fmt.Errorf("error reading output bytes: %s", err)
+			goto fclose
 		}
 		l++
 		if l > 8 && l < 15 {
@@ -647,13 +648,11 @@ func GetMemInfoToFlatbuffersMinAllocs() ([]byte, error) {
 		// first grab the key name (everything up to the ':')
 		for i, v = range line {
 			if v == 0x3A {
+				name = string(line[:i])
 				pos = i + 1
 				break
 			}
-			val = append(val, v)
 		}
-		name = string(val[:])
-		val = val[:0]
 		// skip all spaces
 		for i, v = range line[pos:] {
 			if v != 0x20 {
@@ -665,16 +664,16 @@ func GetMemInfoToFlatbuffersMinAllocs() ([]byte, error) {
 		// grab the numbers
 		for _, v = range line[pos:] {
 			if v == 0x20 || v == '\r' {
+				val = line[pos : pos+i]
 				break
 			}
-			val = append(val, v)
 		}
 		// any conversion error results in 0
-		i, err = strconv.Atoi(string(val[:]))
+		i, err = strconv.Atoi(string(val))
 		if err != nil {
-			return nil, fmt.Errorf("%s: %s", name, err)
+			err = fmt.Errorf("%s: %s", name, err)
+			goto fclose
 		}
-		val = val[:0]
 		if name == "MemTotal" {
 			mem.InfoFlatAddMemTotal(bldr, int64(i))
 			continue
@@ -716,6 +715,8 @@ func GetMemInfoToFlatbuffersMinAllocs() ([]byte, error) {
 			continue
 		}
 	}
+fclose:
+	f.Close()
 	bldr.Finish(mem.InfoFlatEnd(bldr))
-	return bldr.Bytes[bldr.Head():], nil
+	return bldr.Bytes[bldr.Head():], err
 }
