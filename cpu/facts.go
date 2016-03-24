@@ -1,7 +1,7 @@
 package cpu
 
 import (
-	//fb "github.com/google/flatbuffers/go"
+	//Flat "github.com/google/flatbuffers/go"
 	"bufio"
 	"fmt"
 	"io"
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	fb "github.com/google/flatbuffers/go"
+	flat "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
 )
 
@@ -49,124 +49,126 @@ type Fact struct {
 	PowerManagement string  `json:"power_management"`
 }
 
-// Serialize serializes Facts using Flatbuffers.
-func (p *Facts) Serialize() []byte {
-	bldr := fb.NewBuilder(0)
-	factFBs := make([]fb.UOffsetT, len(p.CPUs))
-	vendorIDs := make([]fb.UOffsetT, len(p.CPUs))
-	cpuFamilies := make([]fb.UOffsetT, len(p.CPUs))
-	models := make([]fb.UOffsetT, len(p.CPUs))
-	modelNames := make([]fb.UOffsetT, len(p.CPUs))
-	steppings := make([]fb.UOffsetT, len(p.CPUs))
-	microcodes := make([]fb.UOffsetT, len(p.CPUs))
-	cacheSizes := make([]fb.UOffsetT, len(p.CPUs))
-	fpus := make([]fb.UOffsetT, len(p.CPUs))
-	fpuExceptions := make([]fb.UOffsetT, len(p.CPUs))
-	cpuIDLevels := make([]fb.UOffsetT, len(p.CPUs))
-	wps := make([]fb.UOffsetT, len(p.CPUs))
-	flags := make([]fb.UOffsetT, len(p.CPUs))
-	clFlushSizes := make([]fb.UOffsetT, len(p.CPUs))
-	cacheAlignments := make([]fb.UOffsetT, len(p.CPUs))
-	addressSizes := make([]fb.UOffsetT, len(p.CPUs))
-	powerManagements := make([]fb.UOffsetT, len(p.CPUs))
+// SerializeFlat serializes Facts using Flatbuffers.
+func (f *Facts) SerializeFlat() []byte {
+	bldr := flat.NewBuilder(0)
+	factFlats := make([]flat.UOffsetT, len(f.CPUs))
+	vendorIDs := make([]flat.UOffsetT, len(f.CPUs))
+	cpuFamilies := make([]flat.UOffsetT, len(f.CPUs))
+	models := make([]flat.UOffsetT, len(f.CPUs))
+	modelNames := make([]flat.UOffsetT, len(f.CPUs))
+	steppings := make([]flat.UOffsetT, len(f.CPUs))
+	microcodes := make([]flat.UOffsetT, len(f.CPUs))
+	cacheSizes := make([]flat.UOffsetT, len(f.CPUs))
+	fpus := make([]flat.UOffsetT, len(f.CPUs))
+	fpuExceptions := make([]flat.UOffsetT, len(f.CPUs))
+	cpuIDLevels := make([]flat.UOffsetT, len(f.CPUs))
+	wps := make([]flat.UOffsetT, len(f.CPUs))
+	flags := make([]flat.UOffsetT, len(f.CPUs))
+	clFlushSizes := make([]flat.UOffsetT, len(f.CPUs))
+	cacheAlignments := make([]flat.UOffsetT, len(f.CPUs))
+	addressSizes := make([]flat.UOffsetT, len(f.CPUs))
+	powerManagements := make([]flat.UOffsetT, len(f.CPUs))
 	// create the strings
-	for i := 0; i < len(p.CPUs); i++ {
-		vendorIDs[i] = bldr.CreateString(p.CPUs[i].VendorID)
-		cpuFamilies[i] = bldr.CreateString(p.CPUs[i].CPUFamily)
-		models[i] = bldr.CreateString(p.CPUs[i].Model)
-		modelNames[i] = bldr.CreateString(p.CPUs[i].ModelName)
-		steppings[i] = bldr.CreateString(p.CPUs[i].Stepping)
-		microcodes[i] = bldr.CreateString(p.CPUs[i].Microcode)
-		cacheSizes[i] = bldr.CreateString(p.CPUs[i].CacheSize)
-		fpus[i] = bldr.CreateString(p.CPUs[i].FPU)
-		fpuExceptions[i] = bldr.CreateString(p.CPUs[i].FPUException)
-		cpuIDLevels[i] = bldr.CreateString(p.CPUs[i].CPUIDLevel)
-		wps[i] = bldr.CreateString(p.CPUs[i].WP)
-		flags[i] = bldr.CreateString(p.CPUs[i].Flags)
-		clFlushSizes[i] = bldr.CreateString(p.CPUs[i].CLFlushSize)
-		cacheAlignments[i] = bldr.CreateString(p.CPUs[i].CacheAlignment)
-		addressSizes[i] = bldr.CreateString(p.CPUs[i].AddressSizes)
-		powerManagements[i] = bldr.CreateString(p.CPUs[i].PowerManagement)
+	for i := 0; i < len(f.CPUs); i++ {
+		vendorIDs[i] = bldr.CreateString(f.CPUs[i].VendorID)
+		cpuFamilies[i] = bldr.CreateString(f.CPUs[i].CPUFamily)
+		models[i] = bldr.CreateString(f.CPUs[i].Model)
+		modelNames[i] = bldr.CreateString(f.CPUs[i].ModelName)
+		steppings[i] = bldr.CreateString(f.CPUs[i].Stepping)
+		microcodes[i] = bldr.CreateString(f.CPUs[i].Microcode)
+		cacheSizes[i] = bldr.CreateString(f.CPUs[i].CacheSize)
+		fpus[i] = bldr.CreateString(f.CPUs[i].FPU)
+		fpuExceptions[i] = bldr.CreateString(f.CPUs[i].FPUException)
+		cpuIDLevels[i] = bldr.CreateString(f.CPUs[i].CPUIDLevel)
+		wps[i] = bldr.CreateString(f.CPUs[i].WP)
+		flags[i] = bldr.CreateString(f.CPUs[i].Flags)
+		clFlushSizes[i] = bldr.CreateString(f.CPUs[i].CLFlushSize)
+		cacheAlignments[i] = bldr.CreateString(f.CPUs[i].CacheAlignment)
+		addressSizes[i] = bldr.CreateString(f.CPUs[i].AddressSizes)
+		powerManagements[i] = bldr.CreateString(f.CPUs[i].PowerManagement)
 	}
 	// create the CPUs
-	for i := 0; i < len(p.CPUs); i++ {
-		FactFBStart(bldr)
-		FactFBAddProcessor(bldr, p.CPUs[i].Processor)
-		FactFBAddVendorID(bldr, vendorIDs[i])
-		FactFBAddCPUFamily(bldr, cpuFamilies[i])
-		FactFBAddModel(bldr, models[i])
-		FactFBAddModelName(bldr, modelNames[i])
-		FactFBAddStepping(bldr, steppings[i])
-		FactFBAddMicrocode(bldr, microcodes[i])
-		FactFBAddCPUMHz(bldr, p.CPUs[i].CPUMHz)
-		FactFBAddCacheSize(bldr, cacheSizes[i])
-		FactFBAddPhysicalID(bldr, p.CPUs[i].PhysicalID)
-		FactFBAddSiblings(bldr, p.CPUs[i].Siblings)
-		FactFBAddCoreID(bldr, p.CPUs[i].CoreID)
-		FactFBAddCPUCores(bldr, p.CPUs[i].CPUCores)
-		FactFBAddApicID(bldr, p.CPUs[i].ApicID)
-		FactFBAddInitialApicID(bldr, p.CPUs[i].InitialApicID)
-		FactFBAddFPU(bldr, fpus[i])
-		FactFBAddFPUException(bldr, fpuExceptions[i])
-		FactFBAddCPUIDLevel(bldr, cpuIDLevels[i])
-		FactFBAddWP(bldr, wps[i])
-		FactFBAddFlags(bldr, flags[i])
-		FactFBAddBogoMIPS(bldr, p.CPUs[i].BogoMIPS)
-		FactFBAddCLFlushSize(bldr, clFlushSizes[i])
-		FactFBAddCacheAlignment(bldr, cacheAlignments[i])
-		FactFBAddAddressSizes(bldr, addressSizes[i])
-		FactFBAddPowerManagement(bldr, powerManagements[i])
-		factFBs[i] = FactFBEnd(bldr)
+	for i := 0; i < len(f.CPUs); i++ {
+		FactFlatStart(bldr)
+		FactFlatAddProcessor(bldr, f.CPUs[i].Processor)
+		FactFlatAddVendorID(bldr, vendorIDs[i])
+		FactFlatAddCPUFamily(bldr, cpuFamilies[i])
+		FactFlatAddModel(bldr, models[i])
+		FactFlatAddModelName(bldr, modelNames[i])
+		FactFlatAddStepping(bldr, steppings[i])
+		FactFlatAddMicrocode(bldr, microcodes[i])
+		FactFlatAddCPUMHz(bldr, f.CPUs[i].CPUMHz)
+		FactFlatAddCacheSize(bldr, cacheSizes[i])
+		FactFlatAddPhysicalID(bldr, f.CPUs[i].PhysicalID)
+		FactFlatAddSiblings(bldr, f.CPUs[i].Siblings)
+		FactFlatAddCoreID(bldr, f.CPUs[i].CoreID)
+		FactFlatAddCPUCores(bldr, f.CPUs[i].CPUCores)
+		FactFlatAddApicID(bldr, f.CPUs[i].ApicID)
+		FactFlatAddInitialApicID(bldr, f.CPUs[i].InitialApicID)
+		FactFlatAddFPU(bldr, fpus[i])
+		FactFlatAddFPUException(bldr, fpuExceptions[i])
+		FactFlatAddCPUIDLevel(bldr, cpuIDLevels[i])
+		FactFlatAddWP(bldr, wps[i])
+		FactFlatAddFlags(bldr, flags[i])
+		FactFlatAddBogoMIPS(bldr, f.CPUs[i].BogoMIPS)
+		FactFlatAddCLFlushSize(bldr, clFlushSizes[i])
+		FactFlatAddCacheAlignment(bldr, cacheAlignments[i])
+		FactFlatAddAddressSizes(bldr, addressSizes[i])
+		FactFlatAddPowerManagement(bldr, powerManagements[i])
+		factFlats[i] = FactFlatEnd(bldr)
 	}
-	// Process the FactsFB vector
-	FactsFBStartCPUsVector(bldr, len(factFBs))
-	for i := len(p.CPUs) - 1; i >= 0; i-- {
-		bldr.PrependUOffsetT(factFBs[i])
+	// Process the FactsFlat vector
+	FactsFlatStartCPUsVector(bldr, len(factFlats))
+	for i := len(f.CPUs) - 1; i >= 0; i-- {
+		bldr.PrependUOffsetT(factFlats[i])
 	}
-	factFBsV := bldr.EndVector(len(factFBs))
-	FactsFBStart(bldr)
-	FactsFBAddTimestamp(bldr, p.Timestamp)
-	FactsFBAddCPUs(bldr, factFBsV)
-	bldr.Finish(FactsFBEnd(bldr))
+	factFlatsV := bldr.EndVector(len(factFlats))
+	FactsFlatStart(bldr)
+	FactsFlatAddTimestamp(bldr, f.Timestamp)
+	FactsFlatAddCPUs(bldr, factFlatsV)
+	bldr.Finish(FactsFlatEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
-func Deserialize(p []byte) *Facts {
-	factsFB := GetRootAsFactsFB(p, 0)
-	l := factsFB.CPUsLength()
+// DeserializeFlat takes some bytes and deserialize's them, using Flatbuffers,
+// into the Facts structure.
+func DeserializeFlat(p []byte) *Facts {
+	factsFlat := GetRootAsFactsFlat(p, 0)
+	l := factsFlat.CPUsLength()
 	facts := &Facts{}
-	factFB := &FactFB{}
+	factFlat := &FactFlat{}
 	fact := Fact{}
-	facts.Timestamp = factsFB.Timestamp()
+	facts.Timestamp = factsFlat.Timestamp()
 	for i := 0; i < l; i++ {
-		if !factsFB.CPUs(factFB, i) {
+		if !factsFlat.CPUs(factFlat, i) {
 			continue
 		}
-		fact.Processor = factFB.Processor()
-		fact.VendorID = string(factFB.VendorID())
-		fact.CPUFamily = string(factFB.CPUFamily())
-		fact.Model = string(factFB.Model())
-		fact.ModelName = string(factFB.ModelName())
-		fact.Stepping = string(factFB.Stepping())
-		fact.Microcode = string(factFB.Microcode())
-		fact.CPUMHz = factFB.CPUMHz()
-		fact.CacheSize = string(factFB.CacheSize())
-		fact.PhysicalID = factFB.PhysicalID()
-		fact.Siblings = factFB.Siblings()
-		fact.CoreID = factFB.CoreID()
-		fact.CPUCores = factFB.CPUCores()
-		fact.ApicID = factFB.ApicID()
-		fact.InitialApicID = factFB.InitialApicID()
-		fact.FPU = string(factFB.FPU())
-		fact.FPUException = string(factFB.FPUException())
-		fact.CPUIDLevel = string(factFB.CPUIDLevel())
-		fact.WP = string(factFB.WP())
-		fact.Flags = string(factFB.Flags())
-		fact.BogoMIPS = factFB.BogoMIPS()
-		fact.CLFlushSize = string(factFB.CLFlushSize())
-		fact.CacheAlignment = string(factFB.CacheAlignment())
-		fact.AddressSizes = string(factFB.AddressSizes())
-		fact.PowerManagement = string(factFB.PowerManagement())
+		fact.Processor = factFlat.Processor()
+		fact.VendorID = string(factFlat.VendorID())
+		fact.CPUFamily = string(factFlat.CPUFamily())
+		fact.Model = string(factFlat.Model())
+		fact.ModelName = string(factFlat.ModelName())
+		fact.Stepping = string(factFlat.Stepping())
+		fact.Microcode = string(factFlat.Microcode())
+		fact.CPUMHz = factFlat.CPUMHz()
+		fact.CacheSize = string(factFlat.CacheSize())
+		fact.PhysicalID = factFlat.PhysicalID()
+		fact.Siblings = factFlat.Siblings()
+		fact.CoreID = factFlat.CoreID()
+		fact.CPUCores = factFlat.CPUCores()
+		fact.ApicID = factFlat.ApicID()
+		fact.InitialApicID = factFlat.InitialApicID()
+		fact.FPU = string(factFlat.FPU())
+		fact.FPUException = string(factFlat.FPUException())
+		fact.CPUIDLevel = string(factFlat.CPUIDLevel())
+		fact.WP = string(factFlat.WP())
+		fact.Flags = string(factFlat.Flags())
+		fact.BogoMIPS = factFlat.BogoMIPS()
+		fact.CLFlushSize = string(factFlat.CLFlushSize())
+		fact.CacheAlignment = string(factFlat.CacheAlignment())
+		fact.AddressSizes = string(factFlat.AddressSizes())
+		fact.PowerManagement = string(factFlat.PowerManagement())
 		facts.CPUs = append(facts.CPUs, fact)
 	}
 	return facts
@@ -210,7 +212,7 @@ func GetFacts() (*Facts, error) {
 		if pos < len(line) {
 			value = strings.TrimSpace(string(line[pos:]))
 		}
-		// check to see if this is FactsFB for a different processor
+		// check to see if this is FactsFlat for a different processor
 		if name == "processor" {
 			if procCnt > 0 {
 				facts.CPUs = append(facts.CPUs, cpu)
