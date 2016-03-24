@@ -720,3 +720,101 @@ fclose:
 	bldr.Finish(mem.InfoFlatEnd(bldr))
 	return bldr.Bytes[bldr.Head():], err
 }
+
+func GetMemInfoToFlatbuffersMinAllocsSeek(f *os.File) ([]byte, error) {
+	_, err = f.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+	bldr.Reset()
+	buf.Reset(f)
+	mem.InfoFlatStart(bldr)
+	mem.InfoFlatAddTimestamp(bldr, time.Now().UTC().UnixNano())
+
+	for {
+		if l == 16 {
+			break
+		}
+		line, err = buf.ReadSlice('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("error reading output bytes: %s", err)
+		}
+		l++
+		if l > 8 && l < 15 {
+			continue
+		}
+		// first grab the key name (everything up to the ':')
+		for i, v = range line {
+			if v == 0x3A {
+				name = string(line[:i])
+				pos = i + 1
+				break
+			}
+		}
+		// skip all spaces
+		for i, v = range line[pos:] {
+			if v != 0x20 {
+				pos += i
+				break
+			}
+		}
+
+		// grab the numbers
+		for _, v = range line[pos:] {
+			if v == 0x20 || v == '\r' {
+				val = line[pos : pos+i]
+				break
+			}
+		}
+		// any conversion error results in 0
+		i, err = strconv.Atoi(string(val))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s", name, err)
+		}
+		if name == "MemTotal" {
+			mem.InfoFlatAddMemTotal(bldr, int64(i))
+			continue
+		}
+		if name == "MemFree" {
+			mem.InfoFlatAddMemFree(bldr, int64(i))
+			continue
+		}
+		if name == "MemAvailable" {
+			mem.InfoFlatAddMemAvailable(bldr, int64(i))
+			continue
+		}
+		if name == "Buffers" {
+			mem.InfoFlatAddBuffers(bldr, int64(i))
+			continue
+		}
+		if name == "Cached" {
+			mem.InfoFlatAddMemAvailable(bldr, int64(i))
+			continue
+		}
+		if name == "SwapCached" {
+			mem.InfoFlatAddSwapCached(bldr, int64(i))
+			continue
+		}
+		if name == "Active" {
+			mem.InfoFlatAddActive(bldr, int64(i))
+			continue
+		}
+		if name == "Inactive" {
+			mem.InfoFlatAddInactive(bldr, int64(i))
+			continue
+		}
+		if name == "SwapTotal" {
+			mem.InfoFlatAddSwapTotal(bldr, int64(i))
+			continue
+		}
+		if name == "SwapFree" {
+			mem.InfoFlatAddSwapFree(bldr, int64(i))
+			continue
+		}
+	}
+	bldr.Finish(mem.InfoFlatEnd(bldr))
+	return bldr.Bytes[bldr.Head():], err
+}

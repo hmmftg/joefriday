@@ -7,6 +7,8 @@
 package bench
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/DataDog/gohai/memory"
@@ -123,6 +125,20 @@ func BenchmarkReadMemInfoToFlatbuffersMinAllocs(b *testing.B) {
 	var data []byte
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemInfoToFlatbuffersMinAllocs()
+	}
+	_ = data
+}
+
+func BenchmarkReadMemInfoToFlatbuffersMinAllocsSeek(b *testing.B) {
+	var data []byte
+	b.StopTimer()
+	f, err := os.Open("/proc/meminfo")
+	if err != nil {
+		fmt.Println("couldn't open /proc/meminfo")
+	}
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		data, _ = GetMemInfoToFlatbuffersMinAllocsSeek(f)
 	}
 	_ = data
 }
