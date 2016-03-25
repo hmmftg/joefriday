@@ -22,9 +22,15 @@ type Kernel struct {
 	Arch        string `json:"arch"`
 }
 
-// Serialize serializes Kernel using Flatbuffers.
-func (k Kernel) Serialize() []byte {
+// SerializeFlat serializes Kernel using Flatbuffers.
+func (k Kernel) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
+	return k.SerializeFlatBuilder(bldr)
+}
+
+// SerializeFlatBuilder uses the passed flat.Builder to serialize Kernel.
+// The builder is expected to be in a usable state.
+func (k Kernel) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	version := bldr.CreateString(k.Version)
 	compileUser := bldr.CreateString(k.CompileUser)
 	gcc := bldr.CreateString(k.GCC)
@@ -44,8 +50,8 @@ func (k Kernel) Serialize() []byte {
 	return bldr.Bytes[bldr.Head():]
 }
 
-// DeserializeKernel deserializes the bytes into Kernel using Flatbuffers.
-func DeserializeKernel(p []byte) Kernel {
+// DeserializeKernelFlat deserializes the bytes into Kernel using Flatbuffers.
+func DeserializeKernelFlat(p []byte) Kernel {
 	flatKernel := flat.GetRootAsKernel(p, 0)
 	var kernel Kernel
 	kernel.Version = string(flatKernel.Version())
@@ -147,9 +153,15 @@ type Release struct {
 	BugReportURL string `json:"bug_report_url"`
 }
 
-// Serialize serializes Release using Flatbuffers.
-func (r Release) Serialize() []byte {
+// SerializeFlat serializes Release using Flatbuffers.
+func (r Release) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
+	return r.SerializeFlatBuilder(bldr)
+}
+
+// SerializeFlatBuilder uses the passed flat.Builder to serialize Release.
+// The builder is expected to be in a usable state.
+func (r Release) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	id := bldr.CreateString(r.ID)
 	idLike := bldr.CreateString(r.IDLike)
 	prettyName := bldr.CreateString(r.PrettyName)
@@ -169,8 +181,8 @@ func (r Release) Serialize() []byte {
 	return bldr.Bytes[bldr.Head():]
 }
 
-// DeserializeRelease deserializes bytes into Release using Flatbuffers.
-func DeserializeRelease(p []byte) Release {
+// DeserializeReleaseFlat deserializes bytes into Release using Flatbuffers.
+func DeserializeReleaseFlat(p []byte) Release {
 	releaseFlat := flat.GetRootAsRelease(p, 0)
 	var release Release
 	release.ID = string(releaseFlat.ID())

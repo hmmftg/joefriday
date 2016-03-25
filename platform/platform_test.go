@@ -7,8 +7,8 @@ func TestSerializeDeserializeKernel(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	p := k.Serialize()
-	kD := DeserializeKernel(p)
+	p := k.SerializeFlat()
+	kD := DeserializeKernelFlat(p)
 	if k.Version != kD.Version {
 		t.Errorf("Version: got %s; want %s", kD.Version, k.Version)
 	}
@@ -37,8 +37,8 @@ func TestSerializeDeserializeRelease(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	p := r.Serialize()
-	rD := DeserializeRelease(p)
+	p := r.SerializeFlat()
+	rD := DeserializeReleaseFlat(p)
 	if r.ID != rD.ID {
 		t.Errorf("ID: got %s; want %s", rD.ID, r.ID)
 	}
@@ -60,5 +60,4 @@ func TestSerializeDeserializeRelease(t *testing.T) {
 	if r.BugReportURL != rD.BugReportURL {
 		t.Errorf("BugReportURL: got %s; want %s", rD.BugReportURL, r.BugReportURL)
 	}
-
 }
