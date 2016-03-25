@@ -248,6 +248,7 @@ func InfoFlatTicker(interval time.Duration, out chan []byte, done chan struct{},
 				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue
 			}
+			bldr.Reset()
 			buf.Reset(f)
 			flat.InfoStart(bldr)
 			flat.InfoAddTimestamp(bldr, time.Now().UTC().UnixNano())
@@ -260,8 +261,7 @@ func InfoFlatTicker(interval time.Duration, out chan []byte, done chan struct{},
 					errs <- joe.Error{Type: "mem", Op: "read output bytes", Err: err}
 					break
 				}
-				l++
-				if l > 8 && l < 14 {
+				if l > 7 && l < 14 {
 					continue
 				}
 				// first grab the key name (everything up to the ':')
@@ -326,8 +326,6 @@ func InfoFlatTicker(interval time.Duration, out chan []byte, done chan struct{},
 			bldr.Finish(flat.InfoEnd(bldr))
 			inf := bldr.Bytes[bldr.Head():]
 			out <- inf
-			bldr.Reset()
-			l = 0
 		}
 	}
 }
