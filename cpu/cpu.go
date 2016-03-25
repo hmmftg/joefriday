@@ -40,6 +40,7 @@ func Init() error {
 	return nil
 }
 
+// Stats holds the /proc/stat information
 type Stats struct {
 	ClkTck    int16  `json:"clk_tck"`
 	Timestamp int64  `json:"timestamp"`
@@ -49,7 +50,7 @@ type Stats struct {
 	CPU       []Stat `json:"cpu"`
 }
 
-// Stat is for capturing the output of /proc/stat.
+// Stat is for capturing the CPU information of /proc/stat.
 type Stat struct {
 	ID        string `json:"ID"`
 	User      int64  `json:"user"`
@@ -287,6 +288,15 @@ func GetStats() (Stats, error) {
 	return stats, nil
 }
 
+// GetStatsFlat gets /proc/stat as Flatbuffer serialized bytes.
+func GetStatsFlat() ([]byte, error) {
+	s, err := GetStats()
+	if err != nil {
+		return nil, err
+	}
+	return s.SerializeFlat(), nil
+}
+
 // Utilization holds information about cpu utilization.
 type Utilization struct {
 	Timestamp int64 `json:"timestamp"`
@@ -316,7 +326,7 @@ type Util struct {
 	QuestNice float32 `json:"quest_nice"`
 }
 
-/// SerializeFlat serializes Utilization into Flatbuffer serialized bytes.
+// SerializeFlat serializes Utilization into Flatbuffer serialized bytes.
 func (u *Utilization) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
 	return u.SerializeFlatBuilder(bldr)
@@ -404,6 +414,16 @@ func GetUtilization() (Utilization, error) {
 	}
 
 	return calculateUtilization(stat1, stat2), nil
+}
+
+// GetUtilizationFlat returns CPU Utilization informaton as Flatbuffer
+// serialized bytes.
+func GetUtilizationFlat() ([]byte, error) {
+	u, err := GetUtilization()
+	if err != nil {
+		return nil, err
+	}
+	return u.SerializeFlat(), nil
 }
 
 // UtilizationTicker processes CPU utilization information on a ticker.  The
