@@ -8,6 +8,7 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
+	"github.com/mohae/joefriday/platform/flat"
 )
 
 // Kernel holds information about the kernel; this is /proc/version output
@@ -31,29 +32,29 @@ func (k Kernel) Serialize() []byte {
 	typ := bldr.CreateString(k.Type)
 	compileDate := bldr.CreateString(k.CompileDate)
 	arch := bldr.CreateString(k.Arch)
-	KernelFBStart(bldr)
-	KernelFBAddVersion(bldr, version)
-	KernelFBAddCompileUser(bldr, compileUser)
-	KernelFBAddGCC(bldr, gcc)
-	KernelFBAddOSGCC(bldr, osgcc)
-	KernelFBAddType(bldr, typ)
-	KernelFBAddCompileDate(bldr, compileDate)
-	KernelFBAddArch(bldr, arch)
-	bldr.Finish(KernelFBEnd(bldr))
+	flat.KernelStart(bldr)
+	flat.KernelAddVersion(bldr, version)
+	flat.KernelAddCompileUser(bldr, compileUser)
+	flat.KernelAddGCC(bldr, gcc)
+	flat.KernelAddOSGCC(bldr, osgcc)
+	flat.KernelAddType(bldr, typ)
+	flat.KernelAddCompileDate(bldr, compileDate)
+	flat.KernelAddArch(bldr, arch)
+	bldr.Finish(flat.KernelEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
 // DeserializeKernel deserializes the bytes into Kernel using Flatbuffers.
 func DeserializeKernel(p []byte) Kernel {
-	kernelFB := GetRootAsKernelFB(p, 0)
+	flatKernel := flat.GetRootAsKernel(p, 0)
 	var kernel Kernel
-	kernel.Version = string(kernelFB.Version())
-	kernel.CompileUser = string(kernelFB.CompileUser())
-	kernel.GCC = string(kernelFB.GCC())
-	kernel.OSGCC = string(kernelFB.OSGCC())
-	kernel.Type = string(kernelFB.Type())
-	kernel.CompileDate = string(kernelFB.CompileDate())
-	kernel.Arch = string(kernelFB.Arch())
+	kernel.Version = string(flatKernel.Version())
+	kernel.CompileUser = string(flatKernel.CompileUser())
+	kernel.GCC = string(flatKernel.GCC())
+	kernel.OSGCC = string(flatKernel.OSGCC())
+	kernel.Type = string(flatKernel.Type())
+	kernel.CompileDate = string(flatKernel.CompileDate())
+	kernel.Arch = string(flatKernel.Arch())
 	return kernel
 }
 
@@ -156,29 +157,29 @@ func (r Release) Serialize() []byte {
 	versionID := bldr.CreateString(r.VersionID)
 	homeURL := bldr.CreateString(r.HomeURL)
 	bugReportURL := bldr.CreateString(r.BugReportURL)
-	ReleaseFBStart(bldr)
-	ReleaseFBAddID(bldr, id)
-	ReleaseFBAddIDLike(bldr, idLike)
-	ReleaseFBAddPrettyName(bldr, prettyName)
-	ReleaseFBAddVersion(bldr, version)
-	ReleaseFBAddVersionID(bldr, versionID)
-	ReleaseFBAddHomeURL(bldr, homeURL)
-	ReleaseFBAddBugReportURL(bldr, bugReportURL)
-	bldr.Finish(ReleaseFBEnd(bldr))
+	flat.ReleaseStart(bldr)
+	flat.ReleaseAddID(bldr, id)
+	flat.ReleaseAddIDLike(bldr, idLike)
+	flat.ReleaseAddPrettyName(bldr, prettyName)
+	flat.ReleaseAddVersion(bldr, version)
+	flat.ReleaseAddVersionID(bldr, versionID)
+	flat.ReleaseAddHomeURL(bldr, homeURL)
+	flat.ReleaseAddBugReportURL(bldr, bugReportURL)
+	bldr.Finish(flat.ReleaseEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
 // DeserializeRelease deserializes bytes into Release using Flatbuffers.
 func DeserializeRelease(p []byte) Release {
-	releaseFB := GetRootAsReleaseFB(p, 0)
+	releaseFlat := flat.GetRootAsRelease(p, 0)
 	var release Release
-	release.ID = string(releaseFB.ID())
-	release.IDLike = string(releaseFB.IDLike())
-	release.PrettyName = string(releaseFB.PrettyName())
-	release.Version = string(releaseFB.Version())
-	release.VersionID = string(releaseFB.VersionID())
-	release.HomeURL = string(releaseFB.HomeURL())
-	release.BugReportURL = string(releaseFB.BugReportURL())
+	release.ID = string(releaseFlat.ID())
+	release.IDLike = string(releaseFlat.IDLike())
+	release.PrettyName = string(releaseFlat.PrettyName())
+	release.Version = string(releaseFlat.Version())
+	release.VersionID = string(releaseFlat.VersionID())
+	release.HomeURL = string(releaseFlat.HomeURL())
+	release.BugReportURL = string(releaseFlat.BugReportURL())
 	return release
 }
 

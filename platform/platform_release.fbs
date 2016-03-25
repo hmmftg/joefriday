@@ -1,7 +1,7 @@
 // platform_release.fbs
-namespace platform;
+namespace flat;
 
-table ReleaseFB {
+table Release {
     ID:string;
     IDLike:string;
     PrettyName:string;
@@ -11,4 +11,4 @@ table ReleaseFB {
     BugReportURL:string;
 }
 
-root_type ReleaseFB;
+root_type Release;

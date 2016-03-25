@@ -1,7 +1,7 @@
 // platform_version.fbs
-namespace platform;
+namespace flat;
 
-table KernelFlat {
+table Kernel {
     Version:string;
     CompileUser:string;
     GCC:string;
@@ -11,4 +11,4 @@ table KernelFlat {
     Arch:string;
 }
 
-root_type KernelFB;
+root_type Kernel;
