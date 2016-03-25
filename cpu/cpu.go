@@ -297,6 +297,17 @@ func GetStatsFlat() ([]byte, error) {
 	return s.SerializeFlat(), nil
 }
 
+// GetStatsFlatBuilder returns CPU stats as Flatbuffer serialized bytes.
+// This takes a *flatbuffer.Builder and uses it, instead of creating a new
+// one.  It is assumed that this builder is in a usable state.
+func GetStatsFlatBuilder(bldr *fb.Builder) ([]byte, error) {
+	s, err := GetStats()
+	if err != nil {
+		return nil, err
+	}
+	return s.SerializeFlatBuilder(bldr), nil
+}
+
 // Utilization holds information about cpu utilization.
 type Utilization struct {
 	Timestamp int64 `json:"timestamp"`
@@ -424,6 +435,18 @@ func GetUtilizationFlat() ([]byte, error) {
 		return nil, err
 	}
 	return u.SerializeFlat(), nil
+}
+
+// GetUtilizationFlatBuilder returns CPU Utilization informaton as Flatbuffer
+// serialized bytes.  This takes a *flatbuffer.Builder and uses it, instead
+// of creating a new one.  It is assumed that this builder is in a usable
+// state.
+func GetUtilizationFlatBuilder(bldr *fb.Builder) ([]byte, error) {
+	u, err := GetUtilization()
+	if err != nil {
+		return nil, err
+	}
+	return u.SerializeFlatBuilder(bldr), nil
 }
 
 // UtilizationTicker processes CPU utilization information on a ticker.  The
