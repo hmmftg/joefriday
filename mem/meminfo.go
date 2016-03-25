@@ -20,9 +20,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/EricLagergren/joefriday/mem/meminfo"
+	"github.com/SermoDigital/helpers"
 
 	flat "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
@@ -49,26 +53,26 @@ func (i *Info) SerializeFlat() []byte {
 }
 
 func (i *Info) SerializeFlatBuilder(bldr *flat.Builder) []byte {
-	InfoFlatStart(bldr)
-	InfoFlatAddTimestamp(bldr, int64(i.Timestamp))
-	InfoFlatAddMemTotal(bldr, int64(i.MemTotal))
-	InfoFlatAddMemFree(bldr, int64(i.MemFree))
-	InfoFlatAddMemAvailable(bldr, int64(i.MemAvailable))
-	InfoFlatAddBuffers(bldr, int64(i.Buffers))
-	InfoFlatAddCached(bldr, int64(i.Cached))
-	InfoFlatAddSwapCached(bldr, int64(i.SwapCached))
-	InfoFlatAddActive(bldr, int64(i.Active))
-	InfoFlatAddInactive(bldr, int64(i.Inactive))
-	InfoFlatAddSwapTotal(bldr, int64(i.SwapTotal))
-	InfoFlatAddSwapFree(bldr, int64(i.SwapFree))
-	bldr.Finish(InfoFlatEnd(bldr))
+	meminfo.InfoFlatStart(bldr)
+	meminfo.InfoFlatAddTimestamp(bldr, int64(i.Timestamp))
+	meminfo.InfoFlatAddMemTotal(bldr, int64(i.MemTotal))
+	meminfo.InfoFlatAddMemFree(bldr, int64(i.MemFree))
+	meminfo.InfoFlatAddMemAvailable(bldr, int64(i.MemAvailable))
+	meminfo.InfoFlatAddBuffers(bldr, int64(i.Buffers))
+	meminfo.InfoFlatAddCached(bldr, int64(i.Cached))
+	meminfo.InfoFlatAddSwapCached(bldr, int64(i.SwapCached))
+	meminfo.InfoFlatAddActive(bldr, int64(i.Active))
+	meminfo.InfoFlatAddInactive(bldr, int64(i.Inactive))
+	meminfo.InfoFlatAddSwapTotal(bldr, int64(i.SwapTotal))
+	meminfo.InfoFlatAddSwapFree(bldr, int64(i.SwapFree))
+	bldr.Finish(meminfo.InfoFlatEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
 // DeserializeInfoFlat deserializes bytes serialized with Flatbuffers from
 // InfoFlat into *Info.
 func DeserializeInfoFlat(p []byte) *Info {
-	infoFlat := GetRootAsInfoFlat(p, 0)
+	infoFlat := meminfo.GetRootAsInfoFlat(p, 0)
 	info := &Info{}
 	info.Timestamp = infoFlat.Timestamp()
 	info.MemTotal = infoFlat.MemTotal()
@@ -88,49 +92,57 @@ func (i *Info) String() string {
 	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp).UTC(), i.MemTotal, i.MemFree, i.MemAvailable, i.Active, i.Inactive, i.Cached, i.Buffers, i.SwapTotal, i.SwapCached, i.SwapFree)
 }
 
-// GetInfo returns some of the results of /proc/meminfo.
-func GetInfo() (*Info, error) {
-	var l, i int
-	var name string
-	var v byte
-	t := time.Now().UTC().UnixNano()
-	f, err := os.Open("/proc/meminfo")
+func init() {
+	var err error
+	proc, err = os.Open("/proc/meminfo")
 	if err != nil {
-		return nil, err
+		log.Fatalln(err)
 	}
-	defer f.Close()
-	buf := bufio.NewReader(f)
-	inf := &Info{Timestamp: t}
-	var pos int
-	val := make([]byte, 0, 32)
-	for {
-		if l == 16 {
-			break
-		}
+	buf = bufio.NewReader(proc)
+}
+
+var proc *os.File
+var buf *bufio.Reader
+var val = make([]byte, 0, 32)
+
+// GetInfo returns some of the results of /proc/meminfo.
+func GetInfo() (inf Info, err error) {
+	_, err = proc.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return inf, err
+	}
+	buf.Reset(proc)
+	var (
+		i       int
+		v       byte
+		pos     int
+		nameLen int
+	)
+	for l := 0; l < 16; l++ {
 		line, err := buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return nil, fmt.Errorf("error reading output bytes: %s", err)
+			return inf, fmt.Errorf("error reading output bytes: %s", err)
 		}
-		l++
-		if l > 8 && l < 15 {
+		if l > 8 && l < 14 {
 			continue
 		}
+
 		// first grab the key name (everything up to the ':')
 		for i, v = range line {
-			if v == 0x3A {
+			if v == ':' {
 				pos = i + 1
 				break
 			}
 			val = append(val, v)
 		}
-		name = string(val[:])
-		val = val[:0]
+		nameLen = len(val)
+
 		// skip all spaces
 		for i, v = range line[pos:] {
-			if v != 0x20 {
+			if v != ' ' {
 				pos += i
 				break
 			}
@@ -138,58 +150,50 @@ func GetInfo() (*Info, error) {
 
 		// grab the numbers
 		for _, v = range line[pos:] {
-			if v == 0x20 || v == '\r' {
+			if v == ' ' || v == '\r' {
 				break
 			}
 			val = append(val, v)
 		}
 		// any conversion error results in 0
-		i, err = strconv.Atoi(string(val[:]))
+		n, err := helpers.ParseUint(val[nameLen:])
 		if err != nil {
-			return nil, fmt.Errorf("%s: %s", name, err)
+			return inf, fmt.Errorf("%s: %s", val[:nameLen], err)
+		}
+
+		v = val[0]
+
+		// Forgive me.
+		if v == 'M' {
+			v = val[3]
+			if v == 'T' {
+				inf.MemTotal = int64(n)
+			} else if v == 'F' {
+				inf.MemFree = int64(n)
+			} else {
+				inf.MemAvailable = int64(n)
+			}
+		} else if v == 'S' {
+			v = val[4]
+			if v == 'C' {
+				inf.SwapCached = int64(n)
+			} else if v == 'T' {
+				inf.SwapTotal = int64(n)
+			} else if v == 'F' {
+				inf.SwapFree = int64(n)
+			}
+		} else if v == 'B' {
+			inf.Buffers = int64(n)
+		} else if v == 'I' {
+			inf.Inactive = int64(n)
+		} else if v == 'C' {
+			inf.Cached = int64(n)
+		} else if v == 'A' {
+			inf.Active = int64(n)
 		}
 		val = val[:0]
-		if name == "MemTotal" {
-			inf.MemTotal = int64(i)
-			continue
-		}
-		if name == "MemFree" {
-			inf.MemFree = int64(i)
-			continue
-		}
-		if name == "MemAvailable" {
-			inf.MemAvailable = int64(i)
-			continue
-		}
-		if name == "Buffers" {
-			inf.Buffers = int64(i)
-			continue
-		}
-		if name == "Cached" {
-			inf.MemAvailable = int64(i)
-			continue
-		}
-		if name == "SwapCached" {
-			inf.SwapCached = int64(i)
-			continue
-		}
-		if name == "Active" {
-			inf.Active = int64(i)
-			continue
-		}
-		if name == "Inactive" {
-			inf.Inactive = int64(i)
-			continue
-		}
-		if name == "SwapTotal" {
-			inf.SwapTotal = int64(i)
-			continue
-		}
-		if name == "SwapFree" {
-			inf.SwapFree = int64(i)
-			continue
-		}
 	}
+	inf.Timestamp = time.Now().UTC().UnixNano()
 	return inf, nil
 }
 
@@ -246,8 +250,8 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 				continue
 			}
 			buf.Reset(f)
-			InfoFlatStart(bldr)
-			InfoFlatAddTimestamp(bldr, t)
+			meminfo.InfoFlatStart(bldr)
+			meminfo.InfoFlatAddTimestamp(bldr, t)
 			for {
 				if l == 16 {
 					break
@@ -297,48 +301,48 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 				}
 				val = val[:0]
 				if name == "MemTotal" {
-					InfoFlatAddMemTotal(bldr, int64(i))
+					meminfo.InfoFlatAddMemTotal(bldr, int64(i))
 					continue
 				}
 				if name == "MemFree" {
-					InfoFlatAddMemFree(bldr, int64(i))
+					meminfo.InfoFlatAddMemFree(bldr, int64(i))
 					continue
 				}
 				if name == "MemAvailable" {
-					InfoFlatAddMemAvailable(bldr, int64(i))
+					meminfo.InfoFlatAddMemAvailable(bldr, int64(i))
 					continue
 				}
 				if name == "Buffers" {
-					InfoFlatAddBuffers(bldr, int64(i))
+					meminfo.InfoFlatAddBuffers(bldr, int64(i))
 					continue
 				}
 				if name == "Cached" {
-					InfoFlatAddMemAvailable(bldr, int64(i))
+					meminfo.InfoFlatAddMemAvailable(bldr, int64(i))
 					continue
 				}
 				if name == "SwapCached" {
-					InfoFlatAddSwapCached(bldr, int64(i))
+					meminfo.InfoFlatAddSwapCached(bldr, int64(i))
 					continue
 				}
 				if name == "Active" {
-					InfoFlatAddActive(bldr, int64(i))
+					meminfo.InfoFlatAddActive(bldr, int64(i))
 					continue
 				}
 				if name == "Inactive" {
-					InfoFlatAddInactive(bldr, int64(i))
+					meminfo.InfoFlatAddInactive(bldr, int64(i))
 					continue
 				}
 				if name == "SwapTotal" {
-					InfoFlatAddSwapTotal(bldr, int64(i))
+					meminfo.InfoFlatAddSwapTotal(bldr, int64(i))
 					continue
 				}
 				if name == "SwapFree" {
-					InfoFlatAddSwapFree(bldr, int64(i))
+					meminfo.InfoFlatAddSwapFree(bldr, int64(i))
 					continue
 				}
 			}
 			f.Close()
-			bldr.Finish(InfoFlatEnd(bldr))
+			bldr.Finish(meminfo.InfoFlatEnd(bldr))
 			inf := bldr.Bytes[bldr.Head():]
 			outCh <- inf
 			bldr.Reset()
@@ -347,6 +351,6 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 	}
 }
 
-func (i *InfoFlat) String() string {
-	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp()).UTC(), i.MemTotal(), i.MemFree(), i.MemAvailable(), i.Active(), i.Inactive(), i.Cached(), i.Buffers(), i.SwapTotal(), i.SwapCached(), i.SwapFree())
-}
+// func (i *InfoFlat) String() string {
+// 	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp()).UTC(), i.MemTotal(), i.MemFree(), i.MemAvailable(), i.Active(), i.Inactive(), i.Cached(), i.Buffers(), i.SwapTotal(), i.SwapCached(), i.SwapFree())
+// }

@@ -1,5 +1,5 @@
 // memdata.fbs
-namespace mem;
+namespace meminfo;
 
 table InfoFlat {
 	Timestamp: long;
