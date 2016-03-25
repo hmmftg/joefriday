@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -139,28 +140,44 @@ func DeserializeStatsFlat(p []byte) Stats {
 	return stats
 }
 
+func init() {
+	var err error
+	proc, err = os.Open(procStat)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	buf = bufio.NewReader(proc)
+}
+
+var proc *os.File
+var buf *bufio.Reader
+
 // GetStats gets the output of /proc/stat.
 func GetStats() (Stats, error) {
-	stats := Stats{ClkTck: CLK_TCK, CPU: []Stat{}}
+	var stats Stats
 	if CLK_TCK == 0 {
 		err := Init()
 		if err != nil {
 			return stats, err
 		}
 	}
-	stats.Timestamp = time.Now().UTC().UnixNano()
-	f, err := os.Open(procStat)
+	_, err := proc.Seek(0, os.SEEK_SET)
 	if err != nil {
 		return stats, err
 	}
-	defer f.Close()
+	buf.Reset(proc)
 
-	var name string
-	var i, j, pos, val, fieldNum int
-	var v byte
-	var stop bool
+	stats.ClkTck = CLK_TCK
+	stats.CPU = make([]Stat, 0, 2)
+	stats.Timestamp = time.Now().UTC().UnixNano()
 
-	buf := bufio.NewReader(f)
+	var (
+		name                     string
+		i, j, pos, val, fieldNum int
+		v                        byte
+		stop                     bool
+	)
+
 	// read each line until eof
 	for {
 		line, err := buf.ReadSlice('\n')
@@ -206,45 +223,32 @@ func GetStats() (Stats, error) {
 						return stats, joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
 					}
 					j = pos + i + 1
-					if fieldNum == 1 {
-						stat.User = int64(val)
-						continue
-					}
-					if fieldNum == 2 {
-						stat.Nice = int64(val)
-						continue
-					}
-					if fieldNum == 3 {
-						stat.System = int64(val)
-						continue
-					}
-					if fieldNum == 4 {
-						stat.Idle = int64(val)
-						continue
-					}
-					if fieldNum == 5 {
-						stat.IOWait = int64(val)
-						continue
-					}
-					if fieldNum == 6 {
-						stat.IRQ = int64(val)
-						continue
-					}
-					if fieldNum == 7 {
-						stat.SoftIRQ = int64(val)
-						continue
-					}
-					if fieldNum == 8 {
-						stat.Steal = int64(val)
-						continue
-					}
-					if fieldNum == 9 {
-						stat.Quest = int64(val)
-						continue
-					}
-					if fieldNum == 10 {
+					if fieldNum < 4 {
+						if fieldNum == 1 {
+							stat.User = int64(val)
+						} else if fieldNum == 2 {
+							stat.Nice = int64(val)
+						} else if fieldNum == 3 {
+							stat.System = int64(val)
+						}
+					} else if fieldNum < 7 {
+						if fieldNum == 4 {
+							stat.Idle = int64(val)
+						} else if fieldNum == 5 {
+							stat.IOWait = int64(val)
+						} else if fieldNum == 6 {
+							stat.IRQ = int64(val)
+						}
+					} else if fieldNum < 10 {
+						if fieldNum == 7 {
+							stat.SoftIRQ = int64(val)
+						} else if fieldNum == 8 {
+							stat.Steal = int64(val)
+						} else if fieldNum == 9 {
+							stat.Quest = int64(val)
+						}
+					} else if fieldNum == 10 {
 						stat.QuestNice = int64(val)
-						continue
 					}
 				}
 			}
@@ -417,22 +421,18 @@ func UtilizationTicker(interval time.Duration, outCh chan Utilization, done chan
 	defer ticker.Stop()
 	defer close(outCh)
 	// predeclare some vars
-	var i, j, pos, val, fieldNum int
-	var v byte
-	var name string
-	var stop bool
-	var prior Stats
+	var (
+		i, j, pos, val, fieldNum int
+		v                        byte
+		name                     string
+		stop                     bool
+		prior                    Stats
+	)
 	// first get stats as the baseline
 	cur, err := GetStats()
 	if err != nil {
 		errs <- err
 	}
-	// Some hoops to jump through to ensure we don't get a ErrBufferFull.
-	// TODO: should bufio.Scanner be used instead?
-	var bs []byte
-	tmp := bytes.NewBuffer(bs)
-	buf := bufio.NewReaderSize(tmp, 4096)
-	tmp = nil
 	// ticker
 tick:
 	for {
@@ -448,14 +448,13 @@ tick:
 			}
 			copy(prior.CPU, cur.CPU)
 			cur.Timestamp = time.Now().UTC().UnixNano()
-			f, err := os.Open(procStat)
+			_, err := proc.Seek(0, os.SEEK_SET)
 			if err != nil {
-				errs <- joe.Error{Type: "cpu", Op: "utilization ticker", Err: err}
+				errs <- joe.Error{Type: "cpu", Op: "utilization ticker: seek /proc/stat", Err: err}
 				continue tick
 			}
-			defer f.Close()
+			buf.Reset(proc)
 			cur.CPU = cur.CPU[:0]
-			buf.Reset(f)
 			// read each line until eof
 			for {
 				line, err := buf.ReadSlice('\n')
@@ -503,45 +502,32 @@ tick:
 								continue
 							}
 							j = pos + i + 1
-							if fieldNum == 1 {
-								stat.User = int64(val)
-								continue
-							}
-							if fieldNum == 2 {
-								stat.Nice = int64(val)
-								continue
-							}
-							if fieldNum == 3 {
-								stat.System = int64(val)
-								continue
-							}
-							if fieldNum == 4 {
-								stat.Idle = int64(val)
-								continue
-							}
-							if fieldNum == 5 {
-								stat.IOWait = int64(val)
-								continue
-							}
-							if fieldNum == 6 {
-								stat.IRQ = int64(val)
-								continue
-							}
-							if fieldNum == 7 {
-								stat.SoftIRQ = int64(val)
-								continue
-							}
-							if fieldNum == 8 {
-								stat.Steal = int64(val)
-								continue
-							}
-							if fieldNum == 9 {
-								stat.Quest = int64(val)
-								continue
-							}
-							if fieldNum == 10 {
+							if fieldNum < 4 {
+								if fieldNum == 1 {
+									stat.User = int64(val)
+								} else if fieldNum == 2 {
+									stat.Nice = int64(val)
+								} else if fieldNum == 3 {
+									stat.System = int64(val)
+								}
+							} else if fieldNum < 7 {
+								if fieldNum == 4 {
+									stat.Idle = int64(val)
+								} else if fieldNum == 5 {
+									stat.IOWait = int64(val)
+								} else if fieldNum == 6 {
+									stat.IRQ = int64(val)
+								}
+							} else if fieldNum < 10 {
+								if fieldNum == 7 {
+									stat.SoftIRQ = int64(val)
+								} else if fieldNum == 8 {
+									stat.Steal = int64(val)
+								} else if fieldNum == 9 {
+									stat.Quest = int64(val)
+								}
+							} else if fieldNum == 10 {
 								stat.QuestNice = int64(val)
-								continue
 							}
 						}
 					}
@@ -577,7 +563,6 @@ tick:
 					continue
 				}
 			}
-			f.Close()
 			outCh <- calculateUtilization(prior, cur)
 		}
 	}
