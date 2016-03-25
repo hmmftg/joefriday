@@ -31,6 +31,8 @@ import (
 	"github.com/mohae/joefriday/mem/flat"
 )
 
+const procMemInfo = "/proc/meminfo"
+
 type Info struct {
 	Timestamp    int64 `json:"timestamp"`
 	MemTotal     int64 `json:"mem_total"`
@@ -93,7 +95,7 @@ func (i *Info) String() string {
 
 func init() {
 	var err error
-	proc, err = os.Open("/proc/meminfo")
+	proc, err = os.Open(procMemInfo)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -243,7 +245,7 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 		case <-ticker.C:
 			// The current timestamp is always in UTC
 			t = time.Now().UTC().UnixNano()
-			f, err := os.Open("/proc/meminfo")
+			f, err := os.Open(procMemInfo)
 			if err != nil {
 				errCh <- joe.Error{Type: "mem", Op: "open /proc/meminfo", Err: err}
 				continue
