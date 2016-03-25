@@ -1,10 +1,11 @@
 // automatically generated, do not modify
 
-package mem
+package meminfo
 
 import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
+
 type InfoFlat struct {
 	_tab flatbuffers.Table
 }
@@ -12,7 +13,7 @@ type InfoFlat struct {
 func GetRootAsInfoFlat(buf []byte, offset flatbuffers.UOffsetT) *InfoFlat {
 	n := flatbuffers.GetUOffsetT(buf[offset:])
 	x := &InfoFlat{}
-	x.Init(buf, n + offset)
+	x.Init(buf, n+offset)
 	return x
 }
 
@@ -110,15 +111,37 @@ func (rcv *InfoFlat) SwapFree() int64 {
 }
 
 func InfoFlatStart(builder *flatbuffers.Builder) { builder.StartObject(11) }
-func InfoFlatAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
-func InfoFlatAddMemTotal(builder *flatbuffers.Builder, MemTotal int64) { builder.PrependInt64Slot(1, MemTotal, 0) }
-func InfoFlatAddMemFree(builder *flatbuffers.Builder, MemFree int64) { builder.PrependInt64Slot(2, MemFree, 0) }
-func InfoFlatAddMemAvailable(builder *flatbuffers.Builder, MemAvailable int64) { builder.PrependInt64Slot(3, MemAvailable, 0) }
-func InfoFlatAddBuffers(builder *flatbuffers.Builder, Buffers int64) { builder.PrependInt64Slot(4, Buffers, 0) }
-func InfoFlatAddCached(builder *flatbuffers.Builder, Cached int64) { builder.PrependInt64Slot(5, Cached, 0) }
-func InfoFlatAddSwapCached(builder *flatbuffers.Builder, SwapCached int64) { builder.PrependInt64Slot(6, SwapCached, 0) }
-func InfoFlatAddActive(builder *flatbuffers.Builder, Active int64) { builder.PrependInt64Slot(7, Active, 0) }
-func InfoFlatAddInactive(builder *flatbuffers.Builder, Inactive int64) { builder.PrependInt64Slot(8, Inactive, 0) }
-func InfoFlatAddSwapTotal(builder *flatbuffers.Builder, SwapTotal int64) { builder.PrependInt64Slot(9, SwapTotal, 0) }
-func InfoFlatAddSwapFree(builder *flatbuffers.Builder, SwapFree int64) { builder.PrependInt64Slot(10, SwapFree, 0) }
+func InfoFlatAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) {
+	builder.PrependInt64Slot(0, Timestamp, 0)
+}
+func InfoFlatAddMemTotal(builder *flatbuffers.Builder, MemTotal int64) {
+	builder.PrependInt64Slot(1, MemTotal, 0)
+}
+func InfoFlatAddMemFree(builder *flatbuffers.Builder, MemFree int64) {
+	builder.PrependInt64Slot(2, MemFree, 0)
+}
+func InfoFlatAddMemAvailable(builder *flatbuffers.Builder, MemAvailable int64) {
+	builder.PrependInt64Slot(3, MemAvailable, 0)
+}
+func InfoFlatAddBuffers(builder *flatbuffers.Builder, Buffers int64) {
+	builder.PrependInt64Slot(4, Buffers, 0)
+}
+func InfoFlatAddCached(builder *flatbuffers.Builder, Cached int64) {
+	builder.PrependInt64Slot(5, Cached, 0)
+}
+func InfoFlatAddSwapCached(builder *flatbuffers.Builder, SwapCached int64) {
+	builder.PrependInt64Slot(6, SwapCached, 0)
+}
+func InfoFlatAddActive(builder *flatbuffers.Builder, Active int64) {
+	builder.PrependInt64Slot(7, Active, 0)
+}
+func InfoFlatAddInactive(builder *flatbuffers.Builder, Inactive int64) {
+	builder.PrependInt64Slot(8, Inactive, 0)
+}
+func InfoFlatAddSwapTotal(builder *flatbuffers.Builder, SwapTotal int64) {
+	builder.PrependInt64Slot(9, SwapTotal, 0)
+}
+func InfoFlatAddSwapFree(builder *flatbuffers.Builder, SwapFree int64) {
+	builder.PrependInt64Slot(10, SwapFree, 0)
+}
 func InfoFlatEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }
