@@ -91,6 +91,10 @@ func (i *Info) String() string {
 	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp).UTC(), i.MemTotal, i.MemFree, i.MemAvailable, i.Active, i.Inactive, i.Cached, i.Buffers, i.SwapTotal, i.SwapCached, i.SwapFree)
 }
 
+// This makes me feel dirty, I blame EricLagergren ;) (both the init and
+// globals).  Was done to improve performance and reduce garbage.
+// TODO: maybe encapsulate this with a joe.Reader and use lazy loading?
+
 func init() {
 	var err error
 	proc, err = os.Open(procMemInfo)
@@ -162,7 +166,7 @@ func GetInfo() (inf Info, err error) {
 
 		v = val[0]
 
-		// Forgive me.
+		// Reduce evaluations.
 		if v == 'M' {
 			v = val[3]
 			if v == 'T' {
