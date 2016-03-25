@@ -28,8 +28,9 @@ func (k *Kernel) SerializeFlat() []byte {
 	return k.SerializeFlatBuilder(bldr)
 }
 
-// SerializeFlatBuilder uses the passed flat.Builder to serialize Kernel.
-// The builder is expected to be in a usable state.
+// SerializeFlatBuilder uses the argument *flatbuffer.Builder to serialize
+// Kernel.  The argument *flatbuffer.Builder is expected to be in a usable
+// state.
 func (k *Kernel) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	version := bldr.CreateString(k.Version)
 	compileUser := bldr.CreateString(k.CompileUser)
@@ -150,6 +151,17 @@ func GetKernelFlat() ([]byte, error) {
 	return k.SerializeFlat(), nil
 }
 
+// GetKernelFlatBuilder returns Flatbuffer serialized Kernel information
+// using the argument *flatbuffer.Builder.  The argument *flatbuffer.Builder
+// must be in a usable state.
+func GetKernelFlatBuilder(bldr *fb.Builder) ([]byte, error) {
+	k, err := GetKernel()
+	if err != nil {
+		return nil, err
+	}
+	return k.SerializeFlatBuilder(bldr), nil
+}
+
 // Release holds information about the release.  The source depends on the
 // OS.  Currently only Debian and Redhat families are supported.
 type Release struct {
@@ -168,8 +180,8 @@ func (r *Release) SerializeFlat() []byte {
 	return r.SerializeFlatBuilder(bldr)
 }
 
-// SerializeFlatBuilder uses the passed flat.Builder to serialize Release.
-// The builder is expected to be in a usable state.
+// SerializeFlatBuilder uses the argument *flat.Builder to serialize
+// Release.  The argument *flatbuffer.Builder must be in a usable state.
 func (r *Release) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	id := bldr.CreateString(r.ID)
 	idLike := bldr.CreateString(r.IDLike)
@@ -277,4 +289,15 @@ func GetReleaseFlat() ([]byte, error) {
 		return nil, err
 	}
 	return r.SerializeFlat(), nil
+}
+
+// GetReleaseFlatBuilder returns Flatbuffer serialized Release information
+// using the argument *flatbuffer.Builder.  The argument *flatbuffer.Builder
+// must be in a usable state.
+func GetReleaseFlatBuilder(bldr *fb.Builder) ([]byte, error) {
+	r, err := GetRelease()
+	if err != nil {
+		return nil, err
+	}
+	return r.SerializeFlatBuilder(bldr), nil
 }
