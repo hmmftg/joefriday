@@ -136,12 +136,12 @@ func BenchmarkReadMemInfoToFlatbuffersMinAllocsSeek(b *testing.B) {
 	if err != nil {
 		fmt.Println("couldn't open /proc/meminfo")
 	}
+	defer f.Close()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemInfoToFlatbuffersMinAllocsSeek(f)
 	}
 	_ = data
-	f.Close()
 }
 
 func BenchmarkReadMemInfoEmulateCurrentFlatTicker(b *testing.B) {
@@ -151,12 +151,27 @@ func BenchmarkReadMemInfoEmulateCurrentFlatTicker(b *testing.B) {
 	if err != nil {
 		fmt.Println("couldn't open /proc/meminfo")
 	}
+	defer f.Close()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		data, _ = GetMemInfoEmulateCurrentFlatTicker(f)
 	}
 	_ = data
-	f.Close()
+}
+
+func BenchmarkGetMemInfoCurrent(b *testing.B) {
+	var val MemInfo
+	b.StopTimer()
+	f, err := os.Open("/proc/meminfo")
+	if err != nil {
+		fmt.Println("couldn't open /proc/meminfo")
+	}
+	defer f.Close()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		val, _ = GetMemInfoCurrent(f)
+	}
+	_ = val
 }
 
 func BenchmarkDataDogGohaiMem(b *testing.B) {

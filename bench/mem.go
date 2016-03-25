@@ -908,3 +908,94 @@ func GetMemInfoEmulateCurrentFlatTicker(f *os.File) ([]byte, error) {
 	bldr.Finish(flat.InfoEnd(bldr))
 	return bldr.Bytes[bldr.Head():], nil
 }
+
+func GetMemInfoCurrent(proc *os.File) (inf MemInfo, err error) {
+	_, err = proc.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return inf, err
+	}
+	buf.Reset(proc)
+	var (
+		i       int
+		v       byte
+		pos     int
+		nameLen int
+	)
+	for l := 0; l < 16; l++ {
+		line, err := buf.ReadSlice('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return inf, fmt.Errorf("error reading output bytes: %s", err)
+		}
+		if l > 8 && l < 14 {
+			continue
+		}
+
+		// first grab the key name (everything up to the ':')
+		for i, v = range line {
+			if v == ':' {
+				pos = i + 1
+				break
+			}
+			val = append(val, v)
+		}
+		nameLen = len(val)
+
+		// skip all spaces
+		for i, v = range line[pos:] {
+			if v != ' ' {
+				pos += i
+				break
+			}
+		}
+
+		// grab the numbers
+		for _, v = range line[pos:] {
+			if v == ' ' || v == '\r' {
+				break
+			}
+			val = append(val, v)
+		}
+		// any conversion error results in 0
+		n, err := helpers.ParseUint(val[nameLen:])
+		if err != nil {
+			return inf, fmt.Errorf("%s: %s", val[:nameLen], err)
+		}
+
+		v = val[0]
+
+		// Reduce evaluations.
+		if v == 'M' {
+			v = val[3]
+			if v == 'T' {
+				inf.MemTotal = int64(n)
+			} else if v == 'F' {
+				inf.MemFree = int64(n)
+			} else {
+				inf.MemAvailable = int64(n)
+			}
+		} else if v == 'S' {
+			v = val[4]
+			if v == 'C' {
+				inf.SwapCached = int64(n)
+			} else if v == 'T' {
+				inf.SwapTotal = int64(n)
+			} else if v == 'F' {
+				inf.SwapFree = int64(n)
+			}
+		} else if v == 'B' {
+			inf.Buffers = int64(n)
+		} else if v == 'I' {
+			inf.Inactive = int64(n)
+		} else if v == 'C' {
+			inf.Cached = int64(n)
+		} else if v == 'A' {
+			inf.Active = int64(n)
+		}
+		val = val[:0]
+	}
+	inf.Timestamp = time.Now().UTC().UnixNano()
+	return inf, nil
+}

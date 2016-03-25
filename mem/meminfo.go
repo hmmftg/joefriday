@@ -229,17 +229,10 @@ func InfoFlatTicker(interval time.Duration, out chan []byte, done chan struct{},
 		l, i, pos, nameLen int
 		v                  byte
 		n                  uint64
+		err                error
 	)
-	// premake some temp slices
-	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
 	bldr := fb.NewBuilder(0)
-	f, err := os.Open(procMemInfo)
-	if err != nil {
-		errs <- joe.Error{Type: "cpu", Op: "InfoFlatTicker: open /proc/meminfo", Err: err}
-		return
-	}
-	buf := bufio.NewReaderSize(f, 1536)
 	// ticker
 	for {
 		select {
@@ -247,13 +240,13 @@ func InfoFlatTicker(interval time.Duration, out chan []byte, done chan struct{},
 			return
 		case <-ticker.C:
 			// The current timestamp is always in UTC
-			_, err = f.Seek(0, os.SEEK_SET)
+			_, err = proc.Seek(0, os.SEEK_SET)
 			if err != nil {
 				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue
 			}
 			bldr.Reset()
-			buf.Reset(f)
+			buf.Reset(proc)
 			flat.InfoStart(bldr)
 			flat.InfoAddTimestamp(bldr, time.Now().UTC().UnixNano())
 			for l = 0; l < 16; l++ {
