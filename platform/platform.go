@@ -141,6 +141,15 @@ func GetKernel() (*Kernel, error) {
 	return &kernel, nil
 }
 
+// GetKernelFlat returns the Flatbuffer serialized Kernel information.
+func GetKernelFlat() ([]byte, error) {
+	k, err := GetKernel()
+	if err != nil {
+		return nil, err
+	}
+	return k.SerializeFlat(), nil
+}
+
 // Release holds information about the release.  The source depends on the
 // OS.  Currently only Debian and Redhat families are supported.
 type Release struct {
@@ -259,4 +268,13 @@ func GetRelease() (*Release, error) {
 		}
 	}
 	return &release, nil
+}
+
+// GetReleaseFlat returns Flatbuffer serialized Release information.
+func GetReleaseFlat() ([]byte, error) {
+	r, err := GetRelease()
+	if err != nil {
+		return nil, err
+	}
+	return r.SerializeFlat(), nil
 }
