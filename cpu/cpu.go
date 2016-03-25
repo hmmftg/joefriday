@@ -11,7 +11,10 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
+	"github.com/mohae/joefriday/cpu/flat"
 )
+
+const procStat = "/proc/stat"
 
 var CLK_TCK int16 // the ticks per clock cycle
 
@@ -42,12 +45,12 @@ type Stats struct {
 	Ctxt      int64  `json:"ctxt"`
 	BTime     int64  `json:"btime"`
 	Processes int64  `json:"processes"`
-	CPUs      []Stat `json:"cpus"`
+	CPU       []Stat `json:"cpu"`
 }
 
 // Stat is for capturing the output of /proc/stat.
 type Stat struct {
-	CPU       string `json:"CPU"`
+	ID        string `json:"ID"`
 	User      int64  `json:"user"`
 	Nice      int64  `json:"nice"`
 	System    int64  `json:"system"`
@@ -68,58 +71,58 @@ func (s *Stats) SerializeFlat() []byte {
 
 // SerializeFlat serializes Stats into Flatbuffer serialized bytes.
 func (s *Stats) SerializeFlatBuilder(bldr *fb.Builder) []byte {
-	stats := make([]fb.UOffsetT, len(s.CPUs))
-	cpus := make([]fb.UOffsetT, len(s.CPUs))
-	for i := 0; i < len(cpus); i++ {
-		cpus[i] = bldr.CreateString(s.CPUs[i].CPU)
+	stats := make([]fb.UOffsetT, len(s.CPU))
+	ids := make([]fb.UOffsetT, len(s.CPU))
+	for i := 0; i < len(ids); i++ {
+		ids[i] = bldr.CreateString(s.CPU[i].ID)
 	}
 	for i := 0; i < len(stats); i++ {
-		StatFlatStart(bldr)
-		StatFlatAddCPU(bldr, cpus[i])
-		StatFlatAddUser(bldr, s.CPUs[i].User)
-		StatFlatAddNice(bldr, s.CPUs[i].Nice)
-		StatFlatAddSystem(bldr, s.CPUs[i].System)
-		StatFlatAddIdle(bldr, s.CPUs[i].Idle)
-		StatFlatAddIOWait(bldr, s.CPUs[i].IOWait)
-		StatFlatAddIRQ(bldr, s.CPUs[i].IRQ)
-		StatFlatAddSoftIRQ(bldr, s.CPUs[i].SoftIRQ)
-		StatFlatAddSteal(bldr, s.CPUs[i].Steal)
-		StatFlatAddQuest(bldr, s.CPUs[i].Quest)
-		StatFlatAddQuestNice(bldr, s.CPUs[i].QuestNice)
-		stats[i] = StatFlatEnd(bldr)
+		flat.StatStart(bldr)
+		flat.StatAddID(bldr, ids[i])
+		flat.StatAddUser(bldr, s.CPU[i].User)
+		flat.StatAddNice(bldr, s.CPU[i].Nice)
+		flat.StatAddSystem(bldr, s.CPU[i].System)
+		flat.StatAddIdle(bldr, s.CPU[i].Idle)
+		flat.StatAddIOWait(bldr, s.CPU[i].IOWait)
+		flat.StatAddIRQ(bldr, s.CPU[i].IRQ)
+		flat.StatAddSoftIRQ(bldr, s.CPU[i].SoftIRQ)
+		flat.StatAddSteal(bldr, s.CPU[i].Steal)
+		flat.StatAddQuest(bldr, s.CPU[i].Quest)
+		flat.StatAddQuestNice(bldr, s.CPU[i].QuestNice)
+		stats[i] = flat.StatEnd(bldr)
 	}
-	StatsFlatStartCPUsVector(bldr, len(stats))
+	flat.StatsStartCPUVector(bldr, len(stats))
 	for i := len(stats) - 1; i >= 0; i-- {
 		bldr.PrependUOffsetT(stats[i])
 	}
 	statsV := bldr.EndVector(len(stats))
-	StatsFlatStart(bldr)
-	StatsFlatAddClkTck(bldr, s.ClkTck)
-	StatsFlatAddTimestamp(bldr, s.Timestamp)
-	StatsFlatAddCtxt(bldr, s.Ctxt)
-	StatsFlatAddBTime(bldr, s.BTime)
-	StatsFlatAddProcesses(bldr, s.Processes)
-	StatsFlatAddCPUs(bldr, statsV)
-	bldr.Finish(StatsFlatEnd(bldr))
+	flat.StatsStart(bldr)
+	flat.StatsAddClkTck(bldr, s.ClkTck)
+	flat.StatsAddTimestamp(bldr, s.Timestamp)
+	flat.StatsAddCtxt(bldr, s.Ctxt)
+	flat.StatsAddBTime(bldr, s.BTime)
+	flat.StatsAddProcesses(bldr, s.Processes)
+	flat.StatsAddCPU(bldr, statsV)
+	bldr.Finish(flat.StatsEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
 // DeserializeStatsFlat deserializes Flatbuffer serialized bytes into Stats.
 func DeserializeStatsFlat(p []byte) Stats {
 	var stats Stats
-	statF := &StatFlat{}
-	data := GetRootAsStatsFlat(p, 0)
-	stats.ClkTck = data.ClkTck()
-	stats.Timestamp = data.Timestamp()
-	stats.Ctxt = data.Ctxt()
-	stats.BTime = data.BTime()
-	stats.Processes = data.Processes()
-	len := data.CPUsLength()
-	stats.CPUs = make([]Stat, len)
+	statF := &flat.Stat{}
+	statsFlat := flat.GetRootAsStats(p, 0)
+	stats.ClkTck = statsFlat.ClkTck()
+	stats.Timestamp = statsFlat.Timestamp()
+	stats.Ctxt = statsFlat.Ctxt()
+	stats.BTime = statsFlat.BTime()
+	stats.Processes = statsFlat.Processes()
+	len := statsFlat.CPULength()
+	stats.CPU = make([]Stat, len)
 	for i := 0; i < len; i++ {
 		var stat Stat
-		if data.CPUs(statF, i) {
-			stat.CPU = string(statF.CPU())
+		if statsFlat.CPU(statF, i) {
+			stat.ID = string(statF.ID())
 			stat.User = statF.User()
 			stat.Nice = statF.Nice()
 			stat.System = statF.System()
@@ -131,15 +134,22 @@ func DeserializeStatsFlat(p []byte) Stats {
 			stat.Quest = statF.Quest()
 			stat.QuestNice = statF.QuestNice()
 		}
-		stats.CPUs[i] = stat
+		stats.CPU[i] = stat
 	}
 	return stats
 }
 
 // GetStats gets the output of /proc/stat.
 func GetStats() (Stats, error) {
-	stats := Stats{ClkTck: CLK_TCK, Timestamp: time.Now().UTC().UnixNano(), CPUs: []Stat{}}
-	f, err := os.Open("/proc/stat")
+	stats := Stats{ClkTck: CLK_TCK, CPU: []Stat{}}
+	if CLK_TCK == 0 {
+		err := Init()
+		if err != nil {
+			return stats, err
+		}
+	}
+	stats.Timestamp = time.Now().UTC().UnixNano()
+	f, err := os.Open(procStat)
 	if err != nil {
 		return stats, err
 	}
@@ -181,7 +191,7 @@ func GetStats() (Stats, error) {
 				}
 				j++
 			}
-			stat := Stat{CPU: name}
+			stat := Stat{ID: name}
 			fieldNum = 0
 			pos, j = j+pos, j+pos
 			// space is the field separator
@@ -238,7 +248,7 @@ func GetStats() (Stats, error) {
 					}
 				}
 			}
-			stats.CPUs = append(stats.CPUs, stat)
+			stats.CPU = append(stats.CPU, stat)
 			stop = false
 			continue
 		}
@@ -283,12 +293,12 @@ type Utilization struct {
 	// current number of Processes
 	Processes int32 `json:"processes"`
 	// cpu specific utilization information
-	CPUs []Util `json:"cpus"`
+	CPU []Util `json:"cpu"`
 }
 
 // Util holds utilization information for a CPU.
 type Util struct {
-	CPU       string  `json:"cpu"`
+	ID        string  `json:"id"`
 	Usage     float32 `json:"total"`
 	User      float32 `json:"user"`
 	Nice      float32 `json:"nice"`
@@ -312,34 +322,34 @@ func (u *Utilization) SerializeFlat() []byte {
 // bytes using the received builder.  It is assumed that the passed builder
 // is in a usable state.
 func (u *Utilization) SerializeFlatBuilder(bldr *fb.Builder) []byte {
-	utils := make([]fb.UOffsetT, len(u.CPUs))
-	cpus := make([]fb.UOffsetT, len(u.CPUs))
-	for i := 0; i < len(cpus); i++ {
-		cpus[i] = bldr.CreateString(u.CPUs[i].CPU)
+	utils := make([]fb.UOffsetT, len(u.CPU))
+	ids := make([]fb.UOffsetT, len(u.CPU))
+	for i := 0; i < len(ids); i++ {
+		ids[i] = bldr.CreateString(u.CPU[i].ID)
 	}
 	for i := 0; i < len(utils); i++ {
-		UtilFlatStart(bldr)
-		UtilFlatAddCPU(bldr, cpus[i])
-		UtilFlatAddUsage(bldr, u.CPUs[i].Usage)
-		UtilFlatAddUser(bldr, u.CPUs[i].User)
-		UtilFlatAddNice(bldr, u.CPUs[i].Nice)
-		UtilFlatAddSystem(bldr, u.CPUs[i].System)
-		UtilFlatAddIdle(bldr, u.CPUs[i].Idle)
-		UtilFlatAddIOWait(bldr, u.CPUs[i].IOWait)
-		utils[i] = UtilFlatEnd(bldr)
+		flat.UtilStart(bldr)
+		flat.UtilAddID(bldr, ids[i])
+		flat.UtilAddUsage(bldr, u.CPU[i].Usage)
+		flat.UtilAddUser(bldr, u.CPU[i].User)
+		flat.UtilAddNice(bldr, u.CPU[i].Nice)
+		flat.UtilAddSystem(bldr, u.CPU[i].System)
+		flat.UtilAddIdle(bldr, u.CPU[i].Idle)
+		flat.UtilAddIOWait(bldr, u.CPU[i].IOWait)
+		utils[i] = flat.UtilEnd(bldr)
 	}
-	UtilizationFlatStartCPUsVector(bldr, len(utils))
+	flat.UtilizationStartCPUVector(bldr, len(utils))
 	for i := len(utils) - 1; i >= 0; i-- {
 		bldr.PrependUOffsetT(utils[i])
 	}
 	utilsV := bldr.EndVector(len(utils))
-	UtilizationFlatStart(bldr)
-	UtilizationFlatAddTimestamp(bldr, u.Timestamp)
-	UtilizationFlatAddBTimeDelta(bldr, u.BTimeDelta)
-	UtilizationFlatAddCtxtDelta(bldr, u.CtxtDelta)
-	UtilizationFlatAddProcesses(bldr, u.Processes)
-	UtilizationFlatAddCPUs(bldr, utilsV)
-	bldr.Finish(UtilizationFlatEnd(bldr))
+	flat.UtilizationStart(bldr)
+	flat.UtilizationAddTimestamp(bldr, u.Timestamp)
+	flat.UtilizationAddBTimeDelta(bldr, u.BTimeDelta)
+	flat.UtilizationAddCtxtDelta(bldr, u.CtxtDelta)
+	flat.UtilizationAddProcesses(bldr, u.Processes)
+	flat.UtilizationAddCPU(bldr, utilsV)
+	bldr.Finish(flat.UtilizationEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
@@ -347,18 +357,18 @@ func (u *Utilization) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 // Utilization.
 func DeserializeUtilizationFlat(p []byte) Utilization {
 	var u Utilization
-	uF := &UtilFlat{}
-	data := GetRootAsUtilizationFlat(p, 0)
-	u.Timestamp = data.Timestamp()
-	u.CtxtDelta = data.CtxtDelta()
-	u.BTimeDelta = data.BTimeDelta()
-	u.Processes = data.Processes()
-	len := data.CPUsLength()
-	u.CPUs = make([]Util, len)
+	uF := &flat.Util{}
+	flatUtil := flat.GetRootAsUtilization(p, 0)
+	u.Timestamp = flatUtil.Timestamp()
+	u.CtxtDelta = flatUtil.CtxtDelta()
+	u.BTimeDelta = flatUtil.BTimeDelta()
+	u.Processes = flatUtil.Processes()
+	len := flatUtil.CPULength()
+	u.CPU = make([]Util, len)
 	for i := 0; i < len; i++ {
 		var util Util
-		if data.CPUs(uF, i) {
-			util.CPU = string(uF.CPU())
+		if flatUtil.CPU(uF, i) {
+			util.ID = string(uF.ID())
 			util.Usage = uF.Usage()
 			util.User = uF.User()
 			util.Nice = uF.Nice()
@@ -366,7 +376,7 @@ func DeserializeUtilizationFlat(p []byte) Utilization {
 			util.Idle = uF.Idle()
 			util.IOWait = uF.IOWait()
 		}
-		u.CPUs[i] = util
+		u.CPU[i] = util
 	}
 	return u
 }
@@ -433,18 +443,18 @@ tick:
 			prior.Ctxt = cur.Ctxt
 			prior.BTime = cur.BTime
 			prior.Processes = cur.Processes
-			if len(prior.CPUs) != len(cur.CPUs) {
-				prior.CPUs = make([]Stat, len(cur.CPUs))
+			if len(prior.CPU) != len(cur.CPU) {
+				prior.CPU = make([]Stat, len(cur.CPU))
 			}
-			copy(prior.CPUs, cur.CPUs)
+			copy(prior.CPU, cur.CPU)
 			cur.Timestamp = time.Now().UTC().UnixNano()
-			f, err := os.Open("/proc/stat")
+			f, err := os.Open(procStat)
 			if err != nil {
 				errs <- joe.Error{Type: "cpu", Op: "utilization ticker", Err: err}
 				continue tick
 			}
 			defer f.Close()
-			cur.CPUs = cur.CPUs[:0]
+			cur.CPU = cur.CPU[:0]
 			buf.Reset(f)
 			// read each line until eof
 			for {
@@ -477,7 +487,7 @@ tick:
 						}
 						j++
 					}
-					stat := Stat{CPU: name}
+					stat := Stat{ID: name}
 					fieldNum = 0
 					pos, j = j+pos, j+pos
 					// space is the field separator
@@ -535,7 +545,7 @@ tick:
 							}
 						}
 					}
-					cur.CPUs = append(cur.CPUs, stat)
+					cur.CPU = append(cur.CPU, stat)
 					stop = false
 					continue
 				}
@@ -573,7 +583,7 @@ tick:
 	}
 }
 
-// UtilizationFlatTicker processes CPU utilization information on a ticker
+// UtilizationTickerFlat processes CPU utilization information on a ticker
 // The generated utilization data serialized with flatbuffers and is sent to
 // the outCh.  Any errors encountered are sent to the errCh.  Processing ends
 // when either a done signal is received or the done channel is closed.
@@ -583,7 +593,7 @@ tick:
 // TODO: better handle errors, e.g. restore cur from prior so that there
 // isn't the possibility of temporarily having bad data, just a missed
 // collection interval.
-func UtilizationFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errs chan error) {
+func UtilizationTickerFlat(interval time.Duration, outCh chan []byte, done chan struct{}, errs chan error) {
 	out := make(chan Utilization)
 	defer close(outCh)
 	go UtilizationTicker(interval, out, done, errs)
@@ -607,24 +617,24 @@ func calculateUtilization(s1, s2 Stats) Utilization {
 		BTimeDelta: int32(s2.Timestamp/1000000000 - s2.BTime),
 		CtxtDelta:  s2.Ctxt - s1.Ctxt,
 		Processes:  int32(s2.Processes),
-		CPUs:       make([]Util, len(s2.CPUs)),
+		CPU:        make([]Util, len(s2.CPU)),
 	}
 	var dUser, dNice, dSys, dIdle, tot float32
 	// Rest of the calculations are per core
-	for i := 0; i < len(s2.CPUs); i++ {
-		v := Util{CPU: s2.CPUs[i].CPU}
-		dUser = float32(s2.CPUs[i].User - s1.CPUs[i].User)
-		dNice = float32(s2.CPUs[i].Nice - s1.CPUs[i].Nice)
-		dSys = float32(s2.CPUs[i].System - s1.CPUs[i].System)
-		dIdle = float32(s2.CPUs[i].Idle - s1.CPUs[i].Idle)
+	for i := 0; i < len(s2.CPU); i++ {
+		v := Util{ID: s2.CPU[i].ID}
+		dUser = float32(s2.CPU[i].User - s1.CPU[i].User)
+		dNice = float32(s2.CPU[i].Nice - s1.CPU[i].Nice)
+		dSys = float32(s2.CPU[i].System - s1.CPU[i].System)
+		dIdle = float32(s2.CPU[i].Idle - s1.CPU[i].Idle)
 		tot = dUser + dNice + dSys + dIdle
 		v.Usage = (dUser + dNice + dSys) / tot * float32(s2.ClkTck)
 		v.User = dUser / tot * float32(s2.ClkTck)
 		v.Nice = dNice / tot * float32(s2.ClkTck)
 		v.System = dSys / tot * float32(s2.ClkTck)
 		v.Idle = dIdle / tot * float32(s2.ClkTck)
-		v.IOWait = float32(s2.CPUs[i].IOWait-s1.CPUs[i].IOWait) / tot * float32(s2.ClkTck)
-		u.CPUs[i] = v
+		v.IOWait = float32(s2.CPU[i].IOWait-s1.CPU[i].IOWait) / tot * float32(s2.ClkTck)
+		u.CPU[i] = v
 	}
 	return u
 }

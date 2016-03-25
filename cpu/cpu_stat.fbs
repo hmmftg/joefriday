@@ -1,17 +1,17 @@
 // cpu_stat.fbs
-namespace cpu;
+namespace flat;
 
-table StatsFlat {
+table Stats {
     ClkTck:short;
     Timestamp:long;
     Ctxt:long;
     BTime:long;
     Processes:long;
-    CPUs:[StatFlat];
+    CPU:[Stat];
 }
 
-table StatFlat {
-    CPU:string;
+table Stat {
+    ID:string;
     User:long;
     Nice:long;
     System:long;
@@ -24,4 +24,4 @@ table StatFlat {
     QuestNice:long;
 }
 
-root_type StatsFlat;
+root_type Stats;
