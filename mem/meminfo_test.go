@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/EricLagergren/joefriday/mem/meminfo"
+	"github.com/mohae/joefriday/mem/flat"
 )
 
 func TestGetInfo(t *testing.T) {
@@ -28,7 +28,7 @@ func TestGetData(t *testing.T) {
 	}
 	inf := DeserializeInfoFlat(p)
 	// compare
-	data := meminfo.GetRootAsInfoFlat(p, 0)
+	data := flat.GetRootAsInfo(p, 0)
 	if inf.Timestamp != data.Timestamp() {
 		t.Errorf("got %d; want %d", inf.Timestamp, data.Timestamp())
 	}

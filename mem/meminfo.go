@@ -25,11 +25,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/EricLagergren/joefriday/mem/meminfo"
 	"github.com/SermoDigital/helpers"
-
-	flat "github.com/google/flatbuffers/go"
+	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
+	"github.com/mohae/joefriday/mem/flat"
 )
 
 type Info struct {
@@ -48,31 +47,31 @@ type Info struct {
 
 // Serialize serializes the Info using flatbuffers.
 func (i *Info) SerializeFlat() []byte {
-	bldr := flat.NewBuilder(0)
+	bldr := fb.NewBuilder(0)
 	return i.SerializeFlatBuilder(bldr)
 }
 
-func (i *Info) SerializeFlatBuilder(bldr *flat.Builder) []byte {
-	meminfo.InfoFlatStart(bldr)
-	meminfo.InfoFlatAddTimestamp(bldr, int64(i.Timestamp))
-	meminfo.InfoFlatAddMemTotal(bldr, int64(i.MemTotal))
-	meminfo.InfoFlatAddMemFree(bldr, int64(i.MemFree))
-	meminfo.InfoFlatAddMemAvailable(bldr, int64(i.MemAvailable))
-	meminfo.InfoFlatAddBuffers(bldr, int64(i.Buffers))
-	meminfo.InfoFlatAddCached(bldr, int64(i.Cached))
-	meminfo.InfoFlatAddSwapCached(bldr, int64(i.SwapCached))
-	meminfo.InfoFlatAddActive(bldr, int64(i.Active))
-	meminfo.InfoFlatAddInactive(bldr, int64(i.Inactive))
-	meminfo.InfoFlatAddSwapTotal(bldr, int64(i.SwapTotal))
-	meminfo.InfoFlatAddSwapFree(bldr, int64(i.SwapFree))
-	bldr.Finish(meminfo.InfoFlatEnd(bldr))
+func (i *Info) SerializeFlatBuilder(bldr *fb.Builder) []byte {
+	flat.InfoStart(bldr)
+	flat.InfoAddTimestamp(bldr, int64(i.Timestamp))
+	flat.InfoAddMemTotal(bldr, int64(i.MemTotal))
+	flat.InfoAddMemFree(bldr, int64(i.MemFree))
+	flat.InfoAddMemAvailable(bldr, int64(i.MemAvailable))
+	flat.InfoAddBuffers(bldr, int64(i.Buffers))
+	flat.InfoAddCached(bldr, int64(i.Cached))
+	flat.InfoAddSwapCached(bldr, int64(i.SwapCached))
+	flat.InfoAddActive(bldr, int64(i.Active))
+	flat.InfoAddInactive(bldr, int64(i.Inactive))
+	flat.InfoAddSwapTotal(bldr, int64(i.SwapTotal))
+	flat.InfoAddSwapFree(bldr, int64(i.SwapFree))
+	bldr.Finish(flat.InfoEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
 // DeserializeInfoFlat deserializes bytes serialized with Flatbuffers from
 // InfoFlat into *Info.
 func DeserializeInfoFlat(p []byte) *Info {
-	infoFlat := meminfo.GetRootAsInfoFlat(p, 0)
+	infoFlat := flat.GetRootAsInfo(p, 0)
 	info := &Info{}
 	info.Timestamp = infoFlat.Timestamp()
 	info.MemTotal = infoFlat.MemTotal()
@@ -230,7 +229,7 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 	// premake some temp slices
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
-	bldr := flat.NewBuilder(0)
+	bldr := fb.NewBuilder(0)
 	// Some hoops to jump through to ensure we don't get a ErrBufferFull.
 	var bs []byte
 	tmp := bytes.NewBuffer(bs)
@@ -250,8 +249,8 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 				continue
 			}
 			buf.Reset(f)
-			meminfo.InfoFlatStart(bldr)
-			meminfo.InfoFlatAddTimestamp(bldr, t)
+			flat.InfoStart(bldr)
+			flat.InfoAddTimestamp(bldr, t)
 			for {
 				if l == 16 {
 					break
@@ -301,48 +300,48 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 				}
 				val = val[:0]
 				if name == "MemTotal" {
-					meminfo.InfoFlatAddMemTotal(bldr, int64(i))
+					flat.InfoAddMemTotal(bldr, int64(i))
 					continue
 				}
 				if name == "MemFree" {
-					meminfo.InfoFlatAddMemFree(bldr, int64(i))
+					flat.InfoAddMemFree(bldr, int64(i))
 					continue
 				}
 				if name == "MemAvailable" {
-					meminfo.InfoFlatAddMemAvailable(bldr, int64(i))
+					flat.InfoAddMemAvailable(bldr, int64(i))
 					continue
 				}
 				if name == "Buffers" {
-					meminfo.InfoFlatAddBuffers(bldr, int64(i))
+					flat.InfoAddBuffers(bldr, int64(i))
 					continue
 				}
 				if name == "Cached" {
-					meminfo.InfoFlatAddMemAvailable(bldr, int64(i))
+					flat.InfoAddMemAvailable(bldr, int64(i))
 					continue
 				}
 				if name == "SwapCached" {
-					meminfo.InfoFlatAddSwapCached(bldr, int64(i))
+					flat.InfoAddSwapCached(bldr, int64(i))
 					continue
 				}
 				if name == "Active" {
-					meminfo.InfoFlatAddActive(bldr, int64(i))
+					flat.InfoAddActive(bldr, int64(i))
 					continue
 				}
 				if name == "Inactive" {
-					meminfo.InfoFlatAddInactive(bldr, int64(i))
+					flat.InfoAddInactive(bldr, int64(i))
 					continue
 				}
 				if name == "SwapTotal" {
-					meminfo.InfoFlatAddSwapTotal(bldr, int64(i))
+					flat.InfoAddSwapTotal(bldr, int64(i))
 					continue
 				}
 				if name == "SwapFree" {
-					meminfo.InfoFlatAddSwapFree(bldr, int64(i))
+					flat.InfoAddSwapFree(bldr, int64(i))
 					continue
 				}
 			}
 			f.Close()
-			bldr.Finish(meminfo.InfoFlatEnd(bldr))
+			bldr.Finish(flat.InfoEnd(bldr))
 			inf := bldr.Bytes[bldr.Head():]
 			outCh <- inf
 			bldr.Reset()

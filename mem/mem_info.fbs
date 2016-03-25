@@ -1,7 +1,7 @@
 // memdata.fbs
-namespace meminfo;
+namespace flat;
 
-table InfoFlat {
+table Info {
 	Timestamp: long;
 	MemTotal: long;
 	MemFree: long;
@@ -15,4 +15,4 @@ table InfoFlat {
 	SwapFree: long;
 }
 
-root_type InfoFlat;
+root_type Info;
