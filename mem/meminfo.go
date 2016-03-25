@@ -321,7 +321,6 @@ func InfoFlatTicker(interval time.Duration, out chan []byte, done chan struct{},
 				} else if v == 'A' {
 					flat.InfoAddInactive(bldr, int64(n))
 				}
-				val = val[:0]
 			}
 			bldr.Finish(flat.InfoEnd(bldr))
 			inf := bldr.Bytes[bldr.Head():]
