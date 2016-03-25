@@ -17,12 +17,10 @@ package mem
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/SermoDigital/helpers"
@@ -212,31 +210,32 @@ func GetInfoFlat() ([]byte, error) {
 // output is a Flatbuffers serialization of InfoFlat.  Any error encountered
 // during processing is sent to the error channel; processing will continue.
 //
+// If an error occurs while opening /proc/meminfo, the error will be sent
+// to the errs channel and this func will exit.
+//
 // To stop processing and exit; send a signal on the done channel.  This
 // will cause the function to stop the ticker, close the out channel and
 // return.
-//
-// This pre-allocates the builder and everything other than the []byte that
-// gets sent to the out channel to reduce allocations, as this is expected
-// to be both a frequent and a long-running process.
-func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errCh chan error) {
+func InfoFlatTicker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	defer close(outCh)
+	defer close(out)
 	// predeclare some vars
-	var l, i, pos int
-	var t int64
-	var v byte
-	var name string
+	var (
+		l, i, pos, nameLen int
+		v                  byte
+		n                  uint64
+	)
 	// premake some temp slices
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
 	bldr := fb.NewBuilder(0)
-	// Some hoops to jump through to ensure we don't get a ErrBufferFull.
-	var bs []byte
-	tmp := bytes.NewBuffer(bs)
-	buf := bufio.NewReaderSize(tmp, 1536)
-	tmp = nil
+	f, err := os.Open(procMemInfo)
+	if err != nil {
+		errs <- joe.Error{Type: "cpu", Op: "InfoFlatTicker: open /proc/meminfo", Err: err}
+		return
+	}
+	buf := bufio.NewReaderSize(f, 1536)
 	// ticker
 	for {
 		select {
@@ -244,41 +243,35 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 			return
 		case <-ticker.C:
 			// The current timestamp is always in UTC
-			t = time.Now().UTC().UnixNano()
-			f, err := os.Open(procMemInfo)
+			_, err = f.Seek(0, os.SEEK_SET)
 			if err != nil {
-				errCh <- joe.Error{Type: "mem", Op: "open /proc/meminfo", Err: err}
+				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue
 			}
 			buf.Reset(f)
 			flat.InfoStart(bldr)
-			flat.InfoAddTimestamp(bldr, t)
-			for {
-				if l == 16 {
-					break
-				}
+			flat.InfoAddTimestamp(bldr, time.Now().UTC().UnixNano())
+			for l = 0; l < 16; l++ {
 				line, err := buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
 						break
 					}
-					errCh <- joe.Error{Type: "mem", Op: "read command results", Err: err}
+					errs <- joe.Error{Type: "mem", Op: "read output bytes", Err: err}
 					break
 				}
 				l++
-				if l > 8 && l < 15 {
+				if l > 8 && l < 14 {
 					continue
 				}
 				// first grab the key name (everything up to the ':')
 				for i, v = range line {
 					if v == 0x3A {
-						pos = i + 1
+						val = line[:i]
 						break
 					}
-					val = append(val, v)
 				}
-				name = string(val[:])
-				val = val[:0]
+				nameLen = len(val)
 				// skip all spaces
 				for i, v = range line[pos:] {
 					if v != 0x20 {
@@ -295,57 +288,44 @@ func InfoFlatTicker(interval time.Duration, outCh chan []byte, done chan struct{
 					val = append(val, v)
 				}
 				// any conversion error results in 0
-				i, err = strconv.Atoi(string(val[:]))
+				n, err = helpers.ParseUint(val[nameLen:])
 				if err != nil {
-					errCh <- joe.Error{Type: "mem", Op: "convert to int", Err: err}
+					errs <- joe.Error{Type: "mem", Op: fmt.Sprintf("convert %s", val[:nameLen]), Err: err}
 					continue
+				}
+				v = val[0]
+				if v == 'M' {
+					v = val[3]
+					if v == 'T' {
+						flat.InfoAddMemTotal(bldr, int64(n))
+					} else if v == 'F' {
+						flat.InfoAddMemFree(bldr, int64(n))
+					} else {
+						flat.InfoAddMemAvailable(bldr, int64(n))
+					}
+				} else if v == 'S' {
+					v = val[4]
+					if v == 'C' {
+						flat.InfoAddSwapCached(bldr, int64(n))
+					} else if v == 'T' {
+						flat.InfoAddSwapTotal(bldr, int64(n))
+					} else if v == 'F' {
+						flat.InfoAddSwapFree(bldr, int64(n))
+					}
+				} else if v == 'B' {
+					flat.InfoAddBuffers(bldr, int64(n))
+				} else if v == 'I' {
+					flat.InfoAddInactive(bldr, int64(n))
+				} else if v == 'C' {
+					flat.InfoAddMemAvailable(bldr, int64(n))
+				} else if v == 'A' {
+					flat.InfoAddInactive(bldr, int64(n))
 				}
 				val = val[:0]
-				if name == "MemTotal" {
-					flat.InfoAddMemTotal(bldr, int64(i))
-					continue
-				}
-				if name == "MemFree" {
-					flat.InfoAddMemFree(bldr, int64(i))
-					continue
-				}
-				if name == "MemAvailable" {
-					flat.InfoAddMemAvailable(bldr, int64(i))
-					continue
-				}
-				if name == "Buffers" {
-					flat.InfoAddBuffers(bldr, int64(i))
-					continue
-				}
-				if name == "Cached" {
-					flat.InfoAddMemAvailable(bldr, int64(i))
-					continue
-				}
-				if name == "SwapCached" {
-					flat.InfoAddSwapCached(bldr, int64(i))
-					continue
-				}
-				if name == "Active" {
-					flat.InfoAddActive(bldr, int64(i))
-					continue
-				}
-				if name == "Inactive" {
-					flat.InfoAddInactive(bldr, int64(i))
-					continue
-				}
-				if name == "SwapTotal" {
-					flat.InfoAddSwapTotal(bldr, int64(i))
-					continue
-				}
-				if name == "SwapFree" {
-					flat.InfoAddSwapFree(bldr, int64(i))
-					continue
-				}
 			}
-			f.Close()
 			bldr.Finish(flat.InfoEnd(bldr))
 			inf := bldr.Bytes[bldr.Head():]
-			outCh <- inf
+			out <- inf
 			bldr.Reset()
 			l = 0
 		}
