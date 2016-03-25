@@ -23,14 +23,14 @@ type Kernel struct {
 }
 
 // SerializeFlat serializes Kernel using Flatbuffers.
-func (k Kernel) SerializeFlat() []byte {
+func (k *Kernel) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
 	return k.SerializeFlatBuilder(bldr)
 }
 
 // SerializeFlatBuilder uses the passed flat.Builder to serialize Kernel.
 // The builder is expected to be in a usable state.
-func (k Kernel) SerializeFlatBuilder(bldr *fb.Builder) []byte {
+func (k *Kernel) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	version := bldr.CreateString(k.Version)
 	compileUser := bldr.CreateString(k.CompileUser)
 	gcc := bldr.CreateString(k.GCC)
@@ -51,7 +51,7 @@ func (k Kernel) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 }
 
 // DeserializeKernelFlat deserializes the bytes into Kernel using Flatbuffers.
-func DeserializeKernelFlat(p []byte) Kernel {
+func DeserializeKernelFlat(p []byte) *Kernel {
 	flatKernel := flat.GetRootAsKernel(p, 0)
 	var kernel Kernel
 	kernel.Version = string(flatKernel.Version())
@@ -61,17 +61,17 @@ func DeserializeKernelFlat(p []byte) Kernel {
 	kernel.Type = string(flatKernel.Type())
 	kernel.CompileDate = string(flatKernel.CompileDate())
 	kernel.Arch = string(flatKernel.Arch())
-	return kernel
+	return &kernel
 }
 
 // GetKernel populates Kernel with /proc/version information.
-func GetKernel() (Kernel, error) {
+func GetKernel() (*Kernel, error) {
 	var i, pos, pos2 int
 	var v byte
 	var kernel Kernel
 	f, err := os.Open("/proc/version")
 	if err != nil {
-		return kernel, err
+		return nil, err
 	}
 	defer f.Close()
 	buf := bufio.NewReader(f)
@@ -81,7 +81,7 @@ func GetKernel() (Kernel, error) {
 			if err == io.EOF {
 				break
 			}
-			return kernel, joe.Error{Type: "platform", Op: "read /proc/verion", Err: err}
+			return nil, joe.Error{Type: "platform", Op: "read /proc/verion", Err: err}
 		}
 		// The version is everything up to the first '(', 0x28, - 1 byte
 		for i, v = range line {
@@ -138,7 +138,7 @@ func GetKernel() (Kernel, error) {
 		// The rest is the compile date.
 		kernel.CompileDate = string(line[pos : len(line)-2])
 	}
-	return kernel, nil
+	return &kernel, nil
 }
 
 // Release holds information about the release.  The source depends on the
@@ -154,14 +154,14 @@ type Release struct {
 }
 
 // SerializeFlat serializes Release using Flatbuffers.
-func (r Release) SerializeFlat() []byte {
+func (r *Release) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
 	return r.SerializeFlatBuilder(bldr)
 }
 
 // SerializeFlatBuilder uses the passed flat.Builder to serialize Release.
 // The builder is expected to be in a usable state.
-func (r Release) SerializeFlatBuilder(bldr *fb.Builder) []byte {
+func (r *Release) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	id := bldr.CreateString(r.ID)
 	idLike := bldr.CreateString(r.IDLike)
 	prettyName := bldr.CreateString(r.PrettyName)
@@ -182,7 +182,7 @@ func (r Release) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 }
 
 // DeserializeReleaseFlat deserializes bytes into Release using Flatbuffers.
-func DeserializeReleaseFlat(p []byte) Release {
+func DeserializeReleaseFlat(p []byte) *Release {
 	releaseFlat := flat.GetRootAsRelease(p, 0)
 	var release Release
 	release.ID = string(releaseFlat.ID())
@@ -192,11 +192,11 @@ func DeserializeReleaseFlat(p []byte) Release {
 	release.VersionID = string(releaseFlat.VersionID())
 	release.HomeURL = string(releaseFlat.HomeURL())
 	release.BugReportURL = string(releaseFlat.BugReportURL())
-	return release
+	return &release
 }
 
 // GetRelease populates release: the source depends on the OS
-func GetRelease() (Release, error) {
+func GetRelease() (*Release, error) {
 	var i int
 	var v byte
 	var release Release
@@ -205,7 +205,7 @@ func GetRelease() (Release, error) {
 	val := make([]byte, 32)
 	f, err := os.Open("/etc/os-release")
 	if err != nil {
-		return release, err
+		return nil, err
 	}
 	defer f.Close()
 	buf := bufio.NewReader(f)
@@ -215,7 +215,7 @@ func GetRelease() (Release, error) {
 			if err == io.EOF {
 				break
 			}
-			return release, joe.Error{Type: "platform", Op: "read /proc/verion", Err: err}
+			return nil, joe.Error{Type: "platform", Op: "read /proc/verion", Err: err}
 		}
 		// The key is everything up to '='; 0x3D
 		for i, v = range line {
@@ -258,5 +258,5 @@ func GetRelease() (Release, error) {
 			continue
 		}
 	}
-	return release, nil
+	return &release, nil
 }
