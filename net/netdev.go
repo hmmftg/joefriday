@@ -101,8 +101,8 @@ func (inf *Info) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	return bldr.Bytes[bldr.Head():]
 }
 
-// DeserializeFlat deserializes Flatbuffer serialized bytes as *Info.
-func DeserializeFlat(p []byte) *Info {
+// DeserializeInfoFlat deserializes Flatbuffer serialized bytes as *Info.
+func DeserializeInfoFlat(p []byte) *Info {
 	infoFlat := flat.GetRootAsInfo(p, 0)
 	// get the # of interfaces
 	iLen := infoFlat.InterfacesLength()
@@ -481,6 +481,21 @@ func InfoTickerFlat(interval time.Duration, out chan []byte, done chan struct{},
 
 // Usage holds the difference between network IO snapshots.
 type Usage Info
+
+func (u *Usage) SerializeFlat() []byte {
+	bldr := fb.NewBuilder(0)
+	return u.SerializeFlatBuilder(bldr)
+}
+
+func (u *Usage) SerializeFlatBuilder(bldr *fb.Builder) []byte {
+	inf := Info(*u)
+	return inf.SerializeFlatBuilder(bldr)
+}
+
+func DeserializeUsageFlat(p []byte) *Usage {
+	u := Usage(*(DeserializeInfoFlat(p)))
+	return &u
+}
 
 // Usage gets the number of recieve/transmit information for the given
 func GetUsage(t time.Duration) (Usage, error) {

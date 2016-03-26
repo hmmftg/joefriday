@@ -16,7 +16,7 @@ func TestGetInfo(t *testing.T) {
 	}
 	// test flatbuffers stuff
 	infS := inf.SerializeFlat()
-	infD := DeserializeFlat(infS)
+	infD := DeserializeInfoFlat(infS)
 	// compare
 	if inf.Timestamp != infD.Timestamp {
 		t.Errorf("got %d; want %d", inf.Timestamp, infD.Timestamp)
@@ -77,7 +77,7 @@ func TestInfo(t *testing.T) {
 	inf, _ := GetInfo()
 	bldr := fb.NewBuilder(0)
 	b := inf.SerializeFlatBuilder(bldr)
-	infD := DeserializeFlat(b)
+	infD := DeserializeInfoFlat(b)
 	if json.MarshalToString(inf) != json.MarshalToString(infD) {
 		t.Errorf("serialize/deserialize flatbuffers: got %v, want %v", infD, inf)
 	}
@@ -99,7 +99,7 @@ func TestInfoTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			inf := DeserializeFlat(b)
+			inf := DeserializeInfoFlat(b)
 			if len(inf.Interfaces) < 2 {
 				t.Errorf("expected at least 2 interfaces, got %d", len(inf.Interfaces))
 			}
@@ -124,6 +124,18 @@ func TestGetUsage(t *testing.T) {
 		if v.Name == "" {
 			t.Errorf("%d: expected the interface to have a name, it was empty", i)
 		}
+	}
+}
+
+func TestGetUsageSerializeDeserialize(t *testing.T) {
+	u, err := GetUsage(time.Duration(100) * time.Millisecond)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	b := u.SerializeFlat()
+	uD := DeserializeUsageFlat(b)
+	if json.MarshalToString(u) != json.MarshalToString(uD) {
+		t.Errorf("flatbuffers serialize/deserialize usage: got %v, want %v", uD, u)
 	}
 }
 
