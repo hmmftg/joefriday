@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package net gets and processes /proc/net/dev, returning the data in the
+// Package net gets and processes /proc/net/dev, returning the infoFlat in the
 // appropriate format.
 package net
 
@@ -26,16 +26,16 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
+	"github.com/mohae/joefriday/net/flat"
 )
 
 type Info struct {
-	Timestamp  int64   `json:"timestamp"`
-	Interfaces []Iface `json:"interfaces"`
+	Timestamp  int64       `json:"timestamp"`
+	Interfaces []Interface `json:"interfaces"`
 }
 
-// Iface: contains information for a given network interface; names as
-// such to prevent collision with the Flatbuffers struct.
-type Iface struct {
+// Interface: contains information for a given network interface.
+type Interface struct {
 	Name        string `json:"name"`
 	RBytes      int64  `json:"receive_bytes"`
 	RPackets    int64  `json:"receive_packets"`
@@ -55,59 +55,62 @@ type Iface struct {
 	TCompressed int64  `json:"transmit_compressed"`
 }
 
-// Serialize serializes the Info using flatbuffers.
-func (inf *Info) Serialize() []byte {
+// SerializeFlat serializes the Info using flatbuffers.
+func (inf *Info) SerializeFlat() []byte {
 	bldr := fb.NewBuilder(0)
+	return inf.SerializeFlatBuilder(bldr)
+}
+
+// SerializeFlatBuilder serializes the Info using flatbuffers.
+func (inf *Info) SerializeFlatBuilder(bldr *fb.Builder) []byte {
 	ifaces := make([]fb.UOffsetT, len(inf.Interfaces))
 	names := make([]fb.UOffsetT, len(inf.Interfaces))
 	for i := 0; i < len(inf.Interfaces); i++ {
 		names[i] = bldr.CreateString(inf.Interfaces[i].Name)
 	}
 	for i := 0; i < len(inf.Interfaces); i++ {
-		IFaceStart(bldr)
-		IFaceAddName(bldr, names[i])
-		IFaceAddRBytes(bldr, inf.Interfaces[i].RBytes)
-		IFaceAddRPackets(bldr, inf.Interfaces[i].RPackets)
-		IFaceAddRErrs(bldr, inf.Interfaces[i].RErrs)
-		IFaceAddRDrop(bldr, inf.Interfaces[i].RDrop)
-		IFaceAddRFIFO(bldr, inf.Interfaces[i].RFIFO)
-		IFaceAddRFrame(bldr, inf.Interfaces[i].RFrame)
-		IFaceAddRCompressed(bldr, inf.Interfaces[i].RCompressed)
-		IFaceAddRMulticast(bldr, inf.Interfaces[i].RMulticast)
-		IFaceAddTBytes(bldr, inf.Interfaces[i].TBytes)
-		IFaceAddTPackets(bldr, inf.Interfaces[i].TPackets)
-		IFaceAddTErrs(bldr, inf.Interfaces[i].TErrs)
-		IFaceAddTDrop(bldr, inf.Interfaces[i].TDrop)
-		IFaceAddTFIFO(bldr, inf.Interfaces[i].TFIFO)
-		IFaceAddTColls(bldr, inf.Interfaces[i].TColls)
-		IFaceAddTCarrier(bldr, inf.Interfaces[i].TCarrier)
-		IFaceAddTCompressed(bldr, inf.Interfaces[i].TCompressed)
-		ifaces[i] = IFaceEnd(bldr)
+		flat.InterfaceStart(bldr)
+		flat.InterfaceAddName(bldr, names[i])
+		flat.InterfaceAddRBytes(bldr, inf.Interfaces[i].RBytes)
+		flat.InterfaceAddRPackets(bldr, inf.Interfaces[i].RPackets)
+		flat.InterfaceAddRErrs(bldr, inf.Interfaces[i].RErrs)
+		flat.InterfaceAddRDrop(bldr, inf.Interfaces[i].RDrop)
+		flat.InterfaceAddRFIFO(bldr, inf.Interfaces[i].RFIFO)
+		flat.InterfaceAddRFrame(bldr, inf.Interfaces[i].RFrame)
+		flat.InterfaceAddRCompressed(bldr, inf.Interfaces[i].RCompressed)
+		flat.InterfaceAddRMulticast(bldr, inf.Interfaces[i].RMulticast)
+		flat.InterfaceAddTBytes(bldr, inf.Interfaces[i].TBytes)
+		flat.InterfaceAddTPackets(bldr, inf.Interfaces[i].TPackets)
+		flat.InterfaceAddTErrs(bldr, inf.Interfaces[i].TErrs)
+		flat.InterfaceAddTDrop(bldr, inf.Interfaces[i].TDrop)
+		flat.InterfaceAddTFIFO(bldr, inf.Interfaces[i].TFIFO)
+		flat.InterfaceAddTColls(bldr, inf.Interfaces[i].TColls)
+		flat.InterfaceAddTCarrier(bldr, inf.Interfaces[i].TCarrier)
+		flat.InterfaceAddTCompressed(bldr, inf.Interfaces[i].TCompressed)
+		ifaces[i] = flat.InterfaceEnd(bldr)
 	}
-	DataStartInterfacesVector(bldr, len(ifaces))
+	flat.InfoStartInterfacesVector(bldr, len(ifaces))
 	for i := len(inf.Interfaces) - 1; i >= 0; i-- {
 		bldr.PrependUOffsetT(ifaces[i])
 	}
 	ifacesV := bldr.EndVector(len(ifaces))
-	DataStart(bldr)
-	DataAddTimestamp(bldr, inf.Timestamp)
-	DataAddInterfaces(bldr, ifacesV)
-	bldr.Finish(DataEnd(bldr))
+	flat.InfoStart(bldr)
+	flat.InfoAddTimestamp(bldr, inf.Timestamp)
+	flat.InfoAddInterfaces(bldr, ifacesV)
+	bldr.Finish(flat.InfoEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
 
-// Deserialize deserializes bytes representing flatbuffers serialized Data
-// into *Info.  If the bytes are not from flatbuffers serialization of
-// Data, it is a programmer error and a panic will occur.
-func Deserialize(p []byte) *Info {
-	data := GetRootAsData(p, 0)
+// DeserializeFlat deserializes Flatbuffer serialized bytes as *Info.
+func DeserializeFlat(p []byte) *Info {
+	infoFlat := flat.GetRootAsInfo(p, 0)
 	// get the # of interfaces
-	iLen := data.InterfacesLength()
-	info := &Info{Timestamp: data.Timestamp(), Interfaces: make([]Iface, iLen)}
-	iFace := &IFace{}
-	iface := Iface{}
+	iLen := infoFlat.InterfacesLength()
+	info := &Info{Timestamp: infoFlat.Timestamp(), Interfaces: make([]Interface, iLen)}
+	iFace := &flat.Interface{}
+	iface := Interface{}
 	for i := 0; i < iLen; i++ {
-		if data.Interfaces(iFace, i) {
+		if infoFlat.Interfaces(iFace, i) {
 			iface.Name = string(iFace.Name())
 			iface.RBytes = iFace.RBytes()
 			iface.RPackets = iFace.RPackets()
@@ -170,7 +173,7 @@ func GetInfo() (*Info, error) {
 	defer f.Close()
 	buf := bufio.NewReader(f)
 	// there's always at least 2 interfaces (I think)
-	inf := &Info{Timestamp: t, Interfaces: make([]Iface, 0, 2)}
+	inf := &Info{Timestamp: t, Interfaces: make([]Interface, 0, 2)}
 	val := make([]byte, 0, 32)
 	for {
 		line, err := buf.ReadSlice('\n')
@@ -184,7 +187,7 @@ func GetInfo() (*Info, error) {
 		if l < 3 {
 			continue
 		}
-		var iData Iface
+		var iInfo Interface
 
 		// first grab the interface name (everything up to the ':')
 		for i, v = range line {
@@ -194,7 +197,7 @@ func GetInfo() (*Info, error) {
 			}
 			val = append(val, v)
 		}
-		iData.Name = string(val[:])
+		iInfo.Name = string(val[:])
 		val = val[:0]
 		fieldNum = 0
 		// process the rest of the line
@@ -219,108 +222,107 @@ func GetInfo() (*Info, error) {
 			// any conversion error results in 0
 			fieldVal, err = strconv.Atoi(string(val[:]))
 			if err != nil {
-				return nil, fmt.Errorf("%s: %s", iData.Name, err)
+				return nil, fmt.Errorf("%s: %s", iInfo.Name, err)
 			}
 			val = val[:0]
 			if fieldNum == 1 {
-				iData.RBytes = int64(fieldVal)
+				iInfo.RBytes = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 2 {
-				iData.RPackets = int64(fieldVal)
+				iInfo.RPackets = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 3 {
-				iData.RErrs = int64(fieldVal)
+				iInfo.RErrs = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 4 {
-				iData.RDrop = int64(fieldVal)
+				iInfo.RDrop = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 5 {
-				iData.RFIFO = int64(fieldVal)
+				iInfo.RFIFO = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 6 {
-				iData.RFrame = int64(fieldVal)
+				iInfo.RFrame = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 7 {
-				iData.RCompressed = int64(fieldVal)
+				iInfo.RCompressed = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 8 {
-				iData.RMulticast = int64(fieldVal)
+				iInfo.RMulticast = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 9 {
-				iData.TBytes = int64(fieldVal)
+				iInfo.TBytes = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 10 {
-				iData.TPackets = int64(fieldVal)
+				iInfo.TPackets = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 11 {
-				iData.TErrs = int64(fieldVal)
+				iInfo.TErrs = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 12 {
-				iData.TDrop = int64(fieldVal)
+				iInfo.TDrop = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 13 {
-				iData.TFIFO = int64(fieldVal)
+				iInfo.TFIFO = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 14 {
-				iData.TColls = int64(fieldVal)
+				iInfo.TColls = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 15 {
-				iData.TCarrier = int64(fieldVal)
+				iInfo.TCarrier = int64(fieldVal)
 				continue
 			}
 			if fieldNum == 16 {
-				iData.TCompressed = int64(fieldVal)
+				iInfo.TCompressed = int64(fieldVal)
 				break
 			}
 		}
-		inf.Interfaces = append(inf.Interfaces, iData)
+		inf.Interfaces = append(inf.Interfaces, iInfo)
 	}
 	return inf, nil
 }
 
-// GetData returns the current meminfo as flatbuffer serialized bytes.
-func GetData() ([]byte, error) {
+// GetInfoFlat returns the current meminfo as flatbuffer serialized bytes.
+func GetInfoFlat() ([]byte, error) {
 	inf, err := GetInfo()
 	if err != nil {
 		return nil, err
 	}
-	return inf.Serialize(), nil
+	return inf.SerializeFlat(), nil
 }
 
-// DataTicker gathers the net/dev data on a ticker, whose interval is defined
+// InfoTickerFlat gathers the net/dev infoFlat on a ticker, whose interval is defined
 // by the received duration, and sends the results to the channel.  The output
-// is Flatbuffers serialized Data.  Any error encountered during processing
+// is Flatbuffers serialized Info.  Any error encountered during processing
 // is sent to the error channel.  Processing will continue
 //
-// Either closing the done channel or sending struct{} to the done channel
-// will result in function exit.  The out channel is closed on exit.
+// Sending a struct{}{} to the done channel will result in function exit.
 //
 // This pre-allocates the builder and everything other than the []byte that
 // gets sent to the out channel to reduce allocations, as this is expected
 // to be both a frequent and a long-running process.
-func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, errCh chan error) {
+func InfoTickerFlat(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	defer close(outCh)
+	defer close(out)
 	// predeclare some vars
 	var l, i, pos, fieldNum, fieldVal int
 	var v byte
 	var t int64
-	var iData Iface
+	var iInfo Interface
 	// premake some temp slices
 	val := make([]byte, 0, 32)
 	// just reset the bldr at the end of every ticker
@@ -333,7 +335,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 	// TODO: revisit this sizing/maybe make it configurable?
 	buf := bufio.NewReaderSize(tmp, 4096)
 	tmp = nil
-	inf := &Info{Interfaces: make([]Iface, 0, 4)}
+	inf := &Info{Interfaces: make([]Interface, 0, 4)}
 	// ticker
 	for {
 		select {
@@ -356,7 +358,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 					if err == io.EOF {
 						break
 					}
-					errCh <- fmt.Errorf("/proc/mem/dev: read output bytes: %s", err)
+					errs <- fmt.Errorf("/proc/mem/dev: read output bytes: %s", err)
 					break
 				}
 				l++
@@ -372,7 +374,7 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 					}
 					val = append(val, v)
 				}
-				iData.Name = string(val[:])
+				iInfo.Name = string(val[:])
 				val = val[:0]
 				fieldNum = 0
 				// process the rest of the line
@@ -397,136 +399,90 @@ func DataTicker(interval time.Duration, outCh chan []byte, done chan struct{}, e
 					// any conversion error results in 0
 					fieldVal, err = strconv.Atoi(string(val[:]))
 					if err != nil {
-						errCh <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iData.Name, err)
+						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iInfo.Name, err)
 						continue
 					}
 					val = val[:0]
 					if fieldNum == 1 {
-						iData.RBytes = int64(fieldVal)
+						iInfo.RBytes = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 2 {
-						iData.RPackets = int64(fieldVal)
+						iInfo.RPackets = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 3 {
-						iData.RErrs = int64(fieldVal)
+						iInfo.RErrs = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 4 {
-						iData.RDrop = int64(fieldVal)
+						iInfo.RDrop = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 5 {
-						iData.RFIFO = int64(fieldVal)
+						iInfo.RFIFO = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 6 {
-						iData.RFrame = int64(fieldVal)
+						iInfo.RFrame = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 7 {
-						iData.RCompressed = int64(fieldVal)
+						iInfo.RCompressed = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 8 {
-						iData.RMulticast = int64(fieldVal)
+						iInfo.RMulticast = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 9 {
-						iData.TBytes = int64(fieldVal)
+						iInfo.TBytes = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 10 {
-						iData.TPackets = int64(fieldVal)
+						iInfo.TPackets = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 11 {
-						iData.TErrs = int64(fieldVal)
+						iInfo.TErrs = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 12 {
-						iData.TDrop = int64(fieldVal)
+						iInfo.TDrop = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 13 {
-						iData.TFIFO = int64(fieldVal)
+						iInfo.TFIFO = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 14 {
-						iData.TColls = int64(fieldVal)
+						iInfo.TColls = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 15 {
-						iData.TCarrier = int64(fieldVal)
+						iInfo.TCarrier = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 16 {
-						iData.TCompressed = int64(fieldVal)
+						iInfo.TCompressed = int64(fieldVal)
 						break
 					}
 				}
-				inf.Interfaces = append(inf.Interfaces, iData)
+				inf.Interfaces = append(inf.Interfaces, iInfo)
 			}
 			f.Close()
-			data := Serialize(inf, bldr)
-			outCh <- data
+			bldr.Reset()
+			infoFlat := inf.SerializeFlatBuilder(bldr)
+			out <- infoFlat
 			l = 0
 		}
 	}
 }
 
-// Serialize serializes the Info using Flatbuffers.  This version uses an
-// existing flatbuffers.Builder to save on allocations.  If the builder is
-// not going to be reused, Info.Serialize() should probably be used.
-func Serialize(inf *Info, bldr *fb.Builder) []byte {
-	bldr.Reset()
-	ifaces := make([]fb.UOffsetT, len(inf.Interfaces))
-	names := make([]fb.UOffsetT, len(inf.Interfaces))
-	for i := 0; i < len(inf.Interfaces); i++ {
-		names[i] = bldr.CreateString(inf.Interfaces[i].Name)
-	}
-	for i := 0; i < len(inf.Interfaces); i++ {
-		IFaceStart(bldr)
-		IFaceAddName(bldr, names[i])
-		IFaceAddRBytes(bldr, inf.Interfaces[i].RBytes)
-		IFaceAddRPackets(bldr, inf.Interfaces[i].RPackets)
-		IFaceAddRErrs(bldr, inf.Interfaces[i].RErrs)
-		IFaceAddRDrop(bldr, inf.Interfaces[i].RDrop)
-		IFaceAddRFIFO(bldr, inf.Interfaces[i].RFIFO)
-		IFaceAddRFrame(bldr, inf.Interfaces[i].RFrame)
-		IFaceAddRCompressed(bldr, inf.Interfaces[i].RCompressed)
-		IFaceAddRMulticast(bldr, inf.Interfaces[i].RMulticast)
-		IFaceAddTBytes(bldr, inf.Interfaces[i].TBytes)
-		IFaceAddTPackets(bldr, inf.Interfaces[i].TPackets)
-		IFaceAddTErrs(bldr, inf.Interfaces[i].TErrs)
-		IFaceAddTDrop(bldr, inf.Interfaces[i].TDrop)
-		IFaceAddTFIFO(bldr, inf.Interfaces[i].TFIFO)
-		IFaceAddTColls(bldr, inf.Interfaces[i].TColls)
-		IFaceAddTCarrier(bldr, inf.Interfaces[i].TCarrier)
-		IFaceAddTCompressed(bldr, inf.Interfaces[i].TCompressed)
-		ifaces[i] = IFaceEnd(bldr)
-	}
-	DataStartInterfacesVector(bldr, len(ifaces))
-	for i := len(inf.Interfaces) - 1; i >= 0; i-- {
-		bldr.PrependUOffsetT(ifaces[i])
-	}
-	ifacesV := bldr.EndVector(len(ifaces))
-	DataStart(bldr)
-	DataAddTimestamp(bldr, inf.Timestamp)
-	DataAddInterfaces(bldr, ifacesV)
-	bldr.Finish(DataEnd(bldr))
-	return bldr.Bytes[bldr.Head():]
-}
-
 // Usage holds the difference between network IO snapshots.
-type Usage struct {
-	Timestamp  int64   `json:"timestamp"`
-	Interfaces []Iface `json:"interfaces"`
-}
+type Usage Info
 
 // Usage gets the number of recieve/transmit information for the given
-
 func GetUsage(t time.Duration) (Usage, error) {
 	snap1, err := GetInfo()
 	if err != nil {
@@ -548,7 +504,7 @@ func UsageTicker(period time.Duration, out chan Usage, done chan struct{}, errs 
 	// predeclare some vars
 	var i, l, pos, fieldNum, fieldVal int
 	var v byte
-	var iData Iface
+	var iInfo Interface
 	val := make([]byte, 0, 32)
 	prior := &Info{}
 	// first get Info as the baseline
@@ -571,7 +527,7 @@ tick:
 		case <-ticker.C:
 			prior.Timestamp = cur.Timestamp
 			if len(prior.Interfaces) != len(cur.Interfaces) {
-				prior.Interfaces = make([]Iface, len(cur.Interfaces))
+				prior.Interfaces = make([]Interface, len(cur.Interfaces))
 			}
 			copy(prior.Interfaces, cur.Interfaces)
 			cur.Timestamp = time.Now().UTC().UnixNano()
@@ -608,7 +564,7 @@ tick:
 				// first grab the interface name (everything up to the ':')
 				for i, v = range line[pos:] {
 					if v == 0x3A {
-						iData.Name = string(line[pos : pos+i])
+						iInfo.Name = string(line[pos : pos+i])
 						pos += i + 1
 						break
 					}
@@ -636,76 +592,76 @@ tick:
 					// any conversion error results in 0
 					fieldVal, err = strconv.Atoi(string(val[:]))
 					if err != nil {
-						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iData.Name, err)
+						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iInfo.Name, err)
 						continue
 					}
 					val = val[:0]
 					if fieldNum == 1 {
-						iData.RBytes = int64(fieldVal)
+						iInfo.RBytes = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 2 {
-						iData.RPackets = int64(fieldVal)
+						iInfo.RPackets = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 3 {
-						iData.RErrs = int64(fieldVal)
+						iInfo.RErrs = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 4 {
-						iData.RDrop = int64(fieldVal)
+						iInfo.RDrop = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 5 {
-						iData.RFIFO = int64(fieldVal)
+						iInfo.RFIFO = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 6 {
-						iData.RFrame = int64(fieldVal)
+						iInfo.RFrame = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 7 {
-						iData.RCompressed = int64(fieldVal)
+						iInfo.RCompressed = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 8 {
-						iData.RMulticast = int64(fieldVal)
+						iInfo.RMulticast = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 9 {
-						iData.TBytes = int64(fieldVal)
+						iInfo.TBytes = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 10 {
-						iData.TPackets = int64(fieldVal)
+						iInfo.TPackets = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 11 {
-						iData.TErrs = int64(fieldVal)
+						iInfo.TErrs = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 12 {
-						iData.TDrop = int64(fieldVal)
+						iInfo.TDrop = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 13 {
-						iData.TFIFO = int64(fieldVal)
+						iInfo.TFIFO = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 14 {
-						iData.TColls = int64(fieldVal)
+						iInfo.TColls = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 15 {
-						iData.TCarrier = int64(fieldVal)
+						iInfo.TCarrier = int64(fieldVal)
 						continue
 					}
 					if fieldNum == 16 {
-						iData.TCompressed = int64(fieldVal)
+						iInfo.TCompressed = int64(fieldVal)
 						break
 					}
 				}
-				cur.Interfaces = append(cur.Interfaces, iData)
+				cur.Interfaces = append(cur.Interfaces, iInfo)
 			}
 			f.Close()
 			out <- calculateUsage(prior, cur)
@@ -715,7 +671,7 @@ tick:
 }
 
 func calculateUsage(prior, cur *Info) Usage {
-	u := Usage{Timestamp: cur.Timestamp, Interfaces: make([]Iface, len(cur.Interfaces))}
+	u := Usage{Timestamp: cur.Timestamp, Interfaces: make([]Interface, len(cur.Interfaces))}
 	for i := 0; i < len(cur.Interfaces); i++ {
 		u.Interfaces[i].Name = cur.Interfaces[i].Name
 		u.Interfaces[i].RBytes = cur.Interfaces[i].RBytes - prior.Interfaces[i].RBytes

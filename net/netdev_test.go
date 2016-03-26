@@ -15,8 +15,8 @@ func TestGetInfo(t *testing.T) {
 		return
 	}
 	// test flatbuffers stuff
-	infS := inf.Serialize()
-	infD := Deserialize(infS)
+	infS := inf.SerializeFlat()
+	infD := DeserializeFlat(infS)
 	// compare
 	if inf.Timestamp != infD.Timestamp {
 		t.Errorf("got %d; want %d", inf.Timestamp, infD.Timestamp)
@@ -73,21 +73,21 @@ func TestGetInfo(t *testing.T) {
 	}
 }
 
-func TestData(t *testing.T) {
+func TestInfo(t *testing.T) {
 	inf, _ := GetInfo()
 	bldr := fb.NewBuilder(0)
-	b := Serialize(inf, bldr)
-	infD := Deserialize(b)
+	b := inf.SerializeFlatBuilder(bldr)
+	infD := DeserializeFlat(b)
 	if json.MarshalToString(inf) != json.MarshalToString(infD) {
 		t.Errorf("serialize/deserialize flatbuffers: got %v, want %v", infD, inf)
 	}
 }
 
-func TestDataTicker(t *testing.T) {
+func TestInfoTicker(t *testing.T) {
 	results := make(chan []byte)
 	errs := make(chan error)
 	done := make(chan struct{})
-	go DataTicker(time.Second, results, done, errs)
+	go InfoTickerFlat(time.Second, results, done, errs)
 	var x int
 	for {
 		if x > 0 {
@@ -99,7 +99,7 @@ func TestDataTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			inf := Deserialize(b)
+			inf := DeserializeFlat(b)
 			if len(inf.Interfaces) < 2 {
 				t.Errorf("expected at least 2 interfaces, got %d", len(inf.Interfaces))
 			}

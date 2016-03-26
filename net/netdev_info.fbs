@@ -1,12 +1,12 @@
 // netdev_data.fbs
-namespace net;
+namespace flat;
 
-table Data {
+table Info {
 	Timestamp:long;
-	Interfaces:[IFace];
+	Interfaces:[Interface];
 }
 
-table IFace {
+table Interface {
 	Name:string;
 	RBytes:long;
 	RPackets:long;
@@ -26,4 +26,4 @@ table IFace {
 	TCompressed:long;
 }
 
-root_type Data;
+root_type Info;
