@@ -15,8 +15,11 @@
 package joefriday
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strconv"
+	"sync"
 )
 
 type Error struct {
@@ -29,7 +32,16 @@ func (e Error) Error() string {
 	return fmt.Sprintf("%s: %q: %s", e.Type, e.Op, e.Err)
 }
 
+// A Proc holds everything related to a proc file and
+type Proc struct {
+	sync.Mutex // protects the following fields
+	*os.File
+	Buf  *bufio.Reader
+	Line []byte // current line
+}
+
 // Column returns a right justified string of width w.
+// TODO: replace with text/tabwriter
 func Column(w int, s string) string {
 	pad := w - len(s)
 	padding := make([]byte, pad)

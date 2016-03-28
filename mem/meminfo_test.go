@@ -33,7 +33,7 @@ func TestGetInfo(t *testing.T) {
 	t.Logf("%#v\n", inf)
 }
 
-func TestGetData(t *testing.T) {
+func TestGetInfoSerializeDeserializeFlat(t *testing.T) {
 	p, err := GetInfoFlat()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
@@ -83,11 +83,21 @@ func TestGetData(t *testing.T) {
 	}
 }
 
-var inf Info
+var inf *Info
 
-func BenchmarkReadMemInfo(b *testing.B) {
+func BenchmarkGetMemInfo(b *testing.B) {
+	p, _ := NewInfoProfiler()
 	for i := 0; i < b.N; i++ {
-		inf, _ = GetInfo()
+		inf, _ = p.Get()
 	}
-	// b.Logf("%#v\n", inf)
+	_ = inf
+}
+
+func BenchmarkGetMemInfoFlat(b *testing.B) {
+	var infF []byte
+	p, _ := NewInfoProfiler()
+	for i := 0; i < b.N; i++ {
+		infF, _ = p.GetFlat()
+	}
+	_ = infF
 }
