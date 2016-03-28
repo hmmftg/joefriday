@@ -102,6 +102,15 @@ func BenchmarkGetMemInfoFlat(b *testing.B) {
 	_ = infF
 }
 
+func BenchmarkSerializeInfoFlatBuilder(b *testing.B) {
+	var infF []byte
+	p, _ := NewInfoProfilerFlat()
+	for i := 0; i < b.N; i++ {
+		infF, _ = p.GetFlat()
+	}
+	_ = infF
+}
+
 func BenchmarkGetMemInfoJSON(b *testing.B) {
 	var infF []byte
 	p, _ := NewInfoProfiler()

@@ -545,6 +545,30 @@ func InfoTickerJSON(interval time.Duration, out chan []byte, done chan struct{},
 	p.TickerJSON(interval, out, done, errs)
 }
 
+// InfoProfilerFlat wraps InfoProfiler and provides a builder; enabling reuse.
+type InfoProfilerFlat struct {
+	InfoProfiler
+	bldr *fb.Builder
+}
+
+func NewInfoProfilerFlat() (proc *InfoProfilerFlat, err error) {
+	f, err := os.Open(procMemInfo)
+	if err != nil {
+		return nil, err
+	}
+	return &InfoProfilerFlat{InfoProfiler: InfoProfiler{Proc: joe.Proc{File: f, Buf: bufio.NewReader(f)}, val: make([]byte, 32)}, bldr: fb.NewBuilder(0)}, nil
+}
+
+// GetFlat returns the current meminfo as flatbuffer serialized bytes.
+func (p *InfoProfilerFlat) GetFlat() ([]byte, error) {
+	inf, err := p.InfoProfiler.Get()
+	if err != nil {
+		return nil, err
+	}
+	p.bldr.Reset()
+	return inf.SerializeFlatBuilder(p.bldr), nil
+}
+
 // func (i *InfoFlat) String() string {
 // 	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp()).UTC(), i.MemTotal(), i.MemFree(), i.MemAvailable(), i.Active(), i.Inactive(), i.Cached(), i.Buffers(), i.SwapTotal(), i.SwapCached(), i.SwapFree())
 // }
