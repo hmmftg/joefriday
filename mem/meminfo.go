@@ -64,8 +64,8 @@ func (p *InfoProfiler) Get() (inf *Info, err error) {
 		i, pos, nameLen int
 		v               byte
 	)
+	inf = &Info{}
 	for l := 0; l < 16; l++ {
-		inf = &Info{}
 		p.Line, err = p.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
@@ -179,64 +179,144 @@ func GetInfoFlat() ([]byte, error) {
 	return inf.SerializeFlat(), nil
 }
 
-type Info struct {
-	Timestamp    int64 `json:"timestamp"`
-	MemTotal     int64 `json:"mem_total"`
-	MemFree      int64 `json:"mem_free"`
-	MemAvailable int64 `json:"mem_available"`
-	Buffers      int64 `json:"buffers"`
-	Cached       int64 `json:"cached"`
-	SwapCached   int64 `json:"swap_cached"`
-	Active       int64 `json:"active"`
-	Inactive     int64 `json:"inactive"`
-	SwapTotal    int64 `json:"swap_total"`
-	SwapFree     int64 `json:"swap_free"`
+// Ticker gathers the meminfo on a ticker, whose interval is defined by the
+// received duration, and sends the results to the channel.  The output is
+// Flatbuffer serialized bytes of Info.  Any error encountered during
+// processing is sent to the error channel; processing will continue.
+//
+// If an error occurs while opening /proc/meminfo, the error will be sent
+// to the errs channel and this func will exit.
+//
+// To stop processing and exit; send a signal on the done channel.  This
+// will cause the function to stop the ticker, close the out channel and
+// return.
+func (p *InfoProfiler) Ticker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	defer close(out)
+	// predeclare some vars
+	var (
+		l, i, pos, nameLen int
+		v                  byte
+		n                  uint64
+		err                error
+		inf                Info
+	)
+	// Lock now because the for loop unlocks to simplify unlock logic when
+	// a continue occurs (instead of the tick completing.)
+	p.Lock()
+	// ticker
+	for {
+		p.Unlock()
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			p.Lock()
+			err = p.reset()
+			if err != nil {
+				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
+				continue
+			}
+			p.Line, err = p.Buf.ReadSlice('\n')
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				errs <- fmt.Errorf("error reading output bytes: %s", err)
+				continue
+			}
+			if l > 8 && l < 14 {
+				continue
+			}
+			// first grab the key name (everything up to the ':')
+			for i, v = range p.Line {
+				if v == ':' {
+					pos = i + 1
+					break
+				}
+				p.val = append(p.val, v)
+			}
+			nameLen = len(p.val)
+
+			// skip all spaces
+			for i, v = range p.Line[pos:] {
+				if v != ' ' {
+					pos += i
+					break
+				}
+			}
+
+			// grab the numbers
+			for _, v = range p.Line[pos:] {
+				if v == ' ' || v == '\n' {
+					break
+				}
+				p.val = append(p.val, v)
+			}
+			// any conversion error results in 0
+			n, err = helpers.ParseUint(p.val[nameLen:])
+			if err != nil {
+				errs <- fmt.Errorf("%s: %s", p.val[:nameLen], err)
+			}
+			v = p.val[0]
+
+			// Reduce evaluations.
+			if v == 'M' {
+				v = p.val[3]
+				if v == 'T' {
+					inf.MemTotal = int64(n)
+				} else if v == 'F' {
+					inf.MemFree = int64(n)
+				} else {
+					inf.MemAvailable = int64(n)
+				}
+			} else if v == 'S' {
+				v = p.val[4]
+				if v == 'C' {
+					inf.SwapCached = int64(n)
+				} else if v == 'T' {
+					inf.SwapTotal = int64(n)
+				} else if v == 'F' {
+					inf.SwapFree = int64(n)
+				}
+			} else if v == 'B' {
+				inf.Buffers = int64(n)
+			} else if v == 'I' {
+				inf.Inactive = int64(n)
+			} else if v == 'C' {
+				inf.Cached = int64(n)
+			} else if v == 'A' {
+				inf.Active = int64(n)
+			}
+			p.val = p.val[:0]
+		}
+		inf.Timestamp = time.Now().UTC().UnixNano()
+		out <- inf
+	}
 }
 
-// Serialize serializes the Info using flatbuffers.
-func (i *Info) SerializeFlat() []byte {
-	bldr := fb.NewBuilder(0)
-	return i.SerializeFlatBuilder(bldr)
-}
-
-func (i *Info) SerializeFlatBuilder(bldr *fb.Builder) []byte {
-	flat.InfoStart(bldr)
-	flat.InfoAddTimestamp(bldr, int64(i.Timestamp))
-	flat.InfoAddMemTotal(bldr, int64(i.MemTotal))
-	flat.InfoAddMemFree(bldr, int64(i.MemFree))
-	flat.InfoAddMemAvailable(bldr, int64(i.MemAvailable))
-	flat.InfoAddBuffers(bldr, int64(i.Buffers))
-	flat.InfoAddCached(bldr, int64(i.Cached))
-	flat.InfoAddSwapCached(bldr, int64(i.SwapCached))
-	flat.InfoAddActive(bldr, int64(i.Active))
-	flat.InfoAddInactive(bldr, int64(i.Inactive))
-	flat.InfoAddSwapTotal(bldr, int64(i.SwapTotal))
-	flat.InfoAddSwapFree(bldr, int64(i.SwapFree))
-	bldr.Finish(flat.InfoEnd(bldr))
-	return bldr.Bytes[bldr.Head():]
-}
-
-// DeserializeInfoFlat deserializes bytes serialized with Flatbuffers from
-// InfoFlat into *Info.
-func DeserializeInfoFlat(p []byte) *Info {
-	infoFlat := flat.GetRootAsInfo(p, 0)
-	info := &Info{}
-	info.Timestamp = infoFlat.Timestamp()
-	info.MemTotal = infoFlat.MemTotal()
-	info.MemFree = infoFlat.MemFree()
-	info.MemAvailable = infoFlat.MemAvailable()
-	info.Buffers = infoFlat.Buffers()
-	info.Cached = infoFlat.Cached()
-	info.SwapCached = infoFlat.SwapCached()
-	info.Active = infoFlat.Active()
-	info.Inactive = infoFlat.Inactive()
-	info.SwapTotal = infoFlat.SwapTotal()
-	info.SwapFree = infoFlat.SwapFree()
-	return info
-}
-
-func (i *Info) String() string {
-	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp).UTC(), i.MemTotal, i.MemFree, i.MemAvailable, i.Active, i.Inactive, i.Cached, i.Buffers, i.SwapTotal, i.SwapCached, i.SwapFree)
+// InfoTicker gathers the meminfo on a ticker, whose interval is defined by
+// the received duration, and sends the results to the channel.  The output
+// is Flatbuffer serialized bytes of Info.  Any error encountered during
+// processing is sent to the error channel; processing will continue.
+//
+// If an error occurs while opening /proc/meminfo, the error will be sent
+// to the errs channel and this func will exit.
+//
+// To stop processing and exit; send a signal on the done channel.  This
+// will cause the function to stop the ticker, close the out channel and
+// return.
+//
+// This func uses a local InfoProfiler.  If an error occurs during the
+// creation of the InfoProfiler, it will be sent to errs and exit.
+func InfoTicker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
+	p, err := NewInfoProfiler()
+	if err != nil {
+		errs <- err
+		return
+	}
+	p.Ticker(interval, out, done, errs)
 }
 
 // FlatTicker gathers the meminfo on a ticker, whose interval is defined by
@@ -388,3 +468,63 @@ func FlatTicker(interval time.Duration, out chan []byte, done chan struct{}, err
 // func (i *InfoFlat) String() string {
 // 	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp()).UTC(), i.MemTotal(), i.MemFree(), i.MemAvailable(), i.Active(), i.Inactive(), i.Cached(), i.Buffers(), i.SwapTotal(), i.SwapCached(), i.SwapFree())
 // }
+
+type Info struct {
+	Timestamp    int64 `json:"timestamp"`
+	MemTotal     int64 `json:"mem_total"`
+	MemFree      int64 `json:"mem_free"`
+	MemAvailable int64 `json:"mem_available"`
+	Buffers      int64 `json:"buffers"`
+	Cached       int64 `json:"cached"`
+	SwapCached   int64 `json:"swap_cached"`
+	Active       int64 `json:"active"`
+	Inactive     int64 `json:"inactive"`
+	SwapTotal    int64 `json:"swap_total"`
+	SwapFree     int64 `json:"swap_free"`
+}
+
+// Serialize serializes the Info using flatbuffers.
+func (i *Info) SerializeFlat() []byte {
+	bldr := fb.NewBuilder(0)
+	return i.SerializeFlatBuilder(bldr)
+}
+
+func (i *Info) SerializeFlatBuilder(bldr *fb.Builder) []byte {
+	flat.InfoStart(bldr)
+	flat.InfoAddTimestamp(bldr, int64(i.Timestamp))
+	flat.InfoAddMemTotal(bldr, int64(i.MemTotal))
+	flat.InfoAddMemFree(bldr, int64(i.MemFree))
+	flat.InfoAddMemAvailable(bldr, int64(i.MemAvailable))
+	flat.InfoAddBuffers(bldr, int64(i.Buffers))
+	flat.InfoAddCached(bldr, int64(i.Cached))
+	flat.InfoAddSwapCached(bldr, int64(i.SwapCached))
+	flat.InfoAddActive(bldr, int64(i.Active))
+	flat.InfoAddInactive(bldr, int64(i.Inactive))
+	flat.InfoAddSwapTotal(bldr, int64(i.SwapTotal))
+	flat.InfoAddSwapFree(bldr, int64(i.SwapFree))
+	bldr.Finish(flat.InfoEnd(bldr))
+	return bldr.Bytes[bldr.Head():]
+}
+
+// DeserializeInfoFlat deserializes bytes serialized with Flatbuffers from
+// InfoFlat into *Info.
+func DeserializeInfoFlat(p []byte) *Info {
+	infoFlat := flat.GetRootAsInfo(p, 0)
+	info := &Info{}
+	info.Timestamp = infoFlat.Timestamp()
+	info.MemTotal = infoFlat.MemTotal()
+	info.MemFree = infoFlat.MemFree()
+	info.MemAvailable = infoFlat.MemAvailable()
+	info.Buffers = infoFlat.Buffers()
+	info.Cached = infoFlat.Cached()
+	info.SwapCached = infoFlat.SwapCached()
+	info.Active = infoFlat.Active()
+	info.Inactive = infoFlat.Inactive()
+	info.SwapTotal = infoFlat.SwapTotal()
+	info.SwapFree = infoFlat.SwapFree()
+	return info
+}
+
+func (i *Info) String() string {
+	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp).UTC(), i.MemTotal, i.MemFree, i.MemAvailable, i.Active, i.Inactive, i.Cached, i.Buffers, i.SwapTotal, i.SwapCached, i.SwapFree)
+}
