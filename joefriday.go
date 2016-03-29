@@ -20,8 +20,10 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
+// TODO: make current/better implementation
 type Error struct {
 	Type string
 	Op   string
@@ -38,6 +40,30 @@ type Proc struct {
 	*os.File
 	Buf  *bufio.Reader
 	Line []byte // current line
+}
+
+// ProfileSerializer is implemented by any profiler that has a Get method
+// that returns the data as serialized bytes.
+type ProfileSerializer interface {
+	Get() ([]byte, error)
+}
+
+// ProfileSerializerTicker is implemented by any profiler that defines a
+// Ticker method that uses a ticker to get the current data.  It is used
+// for ongoing monitoring of something.  The current data is sent to the
+// out channel as serialized bytes.
+type ProfileSerializerTicker interface {
+	Ticker(tick time.Duration, out chan []byte, done chan struct{}, errs chan error)
+}
+
+// It is expected that the caller has the lock.
+func (p *Proc) Reset() error {
+	_, err := p.File.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return err
+	}
+	p.Buf.Reset(p.File)
+	return nil
 }
 
 // Column returns a right justified string of width w.

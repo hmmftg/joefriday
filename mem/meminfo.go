@@ -24,16 +24,14 @@ import (
 	"time"
 
 	"github.com/SermoDigital/helpers"
-	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/mem/flat"
 )
 
 const procMemInfo = "/proc/meminfo"
 
 type InfoProfiler struct {
 	joe.Proc
-	val []byte
+	Val []byte
 }
 
 var std *InfoProfiler
@@ -43,17 +41,7 @@ func NewInfoProfiler() (proc *InfoProfiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &InfoProfiler{Proc: joe.Proc{File: f, Buf: bufio.NewReader(f)}, val: make([]byte, 32)}, nil
-}
-
-// It is expected that the caller has the lock.
-func (p *InfoProfiler) reset() error {
-	_, err := p.File.Seek(0, os.SEEK_SET)
-	if err != nil {
-		return err
-	}
-	p.Buf.Reset(p.File)
-	return nil
+	return &InfoProfiler{Proc: joe.Proc{File: f, Buf: bufio.NewReader(f)}, Val: make([]byte, 0, 32)}, nil
 }
 
 // Get returns some of the results of /proc/meminfo.
@@ -64,7 +52,7 @@ func (p *InfoProfiler) Get() (inf *Info, err error) {
 		i, pos, nameLen int
 		v               byte
 	)
-
+	p.Proc.Reset()
 	inf = &Info{}
 	for l := 0; l < 16; l++ {
 		p.Line, err = p.Buf.ReadSlice('\n')
@@ -83,9 +71,9 @@ func (p *InfoProfiler) Get() (inf *Info, err error) {
 				pos = i + 1
 				break
 			}
-			p.val = append(p.val, v)
+			p.Val = append(p.Val, v)
 		}
-		nameLen = len(p.val)
+		nameLen = len(p.Val)
 
 		// skip all spaces
 		for i, v = range p.Line[pos:] {
@@ -100,19 +88,19 @@ func (p *InfoProfiler) Get() (inf *Info, err error) {
 			if v == ' ' || v == '\n' {
 				break
 			}
-			p.val = append(p.val, v)
+			p.Val = append(p.Val, v)
 		}
 		// any conversion error results in 0
-		n, err := helpers.ParseUint(p.val[nameLen:])
+		n, err := helpers.ParseUint(p.Val[nameLen:])
 		if err != nil {
-			return inf, fmt.Errorf("%s: %s", p.val[:nameLen], err)
+			return inf, fmt.Errorf("%s: %s", p.Val[:nameLen], err)
 		}
 
-		v = p.val[0]
+		v = p.Val[0]
 
 		// Reduce evaluations.
 		if v == 'M' {
-			v = p.val[3]
+			v = p.Val[3]
 			if v == 'T' {
 				inf.MemTotal = int64(n)
 			} else if v == 'F' {
@@ -121,7 +109,7 @@ func (p *InfoProfiler) Get() (inf *Info, err error) {
 				inf.MemAvailable = int64(n)
 			}
 		} else if v == 'S' {
-			v = p.val[4]
+			v = p.Val[4]
 			if v == 'C' {
 				inf.SwapCached = int64(n)
 			} else if v == 'T' {
@@ -138,7 +126,7 @@ func (p *InfoProfiler) Get() (inf *Info, err error) {
 		} else if v == 'A' {
 			inf.Active = int64(n)
 		}
-		p.val = p.val[:0]
+		p.Val = p.Val[:0]
 	}
 	inf.Timestamp = time.Now().UTC().UnixNano()
 	return inf, nil
@@ -153,31 +141,6 @@ func GetInfo() (inf *Info, err error) {
 		}
 	}
 	return std.Get()
-}
-
-// GetFlat returns the current meminfo as flatbuffer serialized bytes.
-func (p *InfoProfiler) GetFlat() ([]byte, error) {
-	inf, err := p.Get()
-	if err != nil {
-		return nil, err
-	}
-	return inf.SerializeFlat(), nil
-}
-
-// GetInfoFlat returns the current meminfo as flatbuffer serialized bytes.
-func GetInfoFlat() ([]byte, error) {
-	var err error
-	if std == nil {
-		std, err = NewInfoProfiler()
-		if err != nil {
-			return nil, err
-		}
-	}
-	inf, err := std.Get()
-	if err != nil {
-		return nil, err
-	}
-	return inf.SerializeFlat(), nil
 }
 
 // GetJSON returns the current meminfo as JSON serialized bytes.
@@ -239,7 +202,7 @@ func (p *InfoProfiler) Ticker(interval time.Duration, out chan Info, done chan s
 			return
 		case <-ticker.C:
 			p.Lock()
-			err = p.reset()
+			err = p.Reset()
 			if err != nil {
 				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue
@@ -261,9 +224,9 @@ func (p *InfoProfiler) Ticker(interval time.Duration, out chan Info, done chan s
 					pos = i + 1
 					break
 				}
-				p.val = append(p.val, v)
+				p.Val = append(p.Val, v)
 			}
-			nameLen = len(p.val)
+			nameLen = len(p.Val)
 
 			// skip all spaces
 			for i, v = range p.Line[pos:] {
@@ -278,18 +241,18 @@ func (p *InfoProfiler) Ticker(interval time.Duration, out chan Info, done chan s
 				if v == ' ' || v == '\n' {
 					break
 				}
-				p.val = append(p.val, v)
+				p.Val = append(p.Val, v)
 			}
 			// any conversion error results in 0
-			n, err = helpers.ParseUint(p.val[nameLen:])
+			n, err = helpers.ParseUint(p.Val[nameLen:])
 			if err != nil {
-				errs <- fmt.Errorf("%s: %s", p.val[:nameLen], err)
+				errs <- fmt.Errorf("%s: %s", p.Val[:nameLen], err)
 			}
-			v = p.val[0]
+			v = p.Val[0]
 
 			// Reduce evaluations.
 			if v == 'M' {
-				v = p.val[3]
+				v = p.Val[3]
 				if v == 'T' {
 					inf.MemTotal = int64(n)
 				} else if v == 'F' {
@@ -298,7 +261,7 @@ func (p *InfoProfiler) Ticker(interval time.Duration, out chan Info, done chan s
 					inf.MemAvailable = int64(n)
 				}
 			} else if v == 'S' {
-				v = p.val[4]
+				v = p.Val[4]
 				if v == 'C' {
 					inf.SwapCached = int64(n)
 				} else if v == 'T' {
@@ -315,7 +278,7 @@ func (p *InfoProfiler) Ticker(interval time.Duration, out chan Info, done chan s
 			} else if v == 'A' {
 				inf.Active = int64(n)
 			}
-			p.val = p.val[:0]
+			p.Val = p.Val[:0]
 		}
 		inf.Timestamp = time.Now().UTC().UnixNano()
 		out <- inf
@@ -399,182 +362,6 @@ func InfoTickerJSON(interval time.Duration, out chan []byte, done chan struct{},
 	p.TickerJSON(interval, out, done, errs)
 }
 
-// InfoProfilerFlat wraps InfoProfiler and provides a builder; enabling reuse.
-type InfoProfilerFlat struct {
-	InfoProfiler
-	bldr *fb.Builder
-}
-
-func NewInfoProfilerFlat() (proc *InfoProfilerFlat, err error) {
-	f, err := os.Open(procMemInfo)
-	if err != nil {
-		return nil, err
-	}
-	return &InfoProfilerFlat{InfoProfiler: InfoProfiler{Proc: joe.Proc{File: f, Buf: bufio.NewReader(f)}, val: make([]byte, 32)}, bldr: fb.NewBuilder(0)}, nil
-}
-
-func (p *InfoProfilerFlat) reset() error {
-	p.bldr.Reset()
-	return p.InfoProfiler.reset()
-}
-
-// GetFlat returns the current meminfo as flatbuffer serialized bytes.
-func (p *InfoProfilerFlat) GetFlat() ([]byte, error) {
-	inf, err := p.InfoProfiler.Get()
-	if err != nil {
-		return nil, err
-	}
-	p.bldr.Reset()
-	return inf.SerializeFlatBuilder(p.bldr), nil
-}
-
-// TickerFlat gathers the meminfo on a ticker, whose interval is defined by
-// the received duration, and sends the results to the channel.  The output
-// is Flatbuffer serialized bytes of Info.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-func (p *InfoProfilerFlat) TickerFlat(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
-	// predeclare some vars
-	var (
-		l, i, pos, nameLen int
-		v                  byte
-		n                  uint64
-		err                error
-	)
-	// Lock now because the for loop unlocks to simplify unlock logic when
-	// a continue occurs (instead of the tick completing.)
-	p.Lock()
-	// ticker
-Tick:
-	for {
-		p.Unlock()
-		select {
-		case <-done:
-			return
-		case <-ticker.C:
-			p.Lock()
-			err = p.reset()
-			if err != nil {
-				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
-				continue
-			}
-			flat.InfoStart(p.bldr)
-			flat.InfoAddTimestamp(p.bldr, time.Now().UTC().UnixNano())
-			for l = 0; l < 16; l++ {
-				p.Line, err = p.Buf.ReadSlice('\n')
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-					// An error results in sending error message and stop processing of this tick.
-					errs <- joe.Error{Type: "mem", Op: "read output bytes", Err: err}
-					continue Tick
-				}
-				if l > 7 && l < 14 {
-					continue
-				}
-				// first grab the key name (everything up to the ':')
-				for i, v = range p.Line {
-					if v == 0x3A {
-						p.val = p.Line[:i]
-						break
-					}
-				}
-				nameLen = len(p.val)
-				// skip all spaces
-				for i, v = range p.Line[pos:] {
-					if v != 0x20 {
-						pos += i
-						break
-					}
-				}
-
-				// grab the numbers
-				for _, v = range p.Line[pos:] {
-					if v == 0x20 || v == '\n' {
-						break
-					}
-					p.val = append(p.val, v)
-				}
-				// any conversion error results in 0
-				n, err = helpers.ParseUint(p.val[nameLen:])
-				if err != nil {
-					errs <- joe.Error{Type: "mem", Op: fmt.Sprintf("convert %s", p.val[:nameLen]), Err: err}
-					continue
-				}
-				v = p.val[0]
-				if v == 'M' {
-					v = p.val[3]
-					if v == 'T' {
-						flat.InfoAddMemTotal(p.bldr, int64(n))
-					} else if v == 'F' {
-						flat.InfoAddMemFree(p.bldr, int64(n))
-					} else {
-						flat.InfoAddMemAvailable(p.bldr, int64(n))
-					}
-				} else if v == 'S' {
-					v = p.val[4]
-					if v == 'C' {
-						flat.InfoAddSwapCached(p.bldr, int64(n))
-					} else if v == 'T' {
-						flat.InfoAddSwapTotal(p.bldr, int64(n))
-					} else if v == 'F' {
-						flat.InfoAddSwapFree(p.bldr, int64(n))
-					}
-				} else if v == 'B' {
-					flat.InfoAddBuffers(p.bldr, int64(n))
-				} else if v == 'I' {
-					flat.InfoAddInactive(p.bldr, int64(n))
-				} else if v == 'C' {
-					flat.InfoAddMemAvailable(p.bldr, int64(n))
-				} else if v == 'A' {
-					flat.InfoAddInactive(p.bldr, int64(n))
-				}
-			}
-			p.bldr.Finish(flat.InfoEnd(p.bldr))
-			inf := p.bldr.Bytes[p.bldr.Head():]
-			out <- inf
-		}
-	}
-}
-
-// TODO: should InfoTickerFlat use std or have a local proc?
-// InfoTickerFlat gathers the meminfo on a ticker, whose interval is defined
-// by the received duration, and sends the results to the channel.  The
-// output is Flatbuffer serialized bytes of Info.  Any error encountered
-// during processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-//
-// This func uses a local InfoProfiler.  If an error occurs during the
-// creation of the InfoProfiler, it will be sent to errs and exit.
-func InfoTickerFlat(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	p, err := NewInfoProfilerFlat()
-	if err != nil {
-		errs <- err
-		return
-	}
-	p.TickerFlat(interval, out, done, errs)
-}
-
-// func (i *InfoFlat) String() string {
-// 	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp()).UTC(), i.MemTotal(), i.MemFree(), i.MemAvailable(), i.Active(), i.Inactive(), i.Cached(), i.Buffers(), i.SwapTotal(), i.SwapCached(), i.SwapFree())
-// }
-
 type Info struct {
 	Timestamp    int64 `json:"timestamp"`
 	MemTotal     int64 `json:"mem_total"`
@@ -589,51 +376,9 @@ type Info struct {
 	SwapFree     int64 `json:"swap_free"`
 }
 
-// Serialize serializes the Info using flatbuffers.
-func (i *Info) SerializeFlat() []byte {
-	bldr := fb.NewBuilder(0)
-	return i.SerializeFlatBuilder(bldr)
-}
-
-func (i *Info) SerializeFlatBuilder(bldr *fb.Builder) []byte {
-	flat.InfoStart(bldr)
-	flat.InfoAddTimestamp(bldr, int64(i.Timestamp))
-	flat.InfoAddMemTotal(bldr, int64(i.MemTotal))
-	flat.InfoAddMemFree(bldr, int64(i.MemFree))
-	flat.InfoAddMemAvailable(bldr, int64(i.MemAvailable))
-	flat.InfoAddBuffers(bldr, int64(i.Buffers))
-	flat.InfoAddCached(bldr, int64(i.Cached))
-	flat.InfoAddSwapCached(bldr, int64(i.SwapCached))
-	flat.InfoAddActive(bldr, int64(i.Active))
-	flat.InfoAddInactive(bldr, int64(i.Inactive))
-	flat.InfoAddSwapTotal(bldr, int64(i.SwapTotal))
-	flat.InfoAddSwapFree(bldr, int64(i.SwapFree))
-	bldr.Finish(flat.InfoEnd(bldr))
-	return bldr.Bytes[bldr.Head():]
-}
-
 // Marshal Info as JSON
 func (i *Info) SerializeJSON() ([]byte, error) {
 	return json.Marshal(i)
-}
-
-// DeserializeInfoFlat deserializes bytes serialized with Flatbuffers from
-// InfoFlat into *Info.
-func DeserializeInfoFlat(p []byte) *Info {
-	infoFlat := flat.GetRootAsInfo(p, 0)
-	info := &Info{}
-	info.Timestamp = infoFlat.Timestamp()
-	info.MemTotal = infoFlat.MemTotal()
-	info.MemFree = infoFlat.MemFree()
-	info.MemAvailable = infoFlat.MemAvailable()
-	info.Buffers = infoFlat.Buffers()
-	info.Cached = infoFlat.Cached()
-	info.SwapCached = infoFlat.SwapCached()
-	info.Active = infoFlat.Active()
-	info.Inactive = infoFlat.Inactive()
-	info.SwapTotal = infoFlat.SwapTotal()
-	info.SwapFree = infoFlat.SwapFree()
-	return info
 }
 
 // UnmarshalInfoJSON unmarshals JSON into *Info.
