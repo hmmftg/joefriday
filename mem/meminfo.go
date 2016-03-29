@@ -60,11 +60,11 @@ func (p *InfoProfiler) reset() error {
 func (p *InfoProfiler) Get() (inf *Info, err error) {
 	p.Lock()
 	defer p.Unlock()
-
 	var (
 		i, pos, nameLen int
 		v               byte
 	)
+
 	inf = &Info{}
 	for l := 0; l < 16; l++ {
 		p.Line, err = p.Buf.ReadSlice('\n')
@@ -345,155 +345,9 @@ func InfoTicker(interval time.Duration, out chan Info, done chan struct{}, errs 
 	p.Ticker(interval, out, done, errs)
 }
 
-// TickerFlat gathers the meminfo on a ticker, whose interval is defined by
+// TickerJSON gathers the meminfo on a ticker, whose interval is defined by
 // the received duration, and sends the results to the channel.  The output
-// is Flatbuffer serialized bytes of Info.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-func (p *InfoProfiler) TickerFlat(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
-	// predeclare some vars
-	var (
-		l, i, pos, nameLen int
-		v                  byte
-		n                  uint64
-		err                error
-		line               []byte
-	)
-	// just reset the bldr at the end of every ticker
-	bldr := fb.NewBuilder(0)
-	// Lock now because the for loop unlocks to simplify unlock logic when
-	// a continue occurs (instead of the tick completing.)
-	p.Lock()
-	// ticker
-Tick:
-	for {
-		p.Unlock()
-		select {
-		case <-done:
-			return
-		case <-ticker.C:
-			p.Lock()
-			err = p.reset()
-			if err != nil {
-				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
-				continue
-			}
-			flat.InfoStart(bldr)
-			flat.InfoAddTimestamp(bldr, time.Now().UTC().UnixNano())
-			for l = 0; l < 16; l++ {
-				line, err = p.Buf.ReadSlice('\n')
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-					// An error results in sending error message and stop processing of this tick.
-					errs <- joe.Error{Type: "mem", Op: "read output bytes", Err: err}
-					continue Tick
-				}
-				if l > 7 && l < 14 {
-					continue
-				}
-				// first grab the key name (everything up to the ':')
-				for i, v = range line {
-					if v == 0x3A {
-						p.val = line[:i]
-						break
-					}
-				}
-				nameLen = len(p.val)
-				// skip all spaces
-				for i, v = range line[pos:] {
-					if v != 0x20 {
-						pos += i
-						break
-					}
-				}
-
-				// grab the numbers
-				for _, v = range line[pos:] {
-					if v == 0x20 || v == '\n' {
-						break
-					}
-					p.val = append(p.val, v)
-				}
-				// any conversion error results in 0
-				n, err = helpers.ParseUint(p.val[nameLen:])
-				if err != nil {
-					errs <- joe.Error{Type: "mem", Op: fmt.Sprintf("convert %s", p.val[:nameLen]), Err: err}
-					continue
-				}
-				v = p.val[0]
-				if v == 'M' {
-					v = p.val[3]
-					if v == 'T' {
-						flat.InfoAddMemTotal(bldr, int64(n))
-					} else if v == 'F' {
-						flat.InfoAddMemFree(bldr, int64(n))
-					} else {
-						flat.InfoAddMemAvailable(bldr, int64(n))
-					}
-				} else if v == 'S' {
-					v = p.val[4]
-					if v == 'C' {
-						flat.InfoAddSwapCached(bldr, int64(n))
-					} else if v == 'T' {
-						flat.InfoAddSwapTotal(bldr, int64(n))
-					} else if v == 'F' {
-						flat.InfoAddSwapFree(bldr, int64(n))
-					}
-				} else if v == 'B' {
-					flat.InfoAddBuffers(bldr, int64(n))
-				} else if v == 'I' {
-					flat.InfoAddInactive(bldr, int64(n))
-				} else if v == 'C' {
-					flat.InfoAddMemAvailable(bldr, int64(n))
-				} else if v == 'A' {
-					flat.InfoAddInactive(bldr, int64(n))
-				}
-			}
-			bldr.Finish(flat.InfoEnd(bldr))
-			inf := bldr.Bytes[bldr.Head():]
-			out <- inf
-		}
-	}
-}
-
-// TODO: should InfoTickerFlat use std or have a local proc?
-// InfoTickerFlat gathers the meminfo on a ticker, whose interval is defined
-// by the received duration, and sends the results to the channel.  The
-// output is Flatbuffer serialized bytes of Info.  Any error encountered
-// during processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-//
-// This func uses a local InfoProfiler.  If an error occurs during the
-// creation of the InfoProfiler, it will be sent to errs and exit.
-func InfoTickerFlat(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	p, err := NewInfoProfiler()
-	if err != nil {
-		errs <- err
-		return
-	}
-	p.TickerFlat(interval, out, done, errs)
-}
-
-// TickerFlat gathers the meminfo on a ticker, whose interval is defined by
-// the received duration, and sends the results to the channel.  The output
-// is Flatbuffer serialized bytes of Info.  Any error encountered during
+// is JSON serialized bytes of Info.  Any error encountered during
 // processing is sent to the error channel; processing will continue.
 //
 // If an error occurs while opening /proc/meminfo, the error will be sent
@@ -559,6 +413,11 @@ func NewInfoProfilerFlat() (proc *InfoProfilerFlat, err error) {
 	return &InfoProfilerFlat{InfoProfiler: InfoProfiler{Proc: joe.Proc{File: f, Buf: bufio.NewReader(f)}, val: make([]byte, 32)}, bldr: fb.NewBuilder(0)}, nil
 }
 
+func (p *InfoProfilerFlat) reset() error {
+	p.bldr.Reset()
+	return p.InfoProfiler.reset()
+}
+
 // GetFlat returns the current meminfo as flatbuffer serialized bytes.
 func (p *InfoProfilerFlat) GetFlat() ([]byte, error) {
 	inf, err := p.InfoProfiler.Get()
@@ -567,6 +426,149 @@ func (p *InfoProfilerFlat) GetFlat() ([]byte, error) {
 	}
 	p.bldr.Reset()
 	return inf.SerializeFlatBuilder(p.bldr), nil
+}
+
+// TickerFlat gathers the meminfo on a ticker, whose interval is defined by
+// the received duration, and sends the results to the channel.  The output
+// is Flatbuffer serialized bytes of Info.  Any error encountered during
+// processing is sent to the error channel; processing will continue.
+//
+// If an error occurs while opening /proc/meminfo, the error will be sent
+// to the errs channel and this func will exit.
+//
+// To stop processing and exit; send a signal on the done channel.  This
+// will cause the function to stop the ticker, close the out channel and
+// return.
+func (p *InfoProfilerFlat) TickerFlat(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	defer close(out)
+	// predeclare some vars
+	var (
+		l, i, pos, nameLen int
+		v                  byte
+		n                  uint64
+		err                error
+	)
+	// Lock now because the for loop unlocks to simplify unlock logic when
+	// a continue occurs (instead of the tick completing.)
+	p.Lock()
+	// ticker
+Tick:
+	for {
+		p.Unlock()
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			p.Lock()
+			err = p.reset()
+			if err != nil {
+				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
+				continue
+			}
+			flat.InfoStart(p.bldr)
+			flat.InfoAddTimestamp(p.bldr, time.Now().UTC().UnixNano())
+			for l = 0; l < 16; l++ {
+				p.Line, err = p.Buf.ReadSlice('\n')
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					// An error results in sending error message and stop processing of this tick.
+					errs <- joe.Error{Type: "mem", Op: "read output bytes", Err: err}
+					continue Tick
+				}
+				if l > 7 && l < 14 {
+					continue
+				}
+				// first grab the key name (everything up to the ':')
+				for i, v = range p.Line {
+					if v == 0x3A {
+						p.val = p.Line[:i]
+						break
+					}
+				}
+				nameLen = len(p.val)
+				// skip all spaces
+				for i, v = range p.Line[pos:] {
+					if v != 0x20 {
+						pos += i
+						break
+					}
+				}
+
+				// grab the numbers
+				for _, v = range p.Line[pos:] {
+					if v == 0x20 || v == '\n' {
+						break
+					}
+					p.val = append(p.val, v)
+				}
+				// any conversion error results in 0
+				n, err = helpers.ParseUint(p.val[nameLen:])
+				if err != nil {
+					errs <- joe.Error{Type: "mem", Op: fmt.Sprintf("convert %s", p.val[:nameLen]), Err: err}
+					continue
+				}
+				v = p.val[0]
+				if v == 'M' {
+					v = p.val[3]
+					if v == 'T' {
+						flat.InfoAddMemTotal(p.bldr, int64(n))
+					} else if v == 'F' {
+						flat.InfoAddMemFree(p.bldr, int64(n))
+					} else {
+						flat.InfoAddMemAvailable(p.bldr, int64(n))
+					}
+				} else if v == 'S' {
+					v = p.val[4]
+					if v == 'C' {
+						flat.InfoAddSwapCached(p.bldr, int64(n))
+					} else if v == 'T' {
+						flat.InfoAddSwapTotal(p.bldr, int64(n))
+					} else if v == 'F' {
+						flat.InfoAddSwapFree(p.bldr, int64(n))
+					}
+				} else if v == 'B' {
+					flat.InfoAddBuffers(p.bldr, int64(n))
+				} else if v == 'I' {
+					flat.InfoAddInactive(p.bldr, int64(n))
+				} else if v == 'C' {
+					flat.InfoAddMemAvailable(p.bldr, int64(n))
+				} else if v == 'A' {
+					flat.InfoAddInactive(p.bldr, int64(n))
+				}
+			}
+			p.bldr.Finish(flat.InfoEnd(p.bldr))
+			inf := p.bldr.Bytes[p.bldr.Head():]
+			out <- inf
+		}
+	}
+}
+
+// TODO: should InfoTickerFlat use std or have a local proc?
+// InfoTickerFlat gathers the meminfo on a ticker, whose interval is defined
+// by the received duration, and sends the results to the channel.  The
+// output is Flatbuffer serialized bytes of Info.  Any error encountered
+// during processing is sent to the error channel; processing will continue.
+//
+// If an error occurs while opening /proc/meminfo, the error will be sent
+// to the errs channel and this func will exit.
+//
+// To stop processing and exit; send a signal on the done channel.  This
+// will cause the function to stop the ticker, close the out channel and
+// return.
+//
+// This func uses a local InfoProfiler.  If an error occurs during the
+// creation of the InfoProfiler, it will be sent to errs and exit.
+func InfoTickerFlat(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
+	p, err := NewInfoProfilerFlat()
+	if err != nil {
+		errs <- err
+		return
+	}
+	p.TickerFlat(interval, out, done, errs)
 }
 
 // func (i *InfoFlat) String() string {
