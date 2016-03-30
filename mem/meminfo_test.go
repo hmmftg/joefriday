@@ -40,22 +40,3 @@ func BenchmarkGetMemInfo(b *testing.B) {
 	}
 	_ = inf
 }
-
-func BenchmarkGetMemInfoJSON(b *testing.B) {
-	var infF []byte
-	p, _ := NewInfoProfiler()
-	for i := 0; i < b.N; i++ {
-		infF, _ = p.GetJSON()
-	}
-	_ = infF
-}
-
-func BenchmarkUnmarshalInfoJSON(b *testing.B) {
-	var inf *Info
-	p, _ := NewInfoProfiler()
-	infB, _ := p.GetJSON()
-	for i := 0; i < b.N; i++ {
-		inf, _ = UnmarshalInfoJSON(infB)
-	}
-	_ = inf
-}

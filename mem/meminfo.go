@@ -27,7 +27,7 @@ import (
 	joe "github.com/mohae/joefriday"
 )
 
-const procMemInfo = "/proc/meminfo"
+const ProcMemInfo = "/proc/meminfo"
 
 type InfoProfiler struct {
 	joe.Proc
@@ -37,7 +37,7 @@ type InfoProfiler struct {
 var std *InfoProfiler
 
 func NewInfoProfiler() (proc *InfoProfiler, err error) {
-	f, err := os.Open(procMemInfo)
+	f, err := os.Open(ProcMemInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -46,13 +46,13 @@ func NewInfoProfiler() (proc *InfoProfiler, err error) {
 
 // Get returns some of the results of /proc/meminfo.
 func (p *InfoProfiler) Get() (inf *Info, err error) {
-	p.Lock()
-	defer p.Unlock()
 	var (
 		i, pos, nameLen int
 		v               byte
 	)
 	p.Proc.Reset()
+	p.Lock()
+	defer p.Unlock()
 	inf = &Info{}
 	for l := 0; l < 16; l++ {
 		p.Line, err = p.Buf.ReadSlice('\n')
@@ -201,8 +201,8 @@ func (p *InfoProfiler) Ticker(interval time.Duration, out chan Info, done chan s
 		case <-done:
 			return
 		case <-ticker.C:
-			p.Lock()
 			err = p.Reset()
+			p.Lock()
 			if err != nil {
 				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue

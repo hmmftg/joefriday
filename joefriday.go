@@ -56,8 +56,9 @@ type ProfileSerializerTicker interface {
 	Ticker(tick time.Duration, out chan []byte, done chan struct{}, errs chan error)
 }
 
-// It is expected that the caller has the lock.
 func (p *Proc) Reset() error {
+	p.Lock()
+	defer p.Unlock()
 	_, err := p.File.Seek(0, os.SEEK_SET)
 	if err != nil {
 		return err

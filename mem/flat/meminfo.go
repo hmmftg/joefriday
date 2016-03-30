@@ -27,8 +27,6 @@ import (
 	"github.com/mohae/joefriday/mem"
 )
 
-const procMemInfo = "/proc/meminfo"
-
 var std *InfoProfiler
 
 // InfoProfilerFlat wraps InfoProfiler and provides a builder; enabling reuse.
@@ -38,7 +36,7 @@ type InfoProfiler struct {
 }
 
 func NewInfoProfiler() (proc *InfoProfiler, err error) {
-	f, err := os.Open(procMemInfo)
+	f, err := os.Open(mem.ProcMemInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -46,17 +44,19 @@ func NewInfoProfiler() (proc *InfoProfiler, err error) {
 }
 
 func (p *InfoProfiler) reset() error {
+	p.Info.Lock()
 	p.bldr.Reset()
+	p.Info.Unlock()
 	return p.Info.Reset()
 }
 
 // Get returns the current meminfo as flatbuffer serialized bytes.
 func (p *InfoProfiler) Get() ([]byte, error) {
+	p.reset()
 	inf, err := p.Info.Get()
 	if err != nil {
 		return nil, err
 	}
-	p.bldr.Reset()
 	return p.Serialize(inf), nil
 }
 
@@ -104,8 +104,8 @@ Tick:
 		case <-done:
 			return
 		case <-ticker.C:
-			p.Info.Lock()
 			err = p.reset()
+			p.Info.Lock()
 			if err != nil {
 				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue
@@ -215,6 +215,8 @@ func InfoTicker(interval time.Duration, out chan []byte, done chan struct{}, err
 }
 
 func (prof *InfoProfiler) Serialize(inf *mem.Info) []byte {
+	prof.Info.Lock()
+	defer prof.Info.Unlock()
 	InfoStart(prof.bldr)
 	InfoAddTimestamp(prof.bldr, int64(inf.Timestamp))
 	InfoAddMemTotal(prof.bldr, int64(inf.MemTotal))
