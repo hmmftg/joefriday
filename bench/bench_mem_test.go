@@ -233,3 +233,14 @@ func BenchmarkEricLagergrenGnulibSysinfoPhysmemTotal(b *testing.B) {
 	}
 	_ = mem
 }
+
+func TestDataDogGohaiMem(t *testing.T) {
+	type Collector interface {
+		Name() string
+		Collect() (interface{}, error)
+	}
+	var collector = &memory.Memory{}
+	var c interface{}
+	c, _ = collector.Collect()
+	t.Logf("%#v\n", c)
+}

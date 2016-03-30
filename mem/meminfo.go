@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/SermoDigital/helpers"
@@ -32,8 +33,6 @@ type InfoProfiler struct {
 	joe.Proc
 	Val []byte
 }
-
-var std *InfoProfiler
 
 func NewInfoProfiler() (proc *InfoProfiler, err error) {
 	f, err := os.Open(ProcMemInfo)
@@ -131,8 +130,15 @@ func (p *InfoProfiler) Get() (inf *Info, err error) {
 	return inf, nil
 }
 
+// TODO: is it even worth it to have this as a global?  Should GetInfo()
+// just instantiate a local version and use that?  InfoTicker does...
+var std *InfoProfiler
+var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+
 // GetInfo get's the current meminfo.
 func GetInfo() (inf *Info, err error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
 	if std == nil {
 		std, err = NewInfoProfiler()
 		if err != nil {

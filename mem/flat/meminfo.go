@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/SermoDigital/helpers"
@@ -26,8 +27,6 @@ import (
 	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/mem"
 )
-
-var std *InfoProfiler
 
 // InfoProfilerFlat wraps InfoProfiler and provides a builder; enabling reuse.
 type InfoProfiler struct {
@@ -60,8 +59,15 @@ func (p *InfoProfiler) Get() ([]byte, error) {
 	return p.Serialize(inf), nil
 }
 
+// TODO: is it even worth it to have this as a global?  Should GetInfo()
+// just instantiate a local version and use that?  InfoTicker does...
+var std *InfoProfiler
+var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+
 // GetInfo get's the current meminfo.
 func GetInfo() (p []byte, err error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
 	if std == nil {
 		std, err = NewInfoProfiler()
 		if err != nil {
