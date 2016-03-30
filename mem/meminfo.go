@@ -17,7 +17,6 @@ package mem
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -141,31 +140,6 @@ func GetInfo() (inf *Info, err error) {
 		}
 	}
 	return std.Get()
-}
-
-// GetJSON returns the current meminfo as JSON serialized bytes.
-func (p *InfoProfiler) GetJSON() ([]byte, error) {
-	inf, err := p.Get()
-	if err != nil {
-		return nil, err
-	}
-	return inf.SerializeJSON()
-}
-
-// GetInfoJSON returns the current meminfo as JSON serialized bytes.
-func GetInfoJSON() ([]byte, error) {
-	var err error
-	if std == nil {
-		std, err = NewInfoProfiler()
-		if err != nil {
-			return nil, err
-		}
-	}
-	inf, err := std.Get()
-	if err != nil {
-		return nil, err
-	}
-	return inf.SerializeJSON()
 }
 
 // Ticker gathers the meminfo on a ticker, whose interval is defined by the
@@ -308,60 +282,6 @@ func InfoTicker(interval time.Duration, out chan Info, done chan struct{}, errs 
 	p.Ticker(interval, out, done, errs)
 }
 
-// TickerJSON gathers the meminfo on a ticker, whose interval is defined by
-// the received duration, and sends the results to the channel.  The output
-// is JSON serialized bytes of Info.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-func (p *InfoProfiler) TickerJSON(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	outCh := make(chan Info)
-	defer close(outCh)
-	go p.Ticker(interval, outCh, done, errs)
-	for {
-		select {
-		case inf, ok := <-outCh:
-			if !ok {
-				return
-			}
-			b, err := json.Marshal(inf)
-			if err != nil {
-				errs <- err
-				continue
-			}
-			out <- b
-		}
-	}
-}
-
-// InfoTickerJSON gathers the meminfo on a ticker, whose interval is defined
-// by the received duration, and sends the results to the channel.  The
-// output is the JSON serialized bytes of Info.  Any error encountered
-// during processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-//
-// This func uses a local InfoProfiler.  If an error occurs during the
-// creation of the InfoProfiler, it will be sent to errs and exit.
-func InfoTickerJSON(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	p, err := NewInfoProfiler()
-	if err != nil {
-		errs <- err
-		return
-	}
-	p.TickerJSON(interval, out, done, errs)
-}
-
 type Info struct {
 	Timestamp    int64 `json:"timestamp"`
 	MemTotal     int64 `json:"mem_total"`
@@ -374,21 +294,6 @@ type Info struct {
 	Inactive     int64 `json:"inactive"`
 	SwapTotal    int64 `json:"swap_total"`
 	SwapFree     int64 `json:"swap_free"`
-}
-
-// Marshal Info as JSON
-func (i *Info) SerializeJSON() ([]byte, error) {
-	return json.Marshal(i)
-}
-
-// UnmarshalInfoJSON unmarshals JSON into *Info.
-func UnmarshalInfoJSON(p []byte) (*Info, error) {
-	info := &Info{}
-	err := json.Unmarshal(p, info)
-	if err != nil {
-		return nil, err
-	}
-	return info, nil
 }
 
 func (i *Info) String() string {
