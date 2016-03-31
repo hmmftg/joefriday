@@ -1,0 +1,27 @@
+// stats.fbs
+namespace flat;
+
+table Stats {
+    ClkTck:short;
+    Timestamp:long;
+    Ctxt:long;
+    BTime:long;
+    Processes:long;
+    CPU:[Stat];
+}
+
+table Stat {
+    ID:string;
+    User:long;
+    Nice:long;
+    System:long;
+    Idle:long;
+    IOWait:long;
+    IRQ:long;
+    SoftIRQ:long;
+    Steal:long;
+    Quest:long;
+    QuestNice:long;
+}
+
+root_type Stats;
