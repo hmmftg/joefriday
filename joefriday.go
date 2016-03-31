@@ -42,6 +42,11 @@ type Proc struct {
 	Line []byte // current line
 }
 
+// Creats a Proc using the file handle.
+func NewProc(f *os.File) Proc {
+	return Proc{File: f, Buf: bufio.NewReader(f)}
+}
+
 // ProfileSerializer is implemented by any profiler that has a Get method
 // that returns the data as serialized bytes.
 type ProfileSerializer interface {
