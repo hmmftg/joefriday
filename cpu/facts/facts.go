@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cpu
+package facts
 
 import (
 	//Flat "github.com/google/flatbuffers/go"
@@ -30,38 +30,38 @@ import (
 const ProcCPUInfo = "/proc/cpuinfo"
 
 // Facter gathers CPUInfo facts.
-type Facter struct {
+type Profiler struct {
 	joe.Proc
 	Val []byte
 }
 
-func NewFacter() (facter *Facter, err error) {
+func New() (prof *Profiler, err error) {
 	f, err := os.Open(ProcCPUInfo)
 	if err != nil {
 		return nil, err
 	}
-	return &Facter{Proc: joe.NewProc(f), Val: make([]byte, 0, 160)}, nil
+	return &Profiler{Proc: joe.NewProc(f), Val: make([]byte, 0, 160)}, nil
 }
 
-func (facter *Facter) Reset() {
-	facter.Lock()
-	facter.Val = facter.Val[:0]
-	facter.Unlock()
-	facter.Proc.Reset()
+func (prof *Profiler) Reset() {
+	prof.Lock()
+	prof.Val = prof.Val[:0]
+	prof.Unlock()
+	prof.Proc.Reset()
 }
 
 // GetFacts gets the processor information from /proc/cpuinfo
-func (facter *Facter) Get() (facts *Facts, err error) {
+func (prof *Profiler) Get() (facts *Facts, err error) {
 	var (
 		cpuCnt, i, pos int
 		v              byte
 		name, value    string
 		cpu            Fact
 	)
-	facter.Reset()
+	prof.Reset()
 	facts = &Facts{Timestamp: time.Now().UTC().UnixNano()}
 	for {
-		facter.Line, err = facter.Buf.ReadSlice('\n')
+		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -70,18 +70,18 @@ func (facter *Facter) Get() (facts *Facts, err error) {
 		}
 		// First grab the attribute name; everything up to the ':'.  The key may have
 		// spaces and has trailing spaces; that gets trimmed.
-		for i, v = range facter.Line {
+		for i, v = range prof.Line {
 			if v == 0x3A {
 				pos = i + 1
 				break
 			}
-			facter.Val = append(facter.Val, v)
+			prof.Val = append(prof.Val, v)
 		}
-		name = strings.TrimSpace(string(facter.Val[:]))
-		facter.Val = facter.Val[:0]
+		name = strings.TrimSpace(string(prof.Val[:]))
+		prof.Val = prof.Val[:0]
 		// if there's anything left, the value is everything else; trim spaces
-		if pos < len(facter.Line) {
-			value = strings.TrimSpace(string(facter.Line[pos:]))
+		if pos < len(prof.Line) {
+			value = strings.TrimSpace(string(prof.Line[pos:]))
 		}
 		// check to see if this is flat.Facts for a different processor
 		if name == "processor" {
@@ -230,19 +230,19 @@ func (facter *Facter) Get() (facts *Facts, err error) {
 
 // TODO: is it even worth it to have this as a global?  Should GetFacts
 // just instantiate a local version and use that?
-var stdFacter *Facter
-var stdFacterMu sync.Mutex
+var stdProfiler *Profiler
+var stdProfilerMu sync.Mutex
 
-func GetFacts() (facts *Facts, err error) {
-	stdFacterMu.Lock()
-	defer stdFacterMu.Unlock()
-	if stdFacter == nil {
-		stdFacter, err = NewFacter()
+func Get() (facts *Facts, err error) {
+	stdProfilerMu.Lock()
+	defer stdProfilerMu.Unlock()
+	if stdProfiler == nil {
+		stdProfiler, err = New()
 		if err != nil {
 			return nil, err
 		}
 	}
-	return stdFacter.Get()
+	return stdProfiler.Get()
 }
 
 // Facts are a collection of facts, cpuinfo, about the system's cpus.

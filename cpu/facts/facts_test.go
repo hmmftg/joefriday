@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cpu
+package facts
 
 import "testing"
 
 func TestFacts(t *testing.T) {
-	facts, err := GetFacts()
+	facts, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

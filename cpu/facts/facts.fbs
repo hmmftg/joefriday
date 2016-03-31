@@ -1,4 +1,4 @@
-// cpu_facts.fbs
+// facts.fbs
 namespace flat;
 
 table Facts {
