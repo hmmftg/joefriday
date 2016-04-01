@@ -19,13 +19,13 @@ import (
 	"github.com/mohae/joefriday/mem"
 )
 
-func TestGetInfoSerializeDeserializeFlat(t *testing.T) {
-	p, err := GetInfo()
+func TestSerializeDeserialize(t *testing.T) {
+	p, err := Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	inf := DeserializeInfo(p)
+	inf := Deserialize(p)
 	// compare
 	data := GetRootAsInfo(p, 0)
 	if inf.Timestamp != data.Timestamp() {
@@ -73,7 +73,7 @@ var inf *mem.Info
 
 func BenchmarkGetMemInfo(b *testing.B) {
 	var infF []byte
-	p, _ := NewInfoProfiler()
+	p, _ := New()
 	for i := 0; i < b.N; i++ {
 		infF, _ = p.Get()
 	}
@@ -81,10 +81,10 @@ func BenchmarkGetMemInfo(b *testing.B) {
 }
 
 func BenchmarkDeserializeMemInfo(b *testing.B) {
-	p, _ := NewInfoProfiler()
+	p, _ := New()
 	infB, _ := p.Get()
 	for i := 0; i < b.N; i++ {
-		inf = DeserializeInfo(infB)
+		inf = Deserialize(infB)
 	}
 	_ = inf
 }
