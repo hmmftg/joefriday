@@ -27,7 +27,7 @@ import (
 	joe "github.com/mohae/joefriday"
 )
 
-const ProcCPUInfo = "/proc/cpuinfo"
+const profFile = "/proc/cpuinfo"
 
 // Facter gathers CPUInfo facts.
 type Profiler struct {
@@ -36,7 +36,7 @@ type Profiler struct {
 }
 
 func New() (prof *Profiler, err error) {
-	f, err := os.Open(ProcCPUInfo)
+	f, err := os.Open(profFile)
 	if err != nil {
 		return nil, err
 	}
