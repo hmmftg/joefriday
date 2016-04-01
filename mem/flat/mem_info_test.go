@@ -71,7 +71,7 @@ func TestSerializeDeserialize(t *testing.T) {
 
 var inf *mem.Info
 
-func BenchmarkGetMemInfo(b *testing.B) {
+func BenchmarkGet(b *testing.B) {
 	var infF []byte
 	p, _ := New()
 	for i := 0; i < b.N; i++ {
@@ -80,7 +80,7 @@ func BenchmarkGetMemInfo(b *testing.B) {
 	_ = infF
 }
 
-func BenchmarkDeserializeMemInfo(b *testing.B) {
+func BenchmarkDeserialize(b *testing.B) {
 	p, _ := New()
 	infB, _ := p.Get()
 	for i := 0; i < b.N; i++ {
