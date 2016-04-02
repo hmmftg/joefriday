@@ -19,13 +19,13 @@ import (
 	"github.com/mohae/joefriday/mem"
 )
 
-func TestGetInfo(t *testing.T) {
-	nf, err := GetInfo()
+func TestGet(t *testing.T) {
+	nf, err := Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	info, err := UnmarshalInfo(nf)
+	info, err := Unmarshal(nf)
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
@@ -43,7 +43,7 @@ var inf *mem.Info
 
 func BenchmarkGetMemInfo(b *testing.B) {
 	var jsn []byte
-	p, _ := NewInfoProfiler()
+	p, _ := New()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
 	}
@@ -51,10 +51,10 @@ func BenchmarkGetMemInfo(b *testing.B) {
 }
 
 func BenchmarkUnmarshalMemInfo(b *testing.B) {
-	p, _ := NewInfoProfiler()
+	p, _ := New()
 	infB, _ := p.Get()
 	for i := 0; i < b.N; i++ {
-		inf, _ = UnmarshalInfo(infB)
+		inf, _ = Unmarshal(infB)
 	}
 	_ = inf
 }

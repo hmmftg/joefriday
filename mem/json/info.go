@@ -16,32 +16,29 @@
 package json
 
 import (
-	"bufio"
 	"encoding/json"
-	"os"
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/mem"
 )
 
-type InfoProfiler struct {
-	Info mem.InfoProfiler
+type Profiler struct {
+	Prof *mem.Profiler
 }
 
-func NewInfoProfiler() (proc *InfoProfiler, err error) {
-	f, err := os.Open(mem.ProcMemInfo)
+func New() (prof *Profiler, err error) {
+	p, err := mem.New()
 	if err != nil {
 		return nil, err
 	}
-	return &InfoProfiler{Info: mem.InfoProfiler{Proc: joe.Proc{File: f, Buf: bufio.NewReader(f)}, Val: make([]byte, 0, 32)}}, nil
+	return &Profiler{Prof: p}, nil
 }
 
 // Get returns some of the results of /proc/meminfo.
-func (prof *InfoProfiler) Get() (p []byte, err error) {
-	prof.Info.Proc.Reset()
-	inf, err := prof.Info.Get()
+func (prof *Profiler) Get() (p []byte, err error) {
+	prof.Prof.Reset()
+	inf, err := prof.Prof.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -50,15 +47,15 @@ func (prof *InfoProfiler) Get() (p []byte, err error) {
 
 // TODO: is it even worth it to have this as a global?  Should GetInfo()
 // just instantiate a local version and use that?  InfoTicker does...
-var std *InfoProfiler
+var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// GetInfo get's the current meminfo.
-func GetInfo() (p []byte, err error) {
+// Get get's the current meminfo.
+func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = NewInfoProfiler()
+		std, err = New()
 		if err != nil {
 			return nil, err
 		}
@@ -77,10 +74,10 @@ func GetInfo() (p []byte, err error) {
 // To stop processing and exit; send a signal on the done channel.  This
 // will cause the function to stop the ticker, close the out channel and
 // return.
-func (prof *InfoProfiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
+func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	outCh := make(chan mem.Info)
 	defer close(outCh)
-	go prof.Info.Ticker(interval, outCh, done, errs)
+	go prof.Prof.Ticker(interval, outCh, done, errs)
 	for {
 		select {
 		case inf, ok := <-outCh:
@@ -97,22 +94,18 @@ func (prof *InfoProfiler) Ticker(interval time.Duration, out chan []byte, done c
 	}
 }
 
-// InfoTicker gathers the meminfo on a ticker, whose interval is defined
-// by the received duration, and sends the results to the channel.  The
-// output is the JSON serialized bytes of Info.  Any error encountered
-// during processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
+// Ticker gathers the meminfo on a ticker, whose interval is defined by the
+// received duration, and sends the JSON serialized results to the channel.
+// Errors are sent to errs.
 //
 // To stop processing and exit; send a signal on the done channel.  This
 // will cause the function to stop the ticker, close the out channel and
 // return.
 //
-// This func uses a local InfoProfiler.  If an error occurs during the
-// creation of the InfoProfiler, it will be sent to errs and exit.
+// This func uses a local Profiler.  If an error occurs during the creation
+// of the Profiler, it will be sent to errs and exit.
 func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	p, err := NewInfoProfiler()
+	p, err := New()
 	if err != nil {
 		errs <- err
 		return
@@ -121,12 +114,12 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 }
 
 // Serialize mem.Info as JSON
-func (prof *InfoProfiler) Serialize(inf *mem.Info) ([]byte, error) {
+func (prof *Profiler) Serialize(inf *mem.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
-// UnmarshalInfo unmarshals JSON into *Info.
-func UnmarshalInfo(p []byte) (*mem.Info, error) {
+// Unmarshal unmarshals JSON into *Info.
+func Unmarshal(p []byte) (*mem.Info, error) {
 	info := &mem.Info{}
 	err := json.Unmarshal(p, info)
 	if err != nil {
