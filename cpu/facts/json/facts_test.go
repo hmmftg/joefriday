@@ -38,10 +38,10 @@ func TestGet(t *testing.T) {
 	}
 	for i, v := range fcts.CPU {
 		if v.VendorID == "" {
-			t.Error("expected vendor_id to have a value; it was empty")
+			t.Errorf("%d: expected vendor_id to have a value; it was empty", i)
 		}
 		if v.Flags == "" {
-			t.Error("expected flags to have values; it was empty")
+			t.Errorf("%d: expected flags to have values; it was empty", i)
 		}
 	}
 	t.Logf("%#v\n", fcts)

@@ -18,7 +18,6 @@ package json
 import (
 	"encoding/json"
 	"sync"
-	"time"
 
 	"github.com/mohae/joefriday/cpu/facts"
 )
@@ -61,56 +60,6 @@ func Get() (p []byte, err error) {
 		}
 	}
 	return std.Get()
-}
-
-// Ticker gathers the meminfo on a ticker, whose interval is defined by the
-// received duration, and sends the results to the channel.  The output is
-// JSON serialized bytes of mem.Info.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	outCh := make(chan facts.Facts)
-	defer close(outCh)
-	go prof.Prof.Ticker(interval, outCh, done, errs)
-	for {
-		select {
-		case inf, ok := <-outCh:
-			if !ok {
-				return
-			}
-			b, err := prof.Serialize(&inf)
-			if err != nil {
-				errs <- err
-				continue
-			}
-			out <- b
-		}
-	}
-}
-
-// Ticker gathers the meminfo on a ticker, whose interval is defined by the
-// received duration, and sends the JSON serialized results to the channel.
-// Errors are sent to errs.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-//
-// This func uses a local Profiler.  If an error occurs during the creation
-// of the Profiler, it will be sent to errs and exit.
-func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	p, err := New()
-	if err != nil {
-		errs <- err
-		return
-	}
-	p.Ticker(interval, out, done, errs)
 }
 
 // Serialize mem.Info as JSON
