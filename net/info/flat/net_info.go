@@ -38,7 +38,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() error {
+func (prof *Profiler) Reset() error {
 	prof.Prof.Lock()
 	prof.Builder.Reset()
 	prof.Prof.Unlock()
@@ -47,7 +47,7 @@ func (prof *Profiler) reset() error {
 
 // Get returns the current meminfo as flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	prof.reset()
+	prof.Reset()
 	inf, err := prof.Prof.Get()
 	if err != nil {
 		return nil, err

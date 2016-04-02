@@ -26,14 +26,14 @@ import (
 	"github.com/mohae/joefriday/net/structs"
 )
 
-const procFile = "/proc/net/dev"
+const ProcFile = "/proc/net/dev"
 
 type Profiler struct {
 	*joe.Proc
 }
 
 func New() (prof *Profiler, err error) {
-	proc, err := joe.New(procFile)
+	proc, err := joe.New(ProcFile)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +51,7 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 	// there's always at least 2 interfaces (I think)
 	inf := &structs.Info{Timestamp: time.Now().UTC().UnixNano(), Interfaces: make([]structs.Interface, 0, 2)}
 	for {
+		prof.Val = prof.Val[:0]
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
@@ -63,12 +64,15 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 			continue
 		}
 		var iInfo structs.Interface
-
 		// first grab the interface name (everything up to the ':')
 		for i, v = range prof.Line {
 			if v == 0x3A {
 				pos = i + 1
 				break
+			}
+			// skip spaces
+			if v == 0x20 {
+				continue
 			}
 			prof.Val = append(prof.Val, v)
 		}
