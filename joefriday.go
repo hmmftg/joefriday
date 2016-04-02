@@ -40,11 +40,12 @@ type Proc struct {
 	*os.File
 	Buf  *bufio.Reader
 	Line []byte // current line
+	Val  []byte
 }
 
 // Creats a Proc using the file handle.
 func NewProc(f *os.File) Proc {
-	return Proc{File: f, Buf: bufio.NewReader(f)}
+	return Proc{File: f, Buf: bufio.NewReader(f), Val: make([]byte, 0, 32)}
 }
 
 // ProfileSerializer is implemented by any profiler that has a Get method
@@ -69,6 +70,7 @@ func (p *Proc) Reset() error {
 		return err
 	}
 	p.Buf.Reset(p.File)
+	p.Val = p.Val[:0]
 	return nil
 }
 
