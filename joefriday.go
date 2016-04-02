@@ -44,8 +44,12 @@ type Proc struct {
 }
 
 // Creats a Proc using the file handle.
-func NewProc(f *os.File) Proc {
-	return Proc{File: f, Buf: bufio.NewReader(f), Val: make([]byte, 0, 32)}
+func New(fname string) (*Proc, error) {
+	f, err := os.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+	return &Proc{File: f, Buf: bufio.NewReader(f), Val: make([]byte, 0, 32)}, nil
 }
 
 // ProfileSerializer is implemented by any profiler that has a Get method

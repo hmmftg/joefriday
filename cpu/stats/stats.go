@@ -14,10 +14,8 @@
 package stats
 
 import (
-	"bufio"
 	"bytes"
 	"io"
-	"os"
 	"os/exec"
 	"strconv"
 	"sync"
@@ -56,7 +54,7 @@ func ClkTck() error {
 }
 
 type Profiler struct {
-	joe.Proc
+	*joe.Proc
 	ClkTck int16
 }
 
@@ -68,11 +66,11 @@ func New() (prof *Profiler, err error) {
 			return nil, err
 		}
 	}
-	f, err := os.Open(procFile)
+	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: joe.Proc{File: f, Buf: bufio.NewReader(f)}, ClkTck: int16(atomic.LoadInt32(&CLK_TCK))}, nil
+	return &Profiler{Proc: proc, ClkTck: int16(atomic.LoadInt32(&CLK_TCK))}, nil
 }
 
 func (prof *Profiler) Get() (stats *Stats, err error) {

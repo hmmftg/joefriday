@@ -16,10 +16,8 @@
 package mem
 
 import (
-	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"sync"
 	"time"
 
@@ -30,16 +28,15 @@ import (
 const procFile = "/proc/meminfo"
 
 type Profiler struct {
-	joe.Proc
-	Val []byte
+	*joe.Proc
 }
 
 func New() (prof *Profiler, err error) {
-	f, err := os.Open(procFile)
+	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: joe.Proc{File: f, Buf: bufio.NewReader(f)}, Val: make([]byte, 0, 32)}, nil
+	return &Profiler{Proc: proc}, nil
 }
 
 // Get returns some of the results of /proc/meminfo.

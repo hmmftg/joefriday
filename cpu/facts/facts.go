@@ -18,7 +18,6 @@ import (
 
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,20 +26,19 @@ import (
 	joe "github.com/mohae/joefriday"
 )
 
-const profFile = "/proc/cpuinfo"
+const procFile = "/proc/cpuinfo"
 
 // Facter gathers CPUInfo facts.
 type Profiler struct {
-	joe.Proc
-	Val []byte
+	*joe.Proc
 }
 
 func New() (prof *Profiler, err error) {
-	f, err := os.Open(profFile)
+	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: joe.NewProc(f), Val: make([]byte, 0, 160)}, nil
+	return &Profiler{Proc: proc}, nil
 }
 
 func (prof *Profiler) Reset() {

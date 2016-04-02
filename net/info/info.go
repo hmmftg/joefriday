@@ -18,7 +18,6 @@ package info
 import (
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -30,15 +29,15 @@ import (
 const procFile = "/proc/net/dev"
 
 type Profiler struct {
-	joe.Proc
+	*joe.Proc
 }
 
 func New() (prof *Profiler, err error) {
-	f, err := os.Open(procFile)
+	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: joe.NewProc(f)}, nil
+	return &Profiler{Proc: proc}, nil
 }
 
 // GetInfo returns some of the results of /proc/net/dev
