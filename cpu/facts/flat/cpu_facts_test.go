@@ -13,7 +13,11 @@
 
 package flat
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/mohae/joefriday/cpu/facts"
+)
 
 func TestSerialize(t *testing.T) {
 	facts, err := Get()
@@ -29,13 +33,13 @@ func TestSerialize(t *testing.T) {
 	}
 	for i := 0; i < len(factsD.CPU); i++ {
 		if factsD.CPU[i].VendorID == "" {
-			t.Errorf("VendorID: expected Vendor ID to not be empty, it was", i)
+			t.Errorf("%d: VendorID: expected Vendor ID to not be empty, it was", i)
 		}
 		if factsD.CPU[i].Model == "" {
-			t.Errorf("Model: expected model to not be empty; it was", i)
+			t.Errorf("%d: Model: expected model to not be empty; it was", i)
 		}
 		if factsD.CPU[i].CPUCores == 0 {
-			t.Errorf("CPUCores %d: expected non-zero value; was 0", i)
+			t.Errorf("%d: CPUCores: expected non-zero value; was 0", i)
 		}
 	}
 	_, err = Serialize(factsD)
@@ -43,4 +47,24 @@ func TestSerialize(t *testing.T) {
 		t.Errorf("unexpected serialization error: %s", err)
 		return
 	}
+}
+
+var inf *facts.Facts
+
+func BenchmarkGet(b *testing.B) {
+	var jsn []byte
+	p, _ := New()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Get()
+	}
+	_ = jsn
+}
+
+func BenchmarkDeserialize(b *testing.B) {
+	p, _ := New()
+	infB, _ := p.Get()
+	for i := 0; i < b.N; i++ {
+		inf = Deserialize(infB)
+	}
+	_ = inf
 }
