@@ -103,17 +103,27 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 	prof.Ticker(interval, out, done, errs)
 }
 
-// Serialize mem.Info as JSON
+// Serialize cpu Utilization as JSON
 func (prof *Profiler) Serialize(ut *utilization.Utilization) ([]byte, error) {
 	return json.Marshal(ut)
 }
 
-// Unmarshal unmarshals JSON into *Info.
-func Unmarshal(p []byte) (*utilization.Utilization, error) {
+// Marshal is an alias for Serialize
+func (prof *Profiler) Marshal(ut *utilization.Utilization) ([]byte, error) {
+	return prof.Serialize(ut)
+}
+
+// Deserialize deserializes JSON serialized bytes.
+func Deserialize(p []byte) (*utilization.Utilization, error) {
 	ut := &utilization.Utilization{}
 	err := json.Unmarshal(p, ut)
 	if err != nil {
 		return nil, err
 	}
 	return ut, nil
+}
+
+// Unmarshal is an alias for Deserialize
+func Unmarshal(p []byte) (*utilization.Utilization, error) {
+	return Deserialize(p)
 }

@@ -62,17 +62,27 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize mem.Info as JSON
+// Serialize cpu Facts as JSON
 func (prof *Profiler) Serialize(fct *facts.Facts) ([]byte, error) {
 	return json.Marshal(fct)
 }
 
-// Unmarshal unmarshals JSON into *Info.
-func Unmarshal(p []byte) (*facts.Facts, error) {
+// Marshal is an alias for serialize.
+func (prof *Profiler) Marshal(fct *facts.Facts) ([]byte, error) {
+	return prof.Serialize(fct)
+}
+
+// Deserialize deserializes JSON serialized bytes.
+func Deserialize(p []byte) (*facts.Facts, error) {
 	fct := &facts.Facts{}
 	err := json.Unmarshal(p, fct)
 	if err != nil {
 		return nil, err
 	}
 	return fct, nil
+}
+
+// Unmarshal is an alias for Deserialize
+func Unmarshal(p []byte) (*facts.Facts, error) {
+	return Deserialize(p)
 }

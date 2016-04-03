@@ -118,12 +118,22 @@ func (prof *Profiler) Serialize(inf *mem.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
-// Unmarshal unmarshals JSON into *Info.
-func Unmarshal(p []byte) (*mem.Info, error) {
+// Marshal is an alias for Serialize
+func (prof *Profiler) Marshal(inf *mem.Info) ([]byte, error) {
+	return prof.Serialize(inf)
+}
+
+// Deserialize deserializes JSON serialized bytes.
+func Deserialize(p []byte) (*mem.Info, error) {
 	info := &mem.Info{}
 	err := json.Unmarshal(p, info)
 	if err != nil {
 		return nil, err
 	}
 	return info, nil
+}
+
+// Unmarshal is an alias for Deserialize
+func Unmarshal(p []byte) (*mem.Info, error) {
+	return Deserialize(p)
 }
