@@ -11,8 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem gets and processes /proc/meminfo, returning the data in the
-// appropriate format.
+// Package json handles JSON based processing of network usage.  Instead of
+// returning a Go struct, it returns JSON serialized bytes.  A function to
+// deserialize the JSON serialized bytes into a structs.Info struct is
+// provided.
 package json
 
 import (
@@ -24,10 +26,12 @@ import (
 	"github.com/mohae/joefriday/net/usage"
 )
 
+// Profiler is used to process the network usage JSON.
 type Profiler struct {
 	Prof *usage.Profiler
 }
 
+// Initializes and returns a network usage profiler.
 func New() (prof *Profiler, err error) {
 	p, err := usage.New()
 	if err != nil {
@@ -36,7 +40,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p}, nil
 }
 
-// Get returns net interfaces usage information, in bytes.
+// Get returns the current network usage as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	prof.Prof.Reset()
 	inf, err := prof.Prof.Get()
@@ -51,7 +55,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get get's the current usage information, in bytes.
+// Get returns the current network usage as JSON serialized bytes using the
+// package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -64,17 +69,15 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker gathers the network usage information on a ticker, whose interval
-// is defined by the received duration, and sends the results to the channel.
-// The output is JSON serialized bytes.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
+// Ticker processes network usage on a ticker.  The generated data is sent to
+// the out channel.  Any errors encountered are sent to the errs channel.
+// Processing ends when a done signal is received.
 //
-// If an error occurs while opening /proc/net/dev, the error will be sent
-// to the errs channel and this func will exit.
+// It is the callers responsibility to close the done and errs channels.
 //
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
+// TODO: better handle errors, e.g. restore cur from prior so that there
+// isn't the possibility of temporarily having bad data, just a missed
+// collection interval.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	outCh := make(chan *structs.Info)
 	defer close(outCh)
@@ -95,16 +98,9 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan 
 	}
 }
 
-// Ticker gathers the meminfo on a ticker, whose interval is defined by the
-// received duration, and sends the JSON serialized results to the channel.
-// Errors are sent to errs.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-//
-// This func uses a local Profiler.  If an error occurs during the creation
-// of the Profiler, it will be sent to errs and exit.
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
 func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	p, err := New()
 	if err != nil {
@@ -114,7 +110,7 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 	p.Ticker(interval, out, done, errs)
 }
 
-// Serialize net usage as JSON
+// Serialize network usage using JSON
 func (prof *Profiler) Serialize(inf *structs.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }

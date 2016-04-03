@@ -11,6 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package stat handles processing of the /proc/stats file: information about
+// kernel activity.
 package stats
 
 import (
@@ -53,11 +55,13 @@ func ClkTck() error {
 	return nil
 }
 
+// Profiler is used to process the /proc/stats file.
 type Profiler struct {
 	*joe.Proc
 	ClkTck int16
 }
 
+// Returns an initialized Profiler; ready to use.
 func New() (prof *Profiler, err error) {
 	// if it hasn't been set, set it.
 	if atomic.LoadInt32(&CLK_TCK) == 0 {
@@ -73,6 +77,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc, ClkTck: int16(atomic.LoadInt32(&CLK_TCK))}, nil
 }
 
+// Get returns information about current kernel activity.
 func (prof *Profiler) Get() (stats *Stats, err error) {
 	prof.Reset()
 	prof.Lock()
@@ -204,7 +209,8 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get gets the output of /proc/stat.
+// Get returns the current kernal activity information using the package's
+// global Profiler.
 func Get() (stat *Stats, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

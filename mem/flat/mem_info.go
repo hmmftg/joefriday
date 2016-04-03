@@ -11,7 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat gets and processes /proc/meminfo using Flatbuffers.
+// Package flat handles Flatbuffer based processing of /proc/meminfo.
+// Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
+// A function to deserialize the Flatbuffer serialized bytes into a
+// facts.Facts struct is provided.  After the first use, the flatbuffer
+// builder is reused.
 package flat
 
 import (
@@ -26,12 +30,13 @@ import (
 	"github.com/mohae/joefriday/mem"
 )
 
-// Profiler wraps InfoProfiler and provides a builder; enabling reuse.
+// Profiler is used to process the /proc/meminfo file using Flatbuffers.
 type Profiler struct {
 	Prof    *mem.Profiler
 	Builder *fb.Builder
 }
 
+// Initializes and returns a mem info profiler that utilizes FlatBuffers.
 func New() (prof *Profiler, err error) {
 	p, err := mem.New()
 	if err != nil {
@@ -47,7 +52,7 @@ func (prof *Profiler) reset() error {
 	return prof.Prof.Reset()
 }
 
-// Get returns the current meminfo as flatbuffer serialized bytes.
+// Get returns the current meminfo as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	prof.reset()
 	inf, err := prof.Prof.Get()
@@ -62,7 +67,8 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get get's the current meminfo.
+// Get returns the current meminfo as Flatbuffer serialized bytes using the
+// package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -75,17 +81,11 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker gathers the meminfo on a ticker, whose interval is defined by
-// the received duration, and sends the results to the channel.  The output
-// is Flatbuffer serialized bytes of Info.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
+// Ticker processes meminfo information on a ticker.  The generated data is
+// sent to the out channel.  Any errors encountered are sent to the errs
+// channel.  Processing ends when a done signal is received.
 //
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
+// It is the callers responsibility to close the done and errs channels.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -194,21 +194,9 @@ Tick:
 	}
 }
 
-// TODO: should InfoTickerFlat use std or have a local proc?
-// InfoTickerFlat gathers the meminfo on a ticker, whose interval is defined
-// by the received duration, and sends the results to the channel.  The
-// output is Flatbuffer serialized bytes of Info.  Any error encountered
-// during processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-//
-// This func uses a local InfoProfiler.  If an error occurs during the
-// creation of the InfoProfiler, it will be sent to errs and exit.
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
 func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	prof, err := New()
 	if err != nil {
@@ -218,6 +206,7 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 	prof.Ticker(interval, out, done, errs)
 }
 
+// Serialize mem.Info using Flatbuffers.
 func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	prof.Prof.Lock()
 	defer prof.Prof.Unlock()
@@ -237,7 +226,8 @@ func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	return prof.Builder.Bytes[prof.Builder.Head():]
 }
 
-// Deserialize deserializes Flatbuffer serialized bytes.
+// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// as mem.Info.
 func Deserialize(p []byte) *mem.Info {
 	infoFlat := GetRootAsInfo(p, 0)
 	info := &mem.Info{}

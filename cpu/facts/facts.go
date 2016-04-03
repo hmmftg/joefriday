@@ -11,6 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package facts handles processong of CPU facts: data gathered from
+// /proc/cpuinfo.
 package facts
 
 import (
@@ -28,11 +30,12 @@ import (
 
 const procFile = "/proc/cpuinfo"
 
-// Facter gathers CPUInfo facts.
+// Profiler is used to process the /proc/cpuinfo file.
 type Profiler struct {
 	*joe.Proc
 }
 
+// Returns an initialized Profiler; ready to use.
 func New() (prof *Profiler, err error) {
 	proc, err := joe.New(procFile)
 	if err != nil {
@@ -41,6 +44,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
+// Reset resets the profiler resources so that it is ready to use.
 func (prof *Profiler) Reset() {
 	prof.Lock()
 	prof.Val = prof.Val[:0]
@@ -48,7 +52,7 @@ func (prof *Profiler) Reset() {
 	prof.Proc.Reset()
 }
 
-// GetFacts gets the processor information from /proc/cpuinfo
+// Get returns the current cpuinfo (Facts).
 func (prof *Profiler) Get() (facts *Facts, err error) {
 	var (
 		cpuCnt, i, pos int
@@ -226,11 +230,13 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 	return facts, nil
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetFacts
-// just instantiate a local version and use that?
+// TODO: is it even worth it to have this as a global?  Should Get just
+// instantiate a local version and use that?
 var stdProfiler *Profiler
 var stdProfilerMu sync.Mutex
 
+// Get returns the current cpuinfo (Facts) using the package's global
+// Profiler.
 func Get() (facts *Facts, err error) {
 	stdProfilerMu.Lock()
 	defer stdProfilerMu.Unlock()
@@ -249,7 +255,7 @@ type Facts struct {
 	CPU       []Fact `json:"cpu"`
 }
 
-// Fact holds the /proc/cpuinfo for a single cpu
+// Fact holds the /proc/cpuinfo for a single processor.
 type Fact struct {
 	Processor       int16   `json:"processor"`
 	VendorID        string  `json:"vendor_id"`

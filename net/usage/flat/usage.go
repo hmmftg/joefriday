@@ -11,6 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package flat handles Flatbuffer based processing of network usage.  Usage
+// is calculated by taking the difference in two /proc/net/dev snapshots and
+// reflect bytes received and transmitted since the prior snapshot.  Instead
+// of returning a Go struct, it returns Flatbuffer serialized bytes.  A
+// function to deserialize the Flatbuffer serialized bytes into a structs.Info
+// After the first use, the flatbuffer builder is reused.
 package flat
 
 import (
@@ -21,10 +27,12 @@ import (
 	"github.com/mohae/joefriday/net/structs"
 )
 
+// Profiler is used to process the network usage using Flatbuffers.
 type Profiler struct {
 	Flat *flat.Profiler
 }
 
+// Initializes and returns a network usage profiler that utilizes FlatBuffers.
 func New() (prof *Profiler, err error) {
 	p, err := flat.New()
 	if err != nil {
@@ -33,12 +41,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Flat: p}, nil
 }
 
-// Get returns the network usage.  Usage calculations requires two pieces of
-// data.  This func gets a snapshot of /proc/net/dev, sleeps for a/ second,
-// and takes another snapshot and calcualtes the usage from the two snapshots.
-// If ongoing usage information is desired, Ticker should be called; it's
-// better suited for ongoing usage information: using less cpu cycles and
-// generating less garbage.
+// Get returns the current network usage as Flatbuffer serialized bytes.
 // TODO: should this be changed so that this calculates usage since the last
 // time the network info was obtained.  If there aren't pre-existing info
 // it would get current usage (which may be a separate method (or should be?))
@@ -53,6 +56,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
+// Get returns the current network usage as Flatbuffer serialized bytes
+// using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -65,8 +70,9 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes network usage information on a ticker.  Errors are sent
-// on the errs channel.  Processing ends when a done signal is received.
+// Ticker processes meminfo information on a ticker.  The generated data is
+// sent to the out channel.  Any errors encountered are sent to the errs
+// channel.  Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 //

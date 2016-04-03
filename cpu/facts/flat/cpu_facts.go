@@ -11,6 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package flat handles Flatbuffer based processing of CPU facts.  Instead
+// of returning a Go struct, it returns Flatbuffer serialized bytes.
+// A function to deserialize the Flatbuffer serialized bytes into a
+// facts.Facts struct is provided.  After the first use, the flatbuffer
+// builder is reused.
 package flat
 
 import (
@@ -20,6 +25,7 @@ import (
 	"github.com/mohae/joefriday/cpu/facts"
 )
 
+// Profiler is used to process the /proc/cpuinfo file using Flatbuffers.
 type Profiler struct {
 	*facts.Profiler
 	*fb.Builder
@@ -41,7 +47,7 @@ func (prof *Profiler) reset() {
 	prof.Profiler.Reset()
 }
 
-// Get returns the current cpuinfo as Flatbuffer serialized bytes.
+// Get returns the current cpuinfo (facts) as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	prof.reset()
 	facts, err := prof.Profiler.Get()
@@ -54,7 +60,8 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler    // global for convenience; lazily instantiated.
 var stdMu sync.Mutex // protects access
 
-// Get returns the current cpuinfo as Flatbuffer serialized bytes.
+// Get returns the current cpuinfo (facts) as Flatbuffer serialized bytes
+// using the package global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -67,7 +74,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes the Facts using Flatbuffers.
+// Serialize serializes Facts using Flatbuffers.
 func (prof *Profiler) Serialize(fcts *facts.Facts) []byte {
 	prof.Profiler.Lock()
 	defer prof.Profiler.Unlock()
@@ -150,6 +157,7 @@ func (prof *Profiler) Serialize(fcts *facts.Facts) []byte {
 	return prof.Builder.Bytes[prof.Builder.Head():]
 }
 
+// Serialize Facts using the package global Profiler.
 func Serialize(fcts *facts.Facts) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -164,7 +172,8 @@ func Serialize(fcts *facts.Facts) (p []byte, err error) {
 	return std.Serialize(fcts), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them.
+// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// as fact.Facts.
 func Deserialize(p []byte) *facts.Facts {
 	flatFacts := GetRootAsFacts(p, 0)
 	l := flatFacts.CPULength()

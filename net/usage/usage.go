@@ -11,8 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package usage gets and processes /proc/net/dev usage stats; the difference,
-// in bytes, between two snapshots of /proc/net/dev.
+// Package usage calculates network usage.  Usage is calculated by taking the
+// difference in two /proc/net/dev snapshots and reflect bytes received and
+// transmitted since the prior snapshot.
 package usage
 
 import (
@@ -27,11 +28,13 @@ import (
 	"github.com/mohae/joefriday/net/structs"
 )
 
+// Profiler is used to process the network usage..
 type Profiler struct {
 	*info.Profiler
 	prior *structs.Info
 }
 
+// Returns an initialized Profiler; ready to use.
 func New() (prof *Profiler, err error) {
 	p, err := info.New()
 	if err != nil {
@@ -40,12 +43,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, prior: &structs.Info{}}, nil
 }
 
-// Get returns the network usage.  Usage calculations requires two pieces of
-// data.  This func gets a snapshot of /proc/net/dev, sleeps for a/ second,
-// and takes another snapshot and calcualtes the usage from the two snapshots.
-// If ongoing usage information is desired, Ticker should be called; it's
-// better suited for ongoing usage information: using less cpu cycles and
-// generating less garbage.
+// Get returns the current network usage.
 // TODO: should this be changed so that this calculates usage since the last
 // time the network info was obtained.  If there aren't pre-existing info
 // it would get current usage (which may be a separate method (or should be?))
@@ -65,6 +63,7 @@ func (prof *Profiler) Get() (u *structs.Info, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
+// Get returns the current network usage using the package's global Profiler..
 func Get() (u *structs.Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -77,6 +76,15 @@ func Get() (u *structs.Info, err error) {
 	return std.Get()
 }
 
+// Ticker calculates network usage on a ticker.  The generated data is sent
+// to the out channel.  Any errors encountered are sent to the errs channel.
+//  Processing ends when a done signal is received.
+//
+// It is the callers responsibility to close the done and errs channels.
+//
+// TODO: better handle errors, e.g. restore cur from prior so that there
+// isn't the possibility of temporarily having bad data, just a missed
+// collection interval.
 func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, errs chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -240,6 +248,9 @@ tick:
 	}
 }
 
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
 func Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, errs chan error) {
 	prof, err := New()
 	if err != nil {
@@ -250,6 +261,8 @@ func Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, 
 	prof.Ticker(interval, out, done, errs)
 }
 
+// CalculateUsage returns the difference between the current /proc/net/dev
+// data and the prior one.
 func (prof *Profiler) CalculateUsage(cur *structs.Info) *structs.Info {
 	u := &structs.Info{Timestamp: cur.Timestamp, Interfaces: make([]structs.Interface, len(cur.Interfaces))}
 	for i := 0; i < len(cur.Interfaces); i++ {

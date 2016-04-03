@@ -11,8 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem gets and processes /proc/meminfo, returning the data in the
-// appropriate format.
+// Package json handles JSON based processing of CPU facts.  Instead of
+// returning a Go struct, it returns JSON serialized bytes.  A function to
+// deserialize the JSON serialized bytes into a facts.Facts struct is
+// provided.
 package json
 
 import (
@@ -22,10 +24,12 @@ import (
 	"github.com/mohae/joefriday/cpu/facts"
 )
 
+// Profiler is used to process the /proc/cpuinfo file.
 type Profiler struct {
 	Prof *facts.Profiler
 }
 
+// Initializes and returns a cpu Facts profiler.
 func New() (prof *Profiler, err error) {
 	p, err := facts.New()
 	if err != nil {
@@ -34,7 +38,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p}, nil
 }
 
-// Get returns some of the results of /proc/meminfo.
+// Get returns the current cpuinfo (Facts) as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	prof.Prof.Reset()
 	fct, err := prof.Prof.Get()
@@ -49,7 +53,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get get's the current meminfo.
+// Get returns the current cpuinfo (Facts) as JSON serialized bytes using
+// the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -72,7 +77,8 @@ func (prof *Profiler) Marshal(fct *facts.Facts) ([]byte, error) {
 	return prof.Serialize(fct)
 }
 
-// Deserialize deserializes JSON serialized bytes.
+// Deserialize takes some JSON serialized bytes and unmarshals them as
+// facts.Facts
 func Deserialize(p []byte) (*facts.Facts, error) {
 	fct := &facts.Facts{}
 	err := json.Unmarshal(p, fct)

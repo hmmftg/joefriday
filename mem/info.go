@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem gets and processes /proc/meminfo, returning the data in the
-// appropriate format.
+// Package mem gets and processes mem info: information for the /proc/meminfo
+// file.
 package mem
 
 import (
@@ -27,10 +27,12 @@ import (
 
 const procFile = "/proc/meminfo"
 
+// Profiler is used to process the /proc/meminfo file.
 type Profiler struct {
 	*joe.Proc
 }
 
+// Returns an initialized Profiler; ready to use.
 func New() (prof *Profiler, err error) {
 	proc, err := joe.New(procFile)
 	if err != nil {
@@ -39,7 +41,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns some of the results of /proc/meminfo.
+// Get returns the current meminfo.
 func (prof *Profiler) Get() (inf *Info, err error) {
 	var (
 		i, pos, nameLen int
@@ -132,7 +134,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get get's the current meminfo.
+// Get returns the current meminfo using the package's global Profiler.
 func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -145,17 +147,11 @@ func Get() (inf *Info, err error) {
 	return std.Get()
 }
 
-// Ticker gathers the meminfo on a ticker, whose interval is defined by the
-// received duration, and sends the results to the channel.  The output is
-// Flatbuffer serialized bytes of Info.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
+// Ticker processes meminfo information on a ticker.  The generated data is
+// sent to the out channel.  Any errors encountered are sent to the errs
+// channel.  Processing ends when a done signal is received.
 //
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
+// It is the callers responsibility to close the done and errs channels.
 func (prof *Profiler) Ticker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -262,21 +258,10 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan Info, done chan st
 	}
 }
 
-// InfoTicker gathers the meminfo on a ticker, whose interval is defined by
-// the received duration, and sends the results to the channel.  The output
-// is Flatbuffer serialized bytes of Info.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
-//
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-//
-// This func uses a local InfoProfiler.  If an error occurs during the
-// creation of the InfoProfiler, it will be sent to errs and exit.
-func InfoTicker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
+func Ticker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
 	prof, err := New()
 	if err != nil {
 		errs <- err
@@ -285,6 +270,7 @@ func InfoTicker(interval time.Duration, out chan Info, done chan struct{}, errs 
 	prof.Ticker(interval, out, done, errs)
 }
 
+// Info holds the mem info information.
 type Info struct {
 	Timestamp    int64 `json:"timestamp"`
 	MemTotal     int64 `json:"mem_total"`

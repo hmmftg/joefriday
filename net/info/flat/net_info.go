@@ -11,8 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package net gets and processes /proc/net/dev, returning the infoFlat in the
-// appropriate format.
+// Package flat handles Flatbuffer based processing of network usage
+// information; /proc/net/dev.  Instead of returning a Go struct, it returns
+// Flatbuffer serialized bytes.  A function to deserialize the Flatbuffer
+// serialized bytes into a info.Info struct is provided.  After the first use,
+// the flatbuffer builder is reused.
 package flat
 
 import (
@@ -25,11 +28,13 @@ import (
 	"github.com/mohae/joefriday/net/structs/flat"
 )
 
+// Profiler is used to process the /proc/net/dev file using Flatbuffers.
 type Profiler struct {
 	Prof    *info.Profiler
 	Builder *fb.Builder
 }
 
+// Initializes and returns a net info profiler that utilizes FlatBuffers.
 func New() (prof *Profiler, err error) {
 	p, err := info.New()
 	if err != nil {
@@ -38,6 +43,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
 }
 
+// Reset resets the Flatbuffer Builder, along with the other Profiler
+// resources so that it is ready for re-use.
 func (prof *Profiler) Reset() error {
 	prof.Prof.Lock()
 	prof.Builder.Reset()
@@ -45,7 +52,7 @@ func (prof *Profiler) Reset() error {
 	return prof.Prof.Reset()
 }
 
-// Get returns the current meminfo as flatbuffer serialized bytes.
+// Get returns the current network information as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	prof.Reset()
 	inf, err := prof.Prof.Get()
@@ -60,7 +67,8 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get get's the current meminfo.
+// Get returns the current network information as Flatbuffer serialized bytes
+// using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -73,6 +81,11 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
+// Ticker processes meminfo information on a ticker.  The generated data is
+// sent to the out channel.  Any errors encountered are sent to the errs
+// channel.  Processing ends when a done signal is received.
+//
+// It is the callers responsibility to close the done and errs channels.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -93,6 +106,9 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan 
 	}
 }
 
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
 func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	prof, err := New()
 	if err != nil {
@@ -143,7 +159,8 @@ func (prof *Profiler) Serialize(inf *structs.Info) []byte {
 	return prof.Builder.Bytes[prof.Builder.Head():]
 }
 
-// Deserialize deserializes struct.Info Flatbuffer serialized bytes.
+// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// as info.Info.
 func Deserialize(p []byte) *structs.Info {
 	infoFlat := flat.GetRootAsInfo(p, 0)
 	// get the # of interfaces

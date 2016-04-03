@@ -11,16 +11,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// for shared datastructures
-
+// Package structs defines the datastructures for net/info.
 package structs
 
+// Info holds the information for all of the network interfaces.
 type Info struct {
 	Timestamp  int64       `json:"timestamp"`
 	Interfaces []Interface `json:"interfaces"`
 }
 
-// Interface: contains information for a given network interface.
+// Interface contains information for a given network interface.
 type Interface struct {
 	Name        string `json:"name"`
 	RBytes      int64  `json:"receive_bytes"`

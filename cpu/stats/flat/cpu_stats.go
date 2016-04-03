@@ -11,6 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package flat handles Flatbuffer based processing of CPU stats.  Instead
+// of returning a Go struct, it returns Flatbuffer serialized bytes.
+// A function to deserialize the Flatbuffer serialized bytes into a
+// facts.Facts struct is provided.  After the first use, the flatbuffer
+// builder is reused.
 package flat
 
 import (
@@ -20,12 +25,14 @@ import (
 	"github.com/mohae/joefriday/cpu/stats"
 )
 
+// Profiler is used to process the /proc/stat file, as stats, using
+// Flatbuffers.
 type Profiler struct {
 	*stats.Profiler
 	*fb.Builder
 }
 
-// Initialized a new stats Profiler that works with flatbuffers.
+// Initialized a new stats Profiler that utilizes Flatbuffers.
 func New() (prof *Profiler, err error) {
 	p, err := stats.New()
 	if err != nil {
@@ -41,6 +48,7 @@ func (prof *Profiler) reset() error {
 	return prof.Profiler.Reset()
 }
 
+// Get returns the current Stats as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	prof.reset()
 	stts, err := prof.Profiler.Get()
@@ -53,7 +61,8 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns Flatbuffer serialized bytes.
+// Get returns the current Stats as Flatbuffer serialized bytes using the
+// package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -69,7 +78,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes Stats into Flatbuffer serialized bytes.
+// Serialize serializes the Stats using Flatbuffers.
 func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	prof.Lock()
 	defer prof.Unlock()
@@ -109,14 +118,15 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	return prof.Builder.Bytes[prof.Builder.Head():]
 }
 
-// Serialize serializes Stats into Flatbuffer serialized bytes.
+// Serialize the Stats using the package global Profiler.
 func Serialize(stts *stats.Stats) []byte {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	return std.Serialize(stts)
 }
 
-// Deserialize deserializes Flatbuffer serialized bytes into Stats.
+// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// as a stats.Stats.
 func Deserialize(p []byte) *stats.Stats {
 	stts := &stats.Stats{}
 	statF := &Stat{}

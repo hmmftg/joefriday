@@ -13,6 +13,11 @@
 
 package flat
 
+// Package flat handles Flatbuffer based processing of CPU utilization
+// information.  Instead of returning a Go struct, it returns Flatbuffer
+// serialized bytes.  A function to deserialize the Flatbuffer serialized
+// bytes into a utilization.Utilization struct is provided.  After the first
+// use, the flatbuffer builder is reused.
 import (
 	"sync"
 	"time"
@@ -21,11 +26,14 @@ import (
 	"github.com/mohae/joefriday/cpu/utilization"
 )
 
+// Profiler is used to process the cpu utilization information using
+// Flatbuffers.
 type Profiler struct {
 	*utilization.Profiler
 	*fb.Builder
 }
 
+// Initializes and returns a cpu utilization profiler that uses FlatBuffers.
 func New() (prof *Profiler, err error) {
 	p, err := utilization.New()
 	if err != nil {
@@ -41,13 +49,13 @@ func (prof *Profiler) reset() error {
 	return prof.Profiler.Reset()
 }
 
-// Get returns the cpu utilization.  Utilization calculations requires two
-// pieces of data.  This func gets a snapshot of /proc/stat, sleeps for a
-// second, takes another snapshot and calcualtes the utilization from the
-// two snapshots.  If ongoing utilitzation information is desired, the
-// UtilizationTicker should be used; it's better suited for ongoing
-// utilization information being; using less cpu cycles and generating less
-// garbage.
+// Get returns the current cpu utilization as Flatbuffer serialized bytes.
+// Utilization calculations requires two pieces of data.  This func gets a
+// snapshot of /proc/stat, sleeps for a second, takes another snapshot and
+// calcualtes the utilization from the two snapshots.  If ongoing utilitzation
+// information is desired, the Ticker should be used; it's better suited for
+// ongoing utilization information.
+//
 // TODO: should this be changed so that this calculates utilization since
 // last time the stats were obtained.  If there aren't pre-existing stats
 // it would get current utilization (which may be a separate method (or
@@ -63,6 +71,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
+// Get returns the current cpu utilization as Flatbuffer serialized bytes
+// using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -76,9 +86,8 @@ func Get() (p []byte, err error) {
 }
 
 // Ticker processes CPU utilization information on a ticker.  The generated
-// utilization data is sent to the outCh.  Any errors encountered are sent
-// to the errCh.  Processing ends when either a done signal is received or
-// the done channel is closed.
+// utilization data is sent to the out channel.  Any errors encountered are
+// sent to the errs.  Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 //
@@ -113,9 +122,7 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 	prof.Ticker(interval, out, done, errs)
 }
 
-// Serialize serializes Utilization into Flatbuffer serialized
-// bytes using the received builder.  It is assumed that the passed builder
-// is in a usable state.
+// Serialize cpu utilization using Flatbuffers.
 func (prof *Profiler) Serialize(u *utilization.Utilization) []byte {
 	utils := make([]fb.UOffsetT, len(u.CPU))
 	ids := make([]fb.UOffsetT, len(u.CPU))
@@ -148,7 +155,19 @@ func (prof *Profiler) Serialize(u *utilization.Utilization) []byte {
 	return prof.Builder.Bytes[prof.Builder.Head():]
 }
 
-// Deserialize deserializes Flatbuffer serialized bytes.
+// Serialize the Utilization using the package global Profiler.
+func Serialize(u *utilization.Utilization) ([]byte, error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
+	err := std.reset()
+	if err != nil {
+		return nil, err
+	}
+	return std.Serialize(u), nil
+}
+
+// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// as a utilization.Utilization.
 func Deserialize(p []byte) *utilization.Utilization {
 	u := &utilization.Utilization{}
 	uF := &Util{}

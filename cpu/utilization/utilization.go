@@ -11,6 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package utilization handles processing of CPU utilization information.
+// This information is calculated using the differences of two CPU stats
+// snapshots and represented as a percentage.
 package utilization
 
 import (
@@ -23,11 +26,14 @@ import (
 	"github.com/mohae/joefriday/cpu/stats"
 )
 
+// Profiler is used to process the /proc/stats file and calculate Utilization
+// information.
 type Profiler struct {
 	*stats.Profiler
 	prior *stats.Stats
 }
 
+// Returns an initialized Profiler; ready to use.
 func New() (prof *Profiler, err error) {
 	p, err := stats.New()
 	if err != nil {
@@ -40,9 +46,9 @@ func New() (prof *Profiler, err error) {
 // pieces of data.  This func gets a snapshot of /proc/stat, sleeps for a
 // second, takes another snapshot and calcualtes the utilization from the
 // two snapshots.  If ongoing utilitzation information is desired, the
-// UtilizationTicker should be used; it's better suited for ongoing
-// utilization information being; using less cpu cycles and generating less
-// garbage.
+// Ticker should be used; it's better suited for ongoing utilization
+// information.
+//
 // TODO: should this be changed so that this calculates utilization since
 // last time the stats were obtained.  If there aren't pre-existing stats
 // it would get current utilization (which may be a separate method (or
@@ -63,6 +69,7 @@ func (prof *Profiler) Get() (u *Utilization, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
+// Get returns the current cpu utilization using the package's global Profiler.
 func Get() (*Utilization, error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -77,9 +84,8 @@ func Get() (*Utilization, error) {
 }
 
 // Ticker processes CPU utilization information on a ticker.  The generated
-// utilization data is sent to the outCh.  Any errors encountered are sent
-// to the errCh.  Processing ends when either a done signal is received or
-// the done channel is closed.
+// utilization data is sent to the out channel.  Any errors encountered are
+// sent to the errs.  Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 //
@@ -291,18 +297,13 @@ type Utilization struct {
 	CPU []Util `json:"cpu"`
 }
 
-// Util holds utilization information for a CPU.
+// Util holds utilization information, as percentages, for a CPU.
 type Util struct {
-	ID        string  `json:"id"`
-	Usage     float32 `json:"total"`
-	User      float32 `json:"user"`
-	Nice      float32 `json:"nice"`
-	System    float32 `json:"system"`
-	Idle      float32 `json:"idle"`
-	IOWait    float32 `json:"io_wait"`
-	IRQ       float32 `json:"irq"`
-	SoftIRQ   float32 `json:"soft_irq"`
-	Steal     float32 `json:"steal"`
-	Quest     float32 `json:"quest"`
-	QuestNice float32 `json:"quest_nice"`
+	ID     string  `json:"id"`
+	Usage  float32 `json:"total"`
+	User   float32 `json:"user"`
+	Nice   float32 `json:"nice"`
+	System float32 `json:"system"`
+	Idle   float32 `json:"idle"`
+	IOWait float32 `json:"io_wait"`
 }

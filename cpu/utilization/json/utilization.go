@@ -11,6 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package json handles JSON based processing of CPU utilization.  Instead of
+// returning a Go struct, it returns JSON serialized bytes.  A function to
+// deserialize the JSON serialized bytes into a utlization.Utilization struct
+// is provided.
 package json
 
 import (
@@ -21,10 +25,12 @@ import (
 	"github.com/mohae/joefriday/cpu/utilization"
 )
 
+// Profiler is used to process the cpu utilization information using JSON.
 type Profiler struct {
 	Prof *utilization.Profiler
 }
 
+// Initializes and returns a cpu utlization profiler.
 func New() (prof *Profiler, err error) {
 	p, err := utilization.New()
 	if err != nil {
@@ -33,7 +39,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p}, nil
 }
 
-// Get returns some of the results of
+// Get returns the current cpu utilization information as JSON serialized
+// bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	prof.Prof.Reset()
 	st, err := prof.Prof.Get()
@@ -48,7 +55,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get get's the current meminfo.
+// Get returns the current cpu utilization information as JSON serialized
+// bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -61,9 +69,9 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes CPU utilization information on a ticker as JSON
-// serialized bytes.  Any errors encountered are put on the errs channel.
-// Processing ends when a done signal is received.
+// Ticker processes CPU utilization information on a ticker.  The generated
+// utilization data is sent to the out channel.  Any errors encountered are
+// sent to the errs.  Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 //
@@ -103,7 +111,7 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 	prof.Ticker(interval, out, done, errs)
 }
 
-// Serialize cpu Utilization as JSON
+// Serialize cpu Utilization using JSON
 func (prof *Profiler) Serialize(ut *utilization.Utilization) ([]byte, error) {
 	return json.Marshal(ut)
 }
@@ -113,7 +121,8 @@ func (prof *Profiler) Marshal(ut *utilization.Utilization) ([]byte, error) {
 	return prof.Serialize(ut)
 }
 
-// Deserialize deserializes JSON serialized bytes.
+// Deserialize takes some JSON serialized bytes and unmarshals them as
+// utilization.Utilization.
 func Deserialize(p []byte) (*utilization.Utilization, error) {
 	ut := &utilization.Utilization{}
 	err := json.Unmarshal(p, ut)

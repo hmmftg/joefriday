@@ -11,8 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem gets and processes /proc/meminfo, returning the data in the
-// appropriate format.
+// Package json handles JSON based processing of /proc/meminfo.  Instead of
+// returning a Go struct, it returns JSON serialized bytes.  A function to
+// deserialize the JSON serialized bytes into a facts.Facts struct is
+// provided.
 package json
 
 import (
@@ -23,10 +25,12 @@ import (
 	"github.com/mohae/joefriday/mem"
 )
 
+// Profiler is used to process the /proc/meminfo file using JSON.
 type Profiler struct {
 	Prof *mem.Profiler
 }
 
+// Initializes and returns a json.Profiler for meminfo.
 func New() (prof *Profiler, err error) {
 	p, err := mem.New()
 	if err != nil {
@@ -35,7 +39,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p}, nil
 }
 
-// Get returns some of the results of /proc/meminfo.
+// Get returns the current meminfo as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	prof.Prof.Reset()
 	inf, err := prof.Prof.Get()
@@ -50,7 +54,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get get's the current meminfo.
+// Get returns the current meminfo as JSON serialized bytes using the
+// package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -63,17 +68,11 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker gathers the meminfo on a ticker, whose interval is defined by the
-// received duration, and sends the results to the channel.  The output is
-// JSON serialized bytes of mem.Info.  Any error encountered during
-// processing is sent to the error channel; processing will continue.
+// Ticker processes meminfo information on a ticker.  The generated data is
+// sent to the out channel.  Any errors encountered are sent to the errs
+// channel.  Processing ends when a done signal is received.
 //
-// If an error occurs while opening /proc/meminfo, the error will be sent
-// to the errs channel and this func will exit.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
+// It is the callers responsibility to close the done and errs channels.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	outCh := make(chan mem.Info)
 	defer close(outCh)
@@ -94,16 +93,9 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan 
 	}
 }
 
-// Ticker gathers the meminfo on a ticker, whose interval is defined by the
-// received duration, and sends the JSON serialized results to the channel.
-// Errors are sent to errs.
-//
-// To stop processing and exit; send a signal on the done channel.  This
-// will cause the function to stop the ticker, close the out channel and
-// return.
-//
-// This func uses a local Profiler.  If an error occurs during the creation
-// of the Profiler, it will be sent to errs and exit.
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
 func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	p, err := New()
 	if err != nil {
@@ -113,7 +105,7 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 	p.Ticker(interval, out, done, errs)
 }
 
-// Serialize mem.Info as JSON
+// Serialize mem.Info using JSON
 func (prof *Profiler) Serialize(inf *mem.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
@@ -123,7 +115,8 @@ func (prof *Profiler) Marshal(inf *mem.Info) ([]byte, error) {
 	return prof.Serialize(inf)
 }
 
-// Deserialize deserializes JSON serialized bytes.
+// Deserialize takes some JSON serialized bytes and unmarshals them as
+// mem.Info.
 func Deserialize(p []byte) (*mem.Info, error) {
 	info := &mem.Info{}
 	err := json.Unmarshal(p, info)
