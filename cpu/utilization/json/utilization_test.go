@@ -31,7 +31,7 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkUtilization(ut, t)
+	checkUtilization("get", ut, t)
 	t.Logf("%#v\n", ut)
 }
 
@@ -48,7 +48,7 @@ func TestTicker(t *testing.T) {
 				t.Errorf("got %s, want nil", err)
 				return
 			}
-			checkUtilization(ut, t)
+			checkUtilization("ticker", ut, t)
 		case err := <-errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -56,19 +56,25 @@ func TestTicker(t *testing.T) {
 	t.Logf("%#v\n", ut)
 }
 
-func checkUtilization(ut *utilization.Utilization, t *testing.T) {
-	if ut.Timestamp == 0 {
-		t.Error("expected timestamp to be a non-zero value; got 0")
+func checkUtilization(name string, u *utilization.Utilization, t *testing.T) {
+	if u.Timestamp == 0 {
+		t.Errorf("%s: timestamp: expected on-zero", name)
 	}
-	if ut.BTimeDelta == 0 {
-		t.Error("expected btime delta to be a non-zero value; got 0")
+	if u.CtxtDelta == 0 {
+		t.Errorf("%s: CtxtDelta: expected non-zero value, got 0", name)
 	}
-	if len(ut.CPU) == 0 {
-		t.Error("expected CPUs to be a non-zero value; got 0")
+	if u.BTimeDelta == 0 {
+		t.Errorf("%s: BTimeDelta: expected non-zero value, got 0", name)
 	}
-	for i, v := range ut.CPU {
+	if u.Processes == 0 {
+		t.Errorf("%s: Processes: expected non-zero value, got 0", name)
+	}
+	if len(u.CPU) < 2 {
+		t.Errorf("%s: cpu: got %d, want at least 2", name, len(u.CPU))
+	}
+	for i, v := range u.CPU {
 		if v.ID == "" {
-			t.Errorf("%d: expected id to have a value; it was empty", i)
+			t.Errorf("%s: %d: expected ID to have a value, was empty", i, name)
 		}
 	}
 }

@@ -54,20 +54,25 @@ func New() (prof *Profiler, err error) {
 // it would get current utilization (which may be a separate method (or
 // should be?)).  Also: rethink locking.
 func (prof *Profiler) Get() (u *Utilization, err error) {
-	tmp, err := prof.Profiler.Get()
-	if err != nil {
-		return nil, err
-	}
-	prof.Lock()
-	prof.prior = tmp
-	time.Sleep(time.Second)
-	prof.Unlock()
-	stat2, err := prof.Profiler.Get()
-	if err != nil {
-		return nil, err
-	}
 	prof.Lock()
 	defer prof.Unlock()
+	err = prof.NoLockReset()
+	if err != nil {
+		return nil, err
+	}
+	prof.prior, err = prof.NoLockGet()
+	if err != nil {
+		return nil, err
+	}
+	time.Sleep(time.Second)
+	err = prof.NoLockReset()
+	if err != nil {
+		return nil, err
+	}
+	stat2, err := prof.NoLockGet()
+	if err != nil {
+		return nil, err
+	}
 	return prof.calculateUtilization(stat2), nil
 }
 

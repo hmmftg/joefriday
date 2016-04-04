@@ -42,11 +42,10 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() error {
+func (prof *Profiler) reset() {
 	prof.Lock()
 	prof.Builder.Reset()
 	prof.Unlock()
-	return prof.Profiler.Reset()
 }
 
 // Get returns the current cpu utilization as Flatbuffer serialized bytes.
@@ -61,6 +60,7 @@ func (prof *Profiler) reset() error {
 // it would get current utilization (which may be a separate method (or
 // should be?))
 func (prof *Profiler) Get() (p []byte, err error) {
+	prof.reset()
 	u, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
@@ -165,10 +165,7 @@ func Serialize(u *utilization.Utilization) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	err = std.reset()
-	if err != nil {
-		return nil, err
-	}
+	std.reset()
 	return std.Serialize(u), nil
 }
 

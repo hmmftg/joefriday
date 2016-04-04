@@ -66,9 +66,17 @@ type ProfileSerializerTicker interface {
 	Ticker(tick time.Duration, out chan []byte, done chan struct{}, errs chan error)
 }
 
+// Reset reset's the profiler's resources.
 func (p *Proc) Reset() error {
 	p.Lock()
 	defer p.Unlock()
+	return p.NoLockReset()
+}
+
+// NoLockReset resets the profiler's resources without locking.  This enables
+// methods that already hold a lock to reset the profiler resources w/o
+// releasing the lock.  It is expected that the caller already holds the lock.
+func (p *Proc) NoLockReset() error {
 	_, err := p.File.Seek(0, os.SEEK_SET)
 	if err != nil {
 		return err
