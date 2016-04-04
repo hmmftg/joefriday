@@ -42,10 +42,6 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() {
-	prof.Builder.Reset()
-}
-
 // Get returns the current cpu utilization as Flatbuffer serialized bytes.
 // Utilization calculations requires two pieces of data.  This func gets a
 // snapshot of /proc/stat, sleeps for a second, takes another snapshot and
@@ -58,7 +54,6 @@ func (prof *Profiler) reset() {
 // it would get current utilization (which may be a separate method (or
 // should be?))
 func (prof *Profiler) Get() (p []byte, err error) {
-	prof.reset()
 	u, err := prof.Profiler.Get()
 	return prof.Serialize(u), nil
 }
@@ -119,6 +114,8 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 
 // Serialize cpu utilization using Flatbuffers.
 func (prof *Profiler) Serialize(u *utilization.Utilization) []byte {
+	// ensure the Builder is in a usable state.
+	std.Builder.Reset()
 	utils := make([]fb.UOffsetT, len(u.CPU))
 	ids := make([]fb.UOffsetT, len(u.CPU))
 	for i := 0; i < len(ids); i++ {
@@ -159,8 +156,6 @@ func Serialize(u *utilization.Utilization) (p []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		std.reset()
 	}
 	return std.Serialize(u), nil
 }

@@ -42,13 +42,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() {
-	prof.Builder.Reset()
-}
-
 // Get returns the current Stats as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	prof.reset()
 	stts, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
@@ -70,7 +65,7 @@ func Get() (p []byte, err error) {
 			return nil, err
 		}
 	} else {
-		std.reset()
+		std.Builder.Reset()
 	}
 
 	return std.Get()
@@ -116,6 +111,8 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 
 // Serialize serializes the Stats using Flatbuffers.
 func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
+	// ensure the Builder is in a usable state.
+	std.Builder.Reset()
 	statsF := make([]fb.UOffsetT, len(stts.CPU))
 	ids := make([]fb.UOffsetT, len(stts.CPU))
 	for i := 0; i < len(ids); i++ {
@@ -161,8 +158,6 @@ func Serialize(stts *stats.Stats) (p []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		std.reset()
 	}
 	return std.Serialize(stts), nil
 }

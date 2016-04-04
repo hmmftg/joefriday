@@ -45,13 +45,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() {
-	prof.Builder.Reset()
-}
-
 // Get returns the current meminfo as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	prof.reset()
 	inf, err := prof.Prof.Get()
 	if err != nil {
 		return nil, err
@@ -101,7 +96,7 @@ Tick:
 		case <-done:
 			return
 		case <-ticker.C:
-			prof.reset()
+			prof.Builder.Reset()
 			err = prof.Prof.Reset()
 			if err != nil {
 				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
@@ -201,6 +196,8 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 
 // Serialize mem.Info using Flatbuffers.
 func (prof *Profiler) Serialize(inf *mem.Info) []byte {
+	// ensure the Builder is in a usable state.
+	std.Builder.Reset()
 	InfoStart(prof.Builder)
 	InfoAddTimestamp(prof.Builder, int64(inf.Timestamp))
 	InfoAddMemTotal(prof.Builder, int64(inf.MemTotal))
@@ -215,6 +212,19 @@ func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	InfoAddSwapFree(prof.Builder, int64(inf.SwapFree))
 	prof.Builder.Finish(InfoEnd(prof.Builder))
 	return prof.Builder.Bytes[prof.Builder.Head():]
+}
+
+// Serialize mem.Info using Flatbuffers with the package global Profiler.
+func Serialize(inf *mem.Info) (p []byte, err error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
+	if std == nil {
+		std, err = New()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return std.Serialize(inf), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them

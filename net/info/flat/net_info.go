@@ -43,14 +43,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Reset resets the Flatbuffer Builder.
-func (prof *Profiler) Reset() {
-	prof.Builder.Reset()
-}
-
 // Get returns the current network information as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	prof.Reset()
 	inf, err := prof.Prof.Get()
 	if err != nil {
 		return nil, err
@@ -117,6 +111,8 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 
 // Serialize serializes Info using Flatbuffers.
 func (prof *Profiler) Serialize(inf *structs.Info) []byte {
+	// ensure the Builder is in a usable state.
+	std.Builder.Reset()
 	ifaces := make([]fb.UOffsetT, len(inf.Interfaces))
 	names := make([]fb.UOffsetT, len(inf.Interfaces))
 	for i := 0; i < len(inf.Interfaces); i++ {
@@ -153,6 +149,20 @@ func (prof *Profiler) Serialize(inf *structs.Info) []byte {
 	flat.InfoAddInterfaces(prof.Builder, ifacesV)
 	prof.Builder.Finish(flat.InfoEnd(prof.Builder))
 	return prof.Builder.Bytes[prof.Builder.Head():]
+}
+
+// Serialize serializes Info using Flatbuffers with the package global
+// Profiler.
+func Serialize(inf *structs.Info) (p []byte, err error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
+	if std == nil {
+		std, err = New()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return std.Serialize(inf), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
