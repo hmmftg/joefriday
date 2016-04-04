@@ -43,11 +43,9 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Reset resets the Flatbuffer Builder, along with the other Profiler
-// resources so that it is ready for re-use.
-func (prof *Profiler) Reset() error {
+// Reset resets the Flatbuffer Builder.
+func (prof *Profiler) Reset() {
 	prof.Builder.Reset()
-	return prof.Prof.Reset()
 }
 
 // Get returns the current network information as Flatbuffer serialized bytes.

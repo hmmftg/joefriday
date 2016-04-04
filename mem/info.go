@@ -47,7 +47,11 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		i, pos, nameLen int
 		v               byte
 	)
-	prof.Proc.Reset()
+	err = prof.Reset()
+	if err != nil {
+		return nil, err
+	}
+	inf = &Info{}
 	for l := 0; l < 16; l++ {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {

@@ -41,7 +41,6 @@ func New() (prof *Profiler, err error) {
 
 // Get returns the current meminfo as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	prof.Prof.Reset()
 	inf, err := prof.Prof.Get()
 	if err != nil {
 		return nil, err

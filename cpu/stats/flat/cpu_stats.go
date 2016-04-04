@@ -42,9 +42,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() error {
+func (prof *Profiler) reset() {
 	prof.Builder.Reset()
-	return prof.Profiler.Reset()
 }
 
 // Get returns the current Stats as Flatbuffer serialized bytes.
@@ -162,6 +161,8 @@ func Serialize(stts *stats.Stats) (p []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		std.reset()
 	}
 	return std.Serialize(stts), nil
 }

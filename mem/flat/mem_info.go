@@ -45,9 +45,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() error {
+func (prof *Profiler) reset() {
 	prof.Builder.Reset()
-	return prof.Prof.Reset()
 }
 
 // Get returns the current meminfo as Flatbuffer serialized bytes.
@@ -95,19 +94,15 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan 
 		n                  uint64
 		err                error
 	)
-	// Lock now because the for loop unlocks to simplify unlock logic when
-	// a continue occurs (instead of the tick completing.)
-	prof.Prof.Lock()
 	// ticker
 Tick:
 	for {
-		prof.Prof.Unlock()
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
-			err = prof.reset()
-			prof.Prof.Lock()
+			prof.reset()
+			err = prof.Prof.Reset()
 			if err != nil {
 				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue
@@ -206,8 +201,6 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 
 // Serialize mem.Info using Flatbuffers.
 func (prof *Profiler) Serialize(inf *mem.Info) []byte {
-	prof.Prof.Lock()
-	defer prof.Prof.Unlock()
 	InfoStart(prof.Builder)
 	InfoAddTimestamp(prof.Builder, int64(inf.Timestamp))
 	InfoAddMemTotal(prof.Builder, int64(inf.MemTotal))

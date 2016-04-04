@@ -41,10 +41,6 @@ func New() (prof *Profiler, err error) {
 
 // Get returns the current Stats as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	err = prof.Prof.Reset()
-	if err != nil {
-		return nil, err
-	}
 	st, err := prof.Prof.Get()
 	if err != nil {
 		return nil, err

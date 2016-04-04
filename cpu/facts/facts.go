@@ -16,8 +16,6 @@
 package facts
 
 import (
-	//Flat "github.com/google/flatbuffers/go"
-
 	"fmt"
 	"io"
 	"strconv"
@@ -54,7 +52,10 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 		name, value    string
 		cpu            Fact
 	)
-	prof.Reset()
+	err = prof.Reset()
+	if err != nil {
+		return nil, err
+	}
 	facts = &Facts{Timestamp: time.Now().UTC().UnixNano()}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')

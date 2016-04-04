@@ -40,17 +40,13 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Profiler: factsProf, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() error {
+func (prof *Profiler) reset() {
 	prof.Builder.Reset()
-	return prof.Profiler.Reset()
 }
 
 // Get returns the current cpuinfo (facts) as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	err := prof.reset()
-	if err != nil {
-		return nil, err
-	}
+	prof.reset()
 	facts, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err

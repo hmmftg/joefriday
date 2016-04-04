@@ -33,7 +33,7 @@ func (e Error) Error() string {
 	return fmt.Sprintf("%s: %q: %s", e.Type, e.Op, e.Err)
 }
 
-// A Proc holds everything related to a proc file and
+// A Proc holds everything related to a proc file and some processing vars.
 type Proc struct {
 	*os.File
 	Buf  *bufio.Reader
