@@ -45,13 +45,6 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Reset resets the profiler resources so that it is ready to use.  The caller
-// must hold the lock.
-func (prof *Profiler) Reset() {
-	prof.Val = prof.Val[:0]
-	prof.NoLockReset()
-}
-
 // Get returns the current cpuinfo (Facts).
 func (prof *Profiler) Get() (facts *Facts, err error) {
 	var (
@@ -61,8 +54,6 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 		name, value    string
 		cpu            Fact
 	)
-	prof.Lock()
-	defer prof.Unlock()
 	prof.Reset()
 	facts = &Facts{Timestamp: time.Now().UTC().UnixNano()}
 	for {

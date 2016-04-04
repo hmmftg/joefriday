@@ -46,9 +46,7 @@ func New() (prof *Profiler, err error) {
 // Reset resets the Flatbuffer Builder, along with the other Profiler
 // resources so that it is ready for re-use.
 func (prof *Profiler) Reset() error {
-	prof.Prof.Lock()
 	prof.Builder.Reset()
-	prof.Prof.Unlock()
 	return prof.Prof.Reset()
 }
 

@@ -48,9 +48,6 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		v               byte
 	)
 	prof.Proc.Reset()
-	prof.Lock()
-	defer prof.Unlock()
-	inf = &Info{}
 	for l := 0; l < 16; l++ {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -164,18 +161,13 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan Info, done chan st
 		err                error
 		inf                Info
 	)
-	// Lock now because the for loop unlocks to simplify unlock logic when
-	// a continue occurs (instead of the tick completing.)
-	prof.Lock()
 	// ticker
 	for {
-		prof.Unlock()
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
 			err = prof.Reset()
-			prof.Lock()
 			if err != nil {
 				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue

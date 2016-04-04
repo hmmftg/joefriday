@@ -46,9 +46,7 @@ func New() (prof *Profiler, err error) {
 }
 
 func (prof *Profiler) reset() error {
-	prof.Prof.Lock()
 	prof.Builder.Reset()
-	prof.Prof.Unlock()
 	return prof.Prof.Reset()
 }
 

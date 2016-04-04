@@ -54,22 +54,20 @@ func New() (prof *Profiler, err error) {
 // it would get current utilization (which may be a separate method (or
 // should be?)).  Also: rethink locking.
 func (prof *Profiler) Get() (u *Utilization, err error) {
-	prof.Lock()
-	defer prof.Unlock()
-	err = prof.NoLockReset()
+	err = prof.Reset()
 	if err != nil {
 		return nil, err
 	}
-	prof.prior, err = prof.NoLockGet()
+	prof.prior, err = prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
 	time.Sleep(time.Second)
-	err = prof.NoLockReset()
+	err = prof.Reset()
 	if err != nil {
 		return nil, err
 	}
-	stat2, err := prof.NoLockGet()
+	stat2, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -119,15 +117,12 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *Utilization, done
 		errs <- err
 	}
 	// ticker
-	prof.Lock()
 tick:
 	for {
-		prof.Unlock()
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
-			prof.Lock()
 			prof.prior.Ctxt = cur.Ctxt
 			prof.prior.BTime = cur.BTime
 			prof.prior.Processes = cur.Processes
@@ -136,14 +131,12 @@ tick:
 			}
 			copy(prof.prior.CPU, cur.CPU)
 			cur.Timestamp = time.Now().UTC().UnixNano()
-			prof.Unlock()
 			err = prof.Reset()
 			if err != nil {
 				errs <- joe.Error{Type: "cpu", Op: "utilization ticker: seek /proc/stat", Err: err}
 				continue tick
 			}
 			cur.CPU = cur.CPU[:0]
-			prof.Lock()
 			// read each line until eof
 			for {
 				prof.Line, err = prof.Buf.ReadSlice('\n')

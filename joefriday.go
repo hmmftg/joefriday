@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -36,7 +35,6 @@ func (e Error) Error() string {
 
 // A Proc holds everything related to a proc file and
 type Proc struct {
-	sync.Mutex // protects the following fields
 	*os.File
 	Buf  *bufio.Reader
 	Line []byte // current line
@@ -68,15 +66,6 @@ type ProfileSerializerTicker interface {
 
 // Reset reset's the profiler's resources.
 func (p *Proc) Reset() error {
-	p.Lock()
-	defer p.Unlock()
-	return p.NoLockReset()
-}
-
-// NoLockReset resets the profiler's resources without locking.  This enables
-// methods that already hold a lock to reset the profiler resources w/o
-// releasing the lock.  It is expected that the caller already holds the lock.
-func (p *Proc) NoLockReset() error {
 	_, err := p.File.Seek(0, os.SEEK_SET)
 	if err != nil {
 		return err

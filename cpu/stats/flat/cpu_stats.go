@@ -43,9 +43,7 @@ func New() (prof *Profiler, err error) {
 }
 
 func (prof *Profiler) reset() error {
-	prof.Profiler.Lock()
 	prof.Builder.Reset()
-	prof.Profiler.Unlock()
 	return prof.Profiler.Reset()
 }
 
@@ -119,8 +117,6 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 
 // Serialize serializes the Stats using Flatbuffers.
 func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
-	prof.Lock()
-	defer prof.Unlock()
 	statsF := make([]fb.UOffsetT, len(stts.CPU))
 	ids := make([]fb.UOffsetT, len(stts.CPU))
 	for i := 0; i < len(ids); i++ {

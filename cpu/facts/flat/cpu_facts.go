@@ -40,15 +40,17 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Profiler: factsProf, Builder: fb.NewBuilder(0)}, nil
 }
 
-func (prof *Profiler) reset() {
-	prof.Profiler.Lock()
+func (prof *Profiler) reset() error {
 	prof.Builder.Reset()
-	prof.Profiler.Unlock()
+	return prof.Profiler.Reset()
 }
 
 // Get returns the current cpuinfo (facts) as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	prof.reset()
+	err := prof.reset()
+	if err != nil {
+		return nil, err
+	}
 	facts, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
@@ -75,8 +77,6 @@ func Get() (p []byte, err error) {
 
 // Serialize serializes Facts using Flatbuffers.
 func (prof *Profiler) Serialize(fcts *facts.Facts) []byte {
-	prof.Lock()
-	defer prof.Unlock()
 	flatFacts := make([]fb.UOffsetT, len(fcts.CPU))
 	vendorIDs := make([]fb.UOffsetT, len(fcts.CPU))
 	cpuFamilies := make([]fb.UOffsetT, len(fcts.CPU))

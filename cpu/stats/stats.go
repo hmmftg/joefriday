@@ -79,17 +79,10 @@ func New() (prof *Profiler, err error) {
 
 // Get returns information about current kernel activity.
 func (prof *Profiler) Get() (stats *Stats, err error) {
-	prof.Reset()
-	prof.Lock()
-	defer prof.Unlock()
-	return prof.NoLockGet()
-}
-
-// NoLockGet returns information about current kernel activity.  Reset must
-// be called before calling this method.  This does not lock the profiler;
-// the caller must handle the locking/unlocking.  This mainly exists to
-// enable the cpu utilization package to use,
-func (prof *Profiler) NoLockGet() (stats *Stats, err error) {
+	err = prof.Reset()
+	if err != nil {
+		return nil, err
+	}
 	var (
 		name                     string
 		i, j, pos, val, fieldNum int
