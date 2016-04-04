@@ -53,16 +53,32 @@ var inf *facts.Facts
 
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
+	b.StopTimer()
 	p, _ := New()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
 	}
 	_ = jsn
 }
 
+func BenchmarkSerialize(b *testing.B) {
+	var infB []byte
+	b.StopTimer()
+	p, _ := New()
+	inf, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		infB, _ = Serialize(inf)
+	}
+	_ = infB
+}
+
 func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
 	p, _ := New()
 	infB, _ := p.Get()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		inf = Deserialize(infB)
 	}

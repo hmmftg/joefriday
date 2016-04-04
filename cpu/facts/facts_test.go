@@ -40,3 +40,15 @@ func TestFacts(t *testing.T) {
 	}
 	t.Logf("%#v", facts)
 }
+
+var fact *Facts
+
+func BenchmarkGet(b *testing.B) {
+	b.StopTimer()
+	p, _ := New()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		fact, _ = p.Get()
+	}
+	_ = fact
+}

@@ -51,16 +51,43 @@ var fct *facts.Facts
 
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
+	b.StopTimer()
 	p, _ := New()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
 	}
 	_ = jsn
 }
 
-func BenchmarkUnmarshal(b *testing.B) {
+func BenchmarkSerialize(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := New()
+	v, _ := p.Prof.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Serialize(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
 	p, _ := New()
 	fctB, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		fct, _ = Deserialize(fctB)
+	}
+	_ = fct
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	b.StartTimer()
+	p, _ := New()
+	fctB, _ := p.Get()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		fct, _ = Unmarshal(fctB)
 	}
