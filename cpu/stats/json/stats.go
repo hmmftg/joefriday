@@ -20,6 +20,7 @@ package json
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/mohae/joefriday/cpu/stats"
 )
@@ -65,6 +66,48 @@ func Get() (p []byte, err error) {
 		}
 	}
 	return std.Get()
+}
+
+// Ticker processes cpu stats information on a ticker.  The generated data is
+// sent to the out channel.  Any errors encountered are sent to the errs
+// channel.  Processing ends when a done signal is received.
+//
+// It is the callers responsibility to close the done and errs channels.
+//
+// TODO: better handle errors, e.g. restore cur from prior so that there
+// isn't the possibility of temporarily having bad data, just a missed
+// collection interval.
+func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	defer close(out)
+
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			s, err := prof.Get()
+			if err != nil {
+				errs <- err
+				continue
+			}
+			out <- s
+		}
+	}
+}
+
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
+func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
+	prof, err := New()
+	if err != nil {
+		errs <- err
+		close(out)
+		return
+	}
+	prof.Ticker(interval, out, done, errs)
 }
 
 // Serialize cpu Stats as JSON

@@ -13,7 +13,10 @@
 
 package stats
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestClkTck(t *testing.T) {
 	err := ClkTck()
@@ -26,32 +29,67 @@ func TestClkTck(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	stats, err := Get()
+	s, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	if stats.ClkTck != int16(CLK_TCK) {
-		t.Errorf("CLK_TCK: got %d; wanted %d", stats.ClkTck, CLK_TCK)
-	}
-	if stats.Ctxt == 0 {
-		t.Error("ctck: expected non-zero value, got 0")
-	}
-	if stats.BTime == 0 {
-		t.Error("Btime: expected non-zero value, got 0")
-	}
-	if stats.Processes == 0 {
-		t.Error("Processes: expected non-zero value, got 0")
-	}
-	if len(stats.CPU) < 2 {
-		t.Errorf("cpu: got %d, want at least 2", len(stats.CPU))
-	}
-	for i, v := range stats.CPU {
-		if v.ID == "" {
-			t.Errorf("%d: expected ID to have a value, was empty", i)
+	checkStats(s, t)
+}
+
+func TestGetTicker(t *testing.T) {
+	results := make(chan *Stats)
+	errs := make(chan error)
+	done := make(chan struct{})
+	go Ticker(time.Duration(400)*time.Millisecond, results, done, errs)
+	var x int
+	for {
+		if x > 0 {
+			close(done)
+			break
 		}
-		if v.System == 0 {
-			t.Errorf("%d: expected System to be a non-zero value, got 0", i)
+		select {
+		case s, ok := <-results:
+			if !ok {
+				break
+			}
+			checkStats(s, t)
+			t.Logf("%#v\n", s)
+		case err := <-errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+		x++
+	}
+}
+
+func checkStats(s *Stats, t *testing.T) {
+	if int16(CLK_TCK) != s.ClkTck {
+		t.Errorf("ClkTck: got %s; want %s", s.ClkTck, CLK_TCK)
+	}
+	if s.Timestamp == 0 {
+		t.Error("Timestamp: wanted non-zero value; got 0")
+	}
+	if s.Ctxt == 0 {
+		t.Error("Ctxt: wanted non-zero value; got 0")
+	}
+	if s.BTime == 0 {
+		t.Error("BTime: wanted non-zero value; got 0")
+	}
+	if s.Processes == 0 {
+		t.Error("Processes: wanted non-zero value; got 0")
+	}
+	if len(s.CPU) < 2 {
+		t.Errorf("expected stats for at least 2 CPU entries, got %d", len(s.CPU))
+	}
+	for i := 0; i < len(s.CPU); i++ {
+		if s.CPU[i].ID == "" {
+			t.Errorf("CPU %d: ID: wanted a non-empty value; was empty", i)
+		}
+		if s.CPU[i].User == 0 {
+			t.Errorf("CPU %d: User: wanted a non-zero value, was 0", i)
+		}
+		if s.CPU[i].System == 0 {
+			t.Errorf("CPU %d: System: wanted a non-xero value, was 0", i)
 		}
 	}
 }

@@ -82,12 +82,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 	prof.Reset()
 	prof.Lock()
 	defer prof.Unlock()
-	if CLK_TCK == 0 {
-		err := ClkTck()
-		if err != nil {
-			return stats, err
-		}
-	}
+
 	var (
 		name                     string
 		i, j, pos, val, fieldNum int
@@ -221,6 +216,50 @@ func Get() (stat *Stats, err error) {
 		}
 	}
 	return std.Get()
+}
+
+// Ticker processes CPU utilization information on a ticker.  The generated
+// utilization data is sent to the outCh.  Any errors encountered are sent
+// to the errCh.  Processing ends when either a done signal is received or
+// the done channel is closed.
+//
+// It is the callers responsibility to close the done and errs channels.
+//
+// TODO: better handle errors, e.g. restore cur from prior so that there
+// isn't the possibility of temporarily having bad data, just a missed
+// collection interval.
+func (prof *Profiler) Ticker(interval time.Duration, out chan *Stats, done chan struct{}, errs chan error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	defer close(out)
+
+	// read each line until eof
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			s, err := prof.Get()
+			if err != nil {
+				errs <- err
+				continue
+			}
+			out <- s
+		}
+	}
+}
+
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
+func Ticker(interval time.Duration, out chan *Stats, done chan struct{}, errs chan error) {
+	prof, err := New()
+	if err != nil {
+		errs <- err
+		close(out)
+		return
+	}
+	prof.Ticker(interval, out, done, errs)
 }
 
 // Stats holds the /proc/stat information

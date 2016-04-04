@@ -15,6 +15,7 @@ package json
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mohae/joefriday/cpu/stats"
 )
@@ -30,21 +31,70 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	if stts.Timestamp == 0 {
-		t.Error("expected timestamp to be a non-zero value; got 0")
-	}
-	if len(stts.CPU) == 0 {
-		t.Error("expected CPUs to be a non-zero value; got 0")
-	}
-	for i, v := range stts.CPU {
-		if v.ID == "" {
-			t.Errorf("%d: expected id to have a value; it was empty", i)
-		}
-		if v.System == 0 {
-			t.Errorf("%d: expected system to have a non-zero; it was 0", i)
-		}
-	}
+	checkStats(stts, t)
 	t.Logf("%#v\n", stts)
+}
+
+func TestGetTicker(t *testing.T) {
+	results := make(chan []byte)
+	errs := make(chan error)
+	done := make(chan struct{})
+	go Ticker(time.Duration(400)*time.Millisecond, results, done, errs)
+	var x int
+	for {
+		if x > 0 {
+			close(done)
+			break
+		}
+		select {
+		case b, ok := <-results:
+			if !ok {
+				break
+			}
+			s, err := Deserialize(b)
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+				continue
+			}
+			checkStats(s, t)
+			t.Logf("%#v\n", s)
+		case err := <-errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+		x++
+	}
+}
+
+func checkStats(s *stats.Stats, t *testing.T) {
+	if int16(stats.CLK_TCK) != s.ClkTck {
+		t.Errorf("ClkTck: got %s; want %s", s.ClkTck, stats.CLK_TCK)
+	}
+	if s.Timestamp == 0 {
+		t.Error("Timestamp: wanted non-zero value; got 0")
+	}
+	if s.Ctxt == 0 {
+		t.Error("Ctxt: wanted non-zero value; got 0")
+	}
+	if s.BTime == 0 {
+		t.Error("BTime: wanted non-zero value; got 0")
+	}
+	if s.Processes == 0 {
+		t.Error("Processes: wanted non-zero value; got 0")
+	}
+	if len(s.CPU) < 2 {
+		t.Errorf("expected stats for at least 2 CPU entries, got %d", len(s.CPU))
+	}
+	for i := 0; i < len(s.CPU); i++ {
+		if s.CPU[i].ID == "" {
+			t.Errorf("CPU %d: ID: wanted a non-empty value; was empty", i)
+		}
+		if s.CPU[i].User == 0 {
+			t.Errorf("CPU %d: User: wanted a non-zero value, was 0", i)
+		}
+		if s.CPU[i].System == 0 {
+			t.Errorf("CPU %d: System: wanted a non-xero value, was 0", i)
+		}
+	}
 }
 
 var stts *stats.Stats

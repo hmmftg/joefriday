@@ -20,6 +20,7 @@ package flat
 
 import (
 	"sync"
+	"time"
 
 	fb "github.com/google/flatbuffers/go"
 	"github.com/mohae/joefriday/cpu/stats"
@@ -76,6 +77,44 @@ func Get() (p []byte, err error) {
 	}
 
 	return std.Get()
+}
+
+// Ticker processes CPU utilization information on a ticker.  The generated
+// utilization data is sent to the outCh.  Any errors encountered are sent
+// to the errCh.  Processing ends when either a done signal is received or
+// the done channel is closed.
+//
+// It is the callers responsibility to close the done and errs channels.
+//
+// TODO: better handle errors, e.g. restore cur from prior so that there
+// isn't the possibility of temporarily having bad data, just a missed
+// collection interval.
+func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
+	outCh := make(chan *stats.Stats)
+	defer close(outCh)
+	go prof.Profiler.Ticker(interval, outCh, done, errs)
+	for {
+		select {
+		case s, ok := <-outCh:
+			if !ok {
+				return
+			}
+			out <- prof.Serialize(s)
+		}
+	}
+}
+
+// Ticker gathers information on a ticker using the specified interval.
+// This uses a local Profiler as using the global doesn't make sense for
+// an ongoing ticker.
+func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
+	prof, err := New()
+	if err != nil {
+		errs <- err
+		close(out)
+		return
+	}
+	prof.Ticker(interval, out, done, errs)
 }
 
 // Serialize serializes the Stats using Flatbuffers.
