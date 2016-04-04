@@ -109,9 +109,26 @@ func (prof *Profiler) Serialize(inf *mem.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
+// Serialize mem.Info using JSON with the package global Profiler.
+func Serialize(inf *mem.Info) (p []byte, err error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
+	if std == nil {
+		std, err = New()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return std.Serialize(inf)
+}
+
 // Marshal is an alias for Serialize
 func (prof *Profiler) Marshal(inf *mem.Info) ([]byte, error) {
 	return prof.Serialize(inf)
+}
+
+func Marshal(inf *mem.Info) ([]byte, error) {
+	return Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
