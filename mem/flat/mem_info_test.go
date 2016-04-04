@@ -69,22 +69,38 @@ func TestSerializeDeserialize(t *testing.T) {
 	}
 }
 
-var inf *mem.Info
-
 func BenchmarkGet(b *testing.B) {
-	var infF []byte
+	var tmp []byte
+	b.StopTimer()
 	p, _ := New()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		infF, _ = p.Get()
+		tmp, _ = p.Get()
 	}
-	_ = infF
+	_ = tmp
 }
 
-func BenchmarkDeserialize(b *testing.B) {
+func BenchmarkSerialize(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
 	p, _ := New()
-	infB, _ := p.Get()
+	inf, _ := p.Prof.Get()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf = Deserialize(infB)
+		tmp, _ = Serialize(inf)
+	}
+	_ = tmp
+}
+
+var inf *mem.Info
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
+	p, _ := New()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf = Deserialize(tmp)
 	}
 	_ = inf
 }

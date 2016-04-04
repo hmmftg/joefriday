@@ -40,10 +40,12 @@ func TestTicker(t *testing.T) {
 	done := make(chan struct{})
 	errs := make(chan error)
 	go Ticker(time.Duration(400)*time.Millisecond, out, done, errs)
+	var err error
+	var ut *utilization.Utilization
 	for i := 0; i < 1; i++ {
 		select {
 		case u := <-out:
-			ut, err := Unmarshal(u)
+			ut, err = Unmarshal(u)
 			if err != nil {
 				t.Errorf("got %s, want nil", err)
 				return
@@ -77,24 +79,4 @@ func checkUtilization(name string, u *utilization.Utilization, t *testing.T) {
 			t.Errorf("%s: %d: expected ID to have a value, was empty", i, name)
 		}
 	}
-}
-
-var ut *utilization.Utilization
-
-func BenchmarkGet(b *testing.B) {
-	var jsn []byte
-	p, _ := New()
-	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Get()
-	}
-	_ = jsn
-}
-
-func BenchmarkUnmarshal(b *testing.B) {
-	p, _ := New()
-	utB, _ := p.Get()
-	for i := 0; i < b.N; i++ {
-		ut, _ = Unmarshal(utB)
-	}
-	_ = ut
 }

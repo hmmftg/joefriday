@@ -83,7 +83,7 @@ func Get() (p []byte, err error) {
 // collection interval.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	outCh := make(chan *stats.Stats)
-	defer close(outCh)
+	defer close(out)
 	go prof.Profiler.Ticker(interval, outCh, done, errs)
 	for {
 		select {

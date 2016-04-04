@@ -47,8 +47,6 @@ func TestGet(t *testing.T) {
 	t.Logf("%#v\n", fcts)
 }
 
-var fct *facts.Facts
-
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
@@ -71,6 +69,20 @@ func BenchmarkSerialize(b *testing.B) {
 	}
 	_ = jsn
 }
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := New()
+	v, _ := p.Prof.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
+}
+
+var fct *facts.Facts
 
 func BenchmarkDeserialize(b *testing.B) {
 	b.StopTimer()

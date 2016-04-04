@@ -49,38 +49,38 @@ func TestSerialize(t *testing.T) {
 	}
 }
 
-var inf *facts.Facts
-
 func BenchmarkGet(b *testing.B) {
-	var jsn []byte
+	var tmp []byte
 	b.StopTimer()
 	p, _ := New()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Get()
+		tmp, _ = p.Get()
 	}
-	_ = jsn
+	_ = tmp
 }
 
 func BenchmarkSerialize(b *testing.B) {
-	var infB []byte
+	var tmp []byte
 	b.StopTimer()
 	p, _ := New()
-	inf, _ := p.Profiler.Get()
+	fct, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		infB, _ = Serialize(inf)
+		tmp, _ = Serialize(fct)
 	}
-	_ = infB
+	_ = tmp
 }
+
+var fct *facts.Facts
 
 func BenchmarkDeserialize(b *testing.B) {
 	b.StopTimer()
 	p, _ := New()
-	infB, _ := p.Get()
+	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf = Deserialize(infB)
+		fct = Deserialize(tmp)
 	}
-	_ = inf
+	_ = fct
 }

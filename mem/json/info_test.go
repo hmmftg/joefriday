@@ -39,22 +39,61 @@ func TestGet(t *testing.T) {
 	t.Logf("%#v\n", info)
 }
 
-var inf *mem.Info
-
-func BenchmarkGetMemInfo(b *testing.B) {
+func BenchmarkGet(b *testing.B) {
 	var jsn []byte
+	b.StopTimer()
 	p, _ := New()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
 	}
 	_ = jsn
 }
 
-func BenchmarkUnmarshalMemInfo(b *testing.B) {
+func BenchmarkSerialize(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
 	p, _ := New()
-	infB, _ := p.Get()
+	v, _ := p.Prof.Get()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = Unmarshal(infB)
+		jsn, _ = p.Serialize(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := New()
+	v, _ := p.Prof.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
+}
+
+var inf *mem.Info
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
+	p, _ := New()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf, _ = Deserialize(tmp)
+	}
+	_ = inf
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	b.StartTimer()
+	p, _ := New()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf, _ = Unmarshal(tmp)
 	}
 	_ = inf
 }

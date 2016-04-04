@@ -97,20 +97,59 @@ func checkStats(s *stats.Stats, t *testing.T) {
 	}
 }
 
-var stts *stats.Stats
-
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
+	b.StopTimer()
 	p, _ := New()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
 	}
 	_ = jsn
 }
 
-func BenchmarkUnmarshal(b *testing.B) {
+func BenchmarkSerialize(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := New()
+	v, _ := p.Prof.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Serialize(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := New()
+	v, _ := p.Prof.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
+}
+
+var stts *stats.Stats
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
 	p, _ := New()
 	sttsB, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		stts, _ = Deserialize(sttsB)
+	}
+	_ = stts
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	b.StartTimer()
+	p, _ := New()
+	sttsB, _ := p.Get()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		stts, _ = Unmarshal(sttsB)
 	}

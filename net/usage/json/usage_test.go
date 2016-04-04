@@ -72,23 +72,3 @@ func checkInfo(inf *structs.Info, t *testing.T) {
 		}
 	}
 }
-
-var inf *structs.Info
-
-func BenchmarkGetMemInfo(b *testing.B) {
-	var jsn []byte
-	p, _ := New()
-	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Get()
-	}
-	_ = jsn
-}
-
-func BenchmarkUnmarshalMemInfo(b *testing.B) {
-	p, _ := New()
-	infB, _ := p.Get()
-	for i := 0; i < b.N; i++ {
-		inf, _ = Deserialize(infB)
-	}
-	_ = inf
-}

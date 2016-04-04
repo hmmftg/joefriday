@@ -93,3 +93,15 @@ func checkStats(s *Stats, t *testing.T) {
 		}
 	}
 }
+
+var stts *Stats
+
+func BenchmarkGet(b *testing.B) {
+	b.StopTimer()
+	p, _ := New()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		stts, _ = p.Get()
+	}
+	_ = stts
+}

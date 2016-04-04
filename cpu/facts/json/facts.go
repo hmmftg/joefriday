@@ -81,7 +81,7 @@ func Serialize(fct *facts.Facts) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(st)
+	return std.Serialize(fct)
 }
 
 // Marshal is an alias for serialize.
@@ -91,7 +91,7 @@ func (prof *Profiler) Marshal(fct *facts.Facts) ([]byte, error) {
 
 // Marshal is an alias for Serialize using package globals.
 func Marshal(fct *facts.Facts) ([]byte, error) {
-	return std.Serialize(st)
+	return std.Serialize(fct)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as

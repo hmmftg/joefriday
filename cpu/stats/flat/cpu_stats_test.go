@@ -87,3 +87,39 @@ func checkStats(s *stats.Stats, t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkGet(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := New()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := New()
+	st, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = Serialize(st)
+	}
+	_ = tmp
+}
+
+var st *stats.Stats
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
+	p, _ := New()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		st = Deserialize(tmp)
+	}
+	_ = st
+}

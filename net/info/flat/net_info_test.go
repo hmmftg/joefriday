@@ -72,3 +72,39 @@ func checkInfo(inf *structs.Info, t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkGet(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := New()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+var inf *structs.Info
+
+func BenchmarkSerialize(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := New()
+	inf, _ := p.Prof.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = Serialize(inf)
+	}
+	_ = tmp
+}
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
+	p, _ := New()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf = Deserialize(tmp)
+	}
+	_ = inf
+}

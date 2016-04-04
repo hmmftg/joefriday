@@ -34,7 +34,9 @@ func TestGet(t *testing.T) {
 var inf *Info
 
 func BenchmarkGet(b *testing.B) {
+	b.StopTimer()
 	p, _ := New()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}
