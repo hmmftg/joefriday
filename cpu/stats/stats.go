@@ -24,6 +24,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
 )
 
@@ -84,10 +85,11 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 		return nil, err
 	}
 	var (
-		name                     string
-		i, j, pos, val, fieldNum int
-		v                        byte
-		stop                     bool
+		name                string
+		i, j, pos, fieldNum int
+		n                   uint64
+		v                   byte
+		stop                bool
 	)
 
 	stats = &Stats{Timestamp: time.Now().UTC().UnixNano(), ClkTck: prof.ClkTck, CPU: make([]Stat, 0, 2)}
@@ -132,37 +134,37 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 				}
 				if v == 0x20 || stop {
 					fieldNum++
-					val, err = strconv.Atoi(string(prof.Line[j : pos+i]))
+					n, err = helpers.ParseUint(prof.Line[j : pos+i])
 					if err != nil {
 						return stats, joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
 					}
 					j = pos + i + 1
 					if fieldNum < 4 {
 						if fieldNum == 1 {
-							stat.User = int64(val)
+							stat.User = int64(n)
 						} else if fieldNum == 2 {
-							stat.Nice = int64(val)
+							stat.Nice = int64(n)
 						} else if fieldNum == 3 {
-							stat.System = int64(val)
+							stat.System = int64(n)
 						}
 					} else if fieldNum < 7 {
 						if fieldNum == 4 {
-							stat.Idle = int64(val)
+							stat.Idle = int64(n)
 						} else if fieldNum == 5 {
-							stat.IOWait = int64(val)
+							stat.IOWait = int64(n)
 						} else if fieldNum == 6 {
-							stat.IRQ = int64(val)
+							stat.IRQ = int64(n)
 						}
 					} else if fieldNum < 10 {
 						if fieldNum == 7 {
-							stat.SoftIRQ = int64(val)
+							stat.SoftIRQ = int64(n)
 						} else if fieldNum == 8 {
-							stat.Steal = int64(val)
+							stat.Steal = int64(n)
 						} else if fieldNum == 9 {
-							stat.Quest = int64(val)
+							stat.Quest = int64(n)
 						}
 					} else if fieldNum == 10 {
-						stat.QuestNice = int64(val)
+						stat.QuestNice = int64(n)
 					}
 				}
 			}
@@ -172,29 +174,29 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 		}
 		if name == "ctxt" {
 			// rest of the line is the data
-			val, err = strconv.Atoi(string(prof.Line[pos : len(prof.Line)-1]))
+			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
 				return stats, joe.Error{Type: "cpu stat", Op: "convert ctxt data", Err: err}
 			}
-			stats.Ctxt = int64(val)
+			stats.Ctxt = int64(n)
 			continue
 		}
 		if name == "btime" {
 			// rest of the line is the data
-			val, err = strconv.Atoi(string(prof.Line[pos : len(prof.Line)-1]))
+			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
 				return stats, joe.Error{Type: "cpu stat", Op: "convert btime data", Err: err}
 			}
-			stats.BTime = int64(val)
+			stats.BTime = int64(n)
 			continue
 		}
 		if name == "processes" {
 			// rest of the line is the data
-			val, err = strconv.Atoi(string(prof.Line[pos : len(prof.Line)-1]))
+			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
 				return stats, joe.Error{Type: "cpu stat", Op: "convert processes data", Err: err}
 			}
-			stats.Processes = int64(val)
+			stats.Processes = int64(n)
 			continue
 		}
 	}

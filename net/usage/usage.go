@@ -19,10 +19,10 @@ package usage
 import (
 	"fmt"
 	"io"
-	"strconv"
 	"sync"
 	"time"
 
+	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/net/info"
 	"github.com/mohae/joefriday/net/structs"
@@ -90,9 +90,12 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Info, don
 	defer ticker.Stop()
 	defer close(out)
 	// predeclare some vars
-	var i, l, pos, fieldNum, fieldVal int
-	var v byte
-	var iInfo structs.Interface
+	var (
+		i, l, pos, fieldNum int
+		n                   uint64
+		v                   byte
+		iInfo               structs.Interface
+	)
 	// first get Info as the baseline
 	cur, err := prof.Profiler.Get()
 	if err != nil {
@@ -169,74 +172,74 @@ tick:
 						}
 					}
 					// any conversion error results in 0
-					fieldVal, err = strconv.Atoi(string(prof.Val[:]))
+					n, err = helpers.ParseUint(prof.Val[:])
 					if err != nil {
 						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iInfo.Name, err)
 						continue
 					}
 					prof.Val = prof.Val[:0]
 					if fieldNum == 1 {
-						iInfo.RBytes = int64(fieldVal)
+						iInfo.RBytes = int64(n)
 						continue
 					}
 					if fieldNum == 2 {
-						iInfo.RPackets = int64(fieldVal)
+						iInfo.RPackets = int64(n)
 						continue
 					}
 					if fieldNum == 3 {
-						iInfo.RErrs = int64(fieldVal)
+						iInfo.RErrs = int64(n)
 						continue
 					}
 					if fieldNum == 4 {
-						iInfo.RDrop = int64(fieldVal)
+						iInfo.RDrop = int64(n)
 						continue
 					}
 					if fieldNum == 5 {
-						iInfo.RFIFO = int64(fieldVal)
+						iInfo.RFIFO = int64(n)
 						continue
 					}
 					if fieldNum == 6 {
-						iInfo.RFrame = int64(fieldVal)
+						iInfo.RFrame = int64(n)
 						continue
 					}
 					if fieldNum == 7 {
-						iInfo.RCompressed = int64(fieldVal)
+						iInfo.RCompressed = int64(n)
 						continue
 					}
 					if fieldNum == 8 {
-						iInfo.RMulticast = int64(fieldVal)
+						iInfo.RMulticast = int64(n)
 						continue
 					}
 					if fieldNum == 9 {
-						iInfo.TBytes = int64(fieldVal)
+						iInfo.TBytes = int64(n)
 						continue
 					}
 					if fieldNum == 10 {
-						iInfo.TPackets = int64(fieldVal)
+						iInfo.TPackets = int64(n)
 						continue
 					}
 					if fieldNum == 11 {
-						iInfo.TErrs = int64(fieldVal)
+						iInfo.TErrs = int64(n)
 						continue
 					}
 					if fieldNum == 12 {
-						iInfo.TDrop = int64(fieldVal)
+						iInfo.TDrop = int64(n)
 						continue
 					}
 					if fieldNum == 13 {
-						iInfo.TFIFO = int64(fieldVal)
+						iInfo.TFIFO = int64(n)
 						continue
 					}
 					if fieldNum == 14 {
-						iInfo.TColls = int64(fieldVal)
+						iInfo.TColls = int64(n)
 						continue
 					}
 					if fieldNum == 15 {
-						iInfo.TCarrier = int64(fieldVal)
+						iInfo.TCarrier = int64(n)
 						continue
 					}
 					if fieldNum == 16 {
-						iInfo.TCompressed = int64(fieldVal)
+						iInfo.TCompressed = int64(n)
 						break
 					}
 				}
