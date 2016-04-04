@@ -115,9 +115,27 @@ func (prof *Profiler) Serialize(st *stats.Stats) ([]byte, error) {
 	return json.Marshal(st)
 }
 
+// Serialize cpu Stats as JSON using package globals.
+func Serialize(st *stats.Stats) (p []byte, err error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
+	if std == nil {
+		std, err = New()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return std.Serialize(st)
+}
+
 // Marshal is an alias for Serialize
 func (prof *Profiler) Marshal(st *stats.Stats) ([]byte, error) {
 	return prof.Serialize(st)
+}
+
+// Marshal is an alias for Serialize using package globals.
+func Marshal(st *stats.Stats) ([]byte, error) {
+	return std.Serialize(st)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
