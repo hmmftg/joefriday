@@ -156,10 +156,16 @@ func (prof *Profiler) Serialize(u *utilization.Utilization) []byte {
 }
 
 // Serialize the Utilization using the package global Profiler.
-func Serialize(u *utilization.Utilization) ([]byte, error) {
+func Serialize(u *utilization.Utilization) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
-	err := std.reset()
+	if std == nil {
+		std, err = New()
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = std.reset()
 	if err != nil {
 		return nil, err
 	}
