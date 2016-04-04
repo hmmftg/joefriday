@@ -158,10 +158,16 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 }
 
 // Serialize the Stats using the package global Profiler.
-func Serialize(stts *stats.Stats) []byte {
+func Serialize(stts *stats.Stats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
-	return std.Serialize(stts)
+	if std == nil {
+		std, err = New()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return std.Serialize(stts), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
