@@ -25,6 +25,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
 )
 
@@ -55,6 +56,7 @@ func (prof *Profiler) Reset() {
 func (prof *Profiler) Get() (facts *Facts, err error) {
 	var (
 		cpuCnt, i, pos int
+		n              uint64
 		v              byte
 		name, value    string
 		cpu            Fact
@@ -92,11 +94,11 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 				facts.CPU = append(facts.CPU, cpu)
 			}
 			cpuCnt++
-			i, err = strconv.Atoi(value)
+			n, err = helpers.ParseUint([]byte(value))
 			if err != nil {
 				return nil, joe.Error{Type: "cpu", Op: "fact: processor", Err: err}
 			}
-			cpu = Fact{Processor: int16(i)}
+			cpu = Fact{Processor: int16(n)}
 			continue
 		}
 		if name == "vendor_id" {
@@ -136,51 +138,51 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			continue
 		}
 		if name == "physical id" {
-			i, err = strconv.Atoi(value)
+			n, err = helpers.ParseUint([]byte(value))
 			if err != nil {
 				return nil, joe.Error{Type: "cpu", Op: "facts: physical id", Err: err}
 			}
-			cpu.PhysicalID = int16(i)
+			cpu.PhysicalID = int16(n)
 			continue
 		}
 		if name == "siblings" {
-			i, err = strconv.Atoi(value)
+			n, err = helpers.ParseUint([]byte(value))
 			if err != nil {
 				return nil, joe.Error{Type: "cpu", Op: "facts: siblings", Err: err}
 			}
-			cpu.Siblings = int16(i)
+			cpu.Siblings = int16(n)
 			continue
 		}
 		if name == "core id" {
-			i, err = strconv.Atoi(value)
+			n, err = helpers.ParseUint([]byte(value))
 			if err != nil {
 				return nil, joe.Error{Type: "cpu", Op: "facts: core id", Err: err}
 			}
-			cpu.CoreID = int16(i)
+			cpu.CoreID = int16(n)
 			continue
 		}
 		if name == "cpu cores" {
-			i, err = strconv.Atoi(value)
+			n, err = helpers.ParseUint([]byte(value))
 			if err != nil {
 				return nil, joe.Error{Type: "cpu", Op: "facts: cpu cores", Err: err}
 			}
-			cpu.CPUCores = int16(i)
+			cpu.CPUCores = int16(n)
 			continue
 		}
 		if name == "apicid" {
-			i, err = strconv.Atoi(value)
+			n, err = helpers.ParseUint([]byte(value))
 			if err != nil {
 				return nil, joe.Error{Type: "cpu", Op: "facts: apicid", Err: err}
 			}
-			cpu.ApicID = int16(i)
+			cpu.ApicID = int16(n)
 			continue
 		}
 		if name == "initial apicid" {
-			i, err = strconv.Atoi(value)
+			n, err = helpers.ParseUint([]byte(value))
 			if err != nil {
 				return nil, joe.Error{Type: "cpu", Op: "facts: initial apicid", Err: err}
 			}
-			cpu.InitialApicID = int16(i)
+			cpu.InitialApicID = int16(n)
 			continue
 		}
 		if name == "fpu" {
