@@ -40,7 +40,6 @@ func New() (prof *Profiler, err error) {
 
 // Get returns the current cpuinfo (Facts) as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	prof.Prof.Reset()
 	fct, err := prof.Prof.Get()
 	if err != nil {
 		return nil, err

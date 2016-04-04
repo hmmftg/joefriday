@@ -44,7 +44,6 @@ func (prof *Profiler) reset() {
 	prof.Profiler.Lock()
 	prof.Builder.Reset()
 	prof.Profiler.Unlock()
-	prof.Profiler.Reset()
 }
 
 // Get returns the current cpuinfo (facts) as Flatbuffer serialized bytes.
@@ -76,8 +75,8 @@ func Get() (p []byte, err error) {
 
 // Serialize serializes Facts using Flatbuffers.
 func (prof *Profiler) Serialize(fcts *facts.Facts) []byte {
-	prof.Profiler.Lock()
-	defer prof.Profiler.Unlock()
+	prof.Lock()
+	defer prof.Unlock()
 	flatFacts := make([]fb.UOffsetT, len(fcts.CPU))
 	vendorIDs := make([]fb.UOffsetT, len(fcts.CPU))
 	cpuFamilies := make([]fb.UOffsetT, len(fcts.CPU))
