@@ -26,6 +26,12 @@ var vals = []struct {
 	{[]byte(""), []byte("")},
 	{[]byte("\n"), []byte("")},
 	{[]byte("1\n"), []byte("1")},
+	{[]byte("\t"), []byte("")},
+	{[]byte("1\t"), []byte("1")},
+	{[]byte("\t\n"), []byte("")},
+	{[]byte("1\t\n"), []byte("1")},
+	{[]byte("   \t\n"), []byte("")},
+	{[]byte("1   \t\n"), []byte("1")},
 	{[]byte("      "), []byte("")},
 	{[]byte("hello"), []byte("hello")},
 	{[]byte("salut   "), []byte("salut")},
@@ -36,6 +42,15 @@ var vals = []struct {
 	{[]byte("punctuation space         "), []byte("punctuation space ")},
 	{[]byte("EM Quad space  "), []byte("EM Quad space ")},
 	{[]byte("OGHAM space    "), []byte("OGHAM space ")},
+}
+
+func TestTrimTrailingSpaces(t *testing.T) {
+	for i, test := range vals {
+		tmp := TrimTrailingSpaces(test.val)
+		if !bytes.Equal(tmp, test.expected) {
+			t.Errorf("%d: got %q; want %q", i, tmp, test.expected)
+		}
+	}
 }
 
 var stringVals = []struct {
@@ -52,15 +67,6 @@ var stringVals = []struct {
 	{"punctuation space         ", "punctuation space "},
 	{"EM Quad space  ", "EM Quad space "},
 	{"OGHAM space    ", "OGHAM space "},
-}
-
-func TestTrimTrailingSpaces(t *testing.T) {
-	for i, test := range vals {
-		tmp := TrimTrailingSpaces(test.val)
-		if !bytes.Equal(tmp, test.expected) {
-			t.Errorf("%d: got %q; want %q", i, tmp, test.expected)
-		}
-	}
 }
 
 func BenchmarkTrimTrailingSpaces(b *testing.B) {
