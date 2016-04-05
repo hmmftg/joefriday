@@ -102,10 +102,10 @@ func Int64Column(w int, v int64) string {
 }
 
 // TrimTrailingSpaces removes the trailing spaces from a slice and returns
-// it.  Only 0x20 is considered a space.
+// it.  Only 0x20 and NL are considered space characters.
 func TrimTrailingSpaces(p []byte) []byte {
 	for i := len(p) - 1; i > 0; i-- {
-		if p[i] != 0x20 {
+		if p[i] != 0x20 && p[i] != '\n' {
 			return p[:i+1]
 		}
 	}

@@ -24,10 +24,11 @@ var vals = []struct {
 }{
 	{[]byte{}, []byte{}},
 	{[]byte(""), []byte("")},
+	{[]byte("\n"), []byte("")},
 	{[]byte("      "), []byte("")},
 	{[]byte("hello"), []byte("hello")},
 	{[]byte("salut   "), []byte("salut")},
-	{[]byte("eamus catuli    "), []byte("eamus catuli")},
+	{[]byte("eamus catuli    \n"), []byte("eamus catuli")},
 	{[]byte("hola                  "), []byte("hola")},
 	{[]byte(" nihao   "), []byte(" nihao")},
 	{[]byte("idographic space　  "), []byte("idographic space　")},
