@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -46,11 +45,10 @@ func New() (prof *Profiler, err error) {
 // Get returns the current cpuinfo (Facts).
 func (prof *Profiler) Get() (facts *Facts, err error) {
 	var (
-		cpuCnt, i, pos int
-		n              uint64
-		v              byte
-		name, value    string
-		cpu            Fact
+		cpuCnt, i, pos, nameLen int
+		n                       uint64
+		v                       byte
+		cpu                     Fact
 	)
 	err = prof.Reset()
 	if err != nil {
@@ -65,162 +63,192 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			}
 			return nil, fmt.Errorf("error reading output bytes: %s", err)
 		}
+		prof.Val = prof.Val[:0]
 		// First grab the attribute name; everything up to the ':'.  The key may have
 		// spaces and has trailing spaces; that gets trimmed.
 		for i, v = range prof.Line {
 			if v == 0x3A {
+				prof.Val = prof.Line[:i]
 				pos = i + 1
 				break
 			}
-			prof.Val = append(prof.Val, v)
+			//prof.Val = append(prof.Val, v)
 		}
-		name = strings.TrimSpace(string(prof.Val[:]))
-		prof.Val = prof.Val[:0]
+		prof.Val = joe.TrimTrailingSpaces(prof.Val[:])
+		nameLen = len(prof.Val)
+		// if there's no name; skip.
+		if nameLen == 0 {
+			continue
+		}
 		// if there's anything left, the value is everything else; trim spaces
-		if pos < len(prof.Line) {
-			value = strings.TrimSpace(string(prof.Line[pos:]))
+		if pos+1 < len(prof.Line) {
+			prof.Val = append(prof.Val, joe.TrimTrailingSpaces(prof.Line[pos+1:])...)
 		}
-		// check to see if this is flat.Facts for a different processor
-		if name == "processor" {
-			if cpuCnt > 0 {
-				facts.CPU = append(facts.CPU, cpu)
+		v = prof.Val[0]
+		if v == 'a' {
+			v = prof.Val[1]
+			if v == 'd' { // address sizes
+				cpu.AddressSizes = string(prof.Val[nameLen:])
+				continue
 			}
-			cpuCnt++
-			n, err = helpers.ParseUint([]byte(value))
-			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "fact: processor", Err: err}
+			if v == 'p' { // apicid
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return nil, joe.Error{Type: "cpu", Op: "facts: apicid", Err: err}
+				}
+				cpu.ApicID = int16(n)
 			}
-			cpu = Fact{Processor: int16(n)}
 			continue
 		}
-		if name == "vendor_id" {
-			cpu.VendorID = value
-			continue
-		}
-		if name == "cpu family" {
-			cpu.CPUFamily = value
-			continue
-		}
-		if name == "model" {
-			cpu.Model = value
-			continue
-		}
-		if name == "model name" {
-			cpu.ModelName = value
-			continue
-		}
-		if name == "stepping" {
-			cpu.Stepping = value
-			continue
-		}
-		if name == "microcode" {
-			cpu.Microcode = value
-			continue
-		}
-		if name == "cpu MHz" {
-			f, err := strconv.ParseFloat(value, 32)
-			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: cpu MHz", Err: err}
+		if v == 'c' {
+			v = prof.Val[1]
+			if v == 'p' {
+				v = prof.Val[4]
+				if v == 'c' { // cpu cores
+					n, err = helpers.ParseUint(prof.Val[nameLen:])
+					if err != nil {
+						return nil, joe.Error{Type: "cpu", Op: "facts: cpu cores", Err: err}
+					}
+					cpu.CPUCores = int16(n)
+					continue
+				}
+				if v == 'f' { // cpu family
+					cpu.CPUFamily = string(prof.Val[nameLen:])
+					continue
+				}
+				if v == 'M' { // cpu MHz
+					f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
+					if err != nil {
+						return nil, joe.Error{Type: "cpu", Op: "facts: cpu MHz", Err: err}
+					}
+					cpu.CPUMHz = float32(f)
+					continue
+				}
+				if v == 'd' { // cpuid level
+					cpu.CPUIDLevel = string(prof.Val[nameLen:])
+				}
+				continue
 			}
-			cpu.CPUMHz = float32(f)
-			continue
-		}
-		if name == "cache size" {
-			cpu.CacheSize = value
-			continue
-		}
-		if name == "physical id" {
-			n, err = helpers.ParseUint([]byte(value))
-			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: physical id", Err: err}
+			v = prof.Val[5]
+			if v == '_' { // cache_alignment
+				cpu.CacheAlignment = string(prof.Val[nameLen:])
+				continue
 			}
-			cpu.PhysicalID = int16(n)
-			continue
-		}
-		if name == "siblings" {
-			n, err = helpers.ParseUint([]byte(value))
-			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: siblings", Err: err}
+			if v == ' ' { // cache size
+				cpu.CacheSize = string(prof.Val[nameLen:])
+				continue
 			}
-			cpu.Siblings = int16(n)
-			continue
-		}
-		if name == "core id" {
-			n, err = helpers.ParseUint([]byte(value))
-			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: core id", Err: err}
+			if v == 's' { // clflush size
+				cpu.CLFlushSize = string(prof.Val[nameLen:])
+				continue
 			}
-			cpu.CoreID = int16(n)
-			continue
-		}
-		if name == "cpu cores" {
-			n, err = helpers.ParseUint([]byte(value))
-			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: cpu cores", Err: err}
+			if v == 'i' { // core id
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return nil, joe.Error{Type: "cpu", Op: "facts: core id", Err: err}
+				}
+				cpu.CoreID = int16(n)
 			}
-			cpu.CPUCores = int16(n)
 			continue
 		}
-		if name == "apicid" {
-			n, err = helpers.ParseUint([]byte(value))
-			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: apicid", Err: err}
+		if v == 'f' {
+			v = prof.Val[1]
+			if v == 'l' { // flags
+				cpu.Flags = string(prof.Val[nameLen:])
+				continue
 			}
-			cpu.ApicID = int16(n)
-			continue
-		}
-		if name == "initial apicid" {
-			n, err = helpers.ParseUint([]byte(value))
-			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: initial apicid", Err: err}
+			if v == 'p' {
+				if nameLen == 3 { // fpu
+					cpu.FPU = string(prof.Val[nameLen:])
+				} else { // fpu_exception
+					cpu.FPUException = string(prof.Val[nameLen:])
+				}
 			}
-			cpu.InitialApicID = int16(n)
 			continue
 		}
-		if name == "fpu" {
-			cpu.FPU = value
+		if v == 'm' {
+			v = prof.Val[1]
+			if v == 'i' { // microcode
+				cpu.Microcode = string(prof.Val[nameLen:])
+				continue
+			}
+			if v == 'o' {
+				if nameLen == 5 { // model
+					cpu.Model = string(prof.Val[nameLen:])
+					continue
+				}
+				cpu.ModelName = string(prof.Val[nameLen:])
+			}
 			continue
 		}
-		if name == "fpu_exception" {
-			cpu.FPUException = value
+		if v == 'p' {
+			v = prof.Val[1]
+			if v == 'h' { // physical id
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return nil, joe.Error{Type: "cpu", Op: "facts: physical id", Err: err}
+				}
+				cpu.PhysicalID = int16(n)
+				continue
+			}
+			if v == 'o' { // power management
+				cpu.PowerManagement = string(prof.Val[nameLen:])
+				continue
+			}
+			// processor starts information about a processor.
+			if v == 'r' { // processor
+				if cpuCnt > 0 {
+					facts.CPU = append(facts.CPU, cpu)
+				}
+				cpuCnt++
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return nil, joe.Error{Type: "cpu", Op: "fact: processor", Err: err}
+				}
+				cpu = Fact{Processor: int16(n)}
+			}
 			continue
 		}
-		if name == "cpuid level" {
-			cpu.CPUIDLevel = value
+		if v == 's' {
+			v = prof.Val[1]
+			if v == 'i' { // siblings
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return nil, joe.Error{Type: "cpu", Op: "facts: siblings", Err: err}
+				}
+				cpu.Siblings = int16(n)
+				continue
+			}
+			if v == 't' { // stepping
+				cpu.Stepping = string(prof.Val[nameLen:])
+			}
 			continue
 		}
-		if name == "WP" {
-			cpu.WP = value
-			continue
-		}
-		if name == "flags" {
-			cpu.Flags = value
-			continue
-		}
-		if name == "bogomips" {
-			f, err := strconv.ParseFloat(value, 32)
+		if v == 'b' { // bogomips
+			f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
 			if err != nil {
 				return nil, joe.Error{Type: "cpu", Op: "facts: bogomips", Err: err}
 			}
 			cpu.BogoMIPS = float32(f)
 			continue
 		}
-		if name == "clflush size" {
-			cpu.CLFlushSize = value
+		if v == 'i' { // initial apicid
+			n, err = helpers.ParseUint(prof.Val[nameLen:])
+			if err != nil {
+				return nil, joe.Error{Type: "cpu", Op: "facts: initial apicid", Err: err}
+			}
+			cpu.InitialApicID = int16(n)
 			continue
 		}
-		if name == "cache_alignment" {
-			cpu.CacheAlignment = value
+		if v == 'W' { // WP
+			cpu.WP = string(prof.Val[nameLen:])
 			continue
 		}
-		if name == "address sizes" {
-			cpu.AddressSizes = value
-			continue
-		}
-		if name == "power management" {
-			cpu.PowerManagement = value
+		if v == 'v' { // vendor_id
+			cpu.VendorID = string(prof.Val[nameLen:])
 		}
 	}
+	// append the current processor informatin
 	facts.CPU = append(facts.CPU, cpu)
 	return facts, nil
 }
