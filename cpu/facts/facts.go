@@ -227,21 +227,21 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 
 // TODO: is it even worth it to have this as a global?  Should Get just
 // instantiate a local version and use that?
-var stdProfiler *Profiler
-var stdProfilerMu sync.Mutex
+var std *Profiler
+var stdMu sync.Mutex
 
 // Get returns the current cpuinfo (Facts) using the package's global
 // Profiler.
 func Get() (facts *Facts, err error) {
-	stdProfilerMu.Lock()
-	defer stdProfilerMu.Unlock()
-	if stdProfiler == nil {
-		stdProfiler, err = New()
+	stdMu.Lock()
+	defer stdMu.Unlock()
+	if std == nil {
+		std, err = New()
 		if err != nil {
 			return nil, err
 		}
 	}
-	return stdProfiler.Get()
+	return std.Get()
 }
 
 // Facts are a collection of facts, cpuinfo, about the system's cpus.
