@@ -25,6 +25,7 @@ var vals = []struct {
 	{[]byte{}, []byte{}},
 	{[]byte(""), []byte("")},
 	{[]byte("\n"), []byte("")},
+	{[]byte("1\n"), []byte("1")},
 	{[]byte("      "), []byte("")},
 	{[]byte("hello"), []byte("hello")},
 	{[]byte("salut   "), []byte("salut")},
