@@ -11,7 +11,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package joefriday gets facts.
+// Package joefriday gets information about a system: platform, kernel,
+// memory information, cpu information, cpu stats, cpu utilization, network
+// information, and network usage.
+//
+// Ticker versions of non-static information are available to enable
+// monitoring.
+//
+// The data can be returned as Go structs, Flatbuffer serialized bytes, or
+// JSON serialized bytes.  For convenience, there are deserialization
+// functions for all structs that are serialized.
 package joefriday
 
 import (
