@@ -100,3 +100,15 @@ func Int64Column(w int, v int64) string {
 	s := strconv.FormatInt(v, 10)
 	return Column(w, s)
 }
+
+// TrimTrailingSpaces removes the trailing spaces from a slice and returns
+// it.  Only 0x20 is considered a space.
+func TrimTrailingSpaces(p []byte) []byte {
+	for i := len(p) - 1; i > 0; i-- {
+		if p[i] != 0x20 {
+			return p[:i+1]
+		}
+	}
+	// it was all spaces
+	return p[:0]
+}
