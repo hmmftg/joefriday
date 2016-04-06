@@ -11,17 +11,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package platform
+package json
 
-import "testing"
+import (
+	"testing"
 
-func TestSerializeDeserializeRelease(t *testing.T) {
-	r, err := GetRelease()
+	"github.com/mohae/joefriday/platform/release"
+)
+
+func TestGet(t *testing.T) {
+	p, err := Get()
 	if err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Errorf("got %s, want nil", err)
+		return
 	}
-	p := r.SerializeFlat()
-	rD := DeserializeReleaseFlat(p)
+	r, err := release.Get()
+	if err != nil {
+		t.Errorf("release.Get(): got %s, want nil", err)
+		return
+	}
+	rD, err := Deserialize(p)
+	if err != nil {
+		t.Errorf("deserialize: unexpected error: %s", err)
+		return
+	}
 	if r.ID != rD.ID {
 		t.Errorf("ID: got %s; want %s", rD.ID, r.ID)
 	}
@@ -45,10 +58,61 @@ func TestSerializeDeserializeRelease(t *testing.T) {
 	}
 }
 
-func BenchmarkGetRelease(b *testing.B) {
-	var r *Release
+func BenchmarkGet(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := New()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		r, _ = GetRelease()
+		jsn, _ = p.Get()
 	}
-	_ = r
+	_ = jsn
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := New()
+	v, _ := p.Prof.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Serialize(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := New()
+	v, _ := p.Prof.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
+}
+
+var k *release.Release
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
+	p, _ := New()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		k, _ = Deserialize(tmp)
+	}
+	_ = k
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	b.StartTimer()
+	p, _ := New()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		k, _ = Unmarshal(tmp)
+	}
+	_ = k
 }
