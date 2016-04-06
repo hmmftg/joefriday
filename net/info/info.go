@@ -48,6 +48,7 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 		l, i, pos, fieldNum int
 		n                   uint64
 		v                   byte
+		iInfo               structs.Interface
 	)
 	err := prof.Reset()
 	if err != nil {
@@ -56,7 +57,6 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 	// there's always at least 2 interfaces (I think)
 	inf := &structs.Info{Timestamp: time.Now().UTC().UnixNano(), Interfaces: make([]structs.Interface, 0, 2)}
 	for {
-		prof.Val = prof.Val[:0]
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
@@ -68,7 +68,7 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 		if l < 3 {
 			continue
 		}
-		var iInfo structs.Interface
+		prof.Val = prof.Val[:0]
 		// first grab the interface name (everything up to the ':')
 		for i, v = range prof.Line {
 			if v == 0x3A {
@@ -97,7 +97,6 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 			// grab the numbers
 			for i, v = range prof.Line[pos:] {
 				if v == 0x20 || v == '\n' {
-
 					break
 				}
 			}
