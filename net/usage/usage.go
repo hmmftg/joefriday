@@ -123,6 +123,7 @@ tick:
 			cur.Interfaces = cur.Interfaces[:0]
 			// read each line until eof
 			for {
+				prof.Val = prof.Val[:0]
 				prof.Line, err = prof.Buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
@@ -135,22 +136,19 @@ tick:
 				if l < 3 {
 					continue
 				}
-
-				// skip leading spaces
-				for i, v = range prof.Line {
-					if v != 0x20 {
-						pos = i
-						break
-					}
-				}
 				// first grab the interface name (everything up to the ':')
-				for i, v = range prof.Line[pos:] {
+				for i, v = range prof.Line {
 					if v == 0x3A {
-						iInfo.Name = string(prof.Line[pos : pos+i])
-						pos += i + 1
+						pos = i + 1
 						break
 					}
+					// skip spaces
+					if v != 0x20 {
+						continue
+					}
+					prof.Val = append(prof.Val, v)
 				}
+				iInfo.Name = string(prof.Val[:])
 				fieldNum = 0
 				// process the rest of the line
 				for {
@@ -162,76 +160,73 @@ tick:
 							break
 						}
 					}
-
 					// grab the numbers
 					for i, v = range prof.Line[pos:] {
 						if v == 0x20 || v == '\n' {
-							prof.Val = prof.Line[pos : pos+i]
-							pos += i + 1
 							break
 						}
 					}
 					// any conversion error results in 0
-					n, err = helpers.ParseUint(prof.Val[:])
+					n, err = helpers.ParseUint(prof.Line[pos : pos+1])
+					pos += i
 					if err != nil {
 						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iInfo.Name, err)
 						continue
 					}
-					prof.Val = prof.Val[:0]
-					if fieldNum == 1 {
-						iInfo.RBytes = int64(n)
+					if fieldNum < 9 {
+						if fieldNum < 5 {
+							if fieldNum < 3 {
+								if fieldNum == 1 {
+									iInfo.RBytes = int64(n)
+									continue
+								}
+								iInfo.RPackets = int64(n) // must be 2
+								continue
+							}
+							if fieldNum == 3 {
+								iInfo.RErrs = int64(n)
+								continue
+							}
+							iInfo.RDrop = int64(n) // must be 4
+							continue
+						}
+						if fieldNum < 7 {
+							if fieldNum == 5 {
+								iInfo.RFIFO = int64(n)
+								continue
+							}
+							iInfo.RFrame = int64(n) // must be 6
+							continue
+						}
+						if fieldNum == 7 {
+							iInfo.RCompressed = int64(n)
+							continue
+						}
+						iInfo.RMulticast = int64(n) // must be 8
 						continue
 					}
-					if fieldNum == 2 {
-						iInfo.RPackets = int64(n)
+					if fieldNum < 13 {
+						if fieldNum < 11 {
+							if fieldNum == 9 {
+								iInfo.TBytes = int64(n)
+								continue
+							}
+							iInfo.TPackets = int64(n) // must be 10
+							continue
+						}
+						if fieldNum == 11 {
+							iInfo.TErrs = int64(n)
+							continue
+						}
+						iInfo.TDrop = int64(n) // must be 12
 						continue
 					}
-					if fieldNum == 3 {
-						iInfo.RErrs = int64(n)
-						continue
-					}
-					if fieldNum == 4 {
-						iInfo.RDrop = int64(n)
-						continue
-					}
-					if fieldNum == 5 {
-						iInfo.RFIFO = int64(n)
-						continue
-					}
-					if fieldNum == 6 {
-						iInfo.RFrame = int64(n)
-						continue
-					}
-					if fieldNum == 7 {
-						iInfo.RCompressed = int64(n)
-						continue
-					}
-					if fieldNum == 8 {
-						iInfo.RMulticast = int64(n)
-						continue
-					}
-					if fieldNum == 9 {
-						iInfo.TBytes = int64(n)
-						continue
-					}
-					if fieldNum == 10 {
-						iInfo.TPackets = int64(n)
-						continue
-					}
-					if fieldNum == 11 {
-						iInfo.TErrs = int64(n)
-						continue
-					}
-					if fieldNum == 12 {
-						iInfo.TDrop = int64(n)
-						continue
-					}
-					if fieldNum == 13 {
-						iInfo.TFIFO = int64(n)
-						continue
-					}
-					if fieldNum == 14 {
-						iInfo.TColls = int64(n)
+					if fieldNum < 15 {
+						if fieldNum == 13 {
+							iInfo.TFIFO = int64(n)
+							continue
+						}
+						iInfo.TColls = int64(n) // must be 14
 						continue
 					}
 					if fieldNum == 15 {
