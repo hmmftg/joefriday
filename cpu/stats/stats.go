@@ -85,7 +85,6 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 		return nil, err
 	}
 	var (
-		name                string
 		i, j, pos, fieldNum int
 		n                   uint64
 		v                   byte
@@ -103,87 +102,88 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 			}
 			return nil, joe.Error{Type: "cpu stat", Op: "reading /proc/stat output", Err: err}
 		}
+		prof.Val = prof.Val[:0]
 		// Get everything up to the first space, this is the key.  Not all keys are processed.
 		for i, v = range prof.Line {
 			if v == 0x20 {
-				name = string(prof.Line[:i])
+				prof.Val = prof.Line[:i]
 				pos = i + 1
 				break
 			}
 		}
 		// skip the intr line
-		if name == "intr" {
+		if prof.Val[0] == 'i' {
 			continue
 		}
-		if name[:3] == "cpu" {
-			j = 0
-			// skip over any remaining spaces
-			for i, v = range prof.Line[pos:] {
-				if v != 0x20 {
-					break
-				}
-				j++
-			}
-			stat := Stat{ID: name}
-			fieldNum = 0
-			pos, j = j+pos, j+pos
-			// space is the field separator
-			for i, v = range prof.Line[pos:] {
-				if v == '\n' {
-					stop = true
-				}
-				if v == 0x20 || stop {
-					fieldNum++
-					n, err = helpers.ParseUint(prof.Line[j : pos+i])
-					if err != nil {
-						return stats, joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+		if prof.Val[0] == 'c' {
+			if prof.Val[1] == 'p' { // process CPU
+				stat := Stat{ID: string(prof.Val[:])}
+				j = 0
+				// skip over any remaining spaces
+				for i, v = range prof.Line[pos:] {
+					if v != 0x20 {
+						break
 					}
-					j = pos + i + 1
-					if fieldNum < 6 {
-						if fieldNum < 4 {
-							if fieldNum == 1 {
-								stat.User = int64(n)
+					j++
+				}
+				fieldNum = 0
+				pos, j = j+pos, j+pos
+				// space is the field separator
+				for i, v = range prof.Line[pos:] {
+					if v == '\n' {
+						stop = true
+					}
+					if v == 0x20 || stop {
+						fieldNum++
+						n, err = helpers.ParseUint(prof.Line[j : pos+i])
+						if err != nil {
+							return stats, joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+						}
+						j = pos + i + 1
+						if fieldNum < 6 {
+							if fieldNum < 4 {
+								if fieldNum == 1 {
+									stat.User = int64(n)
+									continue
+								}
+								if fieldNum == 2 {
+									stat.Nice = int64(n)
+									continue
+								}
+								stat.System = int64(n) // 3
 								continue
 							}
-							if fieldNum == 2 {
-								stat.Nice = int64(n)
+							if fieldNum == 4 {
+								stat.Idle = int64(n)
 								continue
 							}
-							stat.System = int64(n) // 3
+							stat.IOWait = int64(n) // 5
 							continue
 						}
-						if fieldNum == 4 {
-							stat.Idle = int64(n)
+						if fieldNum < 8 {
+							if fieldNum == 6 {
+								stat.IRQ = int64(n)
+								continue
+							}
+							stat.SoftIRQ = int64(n) // 7
 							continue
 						}
-						stat.IOWait = int64(n) // 5
-						continue
-					}
-					if fieldNum < 8 {
-						if fieldNum == 6 {
-							stat.IRQ = int64(n)
+						if fieldNum == 8 {
+							stat.Steal = int64(n)
 							continue
 						}
-						stat.SoftIRQ = int64(n) // 7
-						continue
+						if fieldNum == 9 {
+							stat.Quest = int64(n)
+							continue
+						}
+						stat.QuestNice = int64(n) // 10
 					}
-					if fieldNum == 8 {
-						stat.Steal = int64(n)
-						continue
-					}
-					if fieldNum == 9 {
-						stat.Quest = int64(n)
-						continue
-					}
-					stat.QuestNice = int64(n) // 10
 				}
+				stats.CPU = append(stats.CPU, stat)
+				stop = false
+				continue
 			}
-			stats.CPU = append(stats.CPU, stat)
-			stop = false
-			continue
-		}
-		if name == "ctxt" {
-			// rest of the line is the data
+			// Otherwise it's ctxt info; rest of the line is the data.
 			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
 				return stats, joe.Error{Type: "cpu stat", Op: "convert ctxt data", Err: err}
@@ -191,7 +191,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 			stats.Ctxt = int64(n)
 			continue
 		}
-		if name == "btime" {
+		if prof.Val[0] == 'b' {
 			// rest of the line is the data
 			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
@@ -200,7 +200,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 			stats.BTime = int64(n)
 			continue
 		}
-		if name == "processes" {
+		if prof.Val[0] == 'p' && prof.Val[4] == 'e' { // processes info
 			// rest of the line is the data
 			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
