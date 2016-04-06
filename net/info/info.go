@@ -166,10 +166,8 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 				iInfo.TCarrier = int64(n)
 				continue
 			}
-			if fieldNum == 16 {
-				iInfo.TCompressed = int64(n)
-				break
-			}
+			iInfo.TCompressed = int64(n)
+			break
 		}
 		inf.Interfaces = append(inf.Interfaces, iInfo)
 	}
