@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/cpu/stats"
 )
@@ -107,6 +108,7 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *Utilization, done
 	// predeclare some vars
 	var (
 		i, j, pos, val, fieldNum int
+		n                        uint64
 		v                        byte
 		name                     string
 		stop                     bool
@@ -178,39 +180,49 @@ tick:
 						}
 						if v == 0x20 || stop {
 							fieldNum++
-							val, err = strconv.Atoi(string(prof.Line[j : pos+i]))
+							n, err = helpers.ParseUint(prof.Line[j : pos+i])
 							if err != nil {
 								errs <- joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
 								continue
 							}
 							j = pos + i + 1
-							if fieldNum < 4 {
-								if fieldNum == 1 {
-									stat.User = int64(val)
-								} else if fieldNum == 2 {
-									stat.Nice = int64(val)
-								} else if fieldNum == 3 {
-									stat.System = int64(val)
+							if fieldNum < 6 {
+								if fieldNum < 4 {
+									if fieldNum == 1 {
+										stat.User = int64(n)
+										continue
+									}
+									if fieldNum == 2 {
+										stat.Nice = int64(n)
+										continue
+									}
+									stat.System = int64(n) // 3
+									continue
 								}
-							} else if fieldNum < 7 {
 								if fieldNum == 4 {
-									stat.Idle = int64(val)
-								} else if fieldNum == 5 {
-									stat.IOWait = int64(val)
-								} else if fieldNum == 6 {
-									stat.IRQ = int64(val)
+									stat.Idle = int64(n)
+									continue
 								}
-							} else if fieldNum < 10 {
-								if fieldNum == 7 {
-									stat.SoftIRQ = int64(val)
-								} else if fieldNum == 8 {
-									stat.Steal = int64(val)
-								} else if fieldNum == 9 {
-									stat.Quest = int64(val)
-								}
-							} else if fieldNum == 10 {
-								stat.QuestNice = int64(val)
+								stat.IOWait = int64(n) // 5
+								continue
 							}
+							if fieldNum < 8 {
+								if fieldNum == 6 {
+									stat.IRQ = int64(n)
+									continue
+								}
+								stat.SoftIRQ = int64(n) // 7
+								continue
+							}
+							if fieldNum == 8 {
+								stat.Steal = int64(n)
+								continue
+							}
+							if fieldNum == 9 {
+								stat.Quest = int64(n)
+								continue
+							}
+							stat.QuestNice = int64(n) // 10
 						}
 					}
 					cur.CPU = append(cur.CPU, stat)
