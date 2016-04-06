@@ -18,7 +18,6 @@ package utilization
 
 import (
 	"io"
-	"strconv"
 	"sync"
 	"time"
 
@@ -107,11 +106,11 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *Utilization, done
 	defer close(out)
 	// predeclare some vars
 	var (
-		i, j, pos, val, fieldNum int
-		n                        uint64
-		v                        byte
-		name                     string
-		stop                     bool
+		i, j, pos, fieldNum int
+		n                   uint64
+		v                   byte
+		name                string
+		stop                bool
 	)
 	// first get stats as the baseline
 	cur, err := prof.Profiler.Get()
@@ -231,29 +230,29 @@ tick:
 				}
 				if name == "ctxt" {
 					// rest of the line is the data
-					val, err = strconv.Atoi(string(prof.Line[pos : len(prof.Line)-1]))
+					n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 					if err != nil {
 						errs <- joe.Error{Type: "cpu stat", Op: "convert ctxt data", Err: err}
 					}
-					cur.Ctxt = int64(val)
+					cur.Ctxt = int64(n)
 					continue
 				}
 				if name == "btime" {
 					// rest of the line is the data
-					val, err = strconv.Atoi(string(prof.Line[pos : len(prof.Line)-1]))
+					n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 					if err != nil {
 						errs <- joe.Error{Type: "cpu stat", Op: "convert btime data", Err: err}
 					}
-					cur.BTime = int64(val)
+					cur.BTime = int64(n)
 					continue
 				}
 				if name == "processes" {
 					// rest of the line is the data
-					val, err = strconv.Atoi(string(prof.Line[pos : len(prof.Line)-1]))
+					n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 					if err != nil {
 						errs <- joe.Error{Type: "cpu stat", Op: "convert processes data", Err: err}
 					}
-					cur.Processes = int64(val)
+					cur.Processes = int64(n)
 					continue
 				}
 			}
