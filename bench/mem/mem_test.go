@@ -6,6 +6,7 @@ import (
 
 	"github.com/DataDog/gohai/memory"
 	"github.com/cloudfoundry/gosigar"
+	meminfo "github.com/guillermo/go.procmeminfo"
 	joe "github.com/mohae/joefriday/mem"
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
@@ -40,6 +41,14 @@ func BenchmarkDataDogGohaiMem(b *testing.B) {
 		c, _ = collector.Collect()
 	}
 	_ = c
+}
+
+func BenchmarkGuillermoMemInfo(b *testing.B) {
+	mem := meminfo.MemInfo{}
+	for i := 0; i < b.N; i++ {
+		mem.Update()
+	}
+	_ = mem
 }
 
 func BenchmarkShirouGopsutilMem(b *testing.B) {
@@ -90,6 +99,17 @@ func TestDataDogGohaiMem(t *testing.T) {
 		return
 	}
 	p, err := json.MarshalIndent(c, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestGuillermoMemInfo(t *testing.T) {
+	mem := meminfo.MemInfo{}
+	mem.Update()
+	p, err := json.MarshalIndent(mem, "", "\t")
 	if err != nil {
 		t.Error(err)
 		return
