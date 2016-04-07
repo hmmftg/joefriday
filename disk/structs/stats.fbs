@@ -1,0 +1,26 @@
+// stats.fbs
+namespace flat;
+
+table Stats {
+	Timestamp:long;
+	Devices:[Device];
+}
+
+table Device {
+	Major:uint;
+	Minor:uint;
+	Name:string;
+	ReadsCompleted:ulong;
+	ReadsMerged:ulong;
+	ReadSectors:ulong;
+	ReadingTime:ulong;
+	WritesCompleted:ulong;
+	WritesMerged:ulong;
+	WrittenSectors:ulong;
+	WritingTime:ulong;
+	IOInProgress:ulong;
+	IOTime:ulong;
+	WeightedIOTime:ulong;
+}
+
+root_type Stats;
