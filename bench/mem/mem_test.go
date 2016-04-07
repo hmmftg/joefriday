@@ -1,6 +1,7 @@
 package mem
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/DataDog/gohai/memory"
@@ -47,4 +48,65 @@ func BenchmarkShirouGopsutilMem(b *testing.B) {
 		mem, _ = gopsutilmem.VirtualMemory()
 	}
 	_ = mem
+}
+
+// These tests exist to print out the data that is collected; not to test the
+// methods themselves.  Run with the -v flag.
+func TestJoeFridayGet(t *testing.T) {
+	prof, _ := joe.New()
+	mem, err := prof.Get()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p, err := json.MarshalIndent(mem, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestCloudFoundryGoSigarMem(t *testing.T) {
+	var mem sigar.Mem
+	mem.Get()
+	p, err := json.MarshalIndent(mem, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestDataDogGohaiMem(t *testing.T) {
+	type Collector interface {
+		Name() string
+		Collect() (interface{}, error)
+	}
+	var collector = &memory.Memory{}
+	c, err := collector.Collect()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p, err := json.MarshalIndent(c, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestShirouGopsutilMem(t *testing.T) {
+	mem, err := gopsutilmem.VirtualMemory()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p, err := json.MarshalIndent(mem, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
 }
