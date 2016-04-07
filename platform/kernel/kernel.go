@@ -48,21 +48,28 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 	if err != nil {
 		return nil, err
 	}
-	k = &Kernel{}
+	// This will always be linux, I think.
+	k = &Kernel{OS: "linux"}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return nil, joe.Error{Type: "platform", Op: "read /proc/verion", Err: err}
+			return nil, joe.Error{Type: "platform", Op: "read /proc/version", Err: err}
 		}
-		// The version is everything up to the first '(', 0x28, - 1 byte
+		// The version is everything from the space, 0x20, prior to the version string, up to the first '(', 0x28, - 1 byte
 		for i, v = range prof.Line {
 			if v == 0x28 {
-				k.Version = string(prof.Line[:i-1])
+				// get the OS
+				k.Version = string(prof.Line[pos2+1 : i-1])
 				pos = i + 1
 				break
+			}
+			// keep track of the last space encountered
+			if v == 0x20 {
+				pos2 = pos
+				pos = i
 			}
 		}
 		// Set the arch
@@ -144,6 +151,7 @@ func (k *Kernel) SetArch() {
 
 // Kernel holds kernel information.
 type Kernel struct {
+	OS          string `json:"os"`
 	Version     string `json:"version"`
 	CompileUser string `json:"compile_user"`
 	GCC         string `json:"gcc"`

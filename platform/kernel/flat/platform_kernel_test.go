@@ -31,6 +31,9 @@ func TestSerializeDeserialize(t *testing.T) {
 		return
 	}
 	kD := Deserialize(p)
+	if k.OS != kD.OS {
+		t.Errorf("OS: got %s; want %s", kD.OS, k.OS)
+	}
 	if k.Version != kD.Version {
 		t.Errorf("Version: got %s; want %s", kD.Version, k.Version)
 	}

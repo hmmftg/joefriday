@@ -2,6 +2,7 @@
 namespace flat;
 
 table Kernel {
+    OS:string;
     Version:string;
     CompileUser:string;
     GCC:string;

@@ -70,6 +70,7 @@ func Get() (p []byte, err error) {
 func (prof *Profiler) Serialize(k *kernel.Kernel) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
+	os := prof.Builder.CreateString(k.OS)
 	version := prof.Builder.CreateString(k.Version)
 	compileUser := prof.Builder.CreateString(k.CompileUser)
 	gcc := prof.Builder.CreateString(k.GCC)
@@ -78,6 +79,7 @@ func (prof *Profiler) Serialize(k *kernel.Kernel) []byte {
 	compileDate := prof.Builder.CreateString(k.CompileDate)
 	arch := prof.Builder.CreateString(k.Arch)
 	KernelStart(prof.Builder)
+	KernelAddOS(prof.Builder, os)
 	KernelAddVersion(prof.Builder, version)
 	KernelAddCompileUser(prof.Builder, compileUser)
 	KernelAddGCC(prof.Builder, gcc)
@@ -108,6 +110,7 @@ func Serialize(k *kernel.Kernel) (p []byte, err error) {
 func Deserialize(p []byte) *kernel.Kernel {
 	flatK := GetRootAsKernel(p, 0)
 	var k kernel.Kernel
+	k.OS = string(flatK.OS())
 	k.Version = string(flatK.Version())
 	k.CompileUser = string(flatK.CompileUser())
 	k.GCC = string(flatK.GCC())

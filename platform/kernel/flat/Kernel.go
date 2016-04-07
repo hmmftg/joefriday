@@ -21,7 +21,7 @@ func (rcv *Kernel) Init(buf []byte, i flatbuffers.UOffsetT) {
 	rcv._tab.Pos = i
 }
 
-func (rcv *Kernel) Version() []byte {
+func (rcv *Kernel) OS() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
 		return rcv._tab.ByteVector(o + rcv._tab.Pos)
@@ -29,7 +29,7 @@ func (rcv *Kernel) Version() []byte {
 	return nil
 }
 
-func (rcv *Kernel) CompileUser() []byte {
+func (rcv *Kernel) Version() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
 		return rcv._tab.ByteVector(o + rcv._tab.Pos)
@@ -37,7 +37,7 @@ func (rcv *Kernel) CompileUser() []byte {
 	return nil
 }
 
-func (rcv *Kernel) GCC() []byte {
+func (rcv *Kernel) CompileUser() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
 		return rcv._tab.ByteVector(o + rcv._tab.Pos)
@@ -45,7 +45,7 @@ func (rcv *Kernel) GCC() []byte {
 	return nil
 }
 
-func (rcv *Kernel) OSGCC() []byte {
+func (rcv *Kernel) GCC() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
 	if o != 0 {
 		return rcv._tab.ByteVector(o + rcv._tab.Pos)
@@ -53,7 +53,7 @@ func (rcv *Kernel) OSGCC() []byte {
 	return nil
 }
 
-func (rcv *Kernel) Type() []byte {
+func (rcv *Kernel) OSGCC() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
 		return rcv._tab.ByteVector(o + rcv._tab.Pos)
@@ -61,7 +61,7 @@ func (rcv *Kernel) Type() []byte {
 	return nil
 }
 
-func (rcv *Kernel) CompileDate() []byte {
+func (rcv *Kernel) Type() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(14))
 	if o != 0 {
 		return rcv._tab.ByteVector(o + rcv._tab.Pos)
@@ -69,7 +69,7 @@ func (rcv *Kernel) CompileDate() []byte {
 	return nil
 }
 
-func (rcv *Kernel) Arch() []byte {
+func (rcv *Kernel) CompileDate() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
 	if o != 0 {
 		return rcv._tab.ByteVector(o + rcv._tab.Pos)
@@ -77,12 +77,21 @@ func (rcv *Kernel) Arch() []byte {
 	return nil
 }
 
-func KernelStart(builder *flatbuffers.Builder) { builder.StartObject(7) }
-func KernelAddVersion(builder *flatbuffers.Builder, Version flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(Version), 0) }
-func KernelAddCompileUser(builder *flatbuffers.Builder, CompileUser flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(CompileUser), 0) }
-func KernelAddGCC(builder *flatbuffers.Builder, GCC flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(GCC), 0) }
-func KernelAddOSGCC(builder *flatbuffers.Builder, OSGCC flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(OSGCC), 0) }
-func KernelAddType(builder *flatbuffers.Builder, Type flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(4, flatbuffers.UOffsetT(Type), 0) }
-func KernelAddCompileDate(builder *flatbuffers.Builder, CompileDate flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(5, flatbuffers.UOffsetT(CompileDate), 0) }
-func KernelAddArch(builder *flatbuffers.Builder, Arch flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(6, flatbuffers.UOffsetT(Arch), 0) }
+func (rcv *Kernel) Arch() []byte {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(18))
+	if o != 0 {
+		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+	}
+	return nil
+}
+
+func KernelStart(builder *flatbuffers.Builder) { builder.StartObject(8) }
+func KernelAddOS(builder *flatbuffers.Builder, OS flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(OS), 0) }
+func KernelAddVersion(builder *flatbuffers.Builder, Version flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(Version), 0) }
+func KernelAddCompileUser(builder *flatbuffers.Builder, CompileUser flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(CompileUser), 0) }
+func KernelAddGCC(builder *flatbuffers.Builder, GCC flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(GCC), 0) }
+func KernelAddOSGCC(builder *flatbuffers.Builder, OSGCC flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(4, flatbuffers.UOffsetT(OSGCC), 0) }
+func KernelAddType(builder *flatbuffers.Builder, Type flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(5, flatbuffers.UOffsetT(Type), 0) }
+func KernelAddCompileDate(builder *flatbuffers.Builder, CompileDate flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(6, flatbuffers.UOffsetT(CompileDate), 0) }
+func KernelAddArch(builder *flatbuffers.Builder, Arch flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(7, flatbuffers.UOffsetT(Arch), 0) }
 func KernelEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

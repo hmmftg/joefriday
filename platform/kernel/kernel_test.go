@@ -20,6 +20,9 @@ func TestGet(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
+	if k.OS == "" {
+		t.Error("OS: wanted a non-empty value; was empty")
+	}
 	if k.Version == "" {
 		t.Error("Version: wanted a non-empty value; was empty")
 	}
