@@ -18,7 +18,7 @@ import (
 	"testing"
 )
 
-var vals = []struct {
+var trailingVals = []struct {
 	val      []byte
 	expected []byte
 }{
@@ -45,7 +45,7 @@ var vals = []struct {
 }
 
 func TestTrimTrailingSpaces(t *testing.T) {
-	for i, test := range vals {
+	for i, test := range trailingVals {
 		tmp := TrimTrailingSpaces(test.val)
 		if !bytes.Equal(tmp, test.expected) {
 			t.Errorf("%d: got %q; want %q", i, tmp, test.expected)
@@ -53,60 +53,207 @@ func TestTrimTrailingSpaces(t *testing.T) {
 	}
 }
 
-var stringVals = []struct {
-	val      string
-	expected string
+var leadingVals = []struct {
+	val      []byte
+	expected []byte
 }{
-	{"      ", ""},
-	{"hello", "hello"},
-	{"salut   ", "salut"},
-	{"eamus catuli    ", "eamus catuli"},
-	{"hola                  ", "hola"},
-	{" nihao   ", " nihao"},
-	{"idographic space　  ", "idographic space　"},
-	{"punctuation space         ", "punctuation space "},
-	{"EM Quad space  ", "EM Quad space "},
-	{"OGHAM space    ", "OGHAM space "},
+	{[]byte{}, []byte{}},
+	{[]byte(""), []byte("")},
+	{[]byte("\n"), []byte("\n")},
+	{[]byte("  1"), []byte("1")},
+	{[]byte("\t"), []byte("")},
+	{[]byte("  \t1\t"), []byte("1\t")},
+	{[]byte("\t "), []byte("")},
+	{[]byte("1\t\n"), []byte("1\t\n")},
+	{[]byte("   \t  "), []byte("")},
+	{[]byte(" \t 1"), []byte("1")},
+	{[]byte("      "), []byte("")},
+	{[]byte("hello"), []byte("hello")},
+	{[]byte("   salut"), []byte("salut")},
+	{[]byte("     \teamus catuli"), []byte("eamus catuli")},
+	{[]byte("      nihao "), []byte("nihao ")},
+	{[]byte("    　ideographic space"), []byte("　ideographic space")},
+	{[]byte("       punctuation space"), []byte(" punctuation space")},
+	{[]byte(" EM Quad space"), []byte(" EM Quad space")},
+	{[]byte(" OGHAM space"), []byte(" OGHAM space")},
+}
+
+func TestTrimLeadingSpaces(t *testing.T) {
+	for i, test := range leadingVals {
+		tmp := TrimLeadingSpaces(test.val)
+		if !bytes.Equal(tmp, test.expected) {
+			t.Errorf("%d: got %q; want %q", i, tmp, test.expected)
+		}
+	}
+}
+
+var trailingByteVals = [][]byte{
+	[]byte("      "),
+	[]byte("hello"),
+	[]byte("salut   "),
+	[]byte("eamus catuli    "),
+	[]byte("hola                  "),
+	[]byte(" nihao   "),
+	[]byte("ideographic space　  "),
+	[]byte("punctuation space         "),
+	[]byte("EM Quad space  "),
+	[]byte("OGHAM space    "),
 }
 
 func BenchmarkTrimTrailingSpaces(b *testing.B) {
 	var tmp []byte
 	for i := 0; i < b.N; i++ {
-		for j := 2; j < len(vals); j++ {
-			tmp = TrimTrailingSpaces(vals[j].val)
+		for _, v := range trailingByteVals {
+			tmp = TrimTrailingSpaces(v)
 		}
 	}
 	_ = tmp
+}
+
+func BenchmarkTrimTrailingSpaceBytes(b *testing.B) {
+	var tmp []byte
+	for i := 0; i < b.N; i++ {
+		for _, v := range trailingByteVals {
+			tmp = bytes.TrimSpace(v)
+		}
+	}
+	_ = tmp
+
+}
+
+var trailingStringVals = []string{
+	"      ",
+	"hello",
+	"salut   ",
+	"eamus catuli    ",
+	"hola                  ",
+	" nihao   ",
+	"idographic space　  ",
+	"punctuation space         ",
+	"EM Quad space  ",
+	"OGHAM space    ",
+}
+
+func BenchmarkTrimTrailingSpaceStrings(b *testing.B) {
+	var tmp string
+	for i := 0; i < b.N; i++ {
+		for _, v := range trailingStringVals {
+			tmp = strings.TrimSpace(v)
+		}
+	}
+	_ = tmp
+
+}
+
+var leadingByteVals = [][]byte{
+	[]byte("      "),
+	[]byte("hello"),
+	[]byte("   salut"),
+	[]byte("    eamus catuli"),
+	[]byte("                  hola"),
+	[]byte("   nihao "),
+	[]byte("  　ideographic space"),
+	[]byte("         punctuation space"),
+	[]byte("  EM Quad space"),
+	[]byte("    OGHAM space"),
+}
+
+func BenchmarkTrimLeadingSpaces(b *testing.B) {
+	var tmp []byte
+	for i := 0; i < b.N; i++ {
+		for _, v := range leadingByteVals {
+			tmp = TrimLeadingSpaces(v)
+		}
+	}
+	_ = tmp
+}
+
+func BenchmarkTrimLeadingSpaceBytes(b *testing.B) {
+	var tmp []byte
+	for i := 0; i < b.N; i++ {
+		for _, v := range leadingByteVals {
+			tmp = bytes.TrimSpace(v)
+		}
+	}
+	_ = tmp
+}
+
+var leadingStringVals = []string{
+	"      ",
+	"hello",
+	"   salut",
+	"    eamus catuli",
+	"                  hola",
+	"   nihao ",
+	"  　ideographic space",
+	"punctuation space         ",
+	"  EM Quad space",
+	"    OGHAM space",
+}
+
+func BenchmarkTrimLeadingSpacesBytes(b *testing.B) {
+	var tmp string
+	for i := 0; i < b.N; i++ {
+		for _, v := range leadingStringVals {
+			tmp = strings.TrimSpace(v)
+		}
+	}
+	_ = tmp
+
+}
+
+var byteVals = [][]byte{
+	[]byte("      "),
+	[]byte("hello"),
+	[]byte("   salut   "),
+	[]byte("    eamus catuli    "),
+	[]byte("                  hola                  "),
+	[]byte("   nihao   "),
+	[]byte("  　ideographic space  "),
+	[]byte("         punctuation space         "),
+	[]byte("  EM Quad space  "),
+	[]byte("    OGHAM space    "),
+}
+
+func BenchmarkTrimSpaces(b *testing.B) {
+	var tmp []byte
+	for i := 0; i < b.N; i++ {
+		for _, v := range byteVals {
+			tmp = TrimTrailingSpaces(TrimLeadingSpaces(v))
+		}
+	}
+	_ = tmp
+}
+
+func BenchmarkTrimSpaceBytes(b *testing.B) {
+	var tmp []byte
+	for i := 0; i < b.N; i++ {
+		for _, v := range byteVals {
+			tmp = bytes.TrimSpace(v)
+		}
+	}
+	_ = tmp
+}
+
+var stringVals = []string{
+	"      ",
+	"hello",
+	"   salut   ",
+	"    eamus catuli    ",
+	"                  hola                  ",
+	"   nihao   ",
+	"  　ideographic space  ",
+	"         punctuation space         ",
+	"  EM Quad space  ",
+	"    OGHAM space    ",
 }
 
 // benchmark with strings (no conversions)
-func BenchmarkTrimSpaces(b *testing.B) {
+func BenchmarkTrimSpaceString(b *testing.B) {
 	var tmp string
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < len(stringVals); j++ {
-			tmp = strings.TrimSpace(stringVals[j].val)
-		}
-	}
-	_ = tmp
-}
-
-// benchmark with bytes input and string returned val
-func BenchmarkTrimSpacesByteInput(b *testing.B) {
-	var tmp string
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < len(stringVals); j++ {
-			tmp = strings.TrimSpace(string(vals[j].val))
-		}
-	}
-	_ = tmp
-}
-
-// benchmark with bytes; everything converted
-func BenchmarkTrimSpacesBytes(b *testing.B) {
-	var tmp []byte
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < len(stringVals); j++ {
-			tmp = []byte(strings.TrimSpace(string(vals[j].val)))
+		for _, v := range stringVals {
+			tmp = strings.TrimSpace(v)
 		}
 	}
 	_ = tmp
