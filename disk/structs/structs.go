@@ -33,7 +33,14 @@ type Device struct {
 	WritesMerged    uint64 `json:"writes_merged"`
 	WrittenSectors  uint64 `json:"written_sectors"`
 	WritingTime     uint64 `json:"writing_time"`
-	IOInProgress    uint64 `json:"io_in_progress"`
+	IOInProgress    int32  `json:"io_in_progress"`
 	IOTime          uint64 `json:"io_time"`
 	WeightedIOTime  uint64 `json:"weighted_io_time"`
+}
+
+// Usage holds the information for all of the network interfaces.
+type Usage struct {
+	Timestamp int64    `json:"timestamp"`
+	TimeDelta uint32   `json:"time_delta"`
+	Devices   []Device `json:"devices"`
 }

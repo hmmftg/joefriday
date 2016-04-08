@@ -136,7 +136,7 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 				continue
 			}
 			if fieldNum == 12 {
-				dev.IOInProgress = n
+				dev.IOInProgress = int32(n)
 				continue
 			}
 			if fieldNum == 13 {
