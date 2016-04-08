@@ -238,7 +238,7 @@ func Ticker(interval time.Duration, out chan *structs.Usage, done chan struct{},
 // data and the prior one.
 func (prof *Profiler) CalculateUsage(cur *structs.Stats) *structs.Usage {
 	u := &structs.Usage{Timestamp: cur.Timestamp, Devices: make([]structs.Device, len(cur.Devices))}
-	u.TimeDelta = uint32(cur.Timestamp - prof.prior.Timestamp)
+	u.TimeDelta = cur.Timestamp - prof.prior.Timestamp
 	for i := 0; i < len(cur.Devices); i++ {
 		u.Devices[i].Major = cur.Devices[i].Major
 		u.Devices[i].Minor = cur.Devices[i].Minor

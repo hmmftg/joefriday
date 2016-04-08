@@ -27,7 +27,7 @@ type Device struct {
 	Name            string `json:"name"`
 	ReadsCompleted  uint64 `json:"reads_completed"`
 	ReadsMerged     uint64 `json:"reads_merged"`
-	ReadSectors     uint64 `json:'read_sectors'`
+	ReadSectors     uint64 `json:"read_sectors"`
 	ReadingTime     uint64 `json:"reading_time"`
 	WritesCompleted uint64 `json:"writes_completed"`
 	WritesMerged    uint64 `json:"writes_merged"`
@@ -41,6 +41,6 @@ type Device struct {
 // Usage holds the information for all of the network interfaces.
 type Usage struct {
 	Timestamp int64    `json:"timestamp"`
-	TimeDelta uint32   `json:"time_delta"`
+	TimeDelta int64    `json:"time_delta"`
 	Devices   []Device `json:"devices"`
 }

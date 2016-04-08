@@ -102,10 +102,10 @@ func (rcv *Device) WritingTime() uint64 {
 	return 0
 }
 
-func (rcv *Device) IOInProgress() uint64 {
+func (rcv *Device) IOInProgress() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(26))
 	if o != 0 {
-		return rcv._tab.GetUint64(o + rcv._tab.Pos)
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
 	return 0
 }
@@ -138,7 +138,7 @@ func DeviceAddWritesCompleted(builder *flatbuffers.Builder, WritesCompleted uint
 func DeviceAddWritesMerged(builder *flatbuffers.Builder, WritesMerged uint64) { builder.PrependUint64Slot(8, WritesMerged, 0) }
 func DeviceAddWrittenSectors(builder *flatbuffers.Builder, WrittenSectors uint64) { builder.PrependUint64Slot(9, WrittenSectors, 0) }
 func DeviceAddWritingTime(builder *flatbuffers.Builder, WritingTime uint64) { builder.PrependUint64Slot(10, WritingTime, 0) }
-func DeviceAddIOInProgress(builder *flatbuffers.Builder, IOInProgress uint64) { builder.PrependUint64Slot(11, IOInProgress, 0) }
+func DeviceAddIOInProgress(builder *flatbuffers.Builder, IOInProgress int32) { builder.PrependInt32Slot(11, IOInProgress, 0) }
 func DeviceAddIOTime(builder *flatbuffers.Builder, IOTime uint64) { builder.PrependUint64Slot(12, IOTime, 0) }
 func DeviceAddWeightedIOTime(builder *flatbuffers.Builder, WeightedIOTime uint64) { builder.PrependUint64Slot(13, WeightedIOTime, 0) }
 func DeviceEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

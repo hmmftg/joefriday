@@ -18,7 +18,7 @@ table Device {
 	WritesMerged:ulong;
 	WrittenSectors:ulong;
 	WritingTime:ulong;
-	IOInProgress:ulong;
+	IOInProgress:int;
 	IOTime:ulong;
 	WeightedIOTime:ulong;
 }
