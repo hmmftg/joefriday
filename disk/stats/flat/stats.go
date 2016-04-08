@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of CPU stats.  Instead
+// Package flat handles Flatbuffer based processing of disk stats.  Instead
 // of returning a Go struct, it returns Flatbuffer serialized bytes.
 // A function to deserialize the Flatbuffer serialized bytes into a
-// facts.Facts struct is provided.  After the first use, the flatbuffer
+// structs.Stats struct is provided.  After the first use, the flatbuffer
 // builder is reused.
 package flat
 
@@ -73,10 +73,9 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes CPU utilization information on a ticker.  The generated
-// utilization data is sent to the outCh.  Any errors encountered are sent
-// to the errCh.  Processing ends when either a done signal is received or
-// the done channel is closed.
+// Ticker processes Disk stats on a ticker.  The generated data is sent to
+// the out channel.  Any errors encountered are sent to the errs channel.
+// Processing ends when a signal is recieved on the done channel.
 //
 // It is the callers responsibility to close the done and errs channels.
 //
@@ -164,7 +163,7 @@ func Serialize(stts *structs.Stats) (p []byte, err error) {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as a stats.Stats.
+// as a structs.Stats.
 func Deserialize(p []byte) *structs.Stats {
 	stts := &structs.Stats{}
 	devF := &flat.Device{}

@@ -25,13 +25,15 @@ import (
 	"github.com/mohae/joefriday/platform/kernel"
 )
 
-// Profiler is used to process the /proc/net/dev file using Flatbuffers.
+// Profiler is used to process the kernel information, /proc/version, using
+// Flatbuffers.
 type Profiler struct {
 	Prof    *kernel.Profiler
 	Builder *fb.Builder
 }
 
-// Initializes and returns a net info profiler that utilizes FlatBuffers.
+// Initializes and returns a kernel information profiler that utilizes
+// FlatBuffers.
 func New() (prof *Profiler, err error) {
 	p, err := kernel.New()
 	if err != nil {
@@ -66,7 +68,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes Info using Flatbuffers.
+// Serialize serializes kernel information using Flatbuffers.
 func (prof *Profiler) Serialize(k *kernel.Kernel) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()

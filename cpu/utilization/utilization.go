@@ -276,7 +276,8 @@ func Ticker(interval time.Duration, out chan *Utilization, done chan struct{}, e
 	prof.Ticker(interval, out, done, errs)
 }
 
-// usage = ()(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
+// utilizaton =
+//   ()(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
 func (prof *Profiler) calculateUtilization(s2 *stats.Stats) *Utilization {
 	u := &Utilization{
 		Timestamp:  s2.Timestamp,

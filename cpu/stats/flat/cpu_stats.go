@@ -71,10 +71,9 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes CPU utilization information on a ticker.  The generated
-// utilization data is sent to the outCh.  Any errors encountered are sent
-// to the errCh.  Processing ends when either a done signal is received or
-// the done channel is closed.
+// Ticker processes CPU utilization information on a ticker.  Any errors
+// encountered are sent to errs.  Processing ends when either a done signal
+// is received or the done channel is closed.
 //
 // It is the callers responsibility to close the done and errs channels.
 //

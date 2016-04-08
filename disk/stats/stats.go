@@ -11,8 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stat handles processing of the /proc/stats file: information about
-// kernel activity.
+// Package stats handles processing of disk stats, /proc/diskstats.
 package stats
 
 import (
@@ -27,7 +26,7 @@ import (
 
 const procFile = "/proc/diskstats"
 
-// Profiler is used to process the /proc/stats file.
+// Profiler is used to process the /proc/diskstats file.
 type Profiler struct {
 	*joe.Proc
 }
@@ -41,7 +40,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns information about current kernel activity.
+// Get returns information about current disk activity.
 func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 	err = prof.Reset()
 	if err != nil {
@@ -154,8 +153,7 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current kernal activity information using the package's
-// global Profiler.
+// Get returns the current disk stats using the package's global Profiler.
 func Get() (stat *structs.Stats, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -168,10 +166,9 @@ func Get() (stat *structs.Stats, err error) {
 	return std.Get()
 }
 
-// Ticker processes CPU utilization information on a ticker.  The generated
-// utilization data is sent to the outCh.  Any errors encountered are sent
-// to the errCh.  Processing ends when either a done signal is received or
-// the done channel is closed.
+// Ticker processes disk stats on a ticker.  The generated stats are sent to
+// the out channel.  Any errors encountered are sent to the errs channel.
+// Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 //

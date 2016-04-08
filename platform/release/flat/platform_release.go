@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of a platform's kernel
-// information: /proc/version.  Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes.  A function to deserialize the Flatbuffer
-// serialized bytes into a kernel.Kernel struct is provided.  After the first
-// use, the flatbuffer builder is reused.
+// Package flat handles Flatbuffer based processing of a platform's OS
+// information using /etc/os-release.  Instead of returning a Go struct, it
+// returns Flatbuffer serialized bytes.  A function to deserialize the
+// Flatbuffer serialized bytes into a release.Release struct is provided.
+//  After the first use, the flatbuffer builder is reused.
 package flat
 
 import (
@@ -25,13 +25,15 @@ import (
 	"github.com/mohae/joefriday/platform/release"
 )
 
-// Profiler is used to process the /proc/net/dev file using Flatbuffers.
+// Profiler is used to process the os information, /etc/os-release using
+// Flatbuffers.
 type Profiler struct {
 	Prof    *release.Profiler
 	Builder *fb.Builder
 }
 
-// Initializes and returns a net info profiler that utilizes FlatBuffers.
+// Initializes and returns an OS information profiler that utilizes
+// FlatBuffers.
 func New() (prof *Profiler, err error) {
 	p, err := release.New()
 	if err != nil {
@@ -40,7 +42,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current kernel information as Flatbuffer serialized bytes.
+// Get returns the current OS release information as Flatbuffer serialized
+// bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	k, err := prof.Prof.Get()
 	if err != nil {
@@ -52,8 +55,8 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current kernel information as Flatbuffer serialized bytes
-// using the package's global Profiler.
+// Get returns the current OS release information as Flatbuffer serialized
+// bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package facts handles processong of CPU facts: data gathered from
-// /proc/cpuinfo.
+// Package facts handles processong of CPU information: /procs/cpuinfo.  The
+// information about the CPU are called facts by this package.
 package facts
 
 import (
@@ -28,7 +28,7 @@ import (
 
 const procFile = "/proc/cpuinfo"
 
-// Profiler is used to process the /proc/cpuinfo file.
+// Profiler is used to process the /proc/cpuinfo file as facts.
 type Profiler struct {
 	*joe.Proc
 }
@@ -253,8 +253,6 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 	return facts, nil
 }
 
-// TODO: is it even worth it to have this as a global?  Should Get just
-// instantiate a local version and use that?
 var std *Profiler
 var stdMu sync.Mutex
 

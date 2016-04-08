@@ -24,7 +24,8 @@ import (
 	"github.com/mohae/joefriday/platform/kernel"
 )
 
-// Profiler is used to process the /proc/kernel information file using JSON.
+// Profiler is used to process the kernel information, /proc/version, using
+// JSON.
 type Profiler struct {
 	Prof *kernel.Profiler
 }
@@ -87,6 +88,7 @@ func (prof *Profiler) Marshal(inf *kernel.Kernel) ([]byte, error) {
 	return prof.Serialize(inf)
 }
 
+// Marshal is an alias for Serialize that uses the package's global profiler.
 func Marshal(k *kernel.Kernel) ([]byte, error) {
 	return Serialize(k)
 }

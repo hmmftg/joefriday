@@ -11,8 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package Rekease processes the OS Release information from the
-// /etc/os-release file
+// Package Release processes the OS Release information, /etc/os-release.
 package release
 
 import (
@@ -24,7 +23,7 @@ import (
 
 const etcFile = "/etc/os-release"
 
-// Profiler processes the /proc/version file and manages its state.
+// Profiler processes the OS release information, /etc/os-release.
 type Profiler struct {
 	*joe.Proc
 }
@@ -38,7 +37,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get populates Kernel with /etc/os-release information.
+// Get populates Release with /etc/os-release information.
 func (prof *Profiler) Get() (r *Release, err error) {
 	var (
 		i, keyLen int
@@ -107,8 +106,8 @@ func (prof *Profiler) Get() (r *Release, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get gets the release information using the package's global Profiler, which
-// is lazily instantiated.
+// Get gets the OS release information using the package's global Profiler,
+// which is lazily instantiated.
 func Get() (r *Release, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -121,8 +120,7 @@ func Get() (r *Release, err error) {
 	return std.Get()
 }
 
-// Release holds information about the release.  The source depends on the
-// OS.  Currently only Debian and Redhat families are supported.
+// Release holds information about the OS release.
 type Release struct {
 	ID           string `json:"id"`
 	IDLike       string `json:"id_like"`

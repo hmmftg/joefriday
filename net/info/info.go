@@ -11,7 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stat handles processing of network information: /proc/net/dev
+// Package stat handles processing of network interface information:
+// /proc/net/dev using JSON.
 package info
 
 import (
@@ -28,7 +29,8 @@ import (
 // The proc file used by the Profiler.
 const ProcFile = "/proc/net/dev"
 
-// Profiler is used to process the /proc/net/dev file.
+// Profiler is used to process the network interface information using the
+// /proc/net/dev file.
 type Profiler struct {
 	*joe.Proc
 }
@@ -42,7 +44,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns the current network information.
+// Get returns the current network interface information.
 func (prof *Profiler) Get() (*structs.Info, error) {
 	var (
 		l, i, pos, fieldNum int
@@ -177,8 +179,8 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current network information using the package's global
-// Profiler.
+// Get returns the current network interface information using the package's
+// global Profiler.
 func Get() (inf *structs.Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -191,9 +193,9 @@ func Get() (inf *structs.Info, err error) {
 	return std.Get()
 }
 
-// Ticker processes meminfo information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
-// channel.  Processing ends when a done signal is received.
+// Ticker processes network interface information on a ticker.  The generated
+// data is sent to the out channel.  Any errors encountered are sent to the
+// errs channel.  Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, errs chan error) {
@@ -216,9 +218,9 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Info, don
 	}
 }
 
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
+// Ticker gathers network inferface information on a ticker using the
+// specified interval.  This uses a local Profiler as using the global
+// doesn't make sense for an ongoing ticker.
 func Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, errs chan error) {
 	prof, err := New()
 	if err != nil {

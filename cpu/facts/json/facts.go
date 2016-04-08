@@ -47,8 +47,6 @@ func (prof *Profiler) Get() (p []byte, err error) {
 	return prof.Serialize(fct)
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetInfo()
-// just instantiate a local version and use that?  InfoTicker does...
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
@@ -71,7 +69,7 @@ func (prof *Profiler) Serialize(fct *facts.Facts) ([]byte, error) {
 	return json.Marshal(fct)
 }
 
-// Serialize cpu Stats as JSON using package globals.
+// Serialize cpu Facts as JSON using package globals.
 func Serialize(fct *facts.Facts) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

@@ -11,12 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of network usage.  Usage
-// is calculated by taking the difference in two /proc/net/dev snapshots and
-// reflect bytes received and transmitted since the prior snapshot.  Instead
-// of returning a Go struct, it returns Flatbuffer serialized bytes.  A
-// function to deserialize the Flatbuffer serialized bytes into a structs.Info
-// After the first use, the flatbuffer builder is reused.
+// Package flat handles Flatbuffer based processing of network interface
+//usage.  Interface usage is calculated by taking the difference in two
+// /proc/net/dev snapshots and reflect bytes received and transmitted since
+// the prior snapshot.  Instead of returning a Go struct, it returns
+// Flatbuffer serialized bytes.  A function to deserialize the Flatbuffer
+// serialized bytes into a structs.Usage struct.  After the first use, the
+// flatbuffer builder is reused.
 package flat
 
 import (
@@ -27,12 +28,13 @@ import (
 	"github.com/mohae/joefriday/net/structs"
 )
 
-// Profiler is used to process the network usage using Flatbuffers.
+// Profiler is used to process the network interface usage using Flatbuffers.
 type Profiler struct {
 	Flat *flat.Profiler
 }
 
-// Initializes and returns a network usage profiler that utilizes FlatBuffers.
+// Initializes and returns a network interface usage profiler that utilizes
+// FlatBuffers.
 func New() (prof *Profiler, err error) {
 	p, err := flat.New()
 	if err != nil {
@@ -41,7 +43,8 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Flat: p}, nil
 }
 
-// Get returns the current network usage as Flatbuffer serialized bytes.
+// Get returns the current network interface usage as Flatbuffer serialized
+// bytes.
 // TODO: should this be changed so that this calculates usage since the last
 // time the network info was obtained.  If there aren't pre-existing info
 // it would get current usage (which may be a separate method (or should be?))
@@ -56,8 +59,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current network usage as Flatbuffer serialized bytes
-// using the package's global Profiler.
+// Get returns the current network interface usage as Flatbuffer serialized
+// bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -70,8 +73,8 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes meminfo information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
+// Ticker processes network interface usage on a ticker.  The generated data
+// is sent to the out channel.  Any errors encountered are sent to the errs
 // channel.  Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
@@ -94,9 +97,9 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan 
 	}
 }
 
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
+// Ticker gathers network interface usage on a ticker using the specified
+// interval.  This uses a local Profiler as using the global doesn't make
+// sense for an ongoing ticker.
 func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	prof, err := New()
 	if err != nil {

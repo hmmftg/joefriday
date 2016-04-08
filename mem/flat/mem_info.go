@@ -14,7 +14,7 @@
 // Package flat handles Flatbuffer based processing of /proc/meminfo.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
 // A function to deserialize the Flatbuffer serialized bytes into a
-// facts.Facts struct is provided.  After the first use, the flatbuffer
+// mem.Info struct is provided.  After the first use, the flatbuffer
 // builder is reused.
 package flat
 
@@ -54,8 +54,6 @@ func (prof *Profiler) Get() ([]byte, error) {
 	return prof.Serialize(inf), nil
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetInfo()
-// just instantiate a local version and use that?  InfoTicker does...
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 

@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of network information.
-// Instead of returning a Go struct, it returns JSON serialized bytes.  A
-// function to deserialize the JSON serialized bytes into a facts.Facts
-// struct is provided.
+// Package json handles JSON based processing of network interface
+// information. Instead of returning a Go struct, it returns JSON serialized
+// bytes.  A function to deserialize the JSON serialized bytes into a
+// structs.Info struct is provided.
 package json
 
 import (
@@ -26,7 +26,7 @@ import (
 	"github.com/mohae/joefriday/net/structs"
 )
 
-// Profiler is used to process the /proc/net/dev file, as stats, using JSON.
+// Profiler is used to process the /proc/net/dev file using JSON.
 type Profiler struct {
 	Prof *info.Profiler
 }
@@ -49,13 +49,11 @@ func (prof *Profiler) Get() (p []byte, err error) {
 	return prof.Serialize(inf)
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetInfo()
-// just instantiate a local version and use that?  InfoTicker does...
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current network information as JSON serialized bytes
-// using the package's globla Profiler.
+// Get returns the current network interface information as JSON serialized
+// bytes using the package's globla Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -68,9 +66,9 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes network information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
-// channel.  Processing ends when a done signal is received.
+// Ticker processes network interface information on a ticker.  The generated
+// data is sent to the out channel.  Any errors encountered are sent to the
+// errs channel.  Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
@@ -93,9 +91,9 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan 
 	}
 }
 
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
+// Ticker gathers network interface information on a ticker using the
+// specified interval.  This uses a local Profiler as using the global
+// doesn't make sense for an ongoing ticker.
 func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	p, err := New()
 	if err != nil {
@@ -105,12 +103,13 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 	p.Ticker(interval, out, done, errs)
 }
 
-// Serialize network information using JSON
+// Serialize network interface information using JSON
 func (prof *Profiler) Serialize(inf *structs.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
-// Serialize network information using JSON with the package global Profiler.
+// Serialize network interface information using JSON with the package global
+// Profiler.
 func Serialize(inf *structs.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -134,7 +133,7 @@ func Marshal(inf *structs.Info) ([]byte, error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// info.Info
+// structs.Info
 func Deserialize(p []byte) (*structs.Info, error) {
 	info := &structs.Info{}
 	err := json.Unmarshal(p, info)

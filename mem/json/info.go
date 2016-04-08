@@ -13,7 +13,7 @@
 
 // Package json handles JSON based processing of /proc/meminfo.  Instead of
 // returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a facts.Facts struct is
+// deserialize the JSON serialized bytes into a mem.Info struct is
 // provided.
 package json
 
@@ -30,7 +30,7 @@ type Profiler struct {
 	Prof *mem.Profiler
 }
 
-// Initializes and returns a json.Profiler for meminfo.
+// Initializes and returns a profiler for meminfo that uses JSON.
 func New() (prof *Profiler, err error) {
 	p, err := mem.New()
 	if err != nil {
@@ -48,8 +48,6 @@ func (prof *Profiler) Get() (p []byte, err error) {
 	return prof.Serialize(inf)
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetInfo()
-// just instantiate a local version and use that?  InfoTicker does...
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
@@ -127,6 +125,7 @@ func (prof *Profiler) Marshal(inf *mem.Info) ([]byte, error) {
 	return prof.Serialize(inf)
 }
 
+// Marshal is an alias for Serialize that uses the package's global profiler.
 func Marshal(inf *mem.Info) ([]byte, error) {
 	return Serialize(inf)
 }

@@ -12,8 +12,8 @@
 // limitations under the License.
 
 // Package usage calculates disk usage.  Usage is calculated by taking the
-// difference in two /proc/diskstats snapshots and reflect bytes received
-// and transmitted since the prior snapshot.
+// difference in two /proc/diskstats snapshots and reflect the difference
+// between the two snapshots.
 package usage
 
 import (

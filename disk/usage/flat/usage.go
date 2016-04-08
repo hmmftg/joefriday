@@ -12,10 +12,10 @@
 // limitations under the License.
 
 // Package flat handles Flatbuffer based processing of Disk usage.  Instead
-// of returning a Go struct, it returns Flatbuffer serialized bytes.
-// A function to deserialize the Flatbuffer serialized bytes into a
-// structs.Utilization struct is provided.  After the first use, the
-// flatbuffer builder is reused.
+// of returning a Go struct, it returns Flatbuffer serialized bytes.  A
+// function to deserialize the Flatbuffer serialized bytes into a
+// structs.Usage struct is provided.  After the first use, the flatbuffer
+// builder is reused.
 package flat
 
 import (
@@ -28,14 +28,14 @@ import (
 	"github.com/mohae/joefriday/disk/usage"
 )
 
-// Profiler is used to process the /proc/stat file, as stats, using
-// Flatbuffers.
+// Profiler is used to process the disk usage; generating flatbuffers
+// serialized bytes.
 type Profiler struct {
 	*usage.Profiler
 	*fb.Builder
 }
 
-// Initialized a new stats Profiler that utilizes Flatbuffers.
+// Initialized a new disk usage Profiler that utilizes Flatbuffers.
 func New() (prof *Profiler, err error) {
 	p, err := usage.New()
 	if err != nil {
@@ -73,10 +73,9 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes CPU utilization information on a ticker.  The generated
-// utilization data is sent to the outCh.  Any errors encountered are sent
-// to the errCh.  Processing ends when either a done signal is received or
-// the done channel is closed.
+// Ticker processes disk usage on a ticker.  The generated usage data is sent
+// to the out channel.  Any errors encountered are sent to the errs channel.
+// Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 //
@@ -165,7 +164,7 @@ func Serialize(u *structs.Usage) (p []byte, err error) {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as a stats.Usage.
+// as a structs.Usage.
 func Deserialize(p []byte) *structs.Usage {
 	u := &structs.Usage{}
 	devF := &flat.Device{}

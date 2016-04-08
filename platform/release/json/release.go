@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of OS release information.  Instead
-// of returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a release.Release struct is
-// provided.
+// Package json handles JSON based processing of OS release information,
+// /etc/os-release.  Instead of returning a Go struct, it returns JSON
+// serialized bytes.  A function to deserialize the JSON serialized bytes
+// into a release.Release struct is provided.
 package json
 
 import (
@@ -29,7 +29,7 @@ type Profiler struct {
 	Prof *release.Profiler
 }
 
-// Initializes and returns a json.Profiler for release information.
+// Initializes and returns a json.Profiler for OS release information.
 func New() (prof *Profiler, err error) {
 	p, err := release.New()
 	if err != nil {
@@ -38,7 +38,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p}, nil
 }
 
-// Get returns the current release information as JSON serialized bytes.
+// Get returns the current OS release information as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	k, err := prof.Prof.Get()
 	if err != nil {
@@ -50,8 +50,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current release information as JSON serialized bytes using
-// the package's global Profiler.
+// Get returns the current OS release information as JSON serialized bytes
+// using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -87,6 +87,7 @@ func (prof *Profiler) Marshal(r *release.Release) ([]byte, error) {
 	return prof.Serialize(r)
 }
 
+// Marshal is an alias for Serialize using the package's global profiler.
 func Marshal(r *release.Release) ([]byte, error) {
 	return Serialize(r)
 }

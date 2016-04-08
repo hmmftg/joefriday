@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of network information.
-// Instead of returning a Go struct, it returns JSON serialized bytes.  A
-// function to deserialize the JSON serialized bytes into a facts.Facts
-// struct is provided.
+// Package json handles JSON based processing of disk stats.  Instead of
+// returning a Go struct, it returns JSON serialized bytes.  A function to
+// deserialize the JSON serialized bytes into a structs.Stats struct is
+// provided.
 package json
 
 import (
@@ -26,12 +26,12 @@ import (
 	"github.com/mohae/joefriday/disk/structs"
 )
 
-// Profiler is used to process the /proc/net/dev file, as stats, using JSON.
+// Profiler is used to process the /proc/diskstats file, as stats, using JSON.
 type Profiler struct {
 	Prof *stats.Profiler
 }
 
-// Initializes and returns a network information profiler.
+// Initializes and returns a disk stats profiler.
 func New() (prof *Profiler, err error) {
 	p, err := stats.New()
 	if err != nil {
@@ -40,7 +40,7 @@ func New() (prof *Profiler, err error) {
 	return &Profiler{Prof: p}, nil
 }
 
-// Get returns the current network information as JSON serialized bytes.
+// Get returns the current disk stats as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	st, err := prof.Prof.Get()
 	if err != nil {
@@ -49,13 +49,11 @@ func (prof *Profiler) Get() (p []byte, err error) {
 	return prof.Serialize(st)
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetInfo()
-// just instantiate a local version and use that?  InfoTicker does...
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current network information as JSON serialized bytes
-// using the package's globla Profiler.
+// Get returns the current disk stats as JSON serialized bytes using the
+// package's globla Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -68,9 +66,9 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes network information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
-// channel.  Processing ends when a done signal is received.
+// Ticker processes disk stats on a ticker.  The generated data is sent to
+// the out channel.  Any errors encountered are sent to the errs channel.
+// Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
@@ -105,12 +103,12 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 	p.Ticker(interval, out, done, errs)
 }
 
-// Serialize network information using JSON
+// Serialize disk stats using JSON
 func (prof *Profiler) Serialize(st *structs.Stats) ([]byte, error) {
 	return json.Marshal(st)
 }
 
-// Serialize network information using JSON with the package global Profiler.
+// Serialize disk stats using JSON with the package global Profiler.
 func Serialize(st *structs.Stats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

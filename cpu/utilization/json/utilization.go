@@ -49,8 +49,6 @@ func (prof *Profiler) Get() (p []byte, err error) {
 	return prof.Serialize(st)
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetInfo()
-// just instantiate a local version and use that?  InfoTicker does...
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 

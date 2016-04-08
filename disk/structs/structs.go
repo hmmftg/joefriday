@@ -14,7 +14,7 @@
 // Package structs defines the data structures for disk.
 package structs
 
-// Stats holds the information for all of the network interfaces.
+// Stats holds the information for all of the block devices.
 type Stats struct {
 	Timestamp int64    `json:"timestamp"`
 	Devices   []Device `json:"devices"`
@@ -38,7 +38,7 @@ type Device struct {
 	WeightedIOTime  uint64 `json:"weighted_io_time"`
 }
 
-// Usage holds the information for all of the network interfaces.
+// Usage holds the usage information for all of the block devices.
 type Usage struct {
 	Timestamp int64    `json:"timestamp"`
 	TimeDelta int64    `json:"time_delta"`

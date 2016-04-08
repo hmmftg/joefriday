@@ -11,8 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package Kernel processes Kernel and Version information from the
-// proc/version file.
+// Package Kernel processes Kernel information from the /proc/version file.
 package kernel
 
 import (
@@ -24,7 +23,7 @@ import (
 
 const procFile = "/proc/version"
 
-// Profiler processes the /proc/version file and manages its state.
+// Profiler processes the kernel information.
 type Profiler struct {
 	*joe.Proc
 }

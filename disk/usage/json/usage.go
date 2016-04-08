@@ -31,7 +31,7 @@ type Profiler struct {
 	Prof *usage.Profiler
 }
 
-// Initializes and returns a cpu utlization profiler.
+// Initializes and returns a disk usage profiler.
 func New() (prof *Profiler, err error) {
 	p, err := usage.New()
 	if err != nil {
@@ -114,7 +114,7 @@ func (prof *Profiler) Serialize(u *structs.Usage) ([]byte, error) {
 	return json.Marshal(u)
 }
 
-// Serialize cpu Utilization as JSON using the package global Profiler.
+// Serialize disk usage as JSON using the package global Profiler.
 func Serialize(u *structs.Usage) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

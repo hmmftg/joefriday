@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of network usage
+// Package flat handles Flatbuffer based processing of network interface
 // information; /proc/net/dev.  Instead of returning a Go struct, it returns
 // Flatbuffer serialized bytes.  A function to deserialize the Flatbuffer
-// serialized bytes into a info.Info struct is provided.  After the first use,
-// the flatbuffer builder is reused.
+// serialized bytes into a structs.Info struct is provided.  After the first
+// use, the flatbuffer builder is reused.
 package flat
 
 import (
@@ -52,8 +52,6 @@ func (prof *Profiler) Get() ([]byte, error) {
 	return prof.Serialize(inf), nil
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetInfo()
-// just instantiate a local version and use that?  InfoTicker does...
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
@@ -71,9 +69,9 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Ticker processes meminfo information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
-// channel.  Processing ends when a done signal is received.
+// Ticker processes network interface information on a ticker.  The generated
+// data is sent to the out channel.  Any errors encountered are sent to the
+// errs channel.  Processing ends when a done signal is received.
 //
 // It is the callers responsibility to close the done and errs channels.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
@@ -166,7 +164,7 @@ func Serialize(inf *structs.Info) (p []byte, err error) {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as info.Info.
+// as structs.Info.
 func Deserialize(p []byte) *structs.Info {
 	infoFlat := flat.GetRootAsInfo(p, 0)
 	// get the # of interfaces
