@@ -31,7 +31,7 @@ import (
 // Profiler is used to process the network interface usage..
 type Profiler struct {
 	*info.Profiler
-	prior *structs.Info
+	prior structs.Info
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -40,7 +40,11 @@ func New() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Profiler: p, prior: &structs.Info{}}, nil
+	prior, err := p.Get()
+	if err != nil {
+		return nil, err
+	}
+	return &Profiler{Profiler: p, prior: *prior}, nil
 }
 
 // Get returns the current network interface usage.
@@ -48,16 +52,13 @@ func New() (prof *Profiler, err error) {
 // time the network info was obtained.  If there aren't pre-existing info
 // it would get current usage (which may be a separate method (or should be?))
 func (prof *Profiler) Get() (u *structs.Info, err error) {
-	prof.prior, err = prof.Profiler.Get()
-	if err != nil {
-		return nil, err
-	}
-	time.Sleep(time.Second)
 	infCur, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.CalculateUsage(infCur), nil
+	u = prof.CalculateUsage(infCur)
+	prof.prior = *infCur
+	return u, nil
 }
 
 var std *Profiler
@@ -95,14 +96,10 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Info, don
 		i, l, pos, fieldNum int
 		n                   uint64
 		v                   byte
+		err                 error
+		cur                 structs.Info
 		iInfo               structs.Interface
 	)
-	// first get Info as the baseline
-	cur, err := prof.Profiler.Get()
-	if err != nil {
-		errs <- err
-		return
-	}
 	// ticker
 tick:
 	for {
@@ -110,11 +107,6 @@ tick:
 		case <-done:
 			return
 		case <-ticker.C:
-			prof.prior.Timestamp = cur.Timestamp
-			if len(prof.prior.Interfaces) != len(cur.Interfaces) {
-				prof.prior.Interfaces = make([]structs.Interface, len(cur.Interfaces))
-			}
-			copy(prof.prior.Interfaces, cur.Interfaces)
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = prof.Reset()
 			if err != nil {
@@ -241,7 +233,12 @@ tick:
 				}
 				cur.Interfaces = append(cur.Interfaces, iInfo)
 			}
-			out <- prof.CalculateUsage(cur)
+			out <- prof.CalculateUsage(&cur)
+			prof.prior.Timestamp = cur.Timestamp
+			if len(prof.prior.Interfaces) != len(cur.Interfaces) {
+				prof.prior.Interfaces = make([]structs.Interface, len(cur.Interfaces))
+			}
+			copy(prof.prior.Interfaces, cur.Interfaces)
 			l = 0
 		}
 	}

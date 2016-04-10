@@ -21,7 +21,13 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	st, err := Get()
+	p, err := New()
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	time.Sleep(time.Duration(300) * time.Millisecond)
+	st, err := p.Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
