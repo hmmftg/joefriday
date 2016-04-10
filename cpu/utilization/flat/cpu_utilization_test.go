@@ -21,7 +21,13 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	b, err := Get()
+	p, err := New()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+		return
+	}
+	time.Sleep(time.Duration(300) * time.Millisecond)
+	b, err := p.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
@@ -48,7 +54,6 @@ func TestGetTicker(t *testing.T) {
 			}
 			u := Deserialize(b)
 			checkUtilization("ticker", u, t)
-			t.Logf("%#v\n", u)
 		case err := <-errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -59,6 +64,9 @@ func TestGetTicker(t *testing.T) {
 func checkUtilization(name string, u *utilization.Utilization, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: timestamp: expected on-zero", name)
+	}
+	if u.TimeDelta == 0 {
+		t.Errorf("%s: TimeDelta: expected non-zero value, got 0", name)
 	}
 	if u.CtxtDelta == 0 {
 		t.Errorf("%s: CtxtDelta: expected non-zero value, got 0", name)
@@ -74,7 +82,7 @@ func checkUtilization(name string, u *utilization.Utilization, t *testing.T) {
 	}
 	for i, v := range u.CPU {
 		if v.ID == "" {
-			t.Errorf("%s: %d: expected ID to have a value, was empty", i, name)
+			t.Errorf("%s: %d: expected ID to have a value, was empty", name, i)
 		}
 	}
 }

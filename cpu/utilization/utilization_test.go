@@ -61,6 +61,9 @@ func checkUtilization(name string, u *Utilization, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: timestamp: expected on-zero", name)
 	}
+	if u.TimeDelta == 0 {
+		t.Errorf("%s: TimeDelta: expected non-zero value, got 0", name)
+	}
 	if u.CtxtDelta == 0 {
 		t.Errorf("%s: CtxtDelta: expected non-zero value, got 0", name)
 	}

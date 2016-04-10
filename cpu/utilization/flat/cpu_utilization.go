@@ -115,7 +115,7 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 // Serialize cpu utilization using Flatbuffers.
 func (prof *Profiler) Serialize(u *utilization.Utilization) []byte {
 	// ensure the Builder is in a usable state.
-	std.Builder.Reset()
+	prof.Builder.Reset()
 	utils := make([]fb.UOffsetT, len(u.CPU))
 	ids := make([]fb.UOffsetT, len(u.CPU))
 	for i := 0; i < len(ids); i++ {
@@ -139,6 +139,7 @@ func (prof *Profiler) Serialize(u *utilization.Utilization) []byte {
 	utilsV := prof.Builder.EndVector(len(utils))
 	UtilizationStart(prof.Builder)
 	UtilizationAddTimestamp(prof.Builder, u.Timestamp)
+	UtilizationAddTimeDelta(prof.Builder, u.TimeDelta)
 	UtilizationAddBTimeDelta(prof.Builder, u.BTimeDelta)
 	UtilizationAddCtxtDelta(prof.Builder, u.CtxtDelta)
 	UtilizationAddProcesses(prof.Builder, u.Processes)
@@ -167,6 +168,7 @@ func Deserialize(p []byte) *utilization.Utilization {
 	uF := &Util{}
 	flatUtil := GetRootAsUtilization(p, 0)
 	u.Timestamp = flatUtil.Timestamp()
+	u.TimeDelta = flatUtil.TimeDelta()
 	u.CtxtDelta = flatUtil.CtxtDelta()
 	u.BTimeDelta = flatUtil.BTimeDelta()
 	u.Processes = flatUtil.Processes()

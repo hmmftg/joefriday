@@ -269,29 +269,30 @@ func Ticker(interval time.Duration, out chan *Utilization, done chan struct{}, e
 
 // utilizaton =
 //   ()(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
-func (prof *Profiler) calculateUtilization(s2 *stats.Stats) *Utilization {
+func (prof *Profiler) calculateUtilization(cur *stats.Stats) *Utilization {
 	u := &Utilization{
-		Timestamp:  s2.Timestamp,
-		BTimeDelta: int32(s2.Timestamp/1000000000 - s2.BTime),
-		CtxtDelta:  s2.Ctxt - prof.prior.Ctxt,
-		Processes:  int32(s2.Processes),
-		CPU:        make([]Util, len(s2.CPU)),
+		Timestamp:  cur.Timestamp,
+		TimeDelta:  cur.Timestamp - prof.prior.Timestamp,
+		BTimeDelta: int32(cur.Timestamp/1000000000 - cur.BTime),
+		CtxtDelta:  cur.Ctxt - prof.prior.Ctxt,
+		Processes:  int32(cur.Processes),
+		CPU:        make([]Util, len(cur.CPU)),
 	}
 	var dUser, dNice, dSys, dIdle, tot float32
 	// Rest of the calculations are per core
-	for i := 0; i < len(s2.CPU); i++ {
-		v := Util{ID: s2.CPU[i].ID}
-		dUser = float32(s2.CPU[i].User - prof.prior.CPU[i].User)
-		dNice = float32(s2.CPU[i].Nice - prof.prior.CPU[i].Nice)
-		dSys = float32(s2.CPU[i].System - prof.prior.CPU[i].System)
-		dIdle = float32(s2.CPU[i].Idle - prof.prior.CPU[i].Idle)
+	for i := 0; i < len(cur.CPU); i++ {
+		v := Util{ID: cur.CPU[i].ID}
+		dUser = float32(cur.CPU[i].User - prof.prior.CPU[i].User)
+		dNice = float32(cur.CPU[i].Nice - prof.prior.CPU[i].Nice)
+		dSys = float32(cur.CPU[i].System - prof.prior.CPU[i].System)
+		dIdle = float32(cur.CPU[i].Idle - prof.prior.CPU[i].Idle)
 		tot = dUser + dNice + dSys + dIdle
-		v.Usage = (dUser + dNice + dSys) / tot * float32(s2.ClkTck)
-		v.User = dUser / tot * float32(s2.ClkTck)
-		v.Nice = dNice / tot * float32(s2.ClkTck)
-		v.System = dSys / tot * float32(s2.ClkTck)
-		v.Idle = dIdle / tot * float32(s2.ClkTck)
-		v.IOWait = float32(s2.CPU[i].IOWait-prof.prior.CPU[i].IOWait) / tot * float32(s2.ClkTck)
+		v.Usage = (dUser + dNice + dSys) / tot * float32(cur.ClkTck)
+		v.User = dUser / tot * float32(cur.ClkTck)
+		v.Nice = dNice / tot * float32(cur.ClkTck)
+		v.System = dSys / tot * float32(cur.ClkTck)
+		v.Idle = dIdle / tot * float32(cur.ClkTck)
+		v.IOWait = float32(cur.CPU[i].IOWait-prof.prior.CPU[i].IOWait) / tot * float32(cur.ClkTck)
 		u.CPU[i] = v
 	}
 	return u
@@ -300,6 +301,8 @@ func (prof *Profiler) calculateUtilization(s2 *stats.Stats) *Utilization {
 // Utilization holds information about cpu utilization.
 type Utilization struct {
 	Timestamp int64 `json:"timestamp"`
+	// the time since the prior snapshot; the window that the utilization covers.
+	TimeDelta int64 `json:"time_delta"`
 	// time since last reboot, in seconds
 	BTimeDelta int32 `json:"btime_delta"`
 	// context switches since last snapshot

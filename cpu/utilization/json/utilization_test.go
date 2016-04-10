@@ -21,7 +21,13 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	u, err := Get()
+	p, err := New()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+		return
+	}
+	time.Sleep(time.Duration(300) * time.Millisecond)
+	u, err := p.Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
@@ -61,6 +67,9 @@ func TestTicker(t *testing.T) {
 func checkUtilization(name string, u *utilization.Utilization, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: timestamp: expected on-zero", name)
+	}
+	if u.TimeDelta == 0 {
+		t.Errorf("%s: TimeDelta: expected non-zero value, got 0", name)
 	}
 	if u.CtxtDelta == 0 {
 		t.Errorf("%s: CtxtDelta: expected non-zero value, got 0", name)
