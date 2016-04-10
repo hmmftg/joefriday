@@ -19,7 +19,13 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	u, err := Get()
+	p, err := New()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+		return
+	}
+	time.Sleep(time.Duration(200) * time.Millisecond)
+	u, err := p.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return

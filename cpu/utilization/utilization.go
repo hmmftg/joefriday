@@ -30,7 +30,7 @@ import (
 // information.
 type Profiler struct {
 	*stats.Profiler
-	prior *stats.Stats
+	prior stats.Stats
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -43,7 +43,7 @@ func New() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Profiler: p, prior: s}, nil
+	return &Profiler{Profiler: p, prior: *s}, nil
 }
 
 // Get returns the cpu utilization.  Utilization calculations requires two
@@ -67,7 +67,7 @@ func (prof *Profiler) Get() (u *Utilization, err error) {
 		return nil, err
 	}
 	u = prof.calculateUtilization(stat)
-	prof.prior = stat
+	prof.prior = *stat
 	return u, nil
 }
 
@@ -109,6 +109,7 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *Utilization, done
 		stop                bool
 		err                 error
 		cur                 stats.Stats
+		stat                stats.Stat
 	)
 	// ticker
 tick:
@@ -148,7 +149,7 @@ tick:
 				}
 				if prof.Val[0] == 'c' {
 					if prof.Val[1] == 'p' { // process CPU
-						stat := stats.Stat{ID: string(prof.Val[:])}
+						stat.ID = string(prof.Val[:])
 						j = 0
 						// skip over any remaining spaces
 						for i, v = range prof.Line[pos:] {
