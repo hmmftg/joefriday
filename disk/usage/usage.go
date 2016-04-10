@@ -34,30 +34,31 @@ type Profiler struct {
 	prior *structs.Stats
 }
 
-// Returns an initialized Profiler; ready to use.
+// Returns an initialized Profiler; ready to use.  The prior stats is set to
+// the current stats snapshot.
 func New() (prof *Profiler, err error) {
 	p, err := stats.New()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Profiler: p, prior: &structs.Stats{}}, nil
-}
-
-// Get returns the current disk usage.
-// TODO: should this be changed so that this calculates usage since the last
-// time the disk stats were obtained.  If there aren't pre-existing stats
-// it would get current usage (which may be a separate method (or should be?))
-func (prof *Profiler) Get() (u *structs.Usage, err error) {
-	prof.prior, err = prof.Profiler.Get()
+	s, err := p.Get()
 	if err != nil {
 		return nil, err
 	}
+	return &Profiler{Profiler: p, prior: s}, nil
+}
+
+// Get returns the current disk usage.  Usage is calculated as the difference
+// between the prior stats snapshot and the current one.
+func (prof *Profiler) Get() (u *structs.Usage, err error) {
 	time.Sleep(time.Second)
 	st, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.CalculateUsage(st), nil
+	u = prof.CalculateUsage(st)
+	prof.prior = st
+	return u, nil
 }
 
 var std *Profiler
@@ -94,26 +95,16 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Usage, do
 		i, priorPos, pos, fieldNum int
 		n                          uint64
 		v                          byte
+		err                        error
 		dev                        structs.Device
+		cur                        structs.Stats
 	)
-	// first get Info as the baseline
-	cur, err := prof.Profiler.Get()
-	if err != nil {
-		errs <- err
-		return
-	}
-	// ticker
 tick:
 	for {
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
-			prof.prior.Timestamp = cur.Timestamp
-			if len(prof.prior.Devices) != len(cur.Devices) {
-				prof.prior.Devices = make([]structs.Device, len(cur.Devices))
-			}
-			copy(prof.prior.Devices, cur.Devices)
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = prof.Reset()
 			if err != nil {
@@ -216,7 +207,14 @@ tick:
 				}
 				cur.Devices = append(cur.Devices, dev)
 			}
-			out <- prof.CalculateUsage(cur)
+			out <- prof.CalculateUsage(&cur)
+			// set prior info
+			prof.prior.Timestamp = cur.Timestamp
+			if len(prof.prior.Devices) != len(cur.Devices) {
+				prof.prior.Devices = make([]structs.Device, len(cur.Devices))
+			}
+			copy(prof.prior.Devices, cur.Devices)
+
 		}
 	}
 }
