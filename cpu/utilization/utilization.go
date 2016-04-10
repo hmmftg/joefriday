@@ -39,7 +39,11 @@ func New() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Profiler: p, prior: &stats.Stats{}}, nil
+	s, err := p.Get()
+	if err != nil {
+		return nil, err
+	}
+	return &Profiler{Profiler: p, prior: s}, nil
 }
 
 // Get returns the cpu utilization.  Utilization calculations requires two
