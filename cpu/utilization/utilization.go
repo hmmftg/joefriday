@@ -62,20 +62,13 @@ func (prof *Profiler) Get() (u *Utilization, err error) {
 	if err != nil {
 		return nil, err
 	}
-	prof.prior, err = prof.Profiler.Get()
+	stat, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	time.Sleep(time.Second)
-	err = prof.Reset()
-	if err != nil {
-		return nil, err
-	}
-	stat2, err := prof.Profiler.Get()
-	if err != nil {
-		return nil, err
-	}
-	return prof.calculateUtilization(stat2), nil
+	u = prof.calculateUtilization(stat)
+	prof.prior = stat
+	return u, nil
 }
 
 var std *Profiler
@@ -114,12 +107,9 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *Utilization, done
 		n                   uint64
 		v                   byte
 		stop                bool
+		err                 error
+		cur                 stats.Stats
 	)
-	// first get stats as the baseline
-	cur, err := prof.Profiler.Get()
-	if err != nil {
-		errs <- err
-	}
 	// ticker
 tick:
 	for {
@@ -127,13 +117,6 @@ tick:
 		case <-done:
 			return
 		case <-ticker.C:
-			prof.prior.Ctxt = cur.Ctxt
-			prof.prior.BTime = cur.BTime
-			prof.prior.Processes = cur.Processes
-			if len(prof.prior.CPU) != len(cur.CPU) {
-				prof.prior.CPU = make([]stats.Stat, len(cur.CPU))
-			}
-			copy(prof.prior.CPU, cur.CPU)
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = prof.Reset()
 			if err != nil {
@@ -262,7 +245,14 @@ tick:
 					continue
 				}
 			}
-			out <- prof.calculateUtilization(cur)
+			out <- prof.calculateUtilization(&cur)
+			prof.prior.Ctxt = cur.Ctxt
+			prof.prior.BTime = cur.BTime
+			prof.prior.Processes = cur.Processes
+			if len(prof.prior.CPU) != len(cur.CPU) {
+				prof.prior.CPU = make([]stats.Stat, len(cur.CPU))
+			}
+			copy(prof.prior.CPU, cur.CPU)
 		}
 	}
 }
