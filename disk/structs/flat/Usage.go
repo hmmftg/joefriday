@@ -5,7 +5,6 @@ package flat
 import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
-
 type Usage struct {
 	_tab flatbuffers.Table
 }
@@ -13,7 +12,7 @@ type Usage struct {
 func GetRootAsUsage(buf []byte, offset flatbuffers.UOffsetT) *Usage {
 	n := flatbuffers.GetUOffsetT(buf[offset:])
 	x := &Usage{}
-	x.Init(buf, n+offset)
+	x.Init(buf, n + offset)
 	return x
 }
 
@@ -44,9 +43,9 @@ func (rcv *Usage) Devices(obj *Device, j int) bool {
 		x := rcv._tab.Vector(o)
 		x += flatbuffers.UOffsetT(j) * 4
 		x = rcv._tab.Indirect(x)
-		if obj == nil {
-			obj = new(Device)
-		}
+	if obj == nil {
+		obj = new(Device)
+	}
 		obj.Init(rcv._tab.Bytes, x)
 		return true
 	}
@@ -62,16 +61,9 @@ func (rcv *Usage) DevicesLength() int {
 }
 
 func UsageStart(builder *flatbuffers.Builder) { builder.StartObject(3) }
-func UsageAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) {
-	builder.PrependInt64Slot(0, Timestamp, 0)
-}
-func UsageAddTimeDelta(builder *flatbuffers.Builder, TimeDelta int64) {
-	builder.PrependInt64Slot(1, TimeDelta, 0)
-}
-func UsageAddDevices(builder *flatbuffers.Builder, Devices flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(Devices), 0)
-}
-func UsageStartDevicesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
-	return builder.StartVector(4, numElems, 4)
+func UsageAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
+func UsageAddTimeDelta(builder *flatbuffers.Builder, TimeDelta int64) { builder.PrependInt64Slot(1, TimeDelta, 0) }
+func UsageAddDevices(builder *flatbuffers.Builder, Devices flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(Devices), 0) }
+func UsageStartDevicesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func UsageEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

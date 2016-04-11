@@ -1,0 +1,21 @@
+// device.fbs
+namespace flat;
+
+table Device {
+	Major:uint;
+	Minor:uint;
+	Name:string;
+	ReadsCompleted:ulong;
+	ReadsMerged:ulong;
+	ReadSectors:ulong;
+	ReadingTime:ulong;
+	WritesCompleted:ulong;
+	WritesMerged:ulong;
+	WrittenSectors:ulong;
+	WritingTime:ulong;
+	IOInProgress:int;
+	IOTime:ulong;
+	WeightedIOTime:ulong;
+}
+
+root_type Device;
