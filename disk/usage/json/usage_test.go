@@ -21,7 +21,12 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	b, err := Get()
+	p, err := New()
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	b, err := p.Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
@@ -31,7 +36,7 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkUsage(u, t)
+	checkUsage("get", u, t)
 	t.Logf("%#v\n", u)
 }
 
@@ -50,7 +55,7 @@ func TestTicker(t *testing.T) {
 				t.Errorf("got %s, want nil", err)
 				return
 			}
-			checkUsage(u, t)
+			checkUsage("ticker", u, t)
 		case err := <-errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -58,22 +63,22 @@ func TestTicker(t *testing.T) {
 	t.Logf("%#v\n", u)
 }
 
-func checkUsage(u *structs.Usage, t *testing.T) {
+func checkUsage(n string, u *structs.Usage, t *testing.T) {
 	if u.Timestamp == 0 {
-		t.Error("Timestamp: wanted non-zero value; got 0")
+		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)
 	}
 	if u.TimeDelta == 0 {
-		t.Error("TimeDelta: wanted non-zero value; got 0")
+		t.Errorf("%s: TimeDelta: wanted non-zero value; got 0", n)
 	}
 	if len(u.Devices) == 0 {
-		t.Errorf("expected there to be devices; didn't get any")
+		t.Errorf("%s: expected there to be devices; didn't get any", n)
 	}
 	for i := 0; i < len(u.Devices); i++ {
 		if u.Devices[i].Major == 0 {
-			t.Errorf("Device %d: Major: wanted a non-zero value, was 0", i)
+			t.Errorf("%s: Device %d: Major: wanted a non-zero value, was 0", n, i)
 		}
 		if u.Devices[i].Name == "" {
-			t.Errorf("Device %d: Name: wanted a non-empty value; was empty", i)
+			t.Errorf("%s: Device %d: Name: wanted a non-empty value; was empty", n, i)
 		}
 	}
 }

@@ -113,7 +113,7 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 // Serialize serializes the Usage using Flatbuffers.
 func (prof *Profiler) Serialize(u *structs.Usage) []byte {
 	// ensure the Builder is in a usable state.
-	std.Builder.Reset()
+	prof.Builder.Reset()
 	devF := make([]fb.UOffsetT, len(u.Devices))
 	names := make([]fb.UOffsetT, len(u.Devices))
 	for i := 0; i < len(names); i++ {

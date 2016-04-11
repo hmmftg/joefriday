@@ -28,7 +28,7 @@ import (
 
 // Profiler is used to process the disk usage information using JSON.
 type Profiler struct {
-	Prof *usage.Profiler
+	*usage.Profiler
 }
 
 // Initializes and returns a disk usage profiler.
@@ -37,13 +37,13 @@ func New() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p}, nil
+	return &Profiler{Profiler: p}, nil
 }
 
 // Get returns the current disk usage information as JSON serialized
 // bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	u, err := prof.Prof.Get()
+	u, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func Get() (p []byte, err error) {
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
 	outCh := make(chan *structs.Usage)
 	defer close(outCh)
-	go prof.Prof.Ticker(interval, outCh, done, errs)
+	go prof.Profiler.Ticker(interval, outCh, done, errs)
 	for {
 		select {
 		case u, ok := <-outCh:
