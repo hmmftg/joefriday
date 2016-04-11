@@ -1,0 +1,25 @@
+// interface.fbs
+namespace flat;
+
+table Interface {
+	Name:string;
+	RBytes:long;
+	RPackets:long;
+	RErrs:long;
+	RDrop:long;
+	RFIFO:long;
+	RFrame:long;
+	RCompressed:long;
+	RMulticast:long;
+	TBytes:long;
+	TPackets:long;
+	TErrs:long;
+	TDrop:long;
+	TFIFO:long;
+	TColls:long;
+	TCarrier:long;
+	TCompressed:long;
+}
+
+
+root_type Interface;
