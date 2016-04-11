@@ -51,7 +51,6 @@ func New() (prof *Profiler, err error) {
 // Get returns the current disk usage.  Usage is calculated as the difference
 // between the prior stats snapshot and the current one.
 func (prof *Profiler) Get() (u *structs.Usage, err error) {
-	time.Sleep(time.Second)
 	st, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
@@ -64,7 +63,11 @@ func (prof *Profiler) Get() (u *structs.Usage, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current disk usage using the package's global Profiler..
+// Get returns the current disk usage using the package's global Profiler.
+// The profiler is lazily instantiated.  This means that probability of
+// the first utilization snapshot returning inaccurate information is high
+// due to the lack of time elapsing between the initial and current
+// snapshot for utilization calculation.
 func Get() (u *structs.Usage, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
