@@ -21,18 +21,23 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	nf, err := Get()
+	p, err := New()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	info, err := Deserialize(nf)
+	b, err := p.Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkInfo(info, t)
-	t.Logf("%#v\n", info)
+	u, err := Deserialize(b)
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	checkUsage("get", u, t)
+	t.Logf("%#v\n", u)
 }
 
 func TestTicker(t *testing.T) {
@@ -46,29 +51,32 @@ func TestTicker(t *testing.T) {
 		case err := <-errs:
 			t.Errorf("unexpected error: %s", err)
 		case b := <-out:
-			inf, err := Deserialize(b)
+			u, err := Deserialize(b)
 			if err != nil {
 				t.Errorf("unexpected deserialization error: %s", err)
 				continue
 			}
-			checkInfo(inf, t)
-			t.Logf("%#v\n", inf)
+			checkUsage("ticker", u, t)
+			t.Logf("%#v\n", u)
 		}
 	}
 }
 
-func checkInfo(inf *structs.Info, t *testing.T) {
-	if inf.Timestamp == 0 {
-		t.Errorf("expected timestamp to be a non-zero value; was 0")
+func checkUsage(n string, u *structs.Usage, t *testing.T) {
+	if u.Timestamp == 0 {
+		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
-	if len(inf.Interfaces) == 0 {
-		t.Error("expected interfaces; got none")
+	if u.TimeDelta == 0 {
+		t.Errorf("%s: expected TimeDelta to be a non-zero value; was 0", n)
+	}
+	if len(u.Interfaces) == 0 {
+		t.Error("%s: expected interfaces; got none", n)
 		return
 	}
 	// check name
-	for i, v := range inf.Interfaces {
+	for i, v := range u.Interfaces {
 		if v.Name == "" {
-			t.Errorf("%d: expected inteface to have a name; was empty", i)
+			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
 		}
 	}
 }

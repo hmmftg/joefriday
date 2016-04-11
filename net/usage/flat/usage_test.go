@@ -17,19 +17,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/net/info/flat"
 	"github.com/mohae/joefriday/net/structs"
 )
 
 func TestGet(t *testing.T) {
-	b, err := Get()
+	p, err := New()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	u := flat.Deserialize(b)
+	b, err := p.Get()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+		return
+	}
+	u := Deserialize(b)
 	t.Logf("%#v\n", u)
-	checkInfo(u, t)
+	checkUsage("get", u, t)
 }
 
 func TestGetTicker(t *testing.T) {
@@ -48,8 +52,8 @@ func TestGetTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			u := flat.Deserialize(b)
-			checkInfo(u, t)
+			u := Deserialize(b)
+			checkUsage("ticker", u, t)
 			t.Logf("%#v\n", u)
 		case err := <-errs:
 			t.Errorf("unexpected error: %s", err)
@@ -58,18 +62,21 @@ func TestGetTicker(t *testing.T) {
 	}
 }
 
-func checkInfo(inf *structs.Info, t *testing.T) {
-	if inf.Timestamp == 0 {
-		t.Errorf("expected timestamp to be a non-zero value; was 0")
+func checkUsage(n string, u *structs.Usage, t *testing.T) {
+	if u.Timestamp == 0 {
+		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
-	if len(inf.Interfaces) == 0 {
-		t.Error("expected interfaces; got none")
+	if u.TimeDelta == 0 {
+		t.Errorf("%s: expected TimeDelta to be a non-zero value; was 0", n)
+	}
+	if len(u.Interfaces) == 0 {
+		t.Error("%s: expected interfaces; got none", n)
 		return
 	}
 	// check name
-	for i, v := range inf.Interfaces {
+	for i, v := range u.Interfaces {
 		if v.Name == "" {
-			t.Errorf("%d: expected inteface to have a name; was empty", i)
+			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
 		}
 	}
 }

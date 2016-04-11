@@ -51,7 +51,7 @@ func New() (prof *Profiler, err error) {
 // TODO: should this be changed so that this calculates usage since the last
 // time the network info was obtained.  If there aren't pre-existing info
 // it would get current usage (which may be a separate method (or should be?))
-func (prof *Profiler) Get() (u *structs.Info, err error) {
+func (prof *Profiler) Get() (u *structs.Usage, err error) {
 	infCur, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ var stdMu sync.Mutex
 
 // Get returns the current network interface usage using the package's global
 // Profiler.
-func Get() (u *structs.Info, err error) {
+func Get() (u *structs.Usage, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -87,7 +87,7 @@ func Get() (u *structs.Info, err error) {
 // TODO: better handle errors, e.g. restore cur from prior so that there
 // isn't the possibility of temporarily having bad data, just a missed
 // collection interval.
-func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, errs chan error) {
+func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Usage, done chan struct{}, errs chan error) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	defer close(out)
@@ -98,7 +98,7 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Info, don
 		v                   byte
 		err                 error
 		cur                 structs.Info
-		iInfo               structs.Interface
+		iUsage              structs.Interface
 	)
 	// ticker
 tick:
@@ -141,7 +141,7 @@ tick:
 					}
 					prof.Val = append(prof.Val, v)
 				}
-				iInfo.Name = string(prof.Val[:])
+				iUsage.Name = string(prof.Val[:])
 				fieldNum = 0
 				// process the rest of the line
 				for {
@@ -163,75 +163,75 @@ tick:
 					n, err = helpers.ParseUint(prof.Line[pos : pos+1])
 					pos += i
 					if err != nil {
-						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iInfo.Name, err)
+						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iUsage.Name, err)
 						continue
 					}
 					if fieldNum < 9 {
 						if fieldNum < 5 {
 							if fieldNum < 3 {
 								if fieldNum == 1 {
-									iInfo.RBytes = int64(n)
+									iUsage.RBytes = int64(n)
 									continue
 								}
-								iInfo.RPackets = int64(n) // must be 2
+								iUsage.RPackets = int64(n) // must be 2
 								continue
 							}
 							if fieldNum == 3 {
-								iInfo.RErrs = int64(n)
+								iUsage.RErrs = int64(n)
 								continue
 							}
-							iInfo.RDrop = int64(n) // must be 4
+							iUsage.RDrop = int64(n) // must be 4
 							continue
 						}
 						if fieldNum < 7 {
 							if fieldNum == 5 {
-								iInfo.RFIFO = int64(n)
+								iUsage.RFIFO = int64(n)
 								continue
 							}
-							iInfo.RFrame = int64(n) // must be 6
+							iUsage.RFrame = int64(n) // must be 6
 							continue
 						}
 						if fieldNum == 7 {
-							iInfo.RCompressed = int64(n)
+							iUsage.RCompressed = int64(n)
 							continue
 						}
-						iInfo.RMulticast = int64(n) // must be 8
+						iUsage.RMulticast = int64(n) // must be 8
 						continue
 					}
 					if fieldNum < 13 {
 						if fieldNum < 11 {
 							if fieldNum == 9 {
-								iInfo.TBytes = int64(n)
+								iUsage.TBytes = int64(n)
 								continue
 							}
-							iInfo.TPackets = int64(n) // must be 10
+							iUsage.TPackets = int64(n) // must be 10
 							continue
 						}
 						if fieldNum == 11 {
-							iInfo.TErrs = int64(n)
+							iUsage.TErrs = int64(n)
 							continue
 						}
-						iInfo.TDrop = int64(n) // must be 12
+						iUsage.TDrop = int64(n) // must be 12
 						continue
 					}
 					if fieldNum < 15 {
 						if fieldNum == 13 {
-							iInfo.TFIFO = int64(n)
+							iUsage.TFIFO = int64(n)
 							continue
 						}
-						iInfo.TColls = int64(n) // must be 14
+						iUsage.TColls = int64(n) // must be 14
 						continue
 					}
 					if fieldNum == 15 {
-						iInfo.TCarrier = int64(n)
+						iUsage.TCarrier = int64(n)
 						continue
 					}
 					if fieldNum == 16 {
-						iInfo.TCompressed = int64(n)
+						iUsage.TCompressed = int64(n)
 						break
 					}
 				}
-				cur.Interfaces = append(cur.Interfaces, iInfo)
+				cur.Interfaces = append(cur.Interfaces, iUsage)
 			}
 			out <- prof.CalculateUsage(&cur)
 			prof.prior.Timestamp = cur.Timestamp
@@ -247,7 +247,7 @@ tick:
 // Ticker gathers network interface usage on a ticker using the specified
 // interval.  This uses a local Profiler as using the global doesn't make
 // sense for an ongoing ticker.
-func Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, errs chan error) {
+func Ticker(interval time.Duration, out chan *structs.Usage, done chan struct{}, errs chan error) {
 	prof, err := New()
 	if err != nil {
 		errs <- err
@@ -259,8 +259,12 @@ func Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, 
 
 // CalculateUsage calculates the network interface usage: the ference between
 // the current /proc/net/dev data and the prior one.
-func (prof *Profiler) CalculateUsage(cur *structs.Info) *structs.Info {
-	u := &structs.Info{Timestamp: cur.Timestamp, Interfaces: make([]structs.Interface, len(cur.Interfaces))}
+func (prof *Profiler) CalculateUsage(cur *structs.Info) *structs.Usage {
+	u := &structs.Usage{
+		Timestamp:  cur.Timestamp,
+		TimeDelta:  cur.Timestamp - prof.prior.Timestamp,
+		Interfaces: make([]structs.Interface, len(cur.Interfaces)),
+	}
 	for i := 0; i < len(cur.Interfaces); i++ {
 		u.Interfaces[i].Name = cur.Interfaces[i].Name
 		u.Interfaces[i].RBytes = cur.Interfaces[i].RBytes - prof.prior.Interfaces[i].RBytes

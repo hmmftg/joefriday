@@ -24,36 +24,39 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mohae/joefriday/net/info/flat"
+	fb "github.com/google/flatbuffers/go"
 	"github.com/mohae/joefriday/net/structs"
+	"github.com/mohae/joefriday/net/structs/flat"
+	"github.com/mohae/joefriday/net/usage"
 )
 
 // Profiler is used to process the network interface usage using Flatbuffers.
 type Profiler struct {
-	Flat *flat.Profiler
+	*usage.Profiler
+	*fb.Builder
 }
 
 // Initializes and returns a network interface usage profiler that utilizes
 // FlatBuffers.
 func New() (prof *Profiler, err error) {
-	p, err := flat.New()
+	p, err := usage.New()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Flat: p}, nil
+	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
 // Get returns the current network interface usage as Flatbuffer serialized
 // bytes.
 // TODO: should this be changed so that this calculates usage since the last
-// time the network info was obtained.  If there aren't pre-existing info
+// time the network uo was obtained.  If there aren't pre-existing uo
 // it would get current usage (which may be a separate method (or should be?))
 func (prof *Profiler) Get() (p []byte, err error) {
-	u, err := prof.Flat.Prof.Get()
+	u, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.Flat.Serialize(u), nil
+	return prof.Serialize(u), nil
 }
 
 var std *Profiler
@@ -83,16 +86,16 @@ func Get() (p []byte, err error) {
 // isn't the possibility of temporarily having bad data, just a missed
 // collection interval.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	outCh := make(chan *structs.Info)
+	outCh := make(chan *structs.Usage)
 	defer close(outCh)
-	go prof.Flat.Prof.Ticker(interval, outCh, done, errs)
+	go prof.Profiler.Ticker(interval, outCh, done, errs)
 	for {
 		select {
-		case inf, ok := <-outCh:
+		case u, ok := <-outCh:
 			if !ok {
 				return
 			}
-			out <- prof.Flat.Serialize(inf)
+			out <- prof.Serialize(u)
 		}
 	}
 }
@@ -108,4 +111,99 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 		return
 	}
 	prof.Ticker(interval, out, done, errs)
+}
+
+// Serialize serializes Usage using Flatbuffers.
+func (prof *Profiler) Serialize(u *structs.Usage) []byte {
+	// ensure the Builder is in a usable state.
+	prof.Builder.Reset()
+	ifaces := make([]fb.UOffsetT, len(u.Interfaces))
+	names := make([]fb.UOffsetT, len(u.Interfaces))
+	for i := 0; i < len(u.Interfaces); i++ {
+		names[i] = prof.Builder.CreateString(u.Interfaces[i].Name)
+	}
+	for i := 0; i < len(u.Interfaces); i++ {
+		flat.InterfaceStart(prof.Builder)
+		flat.InterfaceAddName(prof.Builder, names[i])
+		flat.InterfaceAddRBytes(prof.Builder, u.Interfaces[i].RBytes)
+		flat.InterfaceAddRPackets(prof.Builder, u.Interfaces[i].RPackets)
+		flat.InterfaceAddRErrs(prof.Builder, u.Interfaces[i].RErrs)
+		flat.InterfaceAddRDrop(prof.Builder, u.Interfaces[i].RDrop)
+		flat.InterfaceAddRFIFO(prof.Builder, u.Interfaces[i].RFIFO)
+		flat.InterfaceAddRFrame(prof.Builder, u.Interfaces[i].RFrame)
+		flat.InterfaceAddRCompressed(prof.Builder, u.Interfaces[i].RCompressed)
+		flat.InterfaceAddRMulticast(prof.Builder, u.Interfaces[i].RMulticast)
+		flat.InterfaceAddTBytes(prof.Builder, u.Interfaces[i].TBytes)
+		flat.InterfaceAddTPackets(prof.Builder, u.Interfaces[i].TPackets)
+		flat.InterfaceAddTErrs(prof.Builder, u.Interfaces[i].TErrs)
+		flat.InterfaceAddTDrop(prof.Builder, u.Interfaces[i].TDrop)
+		flat.InterfaceAddTFIFO(prof.Builder, u.Interfaces[i].TFIFO)
+		flat.InterfaceAddTColls(prof.Builder, u.Interfaces[i].TColls)
+		flat.InterfaceAddTCarrier(prof.Builder, u.Interfaces[i].TCarrier)
+		flat.InterfaceAddTCompressed(prof.Builder, u.Interfaces[i].TCompressed)
+		ifaces[i] = flat.InterfaceEnd(prof.Builder)
+	}
+	flat.UsageStartInterfacesVector(prof.Builder, len(ifaces))
+	for i := len(u.Interfaces) - 1; i >= 0; i-- {
+		prof.Builder.PrependUOffsetT(ifaces[i])
+	}
+	ifacesV := prof.Builder.EndVector(len(ifaces))
+	flat.UsageStart(prof.Builder)
+	flat.UsageAddTimestamp(prof.Builder, u.Timestamp)
+	flat.UsageAddTimeDelta(prof.Builder, u.TimeDelta)
+	flat.UsageAddInterfaces(prof.Builder, ifacesV)
+	prof.Builder.Finish(flat.UsageEnd(prof.Builder))
+	return prof.Builder.Bytes[prof.Builder.Head():]
+}
+
+// Serialize serializes Usage using Flatbuffers with the package global
+// Profiler.
+func Serialize(u *structs.Usage) (p []byte, err error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
+	if std == nil {
+		std, err = New()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return std.Serialize(u), nil
+}
+
+// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// as structs.Usage.
+func Deserialize(p []byte) *structs.Usage {
+	uFlat := flat.GetRootAsUsage(p, 0)
+	// get the # of interfaces
+	iLen := uFlat.InterfacesLength()
+	u := &structs.Usage{
+		Timestamp:  uFlat.Timestamp(),
+		TimeDelta:  uFlat.TimeDelta(),
+		Interfaces: make([]structs.Interface, iLen),
+	}
+	iFace := &flat.Interface{}
+	iface := structs.Interface{}
+	for i := 0; i < iLen; i++ {
+		if uFlat.Interfaces(iFace, i) {
+			iface.Name = string(iFace.Name())
+			iface.RBytes = iFace.RBytes()
+			iface.RPackets = iFace.RPackets()
+			iface.RErrs = iFace.RErrs()
+			iface.RDrop = iFace.RDrop()
+			iface.RFIFO = iFace.RFIFO()
+			iface.RFrame = iFace.RFrame()
+			iface.RCompressed = iFace.RCompressed()
+			iface.RMulticast = iFace.RMulticast()
+			iface.TBytes = iFace.TBytes()
+			iface.TPackets = iFace.TPackets()
+			iface.TErrs = iFace.TErrs()
+			iface.TDrop = iFace.TDrop()
+			iface.TFIFO = iFace.TFIFO()
+			iface.TColls = iFace.TColls()
+			iface.TCarrier = iFace.TCarrier()
+			iface.TCompressed = iFace.TCompressed()
+		}
+		u.Interfaces[i] = iface
+	}
+	return u
 }

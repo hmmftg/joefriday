@@ -28,7 +28,7 @@ import (
 
 // Profiler is used to process the network interface usage JSON.
 type Profiler struct {
-	Prof *usage.Profiler
+	*usage.Profiler
 }
 
 // Initializes and returns a network interface usage profiler.
@@ -37,12 +37,12 @@ func New() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p}, nil
+	return &Profiler{Profiler: p}, nil
 }
 
 // Get returns the current network interface usage as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	inf, err := prof.Prof.Get()
+	inf, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -76,16 +76,16 @@ func Get() (p []byte, err error) {
 // isn't the possibility of temporarily having bad data, just a missed
 // collection interval.
 func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	outCh := make(chan *structs.Info)
+	outCh := make(chan *structs.Usage)
 	defer close(outCh)
-	go prof.Prof.Ticker(interval, outCh, done, errs)
+	go prof.Profiler.Ticker(interval, outCh, done, errs)
 	for {
 		select {
-		case inf, ok := <-outCh:
+		case u, ok := <-outCh:
 			if !ok {
 				return
 			}
-			b, err := prof.Serialize(inf)
+			b, err := prof.Serialize(u)
 			if err != nil {
 				errs <- err
 				continue
@@ -108,26 +108,26 @@ func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs ch
 }
 
 // Serialize network information usage using JSON
-func (prof *Profiler) Serialize(inf *structs.Info) ([]byte, error) {
-	return json.Marshal(inf)
+func (prof *Profiler) Serialize(u *structs.Usage) ([]byte, error) {
+	return json.Marshal(u)
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(inf *structs.Info) ([]byte, error) {
-	return prof.Serialize(inf)
+func (prof *Profiler) Marshal(u *structs.Usage) ([]byte, error) {
+	return prof.Serialize(u)
 }
 
 // Deserialize deserializes JSON serialized bytes.
-func Deserialize(p []byte) (*structs.Info, error) {
-	info := &structs.Info{}
-	err := json.Unmarshal(p, info)
+func Deserialize(p []byte) (*structs.Usage, error) {
+	u := &structs.Usage{}
+	err := json.Unmarshal(p, u)
 	if err != nil {
 		return nil, err
 	}
-	return info, nil
+	return u, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*structs.Info, error) {
+func Unmarshal(p []byte) (*structs.Usage, error) {
 	return Deserialize(p)
 }

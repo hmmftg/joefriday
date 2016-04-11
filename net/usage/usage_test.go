@@ -21,17 +21,22 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	inf, err := Get()
+	p, err := New()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkInfo(inf, t)
-	t.Logf("%#v\n", inf)
+	u, err := p.Get()
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	checkUsage(u, t)
+	t.Logf("%#v\n", u)
 }
 
 func TestTicker(t *testing.T) {
-	results := make(chan *structs.Info)
+	results := make(chan *structs.Usage)
 	errs := make(chan error)
 	done := make(chan struct{})
 	go Ticker(time.Duration(400)*time.Millisecond, results, done, errs)
@@ -42,11 +47,11 @@ func TestTicker(t *testing.T) {
 			break
 		}
 		select {
-		case inf, ok := <-results:
+		case u, ok := <-results:
 			if !ok {
 				break
 			}
-			checkInfo(inf, t)
+			checkUsage(u, t)
 		case err := <-errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -54,16 +59,19 @@ func TestTicker(t *testing.T) {
 	}
 }
 
-func checkInfo(inf *structs.Info, t *testing.T) {
-	if inf.Timestamp == 0 {
+func checkUsage(u *structs.Usage, t *testing.T) {
+	if u.Timestamp == 0 {
 		t.Errorf("expected timestamp to be a non-zero value; was 0")
 	}
-	if len(inf.Interfaces) == 0 {
+	if u.TimeDelta == 0 {
+		t.Errorf("expected TimeDelta to be a non-zero value; was 0")
+	}
+	if len(u.Interfaces) == 0 {
 		t.Error("expected interfaces; got none")
 		return
 	}
 	// check name
-	for i, v := range inf.Interfaces {
+	for i, v := range u.Interfaces {
 		if v.Name == "" {
 			t.Errorf("%d: expected inteface to have a name; was empty", i)
 		}

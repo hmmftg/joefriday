@@ -40,3 +40,10 @@ type Interface struct {
 	TCarrier    int64  `json:"transmit_carrier"`
 	TCompressed int64  `json:"transmit_compressed"`
 }
+
+// Usage holds the usage information for all of the network interfaces.
+type Usage struct {
+	Timestamp  int64       `json:"timestamp"`
+	TimeDelta  int64       `json:"time_delta"`
+	Interfaces []Interface `json:"interfaces"`
+}
