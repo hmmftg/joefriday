@@ -1,0 +1,9 @@
+// uptime.fbs
+namespace flat;
+
+table Uptime {
+    Total:double;
+    Idle:double;
+}
+
+root_type Uptime;
