@@ -1,0 +1,13 @@
+// loadavg.fbs
+namespace flat;
+
+table LoadAvg {
+    LastMinute:float;
+    LastFive:float;
+	LastTen:float;
+	RunningProcesses:int;
+	TotalProcesses:int;
+    PID:int;
+}
+
+root_type LoadAvg;
