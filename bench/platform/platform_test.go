@@ -5,8 +5,12 @@ import (
 	"testing"
 
 	"github.com/DataDog/gohai/platform"
+	"github.com/cloudfoundry/gosigar"
 	joekernel "github.com/mohae/joefriday/platform/kernel"
+	joeloadavg "github.com/mohae/joefriday/platform/loadavg"
 	joerelease "github.com/mohae/joefriday/platform/release"
+	joeuptime "github.com/mohae/joefriday/platform/uptime"
+	"github.com/shirou/gopsutil/load"
 )
 
 func BenchmarkJoeFridayGetKernel(b *testing.B) {
@@ -18,6 +22,41 @@ func BenchmarkJoeFridayGetKernel(b *testing.B) {
 		fct, _ = p.Get()
 	}
 	_ = fct
+}
+
+func BenchmarkCloudFoundryGoSigarLoadAverage(b *testing.B) {
+	var tmp sigar.LoadAverage
+	for i := 0; i < b.N; i++ {
+		tmp.Get()
+	}
+	_ = tmp
+}
+
+func BenchmarkJoeFridayGetLoadAvg(b *testing.B) {
+	var tmp joeloadavg.LoadAvg
+	b.StopTimer()
+	p, _ := joeloadavg.New()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func BenchmarkShirouGopsutilLoadAvg(b *testing.B) {
+	var tmp *load.AvgStat
+	for i := 0; i < b.N; i++ {
+		tmp, _ = load.Avg()
+	}
+	_ = tmp
+}
+
+func BenchmarkShirouGopsutilLoadMisc(b *testing.B) {
+	var tmp *load.MiscStat
+	for i := 0; i < b.N; i++ {
+		tmp, _ = load.Misc()
+	}
+	_ = tmp
 }
 
 func BenchmarkJoeFridayGetReleases(b *testing.B) {
@@ -44,6 +83,25 @@ func BenchmarkDataDogGohaiplatform(b *testing.B) {
 	_ = c
 }
 
+func BenchmarkJoeFridayGetUptime(b *testing.B) {
+	var tmp joeuptime.Uptime
+	b.StopTimer()
+	p, _ := joeuptime.New()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func BenchmarkCloudFoundryGoSigarUptime(b *testing.B) {
+	var tmp sigar.Uptime
+	for i := 0; i < b.N; i++ {
+		tmp.Get()
+	}
+	_ = tmp
+}
+
 // These tests exist to print out the data that is collected; not to test the
 // methods themselves.  Run with the -v flag.
 func TestJoeFridayGetKernel(t *testing.T) {
@@ -58,6 +116,64 @@ func TestJoeFridayGetKernel(t *testing.T) {
 		return
 	}
 	p, err := json.MarshalIndent(fct, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestCloudFoundryGoSigarLoadAverage(t *testing.T) {
+	var tmp sigar.LoadAverage
+	tmp.Get()
+	p, err := json.MarshalIndent(tmp, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestJoeFridayGetLoadAvg(t *testing.T) {
+	prof, err := joeloadavg.New()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tmp, err := prof.Get()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p, err := json.MarshalIndent(tmp, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestShirouGopsutilLoadAvg(t *testing.T) {
+	tmp, err := load.Avg()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p, err := json.MarshalIndent(tmp, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestShirouGopsutilLoadMisc(t *testing.T) {
+	tmp, err := load.Misc()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p, err := json.MarshalIndent(tmp, "", "\t")
 	if err != nil {
 		t.Error(err)
 		return
@@ -96,6 +212,36 @@ func TestDataDogGohaiPlatform(t *testing.T) {
 		return
 	}
 	p, err := json.MarshalIndent(c, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestCloudFoundryGoSigarUptime(t *testing.T) {
+	var tmp sigar.Uptime
+	tmp.Get()
+	p, err := json.MarshalIndent(tmp, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
+func TestJoeFridayGetUptime(t *testing.T) {
+	prof, err := joeuptime.New()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tmp, err := prof.Get()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p, err := json.MarshalIndent(tmp, "", "\t")
 	if err != nil {
 		t.Error(err)
 		return
