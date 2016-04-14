@@ -59,6 +59,39 @@ func New(fname string) (*Proc, error) {
 	return &Proc{File: f, Buf: bufio.NewReader(f), Val: make([]byte, 0, 32)}, nil
 }
 
+// Reset reset's the profiler's resources.
+func (p *Proc) Reset() error {
+	_, err := p.File.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return err
+	}
+	p.Buf.Reset(p.File)
+	p.Val = p.Val[:0]
+	return nil
+}
+
+type Tocker interface {
+	Run()  // runs some code on an interval
+	Stop() // stops execution of the code
+}
+
+type Ticker struct {
+	*time.Ticker
+	Done chan struct{} // done channel
+	Errs chan error    // error channel
+}
+
+func NewTicker(d time.Duration) *Ticker {
+	return &Ticker{Ticker: time.NewTicker(d), Errs: make(chan error), Done: make(chan struct{})}
+}
+
+// Close stops the ticker and closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Stop()
+	close(t.Done)
+	close(t.Errs)
+}
+
 // ProfileSerializer is implemented by any profiler that has a Get method
 // that returns the data as serialized bytes.
 type ProfileSerializer interface {
@@ -71,17 +104,6 @@ type ProfileSerializer interface {
 // out channel as serialized bytes.
 type ProfileSerializerTicker interface {
 	Ticker(tick time.Duration, out chan []byte, done chan struct{}, errs chan error)
-}
-
-// Reset reset's the profiler's resources.
-func (p *Proc) Reset() error {
-	_, err := p.File.Seek(0, os.SEEK_SET)
-	if err != nil {
-		return err
-	}
-	p.Buf.Reset(p.File)
-	p.Val = p.Val[:0]
-	return nil
 }
 
 // Column returns a right justified string of width w.
