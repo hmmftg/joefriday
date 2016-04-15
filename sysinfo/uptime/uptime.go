@@ -23,24 +23,35 @@ import (
 	joe "github.com/mohae/joefriday"
 )
 
-func Get() (int64, error) {
-	var sysinfo syscall.Sysinfo_t
+type Uptime struct {
+	Timestamp int64
+	Uptime    int64 // sorry for the stutter
+}
 
+func (u *Uptime) Get() error {
+	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return sysinfo.Uptime, nil
+	u.Timestamp = time.Now().UTC().UnixNano()
+	u.Uptime = sysinfo.Uptime
+	return nil
+}
+
+func Get() (u Uptime, err error) {
+	err = u.Get()
+	return u, err
 }
 
 type Ticker struct {
 	*joe.Ticker
-	Data chan int64
+	Data chan Uptime
 }
 
 // NewTicker returns a new Ticker containing a ticker channel, T,
 func NewTicker(d time.Duration) (joe.Tocker, error) {
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan int64)}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Uptime)}
 	go t.Run()
 	return &t, nil
 }
@@ -54,21 +65,18 @@ func (t *Ticker) Stop() {
 func (t *Ticker) Run() {
 	defer t.Close()
 	defer close(t.Data)
-
-	var sysinfo syscall.Sysinfo_t
-	var err error
 	// read until done signal is received
 	for {
 		select {
 		case <-t.Done:
 			return
 		case <-t.Ticker.C:
-			err = syscall.Sysinfo(&sysinfo)
+			u, err := Get()
 			if err != nil {
 				t.Errs <- err
 				continue
 			}
-			t.Data <- sysinfo.Uptime
+			t.Data <- u
 		}
 	}
 }

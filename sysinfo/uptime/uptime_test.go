@@ -10,7 +10,10 @@ func TestGet(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if u == 0 {
+	if u.Timestamp == 0 {
+		t.Error("expected timestamp to have a non-zero value; was 0")
+	}
+	if u.Uptime == 0 {
 		t.Error("expected uptime to have a non-zero value; was 0")
 	}
 	t.Logf("%d", u)
@@ -27,11 +30,14 @@ func TestTicker(t *testing.T) {
 		select {
 		case <-tk.Done:
 			break
-		case v, ok := <-tk.Data:
+		case u, ok := <-tk.Data:
 			if !ok {
 				break
 			}
-			if v == 0 {
+			if u.Timestamp == 0 {
+				t.Error("expected timestamp to have a non-zero value; was 0")
+			}
+			if u.Uptime == 0 {
 				t.Error("expected uptime to have a non-zero value; was 0")
 			}
 		case err := <-tk.Errs:
@@ -42,7 +48,7 @@ func TestTicker(t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	var u int64
+	var u Uptime
 	for i := 0; i < b.N; i++ {
 		u, _ = Get()
 	}
