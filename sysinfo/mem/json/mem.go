@@ -11,26 +11,55 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem returns memory information using syscalls, instead of proc
-// files,  Only basic memory information is provided by this package.  for
-// more detailed memory information, use the joefriday/mem packages.
-package mem
+// Package json handles JSON based processing of /proc/meminfo.  Instead of
+// returning a Go struct, it returns JSON serialized bytes.  A function to
+// deserialize the JSON serialized bytes into a mem.Info struct is
+// provided.
+package json
 
 import (
-	"syscall"
+	"encoding/json"
 	"time"
 
 	joe "github.com/mohae/joefriday"
+	"github.com/mohae/joefriday/sysinfo/mem"
 )
+
+// Get returns the current meminfo as JSON serialized bytes using the
+// package's global Profiler.
+func Get() (p []byte, err error) {
+	var inf mem.Info
+	err = inf.Get()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(&inf)
+}
+
+// Deserialize takes some JSON serialized bytes and unmarshals them as
+// mem.Info.
+func Deserialize(p []byte) (*mem.Info, error) {
+	var info mem.Info
+	err := json.Unmarshal(p, &info)
+	if err != nil {
+		return nil, err
+	}
+	return &info, nil
+}
+
+// Unmarshal is an alias for Deserialize
+func Unmarshal(p []byte) (*mem.Info, error) {
+	return Deserialize(p)
+}
 
 type Ticker struct {
 	*joe.Ticker
-	Data chan Info
+	Data chan []byte
 }
 
 // NewTicker returns a new Ticker containing a ticker channel, T,
 func NewTicker(d time.Duration) (joe.Tocker, error) {
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info)}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()
 	return &t, nil
 }
@@ -58,41 +87,4 @@ func (t *Ticker) Run() {
 			t.Data <- s
 		}
 	}
-}
-
-// tick runs on each tick.  When a done signal is received, it returns;
-// closing the Ticker's channels.
-
-// Info holds information about system memory.
-type Info struct {
-	Timestamp int64
-	TotalRAM  uint64
-	FreeRAM   uint64
-	SharedRAM uint64
-	BufferRAM uint64
-	TotalSwap uint64
-	FreeSwap  uint64
-}
-
-// Get gets the meminfo information.
-func (m *Info) Get() error {
-	var sysinfo syscall.Sysinfo_t
-	err := syscall.Sysinfo(&sysinfo)
-	if err != nil {
-		return err
-	}
-	m.Timestamp = time.Now().UTC().UnixNano()
-	m.TotalRAM = sysinfo.Totalram
-	m.FreeRAM = sysinfo.Freeram
-	m.SharedRAM = sysinfo.Sharedram
-	m.BufferRAM = sysinfo.Bufferram
-	m.TotalSwap = sysinfo.Totalswap
-	m.FreeSwap = sysinfo.Freeswap
-	return nil
-}
-
-// Get gets the meminfo information.
-func Get() (m Info, err error) {
-	err = m.Get()
-	return m, err
 }

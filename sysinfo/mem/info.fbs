@@ -1,0 +1,14 @@
+//info.fbs
+namespace flat;
+
+table Info {
+	Timestamp:long;
+	TotalRAM:ulong;
+	FreeRAM:ulong;
+	SharedRAM:ulong;
+	BufferRAM:ulong;
+	TotalSwap:ulong;
+	FreeSwap:ulong;
+}
+
+root_type Info;

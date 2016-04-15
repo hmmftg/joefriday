@@ -37,6 +37,9 @@ func TestGetMemInfo(t *testing.T) {
 }
 
 func checkMemInfo(n string, m Info, t *testing.T) {
+	if m.Timestamp == 0 {
+		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
+	}
 	if m.TotalRAM == 0 {
 		t.Errorf("%s: expected the TotalRAM to be non-zero, was 0", n)
 	}
