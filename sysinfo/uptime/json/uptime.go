@@ -11,46 +11,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package uptime returns the system's uptime.  Instead of using proc files,
-// a syscall is made.
-package sysinfo
+// Package json handles JSON based processing of uptime.  Instead of
+// returning a Go struct, it returns JSON serialized bytes.  A function to
+// deserialize the JSON serialized bytes into a uptime.Uptime struct is
+// provided.
+package json
 
 import (
-	"syscall"
+	"encoding/json"
 	"time"
 
 	joe "github.com/mohae/joefriday"
+	uptime "github.com/mohae/joefriday/sysinfo/uptime"
 )
 
-type Uptime struct {
-	Timestamp int64
-	Uptime    int64 // sorry for the stutter
-}
-
-func (u *Uptime) Get() error {
-	var sysinfo syscall.Sysinfo_t
-	err := syscall.Sysinfo(&sysinfo)
-	if err != nil {
-		return err
-	}
-	u.Timestamp = time.Now().UTC().UnixNano()
-	u.Uptime = sysinfo.Uptime
-	return nil
-}
-
-func Get() (u Uptime, err error) {
+// Get returns the current uptime as JSON serialized bytes using syscall.
+func Get() (p []byte, err error) {
+	var u uptime.Uptime
 	err = u.Get()
-	return u, err
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(&u)
+}
+
+// Deserialize takes some JSON serialized bytes and unmarshals them as
+// uptime.Uptime.
+func Deserialize(p []byte) (*uptime.Uptime, error) {
+	var u uptime.Uptime
+	err := json.Unmarshal(p, &u)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+// Unmarshal is an alias for Deserialize
+func Unmarshal(p []byte) (*uptime.Uptime, error) {
+	return Deserialize(p)
 }
 
 type Ticker struct {
 	*joe.Ticker
-	Data chan Uptime
+	Data chan []byte
 }
 
 // NewTicker returns a new Ticker containing a ticker channel, T,
 func NewTicker(d time.Duration) (joe.Tocker, error) {
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Uptime)}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()
 	return &t, nil
 }
@@ -70,12 +78,12 @@ func (t *Ticker) Run() {
 		case <-t.Done:
 			return
 		case <-t.Ticker.C:
-			u, err := Get()
+			p, err := Get()
 			if err != nil {
 				t.Errs <- err
 				continue
 			}
-			t.Data <- u
+			t.Data <- p
 		}
 	}
 }

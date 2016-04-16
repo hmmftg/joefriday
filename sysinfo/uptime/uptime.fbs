@@ -1,0 +1,9 @@
+// uptime.fbs
+namespace flat;
+
+table Uptime {
+	Timestamp:long;
+    Uptime:long;
+}
+
+root_type Uptime;
