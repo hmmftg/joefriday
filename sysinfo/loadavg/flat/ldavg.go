@@ -80,12 +80,6 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	return &t, nil
 }
 
-// Stop sends a signal to the done channel, stopping the goroutine.  This
-// also closes all channels that the Ticker holds.
-func (t *Ticker) Stop() {
-	t.Done <- struct{}{}
-}
-
 func (t *Ticker) Run() {
 	defer t.Close()
 	defer close(t.Data)
