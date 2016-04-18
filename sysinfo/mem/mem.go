@@ -11,9 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem returns memory information using syscalls, instead of proc
-// files,  Only basic memory information is provided by this package.  for
-// more detailed memory information, use the joefriday/mem packages.
+// Package mem returns memory information using syscalls,  Only basic
+// memory information is provided by this package.
 package mem
 
 import (
@@ -22,40 +21,6 @@ import (
 
 	joe "github.com/mohae/joefriday"
 )
-
-type Ticker struct {
-	*joe.Ticker
-	Data chan Info
-}
-
-// NewTicker returns a new Ticker containing a ticker channel, T,
-func NewTicker(d time.Duration) (joe.Tocker, error) {
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info)}
-	go t.Run()
-	return &t, nil
-}
-
-func (t *Ticker) Run() {
-	defer t.Close()
-	defer close(t.Data)
-	// read until done signal is received
-	for {
-		select {
-		case <-t.Done:
-			return
-		case <-t.Ticker.C:
-			s, err := Get()
-			if err != nil {
-				t.Errs <- err
-				continue
-			}
-			t.Data <- s
-		}
-	}
-}
-
-// tick runs on each tick.  When a done signal is received, it returns;
-// closing the Ticker's channels.
 
 // Info holds information about system memory.
 type Info struct {
@@ -68,7 +33,7 @@ type Info struct {
 	FreeSwap  uint64
 }
 
-// Get gets the meminfo information.
+// Get gets the system's memory information.
 func (m *Info) Get() error {
 	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
@@ -85,8 +50,49 @@ func (m *Info) Get() error {
 	return nil
 }
 
-// Get gets the meminfo information.
+// Get gets the system's memory information.
 func Get() (m Info, err error) {
 	err = m.Get()
 	return m, err
+}
+
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan Info
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info)}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	// read until done signal is received
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.Ticker.C:
+			s, err := Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- s
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

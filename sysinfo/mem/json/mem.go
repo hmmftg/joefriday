@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of /proc/meminfo.  Instead of
-// returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a mem.Info struct is
-// provided.
+// Package json handles JSON based processing of memory information using
+// syscall.  Instead of returning a Go struct, it returns JSON serialized
+// bytes.  A function to deserialize the JSON serialized bytes into a
+// mem.Info struct is provided.
 package json
 
 import (
@@ -25,8 +25,7 @@ import (
 	"github.com/mohae/joefriday/sysinfo/mem"
 )
 
-// Get returns the current meminfo as JSON serialized bytes using the
-// package's global Profiler.
+// Get returns the current meminfo as JSON serialized bytes.
 func Get() (p []byte, err error) {
 	var inf mem.Info
 	err = inf.Get()
@@ -52,21 +51,25 @@ func Unmarshal(p []byte) (*mem.Info, error) {
 	return Deserialize(p)
 }
 
+// Ticker delivers mem.Info as JSON serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 }
 
-// NewTicker returns a new Ticker containing a ticker channel, T,
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()
 	return &t, nil
 }
 
+// Run runs the ticker.
 func (t *Ticker) Run() {
-	defer t.Close()
-	defer close(t.Data)
 	// read until done signal is received
 	for {
 		select {
@@ -81,4 +84,10 @@ func (t *Ticker) Run() {
 			t.Data <- s
 		}
 	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

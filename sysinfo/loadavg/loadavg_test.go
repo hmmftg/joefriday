@@ -34,6 +34,7 @@ func TestTicker(t *testing.T) {
 		}
 	}
 	tk.Stop()
+	tk.Close()
 }
 
 func checkLoadAvg(n string, l LoadAvg, t *testing.T) {

@@ -26,6 +26,7 @@ func TestTicker(t *testing.T) {
 		}
 	}
 	tk.Stop()
+	tk.Close()
 }
 
 func TestGetMemInfo(t *testing.T) {

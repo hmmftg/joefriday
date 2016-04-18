@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of the syscalls uptime
-// information.  Instead of returning a Go struct, it returns Flatbuffer
+// Package flat handles Flatbuffer based processing of the systems uptime
+// using syscall. Instead of returning a Go struct, it returns Flatbuffer
 // serialized bytes.  A function to deserialize the Flatbuffer serialized
-// bytes into a uptime.Uptime struct is provided.  After the first use,
+// bytes into a loadavg.LoadAvg struct is provided.  After the first use,
 // the flatbuffer builder is reused.
 package flat
 
@@ -24,7 +24,7 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	uptime "github.com/mohae/joefriday/sysinfo/uptime"
+	"github.com/mohae/joefriday/sysinfo/uptime"
 )
 
 var builder = fb.NewBuilder(0)
@@ -63,22 +63,26 @@ func Deserialize(p []byte) *uptime.Uptime {
 	return &u
 }
 
+// Ticker delivers loadavg.LoadAvg as Flatbuffers serialized bytes at
+// intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 }
 
-// NewTicker returns a new Uptime Ticker that uses Flatbuffers to serialize
-// the data.
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()
 	return &t, nil
 }
 
+// Run runs the ticker.
 func (t *Ticker) Run() {
-	defer t.Close()
-	defer close(t.Data)
 	// read until done signal is received
 	for {
 		select {
@@ -93,4 +97,10 @@ func (t *Ticker) Run() {
 			t.Data <- p
 		}
 	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

@@ -85,8 +85,8 @@ func NewTicker(d time.Duration) *Ticker {
 	return &Ticker{Ticker: time.NewTicker(d), Errs: make(chan error), Done: make(chan struct{})}
 }
 
-// Stop sends a signal to the done channel, stopping the goroutine.  This
-// also closes all channels that the Ticker holds.
+// Stop sends a signal to the done channel; stopping the Ticker.  The Ticker
+// can be restarted with Run.
 func (t *Ticker) Stop() {
 	t.Done <- struct{}{}
 }

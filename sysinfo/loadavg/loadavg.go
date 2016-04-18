@@ -24,6 +24,7 @@ import (
 
 const LoadsScale = 65536
 
+// LoadAvg holds loadavg information and the timestamp of the data.
 type LoadAvg struct {
 	Timestamp int64
 	One       float64
@@ -52,21 +53,25 @@ func Get() (LoadAvg, error) {
 	return l, err
 }
 
+// Ticker delivers the loadavg at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan LoadAvg
 }
 
-// NewTicker returns a new Ticker containing a ticker channel, T,
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan LoadAvg)}
 	go t.Run()
 	return &t, nil
 }
 
+// Run runs the ticker.
 func (t *Ticker) Run() {
-	defer t.Close()
-	defer close(t.Data)
 	// read until done signal is received
 	for {
 		select {
@@ -81,4 +86,10 @@ func (t *Ticker) Run() {
 			t.Data <- s
 		}
 	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

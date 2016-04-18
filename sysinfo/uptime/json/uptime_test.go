@@ -60,6 +60,7 @@ func TestTicker(t *testing.T) {
 		}
 	}
 	tk.Stop()
+	tk.Close()
 }
 
 func checkUptime(n string, u *uptime.Uptime, t *testing.T) {

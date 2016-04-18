@@ -1,4 +1,4 @@
-package sysinfo
+package uptime
 
 import (
 	"testing"
@@ -45,6 +45,7 @@ func TestTicker(t *testing.T) {
 		}
 	}
 	tk.Stop()
+	tk.Close()
 }
 
 func BenchmarkGet(b *testing.B) {

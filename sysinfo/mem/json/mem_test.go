@@ -60,6 +60,7 @@ func TestTicker(t *testing.T) {
 		}
 	}
 	tk.Stop()
+	tk.Close()
 }
 
 func checkMemInfo(n string, m *mem.Info, t *testing.T) {

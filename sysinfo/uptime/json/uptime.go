@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of uptime.  Instead of
-// returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a uptime.Uptime struct is
-// provided.
+// Package json handles JSON based processing of uptime using syscall.
+// Instead of returning a Go struct, it returns JSON serialized bytes.  A
+// function to deserialize the JSON serialized bytes into a loadavg.LoadAvg
+// struct is provided.
 package json
 
 import (
@@ -22,10 +22,10 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	uptime "github.com/mohae/joefriday/sysinfo/uptime"
+	"github.com/mohae/joefriday/sysinfo/uptime"
 )
 
-// Get returns the current uptime as JSON serialized bytes using syscall.
+// Get returns the current uptime as JSON serialized bytes.
 func Get() (p []byte, err error) {
 	var u uptime.Uptime
 	err = u.Get()
@@ -51,12 +51,17 @@ func Unmarshal(p []byte) (*uptime.Uptime, error) {
 	return Deserialize(p)
 }
 
+// Ticker delivers loadavg.LoadAvg as JSON serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 }
 
-// NewTicker returns a new Ticker containing a ticker channel, T,
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()
@@ -64,8 +69,6 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 }
 
 func (t *Ticker) Run() {
-	defer t.Close()
-	defer close(t.Data)
 	// read until done signal is received
 	for {
 		select {
@@ -80,4 +83,10 @@ func (t *Ticker) Run() {
 			t.Data <- p
 		}
 	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of /proc/meminfo.
+// Package flat handles Flatbuffer based processing of loadavg using syscall.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
 // A function to deserialize the Flatbuffer serialized bytes into a
-// mem.LoadAvg struct is provided.  After the first use, the flatbuffer
+// loadavg.LoadAvg struct is provided.  After the first use, the flatbuffer
 // builder is reused.
 package flat
 
@@ -30,8 +30,7 @@ import (
 var builder = fb.NewBuilder(0)
 var mu sync.Mutex
 
-// Get returns the current meminfo as Flatbuffer serialized bytes using the
-// package's global Profiler.
+// Get returns the current loadavg as Flatbuffer serialized bytes.
 func Get() (p []byte, err error) {
 	var l loadavg.LoadAvg
 	err = l.Get()
@@ -41,7 +40,7 @@ func Get() (p []byte, err error) {
 	return Serialize(&l), nil
 }
 
-// Serialize mem.LoadAvg using Flatbuffers.
+// Serialize loadavg.LoadAvg using Flatbuffers.
 func Serialize(l *loadavg.LoadAvg) []byte {
 	mu.Lock()
 	defer mu.Unlock()
@@ -57,7 +56,7 @@ func Serialize(l *loadavg.LoadAvg) []byte {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as mem.LoadAvg.
+// as loadavg.LoadAvg.
 func Deserialize(p []byte) *loadavg.LoadAvg {
 	lF := GetRootAsLoadAvg(p, 0)
 	l := &loadavg.LoadAvg{}
@@ -68,21 +67,26 @@ func Deserialize(p []byte) *loadavg.LoadAvg {
 	return l
 }
 
+// Ticker delivers loadavg.LoadAvg as Flatbuffers serialized bytes at
+// intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 }
 
-// NewTicker returns a new Ticker containing a ticker channel, T,
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()
 	return &t, nil
 }
 
+// Run runs the ticker.
 func (t *Ticker) Run() {
-	defer t.Close()
-	defer close(t.Data)
 	// read until done signal is received
 	for {
 		select {
@@ -97,4 +101,10 @@ func (t *Ticker) Run() {
 			t.Data <- s
 		}
 	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

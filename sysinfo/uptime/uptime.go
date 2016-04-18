@@ -11,9 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package uptime returns the system's uptime.  Instead of using proc files,
-// a syscall is made.
-package sysinfo
+// Package uptime returns the system's uptime using syscall.
+package uptime
 
 import (
 	"syscall"
@@ -22,11 +21,13 @@ import (
 	joe "github.com/mohae/joefriday"
 )
 
+// Uptime holds the current uptime and timestamp.
 type Uptime struct {
 	Timestamp int64
 	Uptime    int64 // sorry for the stutter
 }
 
+// Get gets the current uptime.
 func (u *Uptime) Get() error {
 	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
@@ -38,26 +39,31 @@ func (u *Uptime) Get() error {
 	return nil
 }
 
+// Get gets the current uptime.
 func Get() (u Uptime, err error) {
 	err = u.Get()
 	return u, err
 }
 
+// Ticker deliivers the uptime at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan Uptime
 }
 
-// NewTicker returns a new Ticker containing a ticker channel, T,
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Uptime)}
 	go t.Run()
 	return &t, nil
 }
 
+// Run runs the ticker.
 func (t *Ticker) Run() {
-	defer t.Close()
-	defer close(t.Data)
 	// read until done signal is received
 	for {
 		select {
@@ -72,4 +78,10 @@ func (t *Ticker) Run() {
 			t.Data <- u
 		}
 	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }
