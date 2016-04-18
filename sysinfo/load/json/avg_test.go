@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/sysinfo/loadavg"
+	"github.com/mohae/joefriday/sysinfo/load"
 )
 
 func TestSerializeDeserialize(t *testing.T) {
@@ -63,7 +63,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkMemInfo(n string, l *loadavg.LoadAvg, t *testing.T) {
+func checkMemInfo(n string, l *load.LoadAvg, t *testing.T) {
 	if l.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
@@ -88,7 +88,7 @@ func BenchmarkGet(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var l *loadavg.LoadAvg
+	var l *load.LoadAvg
 	b.StopTimer()
 	p, _ := Get()
 	b.StartTimer()

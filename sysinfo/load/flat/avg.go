@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of loadavg using syscall.
+// Package flat handles Flatbuffer based processing of load using syscall.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
 // A function to deserialize the Flatbuffer serialized bytes into a
-// loadavg.LoadAvg struct is provided.  After the first use, the flatbuffer
+// load.LoadAvg struct is provided.  After the first use, the flatbuffer
 // builder is reused.
 package flat
 
@@ -24,15 +24,15 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/sysinfo/loadavg"
+	"github.com/mohae/joefriday/sysinfo/load"
 )
 
 var builder = fb.NewBuilder(0)
 var mu sync.Mutex
 
-// Get returns the current loadavg as Flatbuffer serialized bytes.
+// Get returns the current load as Flatbuffer serialized bytes.
 func Get() (p []byte, err error) {
-	var l loadavg.LoadAvg
+	var l load.LoadAvg
 	err = l.Get()
 	if err != nil {
 		return nil, err
@@ -40,8 +40,8 @@ func Get() (p []byte, err error) {
 	return Serialize(&l), nil
 }
 
-// Serialize loadavg.LoadAvg using Flatbuffers.
-func Serialize(l *loadavg.LoadAvg) []byte {
+// Serialize load.LoadAvg using Flatbuffers.
+func Serialize(l *load.LoadAvg) []byte {
 	mu.Lock()
 	defer mu.Unlock()
 	// ensure the Builder is in a usable state.
@@ -56,10 +56,10 @@ func Serialize(l *loadavg.LoadAvg) []byte {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as loadavg.LoadAvg.
-func Deserialize(p []byte) *loadavg.LoadAvg {
+// as load.LoadAvg.
+func Deserialize(p []byte) *load.LoadAvg {
 	lF := GetRootAsLoadAvg(p, 0)
-	l := &loadavg.LoadAvg{}
+	l := &load.LoadAvg{}
 	l.Timestamp = lF.Timestamp()
 	l.One = lF.One()
 	l.Five = lF.Five()
@@ -67,7 +67,7 @@ func Deserialize(p []byte) *loadavg.LoadAvg {
 	return l
 }
 
-// Ticker delivers loadavg.LoadAvg as Flatbuffers serialized bytes at
+// Ticker delivers load.LoadAvg as Flatbuffers serialized bytes at
 // intervals.
 type Ticker struct {
 	*joe.Ticker

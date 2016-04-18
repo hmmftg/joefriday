@@ -1,4 +1,4 @@
-package avg
+package load
 
 import (
 	"testing"

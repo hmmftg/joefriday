@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of loadavg using syscall.
+// Package json handles JSON based processing of load using syscall.
 // Instead of returning a Go struct, it returns JSON serialized bytes.  A
-// function to deserialize the JSON serialized bytes into a loadavg.LoadAvg
+// function to deserialize the JSON serialized bytes into a load.LoadAvg
 // struct is provided.
 package json
 
@@ -22,12 +22,12 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/sysinfo/loadavg"
+	"github.com/mohae/joefriday/sysinfo/load"
 )
 
-// Get returns the current loadavg as JSON serialized bytes.
+// Get returns the current load as JSON serialized bytes.
 func Get() (p []byte, err error) {
-	var l loadavg.LoadAvg
+	var l load.LoadAvg
 	err = l.Get()
 	if err != nil {
 		return nil, err
@@ -36,9 +36,9 @@ func Get() (p []byte, err error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// loadavg.LoadAvg.
-func Deserialize(p []byte) (*loadavg.LoadAvg, error) {
-	var l loadavg.LoadAvg
+// load.LoadAvg.
+func Deserialize(p []byte) (*load.LoadAvg, error) {
+	var l load.LoadAvg
 	err := json.Unmarshal(p, &l)
 	if err != nil {
 		return nil, err
@@ -47,11 +47,11 @@ func Deserialize(p []byte) (*loadavg.LoadAvg, error) {
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*loadavg.LoadAvg, error) {
+func Unmarshal(p []byte) (*load.LoadAvg, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers loadavg.LoadAvg as JSON serialized bytes at intervals.
+// Ticker delivers load.LoadAvg as JSON serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte

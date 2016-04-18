@@ -13,7 +13,7 @@
 
 // Package avg returns the system;s loadavg information, for 1, 5, and 15
 // minutes, using syscall.
-package avg
+package load
 
 import (
 	"syscall"
@@ -37,7 +37,7 @@ func (l *LoadAvg) Get() error {
 	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
 	if err != nil {
-		return err
+		return joe.Error{"load.avg", "get", err}
 	}
 	l.Timestamp = time.Now().UTC().UnixNano()
 	l.One = float64(sysinfo.Loads[0]) / LoadsScale
