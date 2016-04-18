@@ -71,8 +71,9 @@ func (p *Proc) Reset() error {
 }
 
 type Tocker interface {
-	Run()  // runs some code on an interval
-	Stop() // stops execution of the code
+	Close() // Close the Tocker's resources.
+	Run()   // Run some code on an interval.
+	Stop()  // Stop the Tocker.
 }
 
 type Ticker struct {
