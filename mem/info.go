@@ -27,13 +27,32 @@ import (
 
 const procFile = "/proc/meminfo"
 
+// Info holds the mem info information.
+type Info struct {
+	Timestamp    int64 `json:"timestamp"`
+	MemTotal     int64 `json:"mem_total"`
+	MemFree      int64 `json:"mem_free"`
+	MemAvailable int64 `json:"mem_available"`
+	Buffers      int64 `json:"buffers"`
+	Cached       int64 `json:"cached"`
+	SwapCached   int64 `json:"swap_cached"`
+	Active       int64 `json:"active"`
+	Inactive     int64 `json:"inactive"`
+	SwapTotal    int64 `json:"swap_total"`
+	SwapFree     int64 `json:"swap_free"`
+}
+
+func (i *Info) String() string {
+	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp).UTC(), i.MemTotal, i.MemFree, i.MemAvailable, i.Active, i.Inactive, i.Cached, i.Buffers, i.SwapTotal, i.SwapCached, i.SwapFree)
+}
+
 // Profiler is used to process the /proc/meminfo file.
 type Profiler struct {
 	*joe.Proc
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
@@ -140,7 +159,7 @@ func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -148,15 +167,30 @@ func Get() (inf *Info, err error) {
 	return std.Get()
 }
 
-// Ticker processes meminfo information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
-// channel.  Processing ends when a done signal is received.
-//
-// It is the callers responsibility to close the done and errs channels.
-func (prof *Profiler) Ticker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan Info
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
 	// predeclare some vars
 	var (
 		l, i, pos, nameLen int
@@ -168,119 +202,96 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan Info, done chan st
 	// ticker
 	for {
 		select {
-		case <-done:
+		case <-t.Done:
 			return
-		case <-ticker.C:
-			err = prof.Reset()
+		case <-t.Ticker.C:
+			err = t.Profiler.Reset()
 			if err != nil {
-				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
+				t.Errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
 				continue
 			}
-			prof.Line, err = prof.Buf.ReadSlice('\n')
-			if err != nil {
-				if err == io.EOF {
-					break
+			l = 0
+			for {
+				t.Profiler.Line, err = t.Profiler.Buf.ReadSlice('\n')
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					t.Errs <- fmt.Errorf("error reading output bytes: %s", err)
+					continue
 				}
-				errs <- fmt.Errorf("error reading output bytes: %s", err)
-				continue
-			}
-			if l > 8 && l < 14 {
-				continue
-			}
-			// first grab the key name (everything up to the ':')
-			for i, v = range prof.Line {
-				if v == ':' {
-					pos = i + 1
-					break
+				if l > 8 && l < 14 {
+					continue
 				}
-				prof.Val = append(prof.Val, v)
-			}
-			nameLen = len(prof.Val)
+				t.Profiler.Val = t.Profiler.Val[:0]
+				// first grab the key name (everything up to the ':')
+				for i, v = range t.Profiler.Line {
+					if v == ':' {
+						pos = i + 1
+						break
+					}
+					t.Profiler.Val = append(t.Profiler.Val, v)
+				}
+				nameLen = len(t.Profiler.Val)
 
-			// skip all spaces
-			for i, v = range prof.Line[pos:] {
-				if v != ' ' {
-					pos += i
-					break
+				// skip all spaces
+				for i, v = range t.Profiler.Line[pos:] {
+					if v != ' ' {
+						pos += i
+						break
+					}
 				}
-			}
 
-			// grab the numbers
-			for _, v = range prof.Line[pos:] {
-				if v == ' ' || v == '\n' {
-					break
+				// grab the numbers
+				for _, v = range t.Profiler.Line[pos:] {
+					if v == ' ' || v == '\n' {
+						break
+					}
+					t.Profiler.Val = append(t.Profiler.Val, v)
 				}
-				prof.Val = append(prof.Val, v)
-			}
-			// any conversion error results in 0
-			n, err = helpers.ParseUint(prof.Val[nameLen:])
-			if err != nil {
-				errs <- fmt.Errorf("%s: %s", prof.Val[:nameLen], err)
-			}
-			v = prof.Val[0]
+				n, err = helpers.ParseUint(t.Profiler.Val[nameLen:])
+				if err != nil {
+					t.Errs <- fmt.Errorf("%s: %s", t.Profiler.Val[:nameLen], err)
+				}
+				v = t.Profiler.Val[0]
 
-			// Reduce evaluations.
-			if v == 'M' {
-				v = prof.Val[3]
-				if v == 'T' {
-					inf.MemTotal = int64(n)
-				} else if v == 'F' {
-					inf.MemFree = int64(n)
-				} else {
-					inf.MemAvailable = int64(n)
+				// Reduce evaluations.
+				if v == 'M' {
+					v = t.Profiler.Val[3]
+					if v == 'T' {
+						inf.MemTotal = int64(n)
+					} else if v == 'F' {
+						inf.MemFree = int64(n)
+					} else {
+						inf.MemAvailable = int64(n)
+					}
+				} else if v == 'S' {
+					v = t.Profiler.Val[4]
+					if v == 'C' {
+						inf.SwapCached = int64(n)
+					} else if v == 'T' {
+						inf.SwapTotal = int64(n)
+					} else if v == 'F' {
+						inf.SwapFree = int64(n)
+					}
+				} else if v == 'B' && t.Profiler.Val[1] == 'u' {
+					inf.Buffers = int64(n)
+				} else if v == 'I' {
+					inf.Inactive = int64(n)
+				} else if v == 'C' {
+					inf.Cached = int64(n)
+				} else if v == 'A' {
+					inf.Active = int64(n)
 				}
-			} else if v == 'S' {
-				v = prof.Val[4]
-				if v == 'C' {
-					inf.SwapCached = int64(n)
-				} else if v == 'T' {
-					inf.SwapTotal = int64(n)
-				} else if v == 'F' {
-					inf.SwapFree = int64(n)
-				}
-			} else if v == 'B' {
-				inf.Buffers = int64(n)
-			} else if v == 'I' {
-				inf.Inactive = int64(n)
-			} else if v == 'C' {
-				inf.Cached = int64(n)
-			} else if v == 'A' {
-				inf.Active = int64(n)
 			}
-			prof.Val = prof.Val[:0]
+			inf.Timestamp = time.Now().UTC().UnixNano()
+			t.Data <- inf
 		}
-		inf.Timestamp = time.Now().UTC().UnixNano()
-		out <- inf
 	}
 }
 
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
-	prof, err := New()
-	if err != nil {
-		errs <- err
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
-}
-
-// Info holds the mem info information.
-type Info struct {
-	Timestamp    int64 `json:"timestamp"`
-	MemTotal     int64 `json:"mem_total"`
-	MemFree      int64 `json:"mem_free"`
-	MemAvailable int64 `json:"mem_available"`
-	Buffers      int64 `json:"buffers"`
-	Cached       int64 `json:"cached"`
-	SwapCached   int64 `json:"swap_cached"`
-	Active       int64 `json:"active"`
-	Inactive     int64 `json:"inactive"`
-	SwapTotal    int64 `json:"swap_total"`
-	SwapFree     int64 `json:"swap_free"`
-}
-
-func (i *Info) String() string {
-	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp).UTC(), i.MemTotal, i.MemFree, i.MemAvailable, i.Active, i.Inactive, i.Cached, i.Buffers, i.SwapTotal, i.SwapCached, i.SwapFree)
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

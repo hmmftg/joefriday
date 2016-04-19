@@ -14,8 +14,8 @@
 package mem
 
 import (
-	"reflect"
 	"testing"
+	"time"
 )
 
 func TestGet(t *testing.T) {
@@ -24,18 +24,66 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	// just test to make sure the returned value != the zero value of Info.
-	if reflect.DeepEqual(inf, Info{}) {
-		t.Errorf("expected %v to not be equal to the zero value of Info, it was", inf)
-	}
+	checkInfo("get", *inf, t)
 	t.Logf("%#v\n", inf)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			checkInfo("ticker", v, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+	}
+	tk.Stop()
+	tk.Close()
+}
+
+func checkInfo(n string, i Info, t *testing.T) {
+	if i.Timestamp == 0 {
+		t.Errorf("%s: expected timestamp to be a non-zero value, got 0", n)
+	}
+	if i.MemTotal == 0 {
+		t.Errorf("%s: expected MemTotal to be a non-zero value, got 0", n)
+	}
+	if i.MemFree == 0 {
+		t.Errorf("%s: expected MemFree to be a non-zero value, got 0", n)
+	}
+	if i.MemAvailable == 0 {
+		t.Errorf("%s: expected MemAvailable to be a non-zero value, got 0", n)
+	}
+	if i.Buffers == 0 {
+		t.Errorf("%s: expected Buffers to be a non-zero value, got 0", n)
+	}
+	if i.Inactive == 0 {
+		t.Errorf("%s: expected Inactive to be a non-zero value, got 0", n)
+	}
+	if i.SwapTotal == 0 {
+		t.Errorf("%s: expected SwapTotal to be a non-zero value, got 0", n)
+	}
+	if i.SwapFree == 0 {
+		t.Errorf("%s: expected SwapFree to be a non-zero value, got 0", n)
+	}
 }
 
 var inf *Info
 
 func BenchmarkGet(b *testing.B) {
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
