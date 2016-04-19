@@ -15,6 +15,7 @@ package flat
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mohae/joefriday/mem"
 )
@@ -26,53 +27,65 @@ func TestSerializeDeserialize(t *testing.T) {
 		return
 	}
 	inf := Deserialize(p)
-	// compare
-	data := GetRootAsInfo(p, 0)
-	if inf.Timestamp != data.Timestamp() {
-		t.Errorf("got %d; want %d", inf.Timestamp, data.Timestamp())
+	checkInfo("get", *inf, t)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	if inf.MemTotal != data.MemTotal() {
-		t.Errorf("got %d; want %d", inf.MemTotal, data.MemTotal())
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			inf := Deserialize(v)
+			checkInfo("ticker", *inf, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
 	}
-	if inf.MemFree != data.MemFree() {
-		t.Errorf("got %d; want %d", inf.MemFree, data.MemFree())
+	tk.Stop()
+	tk.Close()
+}
+
+func checkInfo(n string, i mem.Info, t *testing.T) {
+	if i.Timestamp == 0 {
+		t.Errorf("%s: expected timestamp to be a non-zero value, got 0", n)
 	}
-	if inf.MemAvailable != data.MemAvailable() {
-		t.Errorf("got %d; want %d", inf.MemAvailable, data.MemAvailable())
+	if i.MemTotal == 0 {
+		t.Errorf("%s: expected MemTotal to be a non-zero value, got 0", n)
 	}
-	if inf.Buffers != data.Buffers() {
-		t.Errorf("got %d; want %d", inf.Buffers, data.Buffers())
+	if i.MemFree == 0 {
+		t.Errorf("%s: expected MemFree to be a non-zero value, got 0", n)
 	}
-	if inf.Cached != data.Cached() {
-		t.Errorf("got %d; want %d", inf.Cached, data.Cached())
+	if i.MemAvailable == 0 {
+		t.Errorf("%s: expected MemAvailable to be a non-zero value, got 0", n)
 	}
-	if inf.SwapCached != data.SwapCached() {
-		t.Errorf("got %d; want %d", inf.SwapCached, data.SwapCached())
+	if i.Buffers == 0 {
+		t.Errorf("%s: expected Buffers to be a non-zero value, got 0", n)
 	}
-	if inf.Active != data.Active() {
-		t.Errorf("got %d; want %d", inf.Active, data.Active())
+	if i.Inactive == 0 {
+		t.Errorf("%s: expected Inactive to be a non-zero value, got 0", n)
 	}
-	if inf.Inactive != data.Inactive() {
-		t.Errorf("got %d; want %d", inf.Inactive, data.Inactive())
+	if i.SwapTotal == 0 {
+		t.Errorf("%s: expected SwapTotal to be a non-zero value, got 0", n)
 	}
-	if inf.MemTotal != data.MemTotal() {
-		t.Errorf("got %d; want %d", inf.MemTotal, data.MemTotal())
-	}
-	if inf.SwapTotal != data.SwapTotal() {
-		t.Errorf("got %d; want %d", inf.SwapTotal, data.SwapTotal())
-	}
-	if inf.SwapFree != data.SwapFree() {
-		t.Errorf("got %d; want %d", inf.SwapFree, data.SwapFree())
-	}
-	if inf.SwapFree != data.SwapFree() {
-		t.Errorf("got %d; want %d", inf.SwapFree, data.SwapFree())
+	if i.SwapFree == 0 {
+		t.Errorf("%s: expected SwapFree to be a non-zero value, got 0", n)
 	}
 }
 
 func BenchmarkGet(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -83,8 +96,8 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := New()
-	inf, _ := p.Prof.Get()
+	p, _ := NewProfiler()
+	inf, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = Serialize(inf)
@@ -96,7 +109,7 @@ var inf *mem.Info
 
 func BenchmarkDeserialize(b *testing.B) {
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

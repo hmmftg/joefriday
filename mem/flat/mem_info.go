@@ -32,22 +32,22 @@ import (
 
 // Profiler is used to process the /proc/meminfo file using Flatbuffers.
 type Profiler struct {
-	Prof    *mem.Profiler
+	*mem.Profiler
 	Builder *fb.Builder
 }
 
 // Initializes and returns a mem info profiler that utilizes FlatBuffers.
-func New() (prof *Profiler, err error) {
-	p, err := mem.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := mem.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
+	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
 // Get returns the current meminfo as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	inf, err := prof.Prof.Get()
+	inf, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -63,133 +63,12 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
 	}
 	return std.Get()
-}
-
-// Ticker processes meminfo information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
-// channel.  Processing ends when a done signal is received.
-//
-// It is the callers responsibility to close the done and errs channels.
-func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
-	// predeclare some vars
-	var (
-		l, i, pos, nameLen int
-		v                  byte
-		n                  uint64
-		err                error
-	)
-	// ticker
-Tick:
-	for {
-		select {
-		case <-done:
-			return
-		case <-ticker.C:
-			prof.Builder.Reset()
-			err = prof.Prof.Reset()
-			if err != nil {
-				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
-				continue
-			}
-			InfoStart(prof.Builder)
-			InfoAddTimestamp(prof.Builder, time.Now().UTC().UnixNano())
-			for l = 0; l < 16; l++ {
-				prof.Prof.Line, err = prof.Prof.Buf.ReadSlice('\n')
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-					// An error results in sending error message and stop processing of this tick.
-					errs <- joe.Error{Type: "mem", Op: "read output bytes", Err: err}
-					continue Tick
-				}
-				if l > 7 && l < 14 {
-					continue
-				}
-				// first grab the key name (everything up to the ':')
-				for i, v = range prof.Prof.Line {
-					if v == 0x3A {
-						prof.Prof.Val = prof.Prof.Line[:i]
-						break
-					}
-				}
-				nameLen = len(prof.Prof.Val)
-				// skip all spaces
-				for i, v = range prof.Prof.Line[pos:] {
-					if v != 0x20 {
-						pos += i
-						break
-					}
-				}
-
-				// grab the numbers
-				for _, v = range prof.Prof.Line[pos:] {
-					if v == 0x20 || v == '\n' {
-						break
-					}
-					prof.Prof.Val = append(prof.Prof.Val, v)
-				}
-				// any conversion error results in 0
-				n, err = helpers.ParseUint(prof.Prof.Val[nameLen:])
-				if err != nil {
-					errs <- joe.Error{Type: "mem", Op: fmt.Sprintf("convert %s", prof.Prof.Val[:nameLen]), Err: err}
-					continue
-				}
-				v = prof.Prof.Val[0]
-				if v == 'M' {
-					v = prof.Prof.Val[3]
-					if v == 'T' {
-						InfoAddMemTotal(prof.Builder, int64(n))
-					} else if v == 'F' {
-						InfoAddMemFree(prof.Builder, int64(n))
-					} else {
-						InfoAddMemAvailable(prof.Builder, int64(n))
-					}
-				} else if v == 'S' {
-					v = prof.Prof.Val[4]
-					if v == 'C' {
-						InfoAddSwapCached(prof.Builder, int64(n))
-					} else if v == 'T' {
-						InfoAddSwapTotal(prof.Builder, int64(n))
-					} else if v == 'F' {
-						InfoAddSwapFree(prof.Builder, int64(n))
-					}
-				} else if v == 'B' {
-					InfoAddBuffers(prof.Builder, int64(n))
-				} else if v == 'I' {
-					InfoAddInactive(prof.Builder, int64(n))
-				} else if v == 'C' {
-					InfoAddMemAvailable(prof.Builder, int64(n))
-				} else if v == 'A' {
-					InfoAddInactive(prof.Builder, int64(n))
-				}
-			}
-			prof.Builder.Finish(InfoEnd(prof.Builder))
-			inf := prof.Builder.Bytes[prof.Builder.Head():]
-			out <- inf
-		}
-	}
-}
-
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	prof, err := New()
-	if err != nil {
-		errs <- err
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
 }
 
 // Serialize mem.Info using Flatbuffers.
@@ -217,7 +96,7 @@ func Serialize(inf *mem.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -242,4 +121,135 @@ func Deserialize(p []byte) *mem.Info {
 	info.SwapTotal = infoFlat.SwapTotal()
 	info.SwapFree = infoFlat.SwapFree()
 	return info
+}
+
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan []byte
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	// predeclare some vars
+	var (
+		l, i, pos, nameLen int
+		v                  byte
+		n                  uint64
+		err                error
+	)
+	// ticker
+Tick:
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.Ticker.C:
+			t.Profiler.Builder.Reset()
+			err = t.Profiler.Profiler.Reset()
+			if err != nil {
+				t.Errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
+				continue
+			}
+			InfoStart(t.Profiler.Builder)
+			InfoAddTimestamp(t.Profiler.Builder, time.Now().UTC().UnixNano())
+			for l = 0; l < 16; l++ {
+				t.Profiler.Val = t.Profiler.Val[:0]
+				t.Profiler.Profiler.Line, err = t.Profiler.Profiler.Buf.ReadSlice('\n')
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					// An error results in sending error message and stop processing of this tick.
+					t.Errs <- joe.Error{Type: "mem", Op: "read output bytes", Err: err}
+					continue Tick
+				}
+				if l > 7 && l < 14 {
+					continue
+				}
+				// first grab the key name (everything up to the ':')
+				for i, v = range t.Profiler.Profiler.Line {
+					if v == 0x3A {
+						t.Profiler.Profiler.Val = t.Profiler.Profiler.Line[:i]
+						pos = i + 1 // skip the :
+						break
+					}
+				}
+				nameLen = len(t.Profiler.Profiler.Val)
+				// skip all spaces
+				for i, v = range t.Profiler.Profiler.Line[pos:] {
+					if v != 0x20 {
+						pos += i
+						break
+					}
+				}
+
+				// grab the numbers
+				for _, v = range t.Profiler.Profiler.Line[pos:] {
+					if v == 0x20 || v == '\n' {
+						break
+					}
+					t.Profiler.Profiler.Val = append(t.Profiler.Profiler.Val, v)
+				}
+				// any conversion error results in 0
+				n, err = helpers.ParseUint(t.Profiler.Profiler.Val[nameLen:])
+				if err != nil {
+					t.Errs <- joe.Error{Type: "mem", Op: fmt.Sprintf("convert %s", t.Profiler.Profiler.Val[:nameLen]), Err: err}
+					continue
+				}
+				v = t.Profiler.Profiler.Val[0]
+				if v == 'M' {
+					v = t.Profiler.Profiler.Val[3]
+					if v == 'T' {
+						InfoAddMemTotal(t.Profiler.Builder, int64(n))
+					} else if v == 'F' {
+						InfoAddMemFree(t.Profiler.Builder, int64(n))
+					} else {
+						InfoAddMemAvailable(t.Profiler.Builder, int64(n))
+					}
+				} else if v == 'S' {
+					v = t.Profiler.Profiler.Val[4]
+					if v == 'C' {
+						InfoAddSwapCached(t.Profiler.Builder, int64(n))
+					} else if v == 'T' {
+						InfoAddSwapTotal(t.Profiler.Builder, int64(n))
+					} else if v == 'F' {
+						InfoAddSwapFree(t.Profiler.Builder, int64(n))
+					}
+				} else if v == 'B' {
+					InfoAddBuffers(t.Profiler.Builder, int64(n))
+				} else if v == 'I' {
+					InfoAddInactive(t.Profiler.Builder, int64(n))
+				} else if v == 'C' {
+					InfoAddMemAvailable(t.Profiler.Builder, int64(n))
+				} else if v == 'A' {
+					InfoAddInactive(t.Profiler.Builder, int64(n))
+				}
+			}
+			t.Profiler.Builder.Finish(InfoEnd(t.Profiler.Builder))
+			t.Data <- t.Profiler.Builder.Bytes[t.Profiler.Builder.Head():]
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }
