@@ -31,68 +31,67 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkStats(stts, t)
+	checkStats("get", stts, t)
 	t.Logf("%#v\n", stts)
 }
 
-func TestGetTicker(t *testing.T) {
-	results := make(chan []byte)
-	errs := make(chan error)
-	done := make(chan struct{})
-	go Ticker(time.Duration(400)*time.Millisecond, results, done, errs)
-	var x int
-	for {
-		if x > 0 {
-			close(done)
-			break
-		}
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case b, ok := <-results:
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
 			if !ok {
 				break
 			}
-			s, err := Deserialize(b)
+			st, err := Deserialize(v)
 			if err != nil {
-				t.Errorf("unexpected error: %s", err)
+				t.Error(err)
 				continue
 			}
-			checkStats(s, t)
-			t.Logf("%#v\n", s)
-		case err := <-errs:
+			checkStats("ticker", st, t)
+		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
-		x++
 	}
+	tk.Stop()
+	tk.Close()
 }
 
-func checkStats(s *stats.Stats, t *testing.T) {
+func checkStats(n string, s *stats.Stats, t *testing.T) {
 	if int16(stats.CLK_TCK) != s.ClkTck {
-		t.Errorf("ClkTck: got %s; want %s", s.ClkTck, stats.CLK_TCK)
+		t.Errorf("%s: ClkTck: got %s; want %s", n, s.ClkTck, stats.CLK_TCK)
 	}
 	if s.Timestamp == 0 {
-		t.Error("Timestamp: wanted non-zero value; got 0")
+		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)
 	}
 	if s.Ctxt == 0 {
-		t.Error("Ctxt: wanted non-zero value; got 0")
+		t.Errorf("%s: Ctxt: wanted non-zero value; got 0", n)
 	}
 	if s.BTime == 0 {
-		t.Error("BTime: wanted non-zero value; got 0")
+		t.Errorf("%s: BTime: wanted non-zero value; got 0", n)
 	}
 	if s.Processes == 0 {
-		t.Error("Processes: wanted non-zero value; got 0")
+		t.Errorf("%s: Processes: wanted non-zero value; got 0", n)
 	}
 	if len(s.CPU) < 2 {
-		t.Errorf("expected stats for at least 2 CPU entries, got %d", len(s.CPU))
+		t.Errorf("%s: expected stats for at least 2 CPU entries, got %d", n, len(s.CPU))
 	}
 	for i := 0; i < len(s.CPU); i++ {
 		if s.CPU[i].ID == "" {
-			t.Errorf("CPU %d: ID: wanted a non-empty value; was empty", i)
+			t.Errorf("%s: CPU %d: ID: wanted a non-empty value; was empty", n, i)
 		}
 		if s.CPU[i].User == 0 {
-			t.Errorf("CPU %d: User: wanted a non-zero value, was 0", i)
+			t.Errorf("%s: CPU %d: User: wanted a non-zero value, was 0", n, i)
 		}
 		if s.CPU[i].System == 0 {
-			t.Errorf("CPU %d: System: wanted a non-xero value, was 0", i)
+			t.Errorf("%s: CPU %d: System: wanted a non-xero value, was 0", n, i)
 		}
 	}
 }
@@ -100,7 +99,7 @@ func checkStats(s *stats.Stats, t *testing.T) {
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
@@ -111,8 +110,8 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
-	v, _ := p.Prof.Get()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Serialize(v)
@@ -123,8 +122,8 @@ func BenchmarkSerialize(b *testing.B) {
 func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
-	v, _ := p.Prof.Get()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Marshal(v)
@@ -132,11 +131,10 @@ func BenchmarkMarshal(b *testing.B) {
 	_ = jsn
 }
 
-var stts *stats.Stats
-
 func BenchmarkDeserialize(b *testing.B) {
+	var stts *stats.Stats
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	sttsB, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -146,8 +144,9 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
+	var stts *stats.Stats
 	b.StartTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	sttsB, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

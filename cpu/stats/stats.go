@@ -56,6 +56,31 @@ func ClkTck() error {
 	return nil
 }
 
+// Stats holds the /proc/stat information
+type Stats struct {
+	ClkTck    int16  `json:"clk_tck"`
+	Timestamp int64  `json:"timestamp"`
+	Ctxt      int64  `json:"ctxt"`
+	BTime     int64  `json:"btime"`
+	Processes int64  `json:"processes"`
+	CPU       []Stat `json:"cpu"`
+}
+
+// Stat is for capturing the CPU information of /proc/stat.
+type Stat struct {
+	ID        string `json:"ID"`
+	User      int64  `json:"user"`
+	Nice      int64  `json:"nice"`
+	System    int64  `json:"system"`
+	Idle      int64  `json:"idle"`
+	IOWait    int64  `json:"io_wait"`
+	IRQ       int64  `json:"irq"`
+	SoftIRQ   int64  `json:"soft_irq"`
+	Steal     int64  `json:"steal"`
+	Quest     int64  `json:"quest"`
+	QuestNice int64  `json:"quest_nice"`
+}
+
 // Profiler is used to process the /proc/stats file.
 type Profiler struct {
 	*joe.Proc
@@ -63,7 +88,7 @@ type Profiler struct {
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	// if it hasn't been set, set it.
 	if atomic.LoadInt32(&CLK_TCK) == 0 {
 		err = ClkTck()
@@ -222,7 +247,7 @@ func Get() (stat *Stats, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -230,71 +255,48 @@ func Get() (stat *Stats, err error) {
 	return std.Get()
 }
 
-// Ticker processes CPU utilization information on a ticker.  The generated
-// utilization data is sent to the outCh.  Any errors encountered are sent
-// to the errCh.  Processing ends when either a done signal is received or
-// the done channel is closed.
-//
-// It is the callers responsibility to close the done and errs channels.
-//
-// TODO: better handle errors, e.g. restore cur from prior so that there
-// isn't the possibility of temporarily having bad data, just a missed
-// collection interval.
-func (prof *Profiler) Ticker(interval time.Duration, out chan *Stats, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan *Stats
+	*Profiler
+}
 
-	// read each line until eof
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *Stats), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	// ticker
 	for {
 		select {
-		case <-done:
+		case <-t.Done:
 			return
-		case <-ticker.C:
-			s, err := prof.Get()
+		case <-t.Ticker.C:
+			s, err := t.Profiler.Get()
 			if err != nil {
-				errs <- err
+				t.Errs <- err
 				continue
 			}
-			out <- s
+			t.Data <- s
 		}
 	}
 }
 
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan *Stats, done chan struct{}, errs chan error) {
-	prof, err := New()
-	if err != nil {
-		errs <- err
-		close(out)
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
-}
-
-// Stats holds the /proc/stat information
-type Stats struct {
-	ClkTck    int16  `json:"clk_tck"`
-	Timestamp int64  `json:"timestamp"`
-	Ctxt      int64  `json:"ctxt"`
-	BTime     int64  `json:"btime"`
-	Processes int64  `json:"processes"`
-	CPU       []Stat `json:"cpu"`
-}
-
-// Stat is for capturing the CPU information of /proc/stat.
-type Stat struct {
-	ID        string `json:"ID"`
-	User      int64  `json:"user"`
-	Nice      int64  `json:"nice"`
-	System    int64  `json:"system"`
-	Idle      int64  `json:"idle"`
-	IOWait    int64  `json:"io_wait"`
-	IRQ       int64  `json:"irq"`
-	SoftIRQ   int64  `json:"soft_irq"`
-	Steal     int64  `json:"steal"`
-	Quest     int64  `json:"quest"`
-	QuestNice int64  `json:"quest_nice"`
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }
