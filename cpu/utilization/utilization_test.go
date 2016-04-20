@@ -19,7 +19,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	p, err := New()
+	p, err := NewProfiler()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
@@ -33,28 +33,28 @@ func TestGet(t *testing.T) {
 	checkUtilization("get", u, t)
 }
 
-func TestGetTicker(t *testing.T) {
-	results := make(chan *Utilization)
-	errs := make(chan error)
-	done := make(chan struct{})
-	go Ticker(time.Second, results, done, errs)
-	var x int
-	for {
-		if x > 0 {
-			close(done)
-			break
-		}
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case u, ok := <-results:
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
 			if !ok {
 				break
 			}
-			checkUtilization("ticker", u, t)
-		case err := <-errs:
+			checkUtilization("ticker", v, t)
+		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
-		x++
 	}
+	tk.Stop()
+	tk.Close()
 }
 
 func checkUtilization(name string, u *Utilization, t *testing.T) {
@@ -78,7 +78,7 @@ func checkUtilization(name string, u *Utilization, t *testing.T) {
 	}
 	for i, v := range u.CPU {
 		if v.ID == "" {
-			t.Errorf("%s: %d: expected ID to have a value, was empty", i, name)
+			t.Errorf("%s: %d: expected ID to have a value, was empty", name, i)
 		}
 	}
 }
