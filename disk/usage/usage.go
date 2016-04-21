@@ -36,8 +36,8 @@ type Profiler struct {
 
 // Returns an initialized Profiler; ready to use.  The prior stats is set to
 // the current stats snapshot.
-func New() (prof *Profiler, err error) {
-	p, err := stats.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := stats.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func Get() (u *structs.Usage, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -80,20 +80,54 @@ func Get() (u *structs.Usage, err error) {
 	return std.Get()
 }
 
-// Ticker calculates disk usage on a ticker.  The generated data is sent to
-// the out channel.  Any errors encountered are sent to the errs channel.
-// Processing ends when a done signal is received.
-//
-// It is the callers responsibility to close the done and errs channels.
-//
-// TODO: better handle errors, e.g. restore cur from prior so that there
-// isn't the possibility of temporarily having bad data, just a missed
-// collection interval.
-func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Usage, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
-	// predeclare some vars
+// CalculateUsage returns the difference between the current /proc/net/dev
+// data and the prior one.
+func (prof *Profiler) CalculateUsage(cur *structs.Stats) *structs.Usage {
+	u := &structs.Usage{Timestamp: cur.Timestamp, Devices: make([]structs.Device, len(cur.Devices))}
+	u.TimeDelta = cur.Timestamp - prof.prior.Timestamp
+	for i := 0; i < len(cur.Devices); i++ {
+		u.Devices[i].Major = cur.Devices[i].Major
+		u.Devices[i].Minor = cur.Devices[i].Minor
+		u.Devices[i].Name = cur.Devices[i].Name
+		u.Devices[i].ReadsCompleted = cur.Devices[i].ReadsCompleted - prof.prior.Devices[i].ReadsCompleted
+		u.Devices[i].ReadsMerged = cur.Devices[i].ReadsMerged - prof.prior.Devices[i].ReadsMerged
+		u.Devices[i].ReadSectors = cur.Devices[i].ReadSectors - prof.prior.Devices[i].ReadSectors
+		u.Devices[i].ReadingTime = cur.Devices[i].ReadingTime - prof.prior.Devices[i].ReadingTime
+		u.Devices[i].WritesCompleted = cur.Devices[i].WritesCompleted - prof.prior.Devices[i].WritesCompleted
+		u.Devices[i].WritesMerged = cur.Devices[i].WritesMerged - prof.prior.Devices[i].WritesMerged
+		u.Devices[i].WrittenSectors = cur.Devices[i].WrittenSectors - prof.prior.Devices[i].WrittenSectors
+		u.Devices[i].WritingTime = cur.Devices[i].WritingTime - prof.prior.Devices[i].WritingTime
+		u.Devices[i].IOInProgress = cur.Devices[i].IOInProgress - prof.prior.Devices[i].IOInProgress
+		u.Devices[i].IOTime = cur.Devices[i].IOTime - prof.prior.Devices[i].IOTime
+		u.Devices[i].WeightedIOTime = cur.Devices[i].WeightedIOTime - prof.prior.Devices[i].WeightedIOTime
+	}
+	return u
+}
+
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan *structs.Usage
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.Usage), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
 	var (
 		i, priorPos, pos, fieldNum int
 		n                          uint64
@@ -102,28 +136,28 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Usage, do
 		dev                        structs.Device
 		cur                        structs.Stats
 	)
-tick:
+	// ticker
 	for {
 		select {
-		case <-done:
+		case <-t.Done:
 			return
-		case <-ticker.C:
+		case <-t.Ticker.C:
 			cur.Timestamp = time.Now().UTC().UnixNano()
-			err = prof.Reset()
+			err = t.Reset()
 			if err != nil {
-				errs <- joe.Error{Type: "disk", Op: "usage ticker", Err: err}
-				continue tick
+				t.Errs <- joe.Error{Type: "disk", Op: "usage ticker", Err: err}
+				break
 			}
 			cur.Devices = cur.Devices[:0]
 			// read each line until eof
 			for {
-				prof.Val = prof.Val[:0]
-				prof.Line, err = prof.Buf.ReadSlice('\n')
+				t.Val = t.Val[:0]
+				t.Line, err = t.Buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
 						break
 					}
-					errs <- fmt.Errorf("/proc/diskstats: read output bytes: %s", err)
+					t.Errs <- fmt.Errorf("/proc/diskstats: read output bytes: %s", err)
 					break
 				}
 				pos = 0
@@ -132,7 +166,7 @@ tick:
 				for {
 					// ignore spaces on the first two fields
 					if fieldNum < 2 {
-						for i, v = range prof.Line[pos:] {
+						for i, v = range t.Line[pos:] {
 							if v != 0x20 {
 								break
 							}
@@ -140,15 +174,15 @@ tick:
 						pos += i
 					}
 					fieldNum++
-					for i, v = range prof.Line[pos:] {
+					for i, v = range t.Line[pos:] {
 						if v == 0x20 || v == '\n' {
 							break
 						}
 					}
 					if fieldNum != 3 {
-						n, err = helpers.ParseUint(prof.Line[pos : pos+i])
+						n, err = helpers.ParseUint(t.Line[pos : pos+i])
 						if err != nil {
-							errs <- joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+							t.Errs <- joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
 							continue
 						}
 					}
@@ -163,7 +197,7 @@ tick:
 								dev.Minor = uint32(n)
 								continue
 							}
-							dev.Name = string(prof.Line[priorPos:pos])
+							dev.Name = string(t.Line[priorPos:pos])
 							continue
 						}
 						if fieldNum < 6 {
@@ -210,51 +244,13 @@ tick:
 				}
 				cur.Devices = append(cur.Devices, dev)
 			}
-			out <- prof.CalculateUsage(&cur)
+			t.Data <- t.CalculateUsage(&cur)
 			// set prior info
-			prof.prior.Timestamp = cur.Timestamp
-			if len(prof.prior.Devices) != len(cur.Devices) {
-				prof.prior.Devices = make([]structs.Device, len(cur.Devices))
+			t.Profiler.prior.Timestamp = cur.Timestamp
+			if len(t.Profiler.prior.Devices) != len(cur.Devices) {
+				t.Profiler.prior.Devices = make([]structs.Device, len(cur.Devices))
 			}
-			copy(prof.prior.Devices, cur.Devices)
-
+			copy(t.Profiler.prior.Devices, cur.Devices)
 		}
 	}
-}
-
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan *structs.Usage, done chan struct{}, errs chan error) {
-	prof, err := New()
-	if err != nil {
-		errs <- err
-		close(out)
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
-}
-
-// CalculateUsage returns the difference between the current /proc/net/dev
-// data and the prior one.
-func (prof *Profiler) CalculateUsage(cur *structs.Stats) *structs.Usage {
-	u := &structs.Usage{Timestamp: cur.Timestamp, Devices: make([]structs.Device, len(cur.Devices))}
-	u.TimeDelta = cur.Timestamp - prof.prior.Timestamp
-	for i := 0; i < len(cur.Devices); i++ {
-		u.Devices[i].Major = cur.Devices[i].Major
-		u.Devices[i].Minor = cur.Devices[i].Minor
-		u.Devices[i].Name = cur.Devices[i].Name
-		u.Devices[i].ReadsCompleted = cur.Devices[i].ReadsCompleted - prof.prior.Devices[i].ReadsCompleted
-		u.Devices[i].ReadsMerged = cur.Devices[i].ReadsMerged - prof.prior.Devices[i].ReadsMerged
-		u.Devices[i].ReadSectors = cur.Devices[i].ReadSectors - prof.prior.Devices[i].ReadSectors
-		u.Devices[i].ReadingTime = cur.Devices[i].ReadingTime - prof.prior.Devices[i].ReadingTime
-		u.Devices[i].WritesCompleted = cur.Devices[i].WritesCompleted - prof.prior.Devices[i].WritesCompleted
-		u.Devices[i].WritesMerged = cur.Devices[i].WritesMerged - prof.prior.Devices[i].WritesMerged
-		u.Devices[i].WrittenSectors = cur.Devices[i].WrittenSectors - prof.prior.Devices[i].WrittenSectors
-		u.Devices[i].WritingTime = cur.Devices[i].WritingTime - prof.prior.Devices[i].WritingTime
-		u.Devices[i].IOInProgress = cur.Devices[i].IOInProgress - prof.prior.Devices[i].IOInProgress
-		u.Devices[i].IOTime = cur.Devices[i].IOTime - prof.prior.Devices[i].IOTime
-		u.Devices[i].WeightedIOTime = cur.Devices[i].WeightedIOTime - prof.prior.Devices[i].WeightedIOTime
-	}
-	return u
 }
