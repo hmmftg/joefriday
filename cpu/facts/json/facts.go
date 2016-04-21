@@ -26,21 +26,21 @@ import (
 
 // Profiler is used to process the /proc/cpuinfo file.
 type Profiler struct {
-	Prof *facts.Profiler
+	*facts.Profiler
 }
 
 // Initializes and returns a cpu Facts profiler.
-func New() (prof *Profiler, err error) {
-	p, err := facts.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := facts.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p}, nil
+	return &Profiler{Profiler: p}, nil
 }
 
 // Get returns the current cpuinfo (Facts) as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	fct, err := prof.Prof.Get()
+	fct, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +74,7 @@ func Serialize(fct *facts.Facts) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}

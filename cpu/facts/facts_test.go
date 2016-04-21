@@ -41,11 +41,10 @@ func TestFacts(t *testing.T) {
 	t.Logf("%#v", facts)
 }
 
-var fact *Facts
-
 func BenchmarkGet(b *testing.B) {
+	var fact *Facts
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		fact, _ = p.Get()

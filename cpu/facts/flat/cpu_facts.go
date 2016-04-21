@@ -32,8 +32,8 @@ type Profiler struct {
 }
 
 // Initializes and returns a cpu facts profiler that utilizes FlatBuffers.
-func New() (prof *Profiler, err error) {
-	factsProf, err := facts.New()
+func NewProfiler() (prof *Profiler, err error) {
+	factsProf, err := facts.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func Serialize(fcts *facts.Facts) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
