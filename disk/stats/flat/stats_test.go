@@ -27,48 +27,48 @@ func TestSerializeDeserialize(t *testing.T) {
 		return
 	}
 	statsD := Deserialize(p)
-	checkStats(statsD, t)
+	checkStats("get", statsD, t)
+	t.Logf("%#v\n", statsD)
 }
 
-func TestGetTicker(t *testing.T) {
-	results := make(chan []byte)
-	errs := make(chan error)
-	done := make(chan struct{})
-	go Ticker(time.Duration(400)*time.Millisecond, results, done, errs)
-	var x int
-	for {
-		if x > 0 {
-			close(done)
-			break
-		}
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case b, ok := <-results:
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
 			if !ok {
 				break
 			}
-			s := Deserialize(b)
-			checkStats(s, t)
-			t.Logf("%#v\n", s)
-		case err := <-errs:
+			st := Deserialize(v)
+			checkStats("ticker", st, t)
+		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
-		x++
 	}
+	tk.Stop()
+	tk.Close()
 }
 
-func checkStats(s *structs.Stats, t *testing.T) {
+func checkStats(n string, s *structs.Stats, t *testing.T) {
 	if s.Timestamp == 0 {
-		t.Error("Timestamp: wanted non-zero value; got 0")
+		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)
 	}
 	if len(s.Devices) == 0 {
-		t.Errorf("expected there to be devices; didn't get any")
+		t.Errorf("%s: expected there to be devices; didn't get any", n)
 	}
 	for i := 0; i < len(s.Devices); i++ {
 		if s.Devices[i].Major == 0 {
-			t.Errorf("Device %d: Major: wanted a non-zero value, was 0", i)
+			t.Errorf("%s: Device %d: Major: wanted a non-zero value, was 0", n, i)
 		}
 		if s.Devices[i].Name == "" {
-			t.Errorf("Device %d: Name: wanted a non-empty value; was empty", i)
+			t.Errorf("%s: Device %d: Name: wanted a non-empty value; was empty", n, i)
 		}
 	}
 }
@@ -76,7 +76,7 @@ func checkStats(s *structs.Stats, t *testing.T) {
 func BenchmarkGet(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -87,7 +87,7 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	st, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -100,7 +100,7 @@ var st *structs.Stats
 
 func BenchmarkDeserialize(b *testing.B) {
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
