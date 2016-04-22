@@ -19,7 +19,6 @@
 package flat
 
 import (
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -149,10 +148,10 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 func (t *Ticker) Run() {
 	// predeclare some vars
 	var (
-		l, i, pos, nameLen int
-		v                  byte
-		n                  uint64
-		err                error
+		i, pos, line, nameLen int
+		v                     byte
+		n                     uint64
+		err                   error
 	)
 	// ticker
 Tick:
@@ -164,12 +163,12 @@ Tick:
 			t.Profiler.Builder.Reset()
 			err = t.Profiler.Profiler.Reset()
 			if err != nil {
-				t.Errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
+				t.Errs <- err
 				continue
 			}
 			InfoStart(t.Profiler.Builder)
 			InfoAddTimestamp(t.Profiler.Builder, time.Now().UTC().UnixNano())
-			for l = 0; l < 16; l++ {
+			for line = 0; line < 16; line++ {
 				t.Profiler.Val = t.Profiler.Val[:0]
 				t.Profiler.Profiler.Line, err = t.Profiler.Profiler.Buf.ReadSlice('\n')
 				if err != nil {
@@ -177,10 +176,10 @@ Tick:
 						break
 					}
 					// An error results in sending error message and stop processing of this tick.
-					t.Errs <- joe.Error{Type: "mem", Op: "read output bytes", Err: err}
+					t.Errs <- &joe.ReadError{Err: err}
 					continue Tick
 				}
-				if l > 7 && l < 14 {
+				if line > 7 && line < 14 {
 					continue
 				}
 				// first grab the key name (everything up to the ':')
@@ -210,7 +209,7 @@ Tick:
 				// any conversion error results in 0
 				n, err = helpers.ParseUint(t.Profiler.Profiler.Val[nameLen:])
 				if err != nil {
-					t.Errs <- joe.Error{Type: "mem", Op: fmt.Sprintf("convert %s", t.Profiler.Profiler.Val[:nameLen]), Err: err}
+					t.Errs <- &joe.ParseError{Info: string(t.Val[:nameLen]), Err: err}
 					continue
 				}
 				v = t.Profiler.Profiler.Val[0]

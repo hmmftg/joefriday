@@ -37,7 +37,7 @@ func (l *LoadAvg) Get() error {
 	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
 	if err != nil {
-		return joe.Error{"load.avg", "get", err}
+		return err
 	}
 	l.Timestamp = time.Now().UTC().UnixNano()
 	l.One = float64(sysinfo.Loads[0]) / LoadsScale

@@ -17,6 +17,8 @@ package stats
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"os/exec"
 	"strconv"
@@ -42,15 +44,15 @@ func ClkTck() error {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return joe.Error{Type: "cpu", Op: "get conf CLK_TCK", Err: err}
+		return errors.New(fmt.Sprintf("get CLK_TCK: %s", err))
 	}
 	b, err := out.ReadBytes('\n')
 	if err != nil {
-		return joe.Error{Type: "cpu", Op: "read conf CLK_TCK output", Err: err}
+		return errors.New(fmt.Sprintf("err CLK_TCK: %s", err))
 	}
 	v, err := strconv.Atoi(string(b[:len(b)-1]))
 	if err != nil {
-		return joe.Error{Type: "cpu", Op: "processing conf CLK_TCK output", Err: err}
+		return errors.New(fmt.Sprintf("process CLK_TCK output: %s", err))
 	}
 	atomic.StoreInt32(&CLK_TCK, int32(v))
 	return nil
@@ -125,7 +127,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, joe.Error{Type: "cpu stat", Op: "reading /proc/stat output", Err: err}
+			return nil, &joe.ReadError{Err: err}
 		}
 		prof.Val = prof.Val[:0]
 		// Get everything up to the first space, this is the key.  Not all keys are processed.
@@ -162,7 +164,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 						fieldNum++
 						n, err = helpers.ParseUint(prof.Line[j : pos+i])
 						if err != nil {
-							return stats, joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+							return stats, &joe.ParseError{Info: string(prof.Val[:]), Err: err}
 						}
 						j = pos + i + 1
 						if fieldNum < 6 {
@@ -211,7 +213,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 			// Otherwise it's ctxt info; rest of the line is the data.
 			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
-				return stats, joe.Error{Type: "cpu stat", Op: "convert ctxt data", Err: err}
+				return stats, &joe.ParseError{Info: string(prof.Val[:]), Err: err}
 			}
 			stats.Ctxt = int64(n)
 			continue
@@ -220,7 +222,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 			// rest of the line is the data
 			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
-				return stats, joe.Error{Type: "cpu stat", Op: "convert btime data", Err: err}
+				return stats, &joe.ParseError{Info: string(prof.Val[:]), Err: err}
 			}
 			stats.BTime = int64(n)
 			continue
@@ -229,7 +231,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 			// rest of the line is the data
 			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
-				return stats, joe.Error{Type: "cpu stat", Op: "convert processes data", Err: err}
+				return stats, &joe.ParseError{Info: string(prof.Val[:]), Err: err}
 			}
 			stats.Processes = int64(n)
 			continue

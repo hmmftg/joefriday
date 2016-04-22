@@ -93,12 +93,12 @@ func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Usage, do
 	defer close(out)
 	// predeclare some vars
 	var (
-		i, l, pos, fieldNum int
-		n                   uint64
-		v                   byte
-		err                 error
-		cur                 structs.Info
-		iUsage              structs.Interface
+		i, pos, line, fieldNum int
+		n                      uint64
+		v                      byte
+		err                    error
+		cur                    structs.Info
+		iUsage                 structs.Interface
 	)
 	// ticker
 tick:
@@ -110,10 +110,11 @@ tick:
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = prof.Reset()
 			if err != nil {
-				errs <- joe.Error{Type: "net", Op: "usage ticker", Err: err}
+				errs <- err
 				continue tick
 			}
 			cur.Interfaces = cur.Interfaces[:0]
+			line = 0
 			// read each line until eof
 			for {
 				prof.Val = prof.Val[:0]
@@ -122,11 +123,11 @@ tick:
 					if err == io.EOF {
 						break
 					}
-					errs <- fmt.Errorf("/proc/mem/dev: read output bytes: %s", err)
+					errs <- &joe.ReadError{Err: err}
 					break
 				}
-				l++
-				if l < 3 {
+				line++
+				if line < 3 {
 					continue
 				}
 				// first grab the interface name (everything up to the ':')
@@ -163,7 +164,7 @@ tick:
 					n, err = helpers.ParseUint(prof.Line[pos : pos+1])
 					pos += i
 					if err != nil {
-						errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iUsage.Name, err)
+						errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 						continue
 					}
 					if fieldNum < 9 {
@@ -239,7 +240,6 @@ tick:
 				prof.prior.Interfaces = make([]structs.Interface, len(cur.Interfaces))
 			}
 			copy(prof.prior.Interfaces, cur.Interfaces)
-			l = 0
 		}
 	}
 }
@@ -299,12 +299,12 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 // Run runs the ticker.
 func (t *Ticker) Run() {
 	var (
-		i, l, pos, fieldNum int
-		n                   uint64
-		v                   byte
-		err                 error
-		cur                 structs.Info
-		iUsage              structs.Interface
+		i, pos, line, fieldNum int
+		n                      uint64
+		v                      byte
+		err                    error
+		cur                    structs.Info
+		iUsage                 structs.Interface
 	)
 	// ticker
 	for {
@@ -315,9 +315,10 @@ func (t *Ticker) Run() {
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = t.Reset()
 			if err != nil {
-				t.Errs <- joe.Error{Type: "net", Op: "usage ticker", Err: err}
+				t.Errs <- err
 				break
 			}
+			line = 0
 			cur.Interfaces = cur.Interfaces[:0]
 			// read each line until eof
 			for {
@@ -327,11 +328,11 @@ func (t *Ticker) Run() {
 					if err == io.EOF {
 						break
 					}
-					t.Errs <- fmt.Errorf("/proc/mem/dev: read output bytes: %s", err)
+					t.Errs <- &joe.ReadError{Err: err}
 					break
 				}
-				l++
-				if l < 3 {
+				line++
+				if line < 3 {
 					continue
 				}
 				// first grab the interface name (everything up to the ':')
@@ -368,7 +369,7 @@ func (t *Ticker) Run() {
 					n, err = helpers.ParseUint(t.Line[pos : pos+1])
 					pos += i
 					if err != nil {
-						t.Errs <- fmt.Errorf("/proc/net/dev ticker: %s: %s", iUsage.Name, err)
+						t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 						continue
 					}
 					if fieldNum < 9 {
@@ -444,7 +445,6 @@ func (t *Ticker) Run() {
 				t.Profiler.prior.Interfaces = make([]structs.Interface, len(cur.Interfaces))
 			}
 			copy(t.Profiler.prior.Interfaces, cur.Interfaces)
-			l = 0
 		}
 	}
 }

@@ -52,7 +52,7 @@ func (prof *Profiler) Get() (u Uptime, err error) {
 			if err == io.EOF {
 				break
 			}
-			return u, joe.Error{Type: "platform", Op: "read /proc/version", Err: err}
+			return u, &joe.ReadError{Err: err}
 		}
 		// space delimits the two values
 		for i, v = range prof.Line {
@@ -62,11 +62,11 @@ func (prof *Profiler) Get() (u Uptime, err error) {
 		}
 		u.Total, err = strconv.ParseFloat(string(prof.Line[:i]), 64)
 		if err != nil {
-			return u, err
+			return u, &joe.ParseError{Info: "total", Err: err}
 		}
 		u.Idle, err = strconv.ParseFloat(string(prof.Line[i+1:len(prof.Line)-1]), 64)
 		if err != nil {
-			return u, err
+			return u, &joe.ParseError{Info: "idle", Err: err}
 		}
 
 	}

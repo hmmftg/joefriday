@@ -15,6 +15,7 @@
 package stats
 
 import (
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -47,10 +48,10 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 		return nil, err
 	}
 	var (
-		i, priorPos, pos, fieldNum int
-		n                          uint64
-		v                          byte
-		dev                        structs.Device
+		i, priorPos, pos, line, fieldNum int
+		n                                uint64
+		v                                byte
+		dev                              structs.Device
 	)
 
 	stats = &structs.Stats{Timestamp: time.Now().UTC().UnixNano(), Devices: make([]structs.Device, 0, 2)}
@@ -62,8 +63,9 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, joe.Error{Type: "cpu stat", Op: "reading /proc/stat output", Err: err}
+			return nil, &joe.ReadError{Err: err}
 		}
+		line++
 		pos = 0
 		fieldNum = 0
 		// process the fields in the line
@@ -86,7 +88,7 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 			if fieldNum != 3 {
 				n, err = helpers.ParseUint(prof.Line[pos : pos+i])
 				if err != nil {
-					return stats, joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+					return stats, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
 			}
 			priorPos, pos = pos, pos+i+1

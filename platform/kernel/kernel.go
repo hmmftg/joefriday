@@ -55,7 +55,7 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, joe.Error{Type: "platform", Op: "read /proc/version", Err: err}
+			return nil, &joe.ReadError{Err: err}
 		}
 		// The version is everything from the space, 0x20, prior to the version string, up to the first '(', 0x28, - 1 byte
 		for i, v = range prof.Line {

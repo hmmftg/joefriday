@@ -181,7 +181,7 @@ Tick:
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = t.Reset()
 			if err != nil {
-				t.Errs <- joe.Error{Type: "cpu", Op: "utilization ticker: seek /proc/stat", Err: err}
+				t.Errs <- err
 				continue Tick
 			}
 			cur.CPU = cur.CPU[:0]
@@ -192,7 +192,7 @@ Tick:
 					if err == io.EOF {
 						break
 					}
-					t.Errs <- joe.Error{Type: "cpu stat", Op: "reading /proc/stat output", Err: err}
+					t.Errs <- &joe.ReadError{Err: err}
 					break
 				}
 				// Get everything up to the first space, this is the key.  Not all keys are processed.
@@ -229,7 +229,7 @@ Tick:
 								fieldNum++
 								n, err = helpers.ParseUint(t.Line[j : pos+i])
 								if err != nil {
-									t.Errs <- joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+									t.Errs <- &joe.ParseError{Info: string(t.Val[:]), Err: err}
 									continue
 								}
 								j = pos + i + 1
@@ -279,7 +279,7 @@ Tick:
 					// Otherwise it's ctxt info; rest of the line is the data.
 					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])
 					if err != nil {
-						t.Errs <- joe.Error{Type: "cpu stat", Op: "convert ctxt data", Err: err}
+						t.Errs <- &joe.ParseError{Info: string(t.Val[:]), Err: err}
 						continue
 					}
 					cur.Ctxt = int64(n)
@@ -289,7 +289,7 @@ Tick:
 					// rest of the line is the data
 					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])
 					if err != nil {
-						t.Errs <- joe.Error{Type: "cpu stat", Op: "convert btime data", Err: err}
+						t.Errs <- &joe.ParseError{Info: string(t.Val[:]), Err: err}
 						continue
 					}
 					cur.BTime = int64(n)
@@ -299,7 +299,7 @@ Tick:
 					// rest of the line is the data
 					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])
 					if err != nil {
-						t.Errs <- joe.Error{Type: "cpu stat", Op: "convert processes data", Err: err}
+						t.Errs <- &joe.ParseError{Info: string(t.Val[:]), Err: err}
 						continue
 					}
 					cur.Processes = int64(n)

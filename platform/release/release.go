@@ -54,7 +54,7 @@ func (prof *Profiler) Get() (r *Release, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, joe.Error{Type: "platform", Op: "read /proc/verion", Err: err}
+			return nil, &joe.ReadError{Err: err}
 		}
 		// The key is everything up to '='; 0x3D
 		for i, v = range prof.Line {

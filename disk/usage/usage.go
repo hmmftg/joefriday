@@ -129,12 +129,12 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 // Run runs the ticker.
 func (t *Ticker) Run() {
 	var (
-		i, priorPos, pos, fieldNum int
-		n                          uint64
-		v                          byte
-		err                        error
-		dev                        structs.Device
-		cur                        structs.Stats
+		i, priorPos, pos, line, fieldNum int
+		n                                uint64
+		v                                byte
+		err                              error
+		dev                              structs.Device
+		cur                              structs.Stats
 	)
 	// ticker
 	for {
@@ -145,7 +145,7 @@ func (t *Ticker) Run() {
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = t.Reset()
 			if err != nil {
-				t.Errs <- joe.Error{Type: "disk", Op: "usage ticker", Err: err}
+				t.Errs <- err
 				break
 			}
 			cur.Devices = cur.Devices[:0]
@@ -157,9 +157,10 @@ func (t *Ticker) Run() {
 					if err == io.EOF {
 						break
 					}
-					t.Errs <- fmt.Errorf("/proc/diskstats: read output bytes: %s", err)
+					t.Errs <- &joe.ReadError{Err: err}
 					break
 				}
+				line++
 				pos = 0
 				fieldNum = 0
 				// process the fields in the line
@@ -182,7 +183,7 @@ func (t *Ticker) Run() {
 					if fieldNum != 3 {
 						n, err = helpers.ParseUint(t.Line[pos : pos+i])
 						if err != nil {
-							t.Errs <- joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+							t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							continue
 						}
 					}

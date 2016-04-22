@@ -16,7 +16,6 @@
 package facts
 
 import (
-	"fmt"
 	"io"
 	"strconv"
 	"sync"
@@ -61,7 +60,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, fmt.Errorf("error reading output bytes: %s", err)
+			return nil, &joe.ReadError{Err: err}
 		}
 		prof.Val = prof.Val[:0]
 		// First grab the attribute name; everything up to the ':'.  The key may have
@@ -94,7 +93,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			if v == 'p' { // apicid
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
-					return nil, joe.Error{Type: "cpu", Op: "facts: apicid", Err: err}
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
 				cpu.ApicID = int16(n)
 			}
@@ -107,7 +106,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 				if v == 'c' { // cpu cores
 					n, err = helpers.ParseUint(prof.Val[nameLen:])
 					if err != nil {
-						return nil, joe.Error{Type: "cpu", Op: "facts: cpu cores", Err: err}
+						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
 					cpu.CPUCores = int16(n)
 					continue
@@ -119,7 +118,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 				if v == 'M' { // cpu MHz
 					f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
 					if err != nil {
-						return nil, joe.Error{Type: "cpu", Op: "facts: cpu MHz", Err: err}
+						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
 					cpu.CPUMHz = float32(f)
 					continue
@@ -145,7 +144,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			if v == 'i' { // core id
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
-					return nil, joe.Error{Type: "cpu", Op: "facts: core id", Err: err}
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
 				cpu.CoreID = int16(n)
 			}
@@ -186,7 +185,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			if v == 'h' { // physical id
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
-					return nil, joe.Error{Type: "cpu", Op: "facts: physical id", Err: err}
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
 				cpu.PhysicalID = int16(n)
 				continue
@@ -203,7 +202,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 				cpuCnt++
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
-					return nil, joe.Error{Type: "cpu", Op: "fact: processor", Err: err}
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
 				cpu = Fact{Processor: int16(n)}
 			}
@@ -214,7 +213,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			if v == 'i' { // siblings
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
-					return nil, joe.Error{Type: "cpu", Op: "facts: siblings", Err: err}
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
 				cpu.Siblings = int16(n)
 				continue
@@ -227,7 +226,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 		if v == 'b' { // bogomips
 			f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
 			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: bogomips", Err: err}
+				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}
 			cpu.BogoMIPS = float32(f)
 			continue
@@ -235,7 +234,7 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 		if v == 'i' { // initial apicid
 			n, err = helpers.ParseUint(prof.Val[nameLen:])
 			if err != nil {
-				return nil, joe.Error{Type: "cpu", Op: "facts: initial apicid", Err: err}
+				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}
 			cpu.InitialApicID = int16(n)
 			continue

@@ -15,6 +15,7 @@
 package loadavg
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 	"sync"
@@ -47,10 +48,10 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 		return l, err
 	}
 	var (
-		i, priorPos, pos, field int
-		n                       uint64
-		f                       float64
-		v                       byte
+		i, priorPos, pos, line, fieldNum int
+		n                                uint64
+		f                                float64
+		v                                byte
 	)
 
 	for {
@@ -59,8 +60,9 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 			if err == io.EOF {
 				break
 			}
-			return l, joe.Error{Type: "platform", Op: "read /proc/version", Err: err}
+			return l, &joe.ReadError{Err: err}
 		}
+		line++
 		for {
 			// space delimits the values
 			for i, v = range prof.Line[pos:] {
@@ -69,24 +71,24 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 					break
 				}
 			}
-			field++
-			if field <= 3 {
+			fieldNum++
+			if fieldNum <= 3 {
 				f, err = strconv.ParseFloat(string(prof.Line[priorPos:pos-1]), 64)
 				if err != nil {
-					return l, err
+					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
-				if field == 1 {
+				if fieldNum == 1 {
 					l.LastMinute = float32(f)
 					continue
 				}
-				if field == 2 {
+				if fieldNum == 2 {
 					l.LastFive = float32(f)
 					continue
 				}
 				l.LastTen = float32(f)
 				continue
 			}
-			if field == 4 {
+			if fieldNum == 4 {
 				// get the process information: separated by /
 				for i, v = range prof.Line[priorPos:pos] {
 					if v == '/' {
@@ -95,12 +97,12 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 				}
 				n, err = helpers.ParseUint(prof.Line[priorPos : priorPos+i])
 				if err != nil {
-					return l, err
+					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
 				l.RunningProcesses = int32(n)
 				n, err = helpers.ParseUint(prof.Line[priorPos+i+1 : pos-1])
 				if err != nil {
-					return l, err
+					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
 				l.TotalProcesses = int32(n)
 				continue
@@ -119,12 +121,12 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 // Ticker gets the loadavg information on a ticker
 func (prof *Profiler) Ticker(d time.Duration, out chan LoadAvg, done chan struct{}, errs chan error) {
 	var (
-		i, priorPos, pos, field int
-		n                       uint64
-		f                       float64
-		v                       byte
-		l                       LoadAvg
-		err                     error
+		i, priorPos, pos, line, fieldNum int
+		n                                uint64
+		f                                float64
+		v                                byte
+		l                                LoadAvg
+		err                              error
 	)
 
 	ticker := time.NewTicker(d)
@@ -138,6 +140,7 @@ func (prof *Profiler) Ticker(d time.Duration, out chan LoadAvg, done chan struct
 			return
 		case <-ticker.C:
 			prof.Reset()
+			line = 0
 		runTicker:
 			for {
 				prof.Line, err = prof.Buf.ReadSlice('\n')
@@ -145,9 +148,10 @@ func (prof *Profiler) Ticker(d time.Duration, out chan LoadAvg, done chan struct
 					if err == io.EOF {
 						break
 					}
-					errs <- joe.Error{Type: "platform", Op: "read /proc/version", Err: err}
+					errs <- &joe.ReadError{Err: err}
 					break runTicker
 				}
+				line++
 				for {
 					// space delimits the values
 					for i, v = range prof.Line[pos:] {
@@ -156,25 +160,25 @@ func (prof *Profiler) Ticker(d time.Duration, out chan LoadAvg, done chan struct
 							break
 						}
 					}
-					field++
-					if field <= 3 {
+					fieldNum++
+					if fieldNum <= 3 {
 						f, err = strconv.ParseFloat(string(prof.Line[priorPos:pos-1]), 64)
 						if err != nil {
-							errs <- err
+							errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break runTicker
 						}
-						if field == 1 {
+						if fieldNum == 1 {
 							l.LastMinute = float32(f)
 							continue
 						}
-						if field == 2 {
+						if fieldNum == 2 {
 							l.LastFive = float32(f)
 							continue
 						}
 						l.LastTen = float32(f)
 						continue
 					}
-					if field == 4 {
+					if fieldNum == 4 {
 						// get the process information: separated by /
 						for i, v = range prof.Line[priorPos:pos] {
 							if v == '/' {
@@ -183,13 +187,13 @@ func (prof *Profiler) Ticker(d time.Duration, out chan LoadAvg, done chan struct
 						}
 						n, err = helpers.ParseUint(prof.Line[priorPos : priorPos+i])
 						if err != nil {
-							errs <- err
+							errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break runTicker
 						}
 						l.RunningProcesses = int32(n)
 						n, err = helpers.ParseUint(prof.Line[priorPos+i+1 : pos-1])
 						if err != nil {
-							errs <- err
+							errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break runTicker
 						}
 						l.TotalProcesses = int32(n)
@@ -197,7 +201,7 @@ func (prof *Profiler) Ticker(d time.Duration, out chan LoadAvg, done chan struct
 					}
 					n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 					if err != nil {
-						errs <- err
+						errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 						break runTicker
 					}
 					l.PID = int32(n)

@@ -47,10 +47,10 @@ func NewProfiler() (prof *Profiler, err error) {
 // Get returns the current network interface information.
 func (prof *Profiler) Get() (*structs.Info, error) {
 	var (
-		l, i, pos, fieldNum int
-		n                   uint64
-		v                   byte
-		iInfo               structs.Interface
+		i, pos, line, fieldNum int
+		n                      uint64
+		v                      byte
+		iInfo                  structs.Interface
 	)
 	err := prof.Reset()
 	if err != nil {
@@ -64,10 +64,10 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, fmt.Errorf("error reading output bytes: %s", err)
+			return nil, &joe.ReadError{Err: err}
 		}
-		l++
-		if l < 3 {
+		line++
+		if line < 3 {
 			continue
 		}
 		prof.Val = prof.Val[:0]
@@ -106,7 +106,7 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 			n, err = helpers.ParseUint(prof.Line[pos : pos+i])
 			pos += i
 			if err != nil {
-				return nil, fmt.Errorf("%s: %s", iInfo.Name, err)
+				return nil, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 			}
 			if fieldNum < 9 {
 				if fieldNum < 5 {

@@ -77,7 +77,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 			if err == io.EOF {
 				break
 			}
-			return inf, fmt.Errorf("error reading output bytes: %s", err)
+			return inf, &joe.ReadError{Err: err}
 		}
 		if l > 8 && l < 14 {
 			continue
@@ -110,7 +110,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		// any conversion error results in 0
 		n, err := helpers.ParseUint(prof.Val[nameLen:])
 		if err != nil {
-			return inf, fmt.Errorf("%s: %s", prof.Val[:nameLen], err)
+			return inf, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 		}
 
 		v = prof.Val[0]
@@ -193,11 +193,11 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 func (t *Ticker) Run() {
 	// predeclare some vars
 	var (
-		l, i, pos, nameLen int
-		v                  byte
-		n                  uint64
-		err                error
-		inf                Info
+		i, pos, line, nameLen int
+		v                     byte
+		n                     uint64
+		err                   error
+		inf                   Info
 	)
 	// ticker
 	for {
@@ -207,20 +207,20 @@ func (t *Ticker) Run() {
 		case <-t.Ticker.C:
 			err = t.Profiler.Reset()
 			if err != nil {
-				t.Errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
+				t.Errs <- err
 				continue
 			}
-			l = 0
+			line = 0
 			for {
 				t.Profiler.Line, err = t.Profiler.Buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
 						break
 					}
-					t.Errs <- fmt.Errorf("error reading output bytes: %s", err)
+					t.Errs <- &joe.ReadError{Err: err}
 					continue
 				}
-				if l > 8 && l < 14 {
+				if line > 8 && line < 14 {
 					continue
 				}
 				t.Profiler.Val = t.Profiler.Val[:0]
@@ -251,7 +251,7 @@ func (t *Ticker) Run() {
 				}
 				n, err = helpers.ParseUint(t.Profiler.Val[nameLen:])
 				if err != nil {
-					t.Errs <- fmt.Errorf("%s: %s", t.Profiler.Val[:nameLen], err)
+					t.Errs <- &joe.ParseError{Info: string(t.Val[:nameLen]), Err: err}
 				}
 				v = t.Profiler.Val[0]
 
