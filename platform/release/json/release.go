@@ -26,7 +26,7 @@ import (
 
 // Profiler is used to process the OS release information file using JSON.
 type Profiler struct {
-	Prof *release.Profiler
+	*release.Profiler
 }
 
 // Initializes and returns a json.Profiler for OS release information.
@@ -35,12 +35,12 @@ func New() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p}, nil
+	return &Profiler{Profiler: p}, nil
 }
 
 // Get returns the current OS release information as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	k, err := prof.Prof.Get()
+	k, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}

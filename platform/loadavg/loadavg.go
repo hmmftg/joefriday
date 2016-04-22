@@ -27,6 +27,16 @@ import (
 
 const procFile = "/proc/loadavg"
 
+// LoadAvg holds loadavg information
+type LoadAvg struct {
+	LastMinute       float32
+	LastFive         float32
+	LastTen          float32
+	RunningProcesses int32
+	TotalProcesses   int32
+	PID              int32
+}
+
 // Profiler processes the loadavg information.
 type Profiler struct {
 	*joe.Proc
@@ -246,14 +256,4 @@ func Ticker(d time.Duration, out chan LoadAvg, done chan struct{}, errs chan err
 	}
 	std.Ticker(d, out, done, errs)
 	return
-}
-
-// LoadAvg holds loadavg information
-type LoadAvg struct {
-	LastMinute       float32
-	LastFive         float32
-	LastTen          float32
-	RunningProcesses int32
-	TotalProcesses   int32
-	PID              int32
 }

@@ -24,7 +24,7 @@ import (
 	"github.com/mohae/joefriday/cpu/facts"
 )
 
-// Profiler is used to process the /proc/cpuinfo file.
+// Profiler is used to process the cpuinfo (facts) as JSON serialized bytes.
 type Profiler struct {
 	*facts.Profiler
 }

@@ -11,13 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stat handles processing of the /proc/stats file: information about
-// kernel activity.
+// Package stats handles the processing of information about kernel activity,
+// /proc/stat, as Stats.
 package stats
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -44,15 +43,15 @@ func ClkTck() error {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return errors.New(fmt.Sprintf("get CLK_TCK: %s", err))
+		return fmt.Errorf("get CLK_TCK: %s", err)
 	}
 	b, err := out.ReadBytes('\n')
 	if err != nil {
-		return errors.New(fmt.Sprintf("err CLK_TCK: %s", err))
+		return fmt.Errorf("err CLK_TCK: %s", err)
 	}
 	v, err := strconv.Atoi(string(b[:len(b)-1]))
 	if err != nil {
-		return errors.New(fmt.Sprintf("process CLK_TCK output: %s", err))
+		return fmt.Errorf("process CLK_TCK output: %s", err)
 	}
 	atomic.StoreInt32(&CLK_TCK, int32(v))
 	return nil
@@ -286,8 +285,8 @@ func (t *Ticker) Run() {
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
-			s, err := t.Profiler.Get()
+		case <-t.C:
+			s, err := t.Get()
 			if err != nil {
 				t.Errs <- err
 				continue

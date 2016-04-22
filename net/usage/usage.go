@@ -322,7 +322,7 @@ func (t *Ticker) Run() {
 			cur.Interfaces = cur.Interfaces[:0]
 			// read each line until eof
 			for {
-				t.Profiler.Val = t.Val[:0]
+				t.Val = t.Val[:0]
 				t.Line, err = t.Buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
@@ -440,11 +440,11 @@ func (t *Ticker) Run() {
 				cur.Interfaces = append(cur.Interfaces, iUsage)
 			}
 			t.Data <- t.CalculateUsage(&cur)
-			t.Profiler.prior.Timestamp = cur.Timestamp
-			if len(t.Profiler.prior.Interfaces) != len(cur.Interfaces) {
-				t.Profiler.prior.Interfaces = make([]structs.Interface, len(cur.Interfaces))
+			t.prior.Timestamp = cur.Timestamp
+			if len(t.prior.Interfaces) != len(cur.Interfaces) {
+				t.prior.Interfaces = make([]structs.Interface, len(cur.Interfaces))
 			}
-			copy(t.Profiler.prior.Interfaces, cur.Interfaces)
+			copy(t.prior.Interfaces, cur.Interfaces)
 		}
 	}
 }

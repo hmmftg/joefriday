@@ -120,8 +120,8 @@ func (t *Ticker) Run() {
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
-			p, err := t.Profiler.Get()
+		case <-t.C:
+			p, err := t.Get()
 			if err != nil {
 				t.Errs <- err
 				continue

@@ -23,6 +23,18 @@ import (
 
 const procFile = "/proc/version"
 
+// Kernel holds kernel information.
+type Kernel struct {
+	OS          string `json:"os"`
+	Version     string `json:"version"`
+	CompileUser string `json:"compile_user"`
+	GCC         string `json:"gcc"`
+	OSGCC       string `json:"os_gcc"`
+	Type        string `json:"type"`
+	CompileDate string `json:"compile_date"`
+	Arch        string `json:"arch"`
+}
+
 // Profiler processes the kernel information.
 type Profiler struct {
 	*joe.Proc
@@ -146,16 +158,4 @@ func (k *Kernel) SetArch() {
 			return
 		}
 	}
-}
-
-// Kernel holds kernel information.
-type Kernel struct {
-	OS          string `json:"os"`
-	Version     string `json:"version"`
-	CompileUser string `json:"compile_user"`
-	GCC         string `json:"gcc"`
-	OSGCC       string `json:"os_gcc"`
-	Type        string `json:"type"`
-	CompileDate string `json:"compile_date"`
-	Arch        string `json:"arch"`
 }

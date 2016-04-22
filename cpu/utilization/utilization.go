@@ -172,17 +172,16 @@ func (t *Ticker) Run() {
 		cur                 stats.Stats
 		stat                stats.Stat
 	)
-Tick:
 	for {
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
+		case <-t.C:
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = t.Reset()
 			if err != nil {
 				t.Errs <- err
-				continue Tick
+				break
 			}
 			cur.CPU = cur.CPU[:0]
 			// read each line until eof

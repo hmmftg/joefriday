@@ -27,7 +27,7 @@ import (
 // Profiler is used to process the uptime information, /proc/version, using
 // JSON.
 type Profiler struct {
-	Profiler *uptime.Profiler
+	*uptime.Profiler
 }
 
 // Initializes and returns a json.Profiler for uptime information.

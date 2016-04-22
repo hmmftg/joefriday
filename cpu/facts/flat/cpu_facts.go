@@ -11,11 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of CPU facts.  Instead
-// of returning a Go struct, it returns Flatbuffer serialized bytes.
-// A function to deserialize the Flatbuffer serialized bytes into a
-// facts.Facts struct is provided.  After the first use, the flatbuffer
-// builder is reused.
+// Package flat handles Flatbuffer based processing of CPU facts.  Instead of
+// returning a Go struct, it returns Flatbuffer serialized bytes.  A function
+// to deserialize the Flatbuffer serialized bytes into a facts.Facts struct
+// is provided.  After the first use, the flatbuffer builder is reused.
 package flat
 
 import (
@@ -25,7 +24,8 @@ import (
 	"github.com/mohae/joefriday/cpu/facts"
 )
 
-// Profiler is used to process the /proc/cpuinfo file using Flatbuffers.
+// Profiler is used to process the cpuinfo (facts) as Flatbuffers serialized
+// bytes.
 type Profiler struct {
 	*facts.Profiler
 	*fb.Builder
@@ -33,11 +33,11 @@ type Profiler struct {
 
 // Initializes and returns a cpu facts profiler that utilizes FlatBuffers.
 func NewProfiler() (prof *Profiler, err error) {
-	factsProf, err := facts.NewProfiler()
+	p, err := facts.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Profiler: factsProf, Builder: fb.NewBuilder(0)}, nil
+	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
 // Get returns the current cpuinfo (facts) as Flatbuffer serialized bytes.

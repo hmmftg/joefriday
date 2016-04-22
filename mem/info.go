@@ -204,7 +204,7 @@ func (t *Ticker) Run() {
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
+		case <-t.C:
 			err = t.Profiler.Reset()
 			if err != nil {
 				t.Errs <- err
@@ -223,19 +223,19 @@ func (t *Ticker) Run() {
 				if line > 8 && line < 14 {
 					continue
 				}
-				t.Profiler.Val = t.Profiler.Val[:0]
+				t.Val = t.Val[:0]
 				// first grab the key name (everything up to the ':')
-				for i, v = range t.Profiler.Line {
+				for i, v = range t.Line {
 					if v == ':' {
 						pos = i + 1
 						break
 					}
-					t.Profiler.Val = append(t.Profiler.Val, v)
+					t.Val = append(t.Val, v)
 				}
-				nameLen = len(t.Profiler.Val)
+				nameLen = len(t.Val)
 
 				// skip all spaces
-				for i, v = range t.Profiler.Line[pos:] {
+				for i, v = range t.Line[pos:] {
 					if v != ' ' {
 						pos += i
 						break
@@ -243,21 +243,21 @@ func (t *Ticker) Run() {
 				}
 
 				// grab the numbers
-				for _, v = range t.Profiler.Line[pos:] {
+				for _, v = range t.Line[pos:] {
 					if v == ' ' || v == '\n' {
 						break
 					}
-					t.Profiler.Val = append(t.Profiler.Val, v)
+					t.Val = append(t.Val, v)
 				}
-				n, err = helpers.ParseUint(t.Profiler.Val[nameLen:])
+				n, err = helpers.ParseUint(t.Val[nameLen:])
 				if err != nil {
 					t.Errs <- &joe.ParseError{Info: string(t.Val[:nameLen]), Err: err}
 				}
-				v = t.Profiler.Val[0]
+				v = t.Val[0]
 
 				// Reduce evaluations.
 				if v == 'M' {
-					v = t.Profiler.Val[3]
+					v = t.Val[3]
 					if v == 'T' {
 						inf.MemTotal = int64(n)
 					} else if v == 'F' {
@@ -266,7 +266,7 @@ func (t *Ticker) Run() {
 						inf.MemAvailable = int64(n)
 					}
 				} else if v == 'S' {
-					v = t.Profiler.Val[4]
+					v = t.Val[4]
 					if v == 'C' {
 						inf.SwapCached = int64(n)
 					} else if v == 'T' {
@@ -274,7 +274,7 @@ func (t *Ticker) Run() {
 					} else if v == 'F' {
 						inf.SwapFree = int64(n)
 					}
-				} else if v == 'B' && t.Profiler.Val[1] == 'u' {
+				} else if v == 'B' && t.Val[1] == 'u' {
 					inf.Buffers = int64(n)
 				} else if v == 'I' {
 					inf.Inactive = int64(n)

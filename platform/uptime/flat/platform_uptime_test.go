@@ -49,7 +49,7 @@ func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
 	p, _ := New()
-	k, _ := p.Prof.Get()
+	k, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = Serialize(k)

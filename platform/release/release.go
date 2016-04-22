@@ -23,6 +23,17 @@ import (
 
 const etcFile = "/etc/os-release"
 
+// Release holds information about the OS release.
+type Release struct {
+	ID           string `json:"id"`
+	IDLike       string `json:"id_like"`
+	PrettyName   string `json:"pretty_name"`
+	Version      string `json:"version"`
+	VersionID    string `json:"version_id"`
+	HomeURL      string `json:"home_url"`
+	BugReportURL string `json:"bug_report_url"`
+}
+
 // Profiler processes the OS release information, /etc/os-release.
 type Profiler struct {
 	*joe.Proc
@@ -118,15 +129,4 @@ func Get() (r *Release, err error) {
 		}
 	}
 	return std.Get()
-}
-
-// Release holds information about the OS release.
-type Release struct {
-	ID           string `json:"id"`
-	IDLike       string `json:"id_like"`
-	PrettyName   string `json:"pretty_name"`
-	Version      string `json:"version"`
-	VersionID    string `json:"version_id"`
-	HomeURL      string `json:"home_url"`
-	BugReportURL string `json:"bug_report_url"`
 }

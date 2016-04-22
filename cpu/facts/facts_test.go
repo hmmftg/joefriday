@@ -24,7 +24,7 @@ func TestFacts(t *testing.T) {
 		t.Error("expected timestamp to have a nonzero value, it didn't")
 	}
 	if len(facts.CPU) == 0 {
-		t.Error("Expected at least 1 CPU entrie, got none")
+		t.Error("Expected at least 1 CPU entry, got none")
 	}
 	// spot check some vars
 	for i, fact := range facts.CPU {

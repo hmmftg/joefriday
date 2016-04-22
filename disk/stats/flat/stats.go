@@ -12,8 +12,8 @@
 // limitations under the License.
 
 // Package flat handles Flatbuffer based processing of disk stats.  Instead
-// of returning a Go struct, it returns Flatbuffer serialized bytes.
-// A function to deserialize the Flatbuffer serialized bytes into a
+// of returning a Go struct, it returns Flatbuffer serialized bytes.  A
+// function to deserialize the Flatbuffer serialized bytes into a
 // structs.Stats struct is provided.  After the first use, the flatbuffer
 // builder is reused.
 package flat
@@ -186,8 +186,8 @@ func (t *Ticker) Run() {
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
-			p, err := t.Profiler.Get()
+		case <-t.C:
+			p, err := t.Get()
 			if err != nil {
 				t.Errs <- err
 				continue

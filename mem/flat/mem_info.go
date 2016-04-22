@@ -32,7 +32,7 @@ import (
 // Profiler is used to process the /proc/meminfo file using Flatbuffers.
 type Profiler struct {
 	*mem.Profiler
-	Builder *fb.Builder
+	*fb.Builder
 }
 
 // Initializes and returns a mem info profiler that utilizes FlatBuffers.
@@ -159,18 +159,18 @@ Tick:
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
-			t.Profiler.Builder.Reset()
+		case <-t.C:
+			t.Builder.Reset()
 			err = t.Profiler.Profiler.Reset()
 			if err != nil {
 				t.Errs <- err
 				continue
 			}
-			InfoStart(t.Profiler.Builder)
-			InfoAddTimestamp(t.Profiler.Builder, time.Now().UTC().UnixNano())
+			InfoStart(t.Builder)
+			InfoAddTimestamp(t.Builder, time.Now().UTC().UnixNano())
 			for line = 0; line < 16; line++ {
-				t.Profiler.Val = t.Profiler.Val[:0]
-				t.Profiler.Profiler.Line, err = t.Profiler.Profiler.Buf.ReadSlice('\n')
+				t.Val = t.Val[:0]
+				t.Line, err = t.Buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
 						break
@@ -183,16 +183,16 @@ Tick:
 					continue
 				}
 				// first grab the key name (everything up to the ':')
-				for i, v = range t.Profiler.Profiler.Line {
+				for i, v = range t.Line {
 					if v == 0x3A {
-						t.Profiler.Profiler.Val = t.Profiler.Profiler.Line[:i]
+						t.Val = t.Line[:i]
 						pos = i + 1 // skip the :
 						break
 					}
 				}
-				nameLen = len(t.Profiler.Profiler.Val)
+				nameLen = len(t.Val)
 				// skip all spaces
-				for i, v = range t.Profiler.Profiler.Line[pos:] {
+				for i, v = range t.Line[pos:] {
 					if v != 0x20 {
 						pos += i
 						break
@@ -200,49 +200,49 @@ Tick:
 				}
 
 				// grab the numbers
-				for _, v = range t.Profiler.Profiler.Line[pos:] {
+				for _, v = range t.Line[pos:] {
 					if v == 0x20 || v == '\n' {
 						break
 					}
-					t.Profiler.Profiler.Val = append(t.Profiler.Profiler.Val, v)
+					t.Val = append(t.Val, v)
 				}
 				// any conversion error results in 0
-				n, err = helpers.ParseUint(t.Profiler.Profiler.Val[nameLen:])
+				n, err = helpers.ParseUint(t.Val[nameLen:])
 				if err != nil {
 					t.Errs <- &joe.ParseError{Info: string(t.Val[:nameLen]), Err: err}
 					continue
 				}
-				v = t.Profiler.Profiler.Val[0]
+				v = t.Val[0]
 				if v == 'M' {
-					v = t.Profiler.Profiler.Val[3]
+					v = t.Val[3]
 					if v == 'T' {
-						InfoAddMemTotal(t.Profiler.Builder, int64(n))
+						InfoAddMemTotal(t.Builder, int64(n))
 					} else if v == 'F' {
-						InfoAddMemFree(t.Profiler.Builder, int64(n))
+						InfoAddMemFree(t.Builder, int64(n))
 					} else {
-						InfoAddMemAvailable(t.Profiler.Builder, int64(n))
+						InfoAddMemAvailable(t.Builder, int64(n))
 					}
 				} else if v == 'S' {
-					v = t.Profiler.Profiler.Val[4]
+					v = t.Val[4]
 					if v == 'C' {
-						InfoAddSwapCached(t.Profiler.Builder, int64(n))
+						InfoAddSwapCached(t.Builder, int64(n))
 					} else if v == 'T' {
-						InfoAddSwapTotal(t.Profiler.Builder, int64(n))
+						InfoAddSwapTotal(t.Builder, int64(n))
 					} else if v == 'F' {
-						InfoAddSwapFree(t.Profiler.Builder, int64(n))
+						InfoAddSwapFree(t.Builder, int64(n))
 					}
 				} else if v == 'B' {
-					InfoAddBuffers(t.Profiler.Builder, int64(n))
+					InfoAddBuffers(t.Builder, int64(n))
 				} else if v == 'I' {
-					InfoAddInactive(t.Profiler.Builder, int64(n))
+					InfoAddInactive(t.Builder, int64(n))
 				} else if v == 'C' {
-					InfoAddMemAvailable(t.Profiler.Builder, int64(n))
+					InfoAddMemAvailable(t.Builder, int64(n))
 				} else if v == 'A' {
-					InfoAddInactive(t.Profiler.Builder, int64(n))
+					InfoAddInactive(t.Builder, int64(n))
 				}
 			}
-			t.Profiler.Builder.Finish(InfoEnd(t.Profiler.Builder))
-			t.Data <- t.Profiler.Builder.Bytes[t.Profiler.Builder.Head():]
+			t.Builder.Finish(InfoEnd(t.Builder))
+			t.Data <- t.Profiler.Builder.Bytes[t.Builder.Head():]
 		}
 	}
 }

@@ -73,7 +73,7 @@ func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
 	p, _ := New()
-	v, _ := p.Prof.Get()
+	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Serialize(v)
@@ -85,7 +85,7 @@ func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
 	p, _ := New()
-	v, _ := p.Prof.Get()
+	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Marshal(v)

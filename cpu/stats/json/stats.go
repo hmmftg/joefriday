@@ -26,12 +26,12 @@ import (
 	"github.com/mohae/joefriday/cpu/stats"
 )
 
-// Profiler is used to process the /proc/stats file, as Stats, using JSON.
+// Profiler is used to process Stats, /proc/stats, as JSON serialized bytes.
 type Profiler struct {
 	*stats.Profiler
 }
 
-// Initializes and returns a cpu Stats profiler.
+// Initializes and returns a cpu Stats profiler that uses JSON.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := stats.NewProfiler()
 	if err != nil {
@@ -138,8 +138,8 @@ func (t *Ticker) Run() {
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
-			p, err := t.Profiler.Get()
+		case <-t.C:
+			p, err := t.Get()
 			if err != nil {
 				t.Errs <- err
 				continue

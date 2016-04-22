@@ -11,8 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package facts handles processong of CPU information: /procs/cpuinfo.  The
-// information about the CPU are called facts by this package.
+// Package facts handles processong of the /procs/cpuinfo file as facts.
 package facts
 
 import (
@@ -26,6 +25,41 @@ import (
 )
 
 const procFile = "/proc/cpuinfo"
+
+// Facts are a collection of facts, cpuinfo, about the system's cpus.
+type Facts struct {
+	Timestamp int64
+	CPU       []Fact `json:"cpu"`
+}
+
+// Fact holds the /proc/cpuinfo for a single processor.
+type Fact struct {
+	Processor       int16   `json:"processor"`
+	VendorID        string  `json:"vendor_id"`
+	CPUFamily       string  `json:"cpu_family"`
+	Model           string  `json:"model"`
+	ModelName       string  `json:"model_name"`
+	Stepping        string  `json:"stepping"`
+	Microcode       string  `json:"microcode"`
+	CPUMHz          float32 `json:"cpu_mhz"`
+	CacheSize       string  `json:"cache_size"`
+	PhysicalID      int16   `json:"physical_id"`
+	Siblings        int16   `json:"siblings"`
+	CoreID          int16   `json:"core_id"`
+	CPUCores        int16   `json:"cpu_cores"`
+	ApicID          int16   `json:"apicid"`
+	InitialApicID   int16   `json:"initial_apicid"`
+	FPU             string  `json:"fpu"`
+	FPUException    string  `json:"fpu_exception"`
+	CPUIDLevel      string  `json:"cpuid_level"`
+	WP              string  `json:"wp"`
+	Flags           string  `json:"flags"` // should this be a []string?
+	BogoMIPS        float32 `json:"bogomips"`
+	CLFlushSize     string  `json:"clflush_size"`
+	CacheAlignment  string  `json:"cache_alignment"`
+	AddressSizes    string  `json:"address_sizes"`
+	PowerManagement string  `json:"power_management"`
+}
 
 // Profiler is used to process the /proc/cpuinfo file as facts.
 type Profiler struct {
@@ -267,39 +301,4 @@ func Get() (facts *Facts, err error) {
 		}
 	}
 	return std.Get()
-}
-
-// Facts are a collection of facts, cpuinfo, about the system's cpus.
-type Facts struct {
-	Timestamp int64
-	CPU       []Fact `json:"cpu"`
-}
-
-// Fact holds the /proc/cpuinfo for a single processor.
-type Fact struct {
-	Processor       int16   `json:"processor"`
-	VendorID        string  `json:"vendor_id"`
-	CPUFamily       string  `json:"cpu_family"`
-	Model           string  `json:"model"`
-	ModelName       string  `json:"model_name"`
-	Stepping        string  `json:"stepping"`
-	Microcode       string  `json:"microcode"`
-	CPUMHz          float32 `json:"cpu_mhz"`
-	CacheSize       string  `json:"cache_size"`
-	PhysicalID      int16   `json:"physical_id"`
-	Siblings        int16   `json:"siblings"`
-	CoreID          int16   `json:"core_id"`
-	CPUCores        int16   `json:"cpu_cores"`
-	ApicID          int16   `json:"apicid"`
-	InitialApicID   int16   `json:"initial_apicid"`
-	FPU             string  `json:"fpu"`
-	FPUException    string  `json:"fpu_exception"`
-	CPUIDLevel      string  `json:"cpuid_level"`
-	WP              string  `json:"wp"`
-	Flags           string  `json:"flags"` // should this be a []string?
-	BogoMIPS        float32 `json:"bogomips"`
-	CLFlushSize     string  `json:"clflush_size"`
-	CacheAlignment  string  `json:"cache_alignment"`
-	AddressSizes    string  `json:"address_sizes"`
-	PowerManagement string  `json:"power_management"`
 }

@@ -141,7 +141,7 @@ func (t *Ticker) Run() {
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
+		case <-t.C:
 			cur.Timestamp = time.Now().UTC().UnixNano()
 			err = t.Reset()
 			if err != nil {
@@ -247,11 +247,17 @@ func (t *Ticker) Run() {
 			}
 			t.Data <- t.CalculateUsage(&cur)
 			// set prior info
-			t.Profiler.prior.Timestamp = cur.Timestamp
-			if len(t.Profiler.prior.Devices) != len(cur.Devices) {
-				t.Profiler.prior.Devices = make([]structs.Device, len(cur.Devices))
+			t.prior.Timestamp = cur.Timestamp
+			if len(t.prior.Devices) != len(cur.Devices) {
+				t.prior.Devices = make([]structs.Device, len(cur.Devices))
 			}
-			copy(t.Profiler.prior.Devices, cur.Devices)
+			copy(t.prior.Devices, cur.Devices)
 		}
 	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

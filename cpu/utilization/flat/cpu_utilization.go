@@ -49,11 +49,6 @@ func NewProfiler() (prof *Profiler, err error) {
 // calcualtes the utilization from the two snapshots.  If ongoing utilitzation
 // information is desired, the Ticker should be used; it's better suited for
 // ongoing utilization information.
-//
-// TODO: should this be changed so that this calculates utilization since
-// last time the stats were obtained.  If there aren't pre-existing stats
-// it would get current utilization (which may be a separate method (or
-// should be?))
 func (prof *Profiler) Get() (p []byte, err error) {
 	u, err := prof.Profiler.Get()
 	return prof.Serialize(u), nil
@@ -182,8 +177,8 @@ func (t *Ticker) Run() {
 		select {
 		case <-t.Done:
 			return
-		case <-t.Ticker.C:
-			p, err := t.Profiler.Get()
+		case <-t.C:
+			p, err := t.Get()
 			if err != nil {
 				t.Errs <- err
 				continue

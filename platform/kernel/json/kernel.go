@@ -27,7 +27,7 @@ import (
 // Profiler is used to process the kernel information, /proc/version, using
 // JSON.
 type Profiler struct {
-	Prof *kernel.Profiler
+	*kernel.Profiler
 }
 
 // Initializes and returns a json.Profiler for kernel information.
@@ -36,12 +36,12 @@ func New() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p}, nil
+	return &Profiler{Profiler: p}, nil
 }
 
 // Get returns the current kernel information as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	k, err := prof.Prof.Get()
+	k, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}

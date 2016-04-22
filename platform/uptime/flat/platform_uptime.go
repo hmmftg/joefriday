@@ -28,8 +28,8 @@ import (
 // Profiler is used to process the uptime information, /proc/uptime, using
 // Flatbuffers.
 type Profiler struct {
-	Prof    *uptime.Profiler
-	Builder *fb.Builder
+	*uptime.Profiler
+	*fb.Builder
 }
 
 // Initializes and returns an uptime information profiler that utilizes
@@ -39,12 +39,12 @@ func New() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
+	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
 // Get returns the current uptime information as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	k, err := prof.Prof.Get()
+	k, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}

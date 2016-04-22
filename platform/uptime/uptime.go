@@ -24,6 +24,12 @@ import (
 
 const procFile = "/proc/uptime"
 
+// Uptime holds uptime information
+type Uptime struct {
+	Total float64
+	Idle  float64
+}
+
 // Profiler processes the uptime information.
 type Profiler struct {
 	*joe.Proc
@@ -88,10 +94,4 @@ func Get() (u Uptime, err error) {
 		}
 	}
 	return std.Get()
-}
-
-// Uptime holds uptime information
-type Uptime struct {
-	Total float64
-	Idle  float64
 }
