@@ -35,8 +35,8 @@ type Profiler struct {
 
 // Initializes and returns an loadavg information profiler that utilizes
 // FlatBuffers.
-func New() (prof *Profiler, err error) {
-	p, err := loadavg.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := loadavg.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +95,7 @@ func Get() (p []byte, err error) {
 // This uses a local Profiler as using the global doesn't make sense for
 // an ongoing ticker.
 func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	prof, err := New()
+	prof, err := NewProfiler()
 	if err != nil {
 		errs <- err
 		close(out)
@@ -125,7 +125,7 @@ func Serialize(u loadavg.LoadAvg) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}

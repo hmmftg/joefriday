@@ -43,7 +43,7 @@ type Profiler struct {
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
@@ -232,7 +232,7 @@ func Get() (l LoadAvg, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return l, err
 		}
@@ -247,7 +247,7 @@ func Ticker(d time.Duration, out chan LoadAvg, done chan struct{}, errs chan err
 	defer stdMu.Unlock()
 	if std == nil {
 		var err error
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			errs <- err
 			close(out)

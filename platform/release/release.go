@@ -40,7 +40,7 @@ type Profiler struct {
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(etcFile)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func Get() (r *Release, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}

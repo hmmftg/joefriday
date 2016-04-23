@@ -31,8 +31,8 @@ type Profiler struct {
 }
 
 // Initializes and returns a json.Profiler for uptime information.
-func New() (prof *Profiler, err error) {
-	p, err := uptime.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := uptime.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +75,7 @@ func Serialize(u uptime.Uptime) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}

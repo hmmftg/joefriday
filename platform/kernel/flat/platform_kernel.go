@@ -34,8 +34,8 @@ type Profiler struct {
 
 // Initializes and returns a kernel information profiler that utilizes
 // FlatBuffers.
-func New() (prof *Profiler, err error) {
-	p, err := kernel.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := kernel.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func Serialize(k *kernel.Kernel) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}

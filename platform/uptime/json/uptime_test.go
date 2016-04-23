@@ -41,7 +41,7 @@ func TestGet(t *testing.T) {
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
@@ -52,7 +52,7 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -64,7 +64,7 @@ func BenchmarkSerialize(b *testing.B) {
 func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -73,11 +73,10 @@ func BenchmarkMarshal(b *testing.B) {
 	_ = jsn
 }
 
-var u uptime.Uptime
-
 func BenchmarkDeserialize(b *testing.B) {
+	var u uptime.Uptime
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -87,8 +86,9 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
+	var u uptime.Uptime
 	b.StartTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
