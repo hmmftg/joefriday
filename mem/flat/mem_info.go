@@ -76,16 +76,49 @@ func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	std.Builder.Reset()
 	InfoStart(prof.Builder)
 	InfoAddTimestamp(prof.Builder, int64(inf.Timestamp))
-	InfoAddMemTotal(prof.Builder, int64(inf.MemTotal))
-	InfoAddMemFree(prof.Builder, int64(inf.MemFree))
-	InfoAddMemAvailable(prof.Builder, int64(inf.MemAvailable))
+	InfoAddActive(prof.Builder, int64(inf.Active))
+	InfoAddActiveAnon(prof.Builder, int64(inf.ActiveAnon))
+	InfoAddActiveFile(prof.Builder, int64(inf.ActiveFile))
+	InfoAddAnonHugePages(prof.Builder, int64(inf.AnonHugePages))
+	InfoAddAnonPages(prof.Builder, int64(inf.AnonPages))
+	InfoAddBounce(prof.Builder, int64(inf.Bounce))
 	InfoAddBuffers(prof.Builder, int64(inf.Buffers))
 	InfoAddCached(prof.Builder, int64(inf.Cached))
-	InfoAddSwapCached(prof.Builder, int64(inf.SwapCached))
-	InfoAddActive(prof.Builder, int64(inf.Active))
+	InfoAddCommitLimit(prof.Builder, int64(inf.CommitLimit))
+	InfoAddCommittedAS(prof.Builder, int64(inf.CommittedAS))
+	InfoAddDirectMap4K(prof.Builder, int64(inf.DirectMap4K))
+	InfoAddDirectMap2M(prof.Builder, int64(inf.DirectMap2M))
+	InfoAddDirty(prof.Builder, int64(inf.Dirty))
+	InfoAddHardwareCorrupted(prof.Builder, int64(inf.HardwareCorrupted))
+	InfoAddHugePagesFree(prof.Builder, int64(inf.HugePagesFree))
+	InfoAddHugePagesRsvd(prof.Builder, int64(inf.HugePagesRsvd))
+	InfoAddHugePagesSize(prof.Builder, int64(inf.HugePagesSize))
+	InfoAddHugePagesSurp(prof.Builder, int64(inf.HugePagesSurp))
+	InfoAddHugePagesTotal(prof.Builder, int64(inf.HugePagesTotal))
 	InfoAddInactive(prof.Builder, int64(inf.Inactive))
-	InfoAddSwapTotal(prof.Builder, int64(inf.SwapTotal))
+	InfoAddInactiveAnon(prof.Builder, int64(inf.InactiveAnon))
+	InfoAddInactiveFile(prof.Builder, int64(inf.InactiveFile))
+	InfoAddKernelStack(prof.Builder, int64(inf.KernelStack))
+	InfoAddMapped(prof.Builder, int64(inf.Mapped))
+	InfoAddMemAvailable(prof.Builder, int64(inf.MemAvailable))
+	InfoAddMemFree(prof.Builder, int64(inf.MemFree))
+	InfoAddMemTotal(prof.Builder, int64(inf.MemTotal))
+	InfoAddMlocked(prof.Builder, int64(inf.Mlocked))
+	InfoAddNFSUnstable(prof.Builder, int64(inf.NFSUnstable))
+	InfoAddPageTables(prof.Builder, int64(inf.PageTables))
+	InfoAddShmem(prof.Builder, int64(inf.Shmem))
+	InfoAddSlab(prof.Builder, int64(inf.Slab))
+	InfoAddSReclaimable(prof.Builder, int64(inf.SReclaimable))
+	InfoAddSUnreclaim(prof.Builder, int64(inf.SUnreclaim))
+	InfoAddSwapCached(prof.Builder, int64(inf.SwapCached))
 	InfoAddSwapFree(prof.Builder, int64(inf.SwapFree))
+	InfoAddSwapTotal(prof.Builder, int64(inf.SwapTotal))
+	InfoAddUnevictable(prof.Builder, int64(inf.Unevictable))
+	InfoAddVmallocChunk(prof.Builder, int64(inf.VmallocChunk))
+	InfoAddVmallocTotal(prof.Builder, int64(inf.VmallocTotal))
+	InfoAddVmallocUsed(prof.Builder, int64(inf.VmallocUsed))
+	InfoAddWriteback(prof.Builder, int64(inf.Writeback))
+	InfoAddWritebackTmp(prof.Builder, int64(inf.WritebackTmp))
 	prof.Builder.Finish(InfoEnd(prof.Builder))
 	return prof.Builder.Bytes[prof.Builder.Head():]
 }
@@ -109,16 +142,49 @@ func Deserialize(p []byte) *mem.Info {
 	infoFlat := GetRootAsInfo(p, 0)
 	info := &mem.Info{}
 	info.Timestamp = infoFlat.Timestamp()
-	info.MemTotal = infoFlat.MemTotal()
-	info.MemFree = infoFlat.MemFree()
-	info.MemAvailable = infoFlat.MemAvailable()
+	info.Active = infoFlat.Active()
+	info.ActiveAnon = infoFlat.ActiveAnon()
+	info.ActiveFile = infoFlat.ActiveFile()
+	info.AnonHugePages = infoFlat.AnonHugePages()
+	info.AnonPages = infoFlat.AnonPages()
+	info.Bounce = infoFlat.Bounce()
 	info.Buffers = infoFlat.Buffers()
 	info.Cached = infoFlat.Cached()
-	info.SwapCached = infoFlat.SwapCached()
-	info.Active = infoFlat.Active()
+	info.CommitLimit = infoFlat.CommitLimit()
+	info.CommittedAS = infoFlat.CommittedAS()
+	info.DirectMap4K = infoFlat.DirectMap4K()
+	info.DirectMap2M = infoFlat.DirectMap2M()
+	info.Dirty = infoFlat.Dirty()
+	info.HardwareCorrupted = infoFlat.HardwareCorrupted()
+	info.HugePagesFree = infoFlat.HugePagesFree()
+	info.HugePagesRsvd = infoFlat.HugePagesRsvd()
+	info.HugePagesSize = infoFlat.HugePagesSize()
+	info.HugePagesSurp = infoFlat.HugePagesSurp()
+	info.HugePagesTotal = infoFlat.HugePagesTotal()
 	info.Inactive = infoFlat.Inactive()
-	info.SwapTotal = infoFlat.SwapTotal()
+	info.InactiveAnon = infoFlat.InactiveAnon()
+	info.InactiveFile = infoFlat.InactiveFile()
+	info.KernelStack = infoFlat.KernelStack()
+	info.Mapped = infoFlat.Mapped()
+	info.MemAvailable = infoFlat.MemAvailable()
+	info.MemFree = infoFlat.MemFree()
+	info.MemTotal = infoFlat.MemTotal()
+	info.Mlocked = infoFlat.Mlocked()
+	info.NFSUnstable = infoFlat.NFSUnstable()
+	info.PageTables = infoFlat.PageTables()
+	info.Shmem = infoFlat.Shmem()
+	info.Slab = infoFlat.Slab()
+	info.SReclaimable = infoFlat.SReclaimable()
+	info.SUnreclaim = infoFlat.SUnreclaim()
+	info.SwapCached = infoFlat.SwapCached()
 	info.SwapFree = infoFlat.SwapFree()
+	info.SwapTotal = infoFlat.SwapTotal()
+	info.Unevictable = infoFlat.Unevictable()
+	info.VmallocChunk = infoFlat.VmallocChunk()
+	info.VmallocTotal = infoFlat.VmallocTotal()
+	info.VmallocUsed = infoFlat.VmallocUsed()
+	info.Writeback = infoFlat.Writeback()
+	info.WritebackTmp = infoFlat.WritebackTmp()
 	return info
 }
 
@@ -148,10 +214,10 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 func (t *Ticker) Run() {
 	// predeclare some vars
 	var (
-		i, pos, line, nameLen int
-		v                     byte
-		n                     uint64
-		err                   error
+		i, pos, nameLen int
+		v               byte
+		n               uint64
+		err             error
 	)
 	// ticker
 Tick:
@@ -168,7 +234,7 @@ Tick:
 			}
 			InfoStart(t.Builder)
 			InfoAddTimestamp(t.Builder, time.Now().UTC().UnixNano())
-			for line = 0; line < 16; line++ {
+			for {
 				t.Val = t.Val[:0]
 				t.Line, err = t.Buf.ReadSlice('\n')
 				if err != nil {
@@ -178,9 +244,6 @@ Tick:
 					// An error results in sending error message and stop processing of this tick.
 					t.Errs <- &joe.ReadError{Err: err}
 					continue Tick
-				}
-				if line > 7 && line < 14 {
-					continue
 				}
 				// first grab the key name (everything up to the ':')
 				for i, v = range t.Line {
@@ -213,33 +276,174 @@ Tick:
 					continue
 				}
 				v = t.Val[0]
+				if v == 'A' {
+					if t.Val[5] == 'e' {
+						if nameLen == 6 {
+							InfoAddActive(t.Builder, int64(n))
+							continue
+						}
+						if t.Val[7] == 'a' {
+							InfoAddActiveAnon(t.Builder, int64(n))
+							continue
+						}
+						InfoAddActiveFile(t.Builder, int64(n))
+						continue
+					}
+					if nameLen == 9 {
+						InfoAddAnonPages(t.Builder, int64(n))
+						continue
+					}
+					InfoAddAnonHugePages(t.Builder, int64(n))
+					continue
+				}
+				if v == 'C' {
+					if nameLen == 6 {
+						InfoAddCached(t.Builder, int64(n))
+						continue
+					}
+					if nameLen == 11 {
+						InfoAddCommitLimit(t.Builder, int64(n))
+						continue
+					}
+					InfoAddCommittedAS(t.Builder, int64(n))
+					continue
+				}
+				if v == 'D' {
+					if nameLen == 5 {
+						InfoAddDirty(t.Builder, int64(n))
+						continue
+					}
+					if t.Val[10] == 'k' {
+						InfoAddDirectMap4K(t.Builder, int64(n))
+						continue
+					}
+					InfoAddDirectMap2M(t.Builder, int64(n))
+					continue
+				}
+				if v == 'H' {
+					if nameLen == 14 {
+						if t.Val[10] == 'F' {
+							InfoAddHugePagesFree(t.Builder, int64(n))
+							continue
+						}
+						if t.Val[10] == 'R' {
+							InfoAddHugePagesRsvd(t.Builder, int64(n))
+							continue
+						}
+						InfoAddHugePagesSurp(t.Builder, int64(n))
+					}
+					if t.Val[1] == 'a' {
+						InfoAddHardwareCorrupted(t.Builder, int64(n))
+						continue
+					}
+					if t.Val[9] == 'i' {
+						InfoAddHugePagesSize(t.Builder, int64(n))
+						continue
+					}
+					InfoAddHugePagesTotal(t.Builder, int64(n))
+					continue
+				}
+				if v == 'I' {
+					if nameLen == 8 {
+						InfoAddInactive(t.Builder, int64(n))
+						continue
+					}
+					if t.Val[9] == 'a' {
+						InfoAddInactiveAnon(t.Builder, int64(n))
+						continue
+					}
+					InfoAddInactiveFile(t.Builder, int64(n))
+				}
 				if v == 'M' {
 					v = t.Val[3]
-					if v == 'T' {
-						InfoAddMemTotal(t.Builder, int64(n))
-					} else if v == 'F' {
-						InfoAddMemFree(t.Builder, int64(n))
-					} else {
+					if nameLen < 8 {
+						if v == 'p' {
+							InfoAddMapped(t.Builder, int64(n))
+							continue
+						}
+						if v == 'F' {
+							InfoAddMemFree(t.Builder, int64(n))
+							continue
+						}
+						InfoAddMlocked(t.Builder, int64(n))
+						continue
+					}
+					if v == 'A' {
 						InfoAddMemAvailable(t.Builder, int64(n))
+						continue
 					}
-				} else if v == 'S' {
-					v = t.Val[4]
-					if v == 'C' {
-						InfoAddSwapCached(t.Builder, int64(n))
-					} else if v == 'T' {
-						InfoAddSwapTotal(t.Builder, int64(n))
-					} else if v == 'F' {
-						InfoAddSwapFree(t.Builder, int64(n))
-					}
-				} else if v == 'B' {
-					InfoAddBuffers(t.Builder, int64(n))
-				} else if v == 'I' {
-					InfoAddInactive(t.Builder, int64(n))
-				} else if v == 'C' {
-					InfoAddMemAvailable(t.Builder, int64(n))
-				} else if v == 'A' {
-					InfoAddInactive(t.Builder, int64(n))
+					InfoAddMemTotal(t.Builder, int64(n))
+					continue
 				}
+				if v == 'S' {
+					v = t.Val[1]
+					if v == 'w' {
+						if t.Val[4] == 'C' {
+							InfoAddSwapCached(t.Builder, int64(n))
+							continue
+						}
+						if t.Val[4] == 'F' {
+							InfoAddSwapFree(t.Builder, int64(n))
+							continue
+						}
+						InfoAddSwapTotal(t.Builder, int64(n))
+						continue
+					}
+					if v == 'h' {
+						InfoAddShmem(t.Builder, int64(n))
+						continue
+					}
+					if v == 'l' {
+						InfoAddSlab(t.Builder, int64(n))
+						continue
+					}
+					if v == 'R' {
+						InfoAddSReclaimable(t.Builder, int64(n))
+						continue
+					}
+					InfoAddSUnreclaim(t.Builder, int64(n))
+					continue
+				}
+				if v == 'V' {
+					if t.Val[8] == 'C' {
+						InfoAddVmallocChunk(t.Builder, int64(n))
+						continue
+					}
+					if t.Val[8] == 'T' {
+						InfoAddVmallocTotal(t.Builder, int64(n))
+						continue
+					}
+					InfoAddVmallocUsed(t.Builder, int64(n))
+					continue
+				}
+				if v == 'W' {
+					if nameLen == 9 {
+						InfoAddWriteback(t.Builder, int64(n))
+						continue
+					}
+					InfoAddWritebackTmp(t.Builder, int64(n))
+					continue
+				}
+				if v == 'B' {
+					if nameLen == 6 {
+						InfoAddBounce(t.Builder, int64(n))
+						continue
+					}
+					InfoAddBuffers(t.Builder, int64(n))
+					continue
+				}
+				if v == 'K' {
+					InfoAddKernelStack(t.Builder, int64(n))
+					continue
+				}
+				if v == 'N' {
+					InfoAddNFSUnstable(t.Builder, int64(n))
+					continue
+				}
+				if v == 'P' {
+					InfoAddPageTables(t.Builder, int64(n))
+				}
+				InfoAddUnevictable(t.Builder, int64(n))
 			}
 			t.Builder.Finish(InfoEnd(t.Builder))
 			t.Data <- t.Profiler.Builder.Bytes[t.Builder.Head():]
