@@ -212,7 +212,7 @@ func (t *Ticker) Run() {
 			}
 			line = 0
 			for {
-				t.Profiler.Line, err = t.Profiler.Buf.ReadSlice('\n')
+				t.Profiler.Line, err = t.Buf.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
 						break
