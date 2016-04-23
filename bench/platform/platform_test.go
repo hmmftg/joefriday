@@ -16,7 +16,7 @@ import (
 func BenchmarkJoeFridayGetKernel(b *testing.B) {
 	var fct *joekernel.Kernel
 	b.StopTimer()
-	p, _ := joekernel.New()
+	p, _ := joekernel.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		fct, _ = p.Get()
@@ -35,7 +35,7 @@ func BenchmarkCloudFoundryGoSigarLoadAverage(b *testing.B) {
 func BenchmarkJoeFridayGetLoadAvg(b *testing.B) {
 	var tmp joeloadavg.LoadAvg
 	b.StopTimer()
-	p, _ := joeloadavg.New()
+	p, _ := joeloadavg.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -62,7 +62,7 @@ func BenchmarkShirouGopsutilLoadMisc(b *testing.B) {
 func BenchmarkJoeFridayGetReleases(b *testing.B) {
 	var st *joerelease.Release
 	b.StopTimer()
-	p, _ := joerelease.New()
+	p, _ := joerelease.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = p.Get()
@@ -86,7 +86,7 @@ func BenchmarkDataDogGohaiplatform(b *testing.B) {
 func BenchmarkJoeFridayGetUptime(b *testing.B) {
 	var tmp joeuptime.Uptime
 	b.StopTimer()
-	p, _ := joeuptime.New()
+	p, _ := joeuptime.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -105,7 +105,7 @@ func BenchmarkCloudFoundryGoSigarUptime(b *testing.B) {
 // These tests exist to print out the data that is collected; not to test the
 // methods themselves.  Run with the -v flag.
 func TestJoeFridayGetKernel(t *testing.T) {
-	prof, err := joekernel.New()
+	prof, err := joekernel.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
@@ -135,7 +135,7 @@ func TestCloudFoundryGoSigarLoadAverage(t *testing.T) {
 }
 
 func TestJoeFridayGetLoadAvg(t *testing.T) {
-	prof, err := joeloadavg.New()
+	prof, err := joeloadavg.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return

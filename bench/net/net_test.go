@@ -14,7 +14,7 @@ import (
 func BenchmarkJoeFridayGetInfo(b *testing.B) {
 	var inf *joestructs.Info
 	b.StopTimer()
-	p, _ := joeinfo.New()
+	p, _ := joeinfo.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
@@ -22,20 +22,16 @@ func BenchmarkJoeFridayGetInfo(b *testing.B) {
 	_ = inf
 }
 
-// don't bench usage for now, as it taks 1 second per with current
-// implementation.
-/*
 func BenchmarkJoeFridayGetUsage(b *testing.B) {
-	var u *joestructs.Info
+	var u *joestructs.Usage
 	b.StopTimer()
-	p, _ := joeusage.New()
+	p, _ := joeusage.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
 	}
 	_ = u
 }
-*/
 
 func BenchmarkDataDogGohaiNetwork(b *testing.B) {
 	type Collector interface {
@@ -51,17 +47,17 @@ func BenchmarkDataDogGohaiNetwork(b *testing.B) {
 }
 
 func BenchmarkShirouGopsutilNetInterfaces(b *testing.B) {
-	var st []gopsutilnet.NetInterfaceStat
+	var st []gopsutilnet.InterfaceStat
 	for i := 0; i < b.N; i++ {
-		st, _ = gopsutilnet.NetInterfaces()
+		st, _ = gopsutilnet.Interfaces()
 	}
 	_ = st
 }
 
 func BenchmarkShirouGopsutilTimeStat(b *testing.B) {
-	var st []gopsutilnet.NetIOCountersStat
+	var st []gopsutilnet.IOCountersStat
 	for i := 0; i < b.N; i++ {
-		st, _ = gopsutilnet.NetIOCounters(true)
+		st, _ = gopsutilnet.IOCounters(true)
 	}
 	_ = st
 }
@@ -69,7 +65,7 @@ func BenchmarkShirouGopsutilTimeStat(b *testing.B) {
 // These tests exist to print out the data that is collected; not to test the
 // methods themselves.  Run with the -v flag.
 func TestJoeFridayGetInfo(t *testing.T) {
-	prof, err := joeinfo.New()
+	prof, err := joeinfo.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
@@ -88,7 +84,7 @@ func TestJoeFridayGetInfo(t *testing.T) {
 }
 
 func TestJoeFridayGetUsage(t *testing.T) {
-	prof, err := joeusage.New()
+	prof, err := joeusage.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
@@ -126,7 +122,7 @@ func TestDataDogGohaiNetwork(t *testing.T) {
 }
 
 func TestShirouGopsutilNetInterfaces(t *testing.T) {
-	st, err := gopsutilnet.NetInterfaces()
+	st, err := gopsutilnet.Interfaces()
 	if err != nil {
 		t.Error(err)
 		return
@@ -140,7 +136,7 @@ func TestShirouGopsutilNetInterfaces(t *testing.T) {
 }
 
 func TestShirouGopsutilTimeStat(t *testing.T) {
-	st, err := gopsutilnet.NetIOCounters(true)
+	st, err := gopsutilnet.IOCounters(true)
 	if err != nil {
 		t.Error(err)
 		return

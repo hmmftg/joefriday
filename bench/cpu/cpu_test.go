@@ -13,7 +13,7 @@ import (
 func BenchmarkJoeFridayGetFacts(b *testing.B) {
 	var fct *joefacts.Facts
 	b.StopTimer()
-	p, _ := joefacts.New()
+	p, _ := joefacts.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		fct, _ = p.Get()
@@ -24,7 +24,7 @@ func BenchmarkJoeFridayGetFacts(b *testing.B) {
 func BenchmarkJoeFridayGetStats(b *testing.B) {
 	var st *joestats.Stats
 	b.StopTimer()
-	p, _ := joestats.New()
+	p, _ := joestats.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = p.Get()
@@ -46,17 +46,17 @@ func BenchmarkDataDogGohaiCPU(b *testing.B) {
 }
 
 func BenchmarkShirouGopsutilInfoStat(b *testing.B) {
-	var st []gopsutilcpu.CPUInfoStat
+	var st []gopsutilcpu.InfoStat
 	for i := 0; i < b.N; i++ {
-		st, _ = gopsutilcpu.CPUInfo()
+		st, _ = gopsutilcpu.Info()
 	}
 	_ = st
 }
 
 func BenchmarkShirouGopsutilTimeStat(b *testing.B) {
-	var st []gopsutilcpu.CPUTimesStat
+	var st []gopsutilcpu.TimesStat
 	for i := 0; i < b.N; i++ {
-		st, _ = gopsutilcpu.CPUTimes(true)
+		st, _ = gopsutilcpu.Times(true)
 	}
 	_ = st
 }
@@ -64,7 +64,7 @@ func BenchmarkShirouGopsutilTimeStat(b *testing.B) {
 // These tests exist to print out the data that is collected; not to test the
 // methods themselves.  Run with the -v flag.
 func TestJoeFridayGetFacts(t *testing.T) {
-	prof, err := joefacts.New()
+	prof, err := joefacts.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
@@ -83,7 +83,7 @@ func TestJoeFridayGetFacts(t *testing.T) {
 }
 
 func TestJoeFridayGetStats(t *testing.T) {
-	prof, err := joestats.New()
+	prof, err := joestats.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
@@ -121,7 +121,7 @@ func TestDataDogGohaiCPU(t *testing.T) {
 }
 
 func TestShirouGopsutilInfoStat(t *testing.T) {
-	st, err := gopsutilcpu.CPUInfo()
+	st, err := gopsutilcpu.Info()
 	if err != nil {
 		t.Error(err)
 		return
@@ -135,7 +135,7 @@ func TestShirouGopsutilInfoStat(t *testing.T) {
 }
 
 func TestShirouGopsutilTimeStat(t *testing.T) {
-	st, err := gopsutilcpu.CPUTimes(true)
+	st, err := gopsutilcpu.Times(true)
 	if err != nil {
 		t.Error(err)
 		return
