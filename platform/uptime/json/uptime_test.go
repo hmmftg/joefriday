@@ -15,6 +15,7 @@ package json
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mohae/joefriday/platform/uptime"
 )
@@ -30,11 +31,44 @@ func TestGet(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	if int(u.Total) == 0 {
-		t.Error("Total: expected a non-zero value, got 0")
+	checkUptime("get", u, t)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	if int(u.Idle) == 0 {
-		t.Error("Idle: expected a non-zero value, got 0")
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			u, err := Deserialize(v)
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+				continue
+			}
+			checkUptime("ticker", u, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+	}
+	tk.Stop()
+	tk.Close()
+}
+
+func checkUptime(n string, u uptime.Uptime, t *testing.T) {
+	if u.Total == 0 {
+		t.Errorf("expected total to be a non-zero value; got 0")
+	}
+	if u.Idle == 0 {
+		t.Errorf("expected idle to be a non-zero value; got 0")
 	}
 }
 

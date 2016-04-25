@@ -13,20 +13,51 @@
 
 package uptime
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestGet(t *testing.T) {
 	u, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
+	checkUptime("get", u, t)
+	t.Logf("%#v\n", u)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			checkUptime("ticker", v, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+	}
+	tk.Stop()
+	tk.Close()
+}
+
+func checkUptime(n string, u Uptime, t *testing.T) {
 	if u.Total == 0 {
 		t.Errorf("expected total to be a non-zero value; got 0")
 	}
 	if u.Idle == 0 {
 		t.Errorf("expected idle to be a non-zero value; got 0")
 	}
-	t.Logf("%#v\n", u)
 }
 
 func BenchmarkGet(b *testing.B) {
