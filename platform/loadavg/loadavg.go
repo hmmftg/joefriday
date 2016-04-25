@@ -29,12 +29,12 @@ const procFile = "/proc/loadavg"
 
 // LoadAvg holds loadavg information
 type LoadAvg struct {
-	LastMinute       float32
-	LastFive         float32
-	LastTen          float32
-	RunningProcesses int32
-	TotalProcesses   int32
-	PID              int32
+	Minute  float32
+	Five    float32
+	Fifteen float32
+	Running int32
+	Total   int32
+	PID     int32
 }
 
 // Profiler processes the loadavg information.
@@ -88,14 +88,14 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
 				if fieldNum == 1 {
-					l.LastMinute = float32(f)
+					l.Minute = float32(f)
 					continue
 				}
 				if fieldNum == 2 {
-					l.LastFive = float32(f)
+					l.Five = float32(f)
 					continue
 				}
-				l.LastTen = float32(f)
+				l.Fifteen = float32(f)
 				continue
 			}
 			if fieldNum == 4 {
@@ -109,12 +109,12 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 				if err != nil {
 					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
-				l.RunningProcesses = int32(n)
+				l.Running = int32(n)
 				n, err = helpers.ParseUint(prof.Line[priorPos+i+1 : pos-1])
 				if err != nil {
 					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
-				l.TotalProcesses = int32(n)
+				l.Total = int32(n)
 				continue
 			}
 			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
@@ -213,14 +213,14 @@ func (t *Ticker) Run() {
 							break tick
 						}
 						if fieldNum == 1 {
-							l.LastMinute = float32(f)
+							l.Minute = float32(f)
 							continue
 						}
 						if fieldNum == 2 {
-							l.LastFive = float32(f)
+							l.Five = float32(f)
 							continue
 						}
-						l.LastTen = float32(f)
+						l.Fifteen = float32(f)
 						continue
 					}
 					if fieldNum == 4 {
@@ -235,13 +235,13 @@ func (t *Ticker) Run() {
 							t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break tick
 						}
-						l.RunningProcesses = int32(n)
+						l.Running = int32(n)
 						n, err = helpers.ParseUint(t.Line[priorPos+i+1 : pos-1])
 						if err != nil {
 							t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break tick
 						}
-						l.TotalProcesses = int32(n)
+						l.Total = int32(n)
 						continue
 					}
 					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])

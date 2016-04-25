@@ -76,11 +76,11 @@ func (prof *Profiler) Serialize(l loadavg.LoadAvg) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
 	LoadAvgStart(prof.Builder)
-	LoadAvgAddLastMinute(prof.Builder, l.LastMinute)
-	LoadAvgAddLastFive(prof.Builder, l.LastFive)
-	LoadAvgAddLastTen(prof.Builder, l.LastTen)
-	LoadAvgAddRunningProcesses(prof.Builder, l.RunningProcesses)
-	LoadAvgAddTotalProcesses(prof.Builder, l.TotalProcesses)
+	LoadAvgAddMinute(prof.Builder, l.Minute)
+	LoadAvgAddFive(prof.Builder, l.Five)
+	LoadAvgAddFifteen(prof.Builder, l.Fifteen)
+	LoadAvgAddRunning(prof.Builder, l.Running)
+	LoadAvgAddTotal(prof.Builder, l.Total)
 	LoadAvgAddPID(prof.Builder, l.PID)
 	prof.Builder.Finish(LoadAvgEnd(prof.Builder))
 	return prof.Builder.Bytes[prof.Builder.Head():]
@@ -105,11 +105,11 @@ func Serialize(u loadavg.LoadAvg) (p []byte, err error) {
 func Deserialize(p []byte) loadavg.LoadAvg {
 	flatL := GetRootAsLoadAvg(p, 0)
 	var l loadavg.LoadAvg
-	l.LastMinute = flatL.LastMinute()
-	l.LastFive = flatL.LastFive()
-	l.LastTen = flatL.LastTen()
-	l.RunningProcesses = flatL.RunningProcesses()
-	l.TotalProcesses = flatL.TotalProcesses()
+	l.Minute = flatL.Minute()
+	l.Five = flatL.Five()
+	l.Fifteen = flatL.Fifteen()
+	l.Running = flatL.Running()
+	l.Total = flatL.Total()
 	l.PID = flatL.PID()
 	return l
 }

@@ -60,20 +60,20 @@ func TestTicker(t *testing.T) {
 }
 
 func checkLoad(n string, l loadavg.LoadAvg, t *testing.T) {
-	if l.LastMinute == 0 {
-		t.Errorf("%s: expected LastMinute to be a non-zero value; got 0", n)
+	if l.Minute == 0 {
+		t.Errorf("%s: expected Minute to be a non-zero value; got 0", n)
 	}
-	if l.LastFive == 0 {
-		t.Errorf("%s: expected LastFive to be a non-zero value; got 0", n)
+	if l.Five == 0 {
+		t.Errorf("%s: expected Five to be a non-zero value; got 0", n)
 	}
-	if l.LastTen == 0 {
-		t.Errorf("%s: expected LastTen to be a non-zero value; got 0", n)
+	if l.Fifteen == 0 {
+		t.Errorf("%s: expected Fifteen to be a non-zero value; got 0", n)
 	}
-	if l.RunningProcesses == 0 {
-		t.Errorf("%s: expected RunningProcesses to be a non-zero value; got 0", n)
+	if l.Running == 0 {
+		t.Errorf("%s: expected Running to be a non-zero value; got 0", n)
 	}
-	if l.TotalProcesses == 0 {
-		t.Errorf("%s: expected TotalProcesses to be a non-zero value; got 0", n)
+	if l.Total == 0 {
+		t.Errorf("%s: expected Total to be a non-zero value; got 0", n)
 	}
 	if l.PID == 0 {
 		t.Errorf("%s: expected PID to be a non-zero value; got 0", n)
