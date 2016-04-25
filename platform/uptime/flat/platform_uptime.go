@@ -75,6 +75,7 @@ func (prof *Profiler) Serialize(u uptime.Uptime) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
 	UptimeStart(prof.Builder)
+	UptimeAddTimestamp(prof.Builder, u.Timestamp)
 	UptimeAddTotal(prof.Builder, u.Total)
 	UptimeAddIdle(prof.Builder, u.Idle)
 	prof.Builder.Finish(UptimeEnd(prof.Builder))
@@ -100,6 +101,7 @@ func Serialize(u uptime.Uptime) (p []byte, err error) {
 func Deserialize(p []byte) uptime.Uptime {
 	flatU := GetRootAsUptime(p, 0)
 	var u uptime.Uptime
+	u.Timestamp = flatU.Timestamp()
 	u.Total = flatU.Total()
 	u.Idle = flatU.Idle()
 	return u

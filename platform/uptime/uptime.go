@@ -27,8 +27,9 @@ const procFile = "/proc/uptime"
 
 // Uptime holds uptime information
 type Uptime struct {
-	Total float64
-	Idle  float64
+	Timestamp int64
+	Total     float64
+	Idle      float64
 }
 
 // Profiler processes the uptime information.
@@ -53,6 +54,7 @@ func (prof *Profiler) Get() (u Uptime, err error) {
 	}
 	var i int
 	var v byte
+	u.Timestamp = time.Now().UTC().UnixNano()
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {

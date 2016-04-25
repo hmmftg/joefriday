@@ -56,6 +56,9 @@ func TestTicker(t *testing.T) {
 }
 
 func checkUptime(n string, u uptime.Uptime, t *testing.T) {
+	if u.Timestamp == 0 {
+		t.Errorf("expected Timestamp to be a non-zero value; got 0")
+	}
 	if u.Total == 0 {
 		t.Errorf("expected total to be a non-zero value; got 0")
 	}
