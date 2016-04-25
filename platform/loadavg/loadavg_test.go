@@ -29,20 +29,27 @@ func TestGet(t *testing.T) {
 }
 
 func TestTicker(t *testing.T) {
-	out := make(chan LoadAvg)
-	done := make(chan struct{})
-	errs := make(chan error)
-	go Ticker(time.Duration(400)*time.Millisecond, out, done, errs)
-	for i := 0; i < 1; i++ {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case l := <-out:
-			checkLoad("ticker", l, t)
-			t.Logf("%#v\n", l)
-		case err := <-errs:
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			checkLoad("ticker", v, t)
+		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
 	}
-	close(done)
+	tk.Stop()
+	tk.Close()
 }
 
 func checkLoad(n string, l LoadAvg, t *testing.T) {

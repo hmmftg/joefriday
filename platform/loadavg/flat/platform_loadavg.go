@@ -23,6 +23,7 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
+	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/platform/loadavg"
 )
 
@@ -53,27 +54,6 @@ func (prof *Profiler) Get() ([]byte, error) {
 	return prof.Serialize(k), nil
 }
 
-// Ticker returns the current loadavg as Flatbuffer serialized bytes on a
-// ticker.
-func (prof *Profiler) Ticker(d time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	outCh := make(chan loadavg.LoadAvg)
-	defer close(out)
-	var (
-		ok bool
-		l  loadavg.LoadAvg
-	)
-	go prof.Profiler.Ticker(d, outCh, done, errs)
-	for {
-		select {
-		case l, ok = <-outCh:
-			if !ok {
-				return
-			}
-			out <- prof.Serialize(l)
-		}
-	}
-}
-
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
@@ -89,19 +69,6 @@ func Get() (p []byte, err error) {
 		}
 	}
 	return std.Get()
-}
-
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	prof, err := NewProfiler()
-	if err != nil {
-		errs <- err
-		close(out)
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
 }
 
 // Serialize serializes loadavg information using Flatbuffers.
@@ -145,4 +112,49 @@ func Deserialize(p []byte) loadavg.LoadAvg {
 	l.TotalProcesses = flatL.TotalProcesses()
 	l.PID = flatL.PID()
 	return l
+}
+
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan []byte
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.C:
+			p, err := t.Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- p
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }
