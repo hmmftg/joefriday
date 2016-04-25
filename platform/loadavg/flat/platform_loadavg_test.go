@@ -60,6 +60,9 @@ func TestTicker(t *testing.T) {
 }
 
 func checkLoad(n string, l loadavg.LoadAvg, t *testing.T) {
+	if l.Timestamp == 0 {
+		t.Errorf("%s: expected Timestamp to be a non-zero value; got 0", n)
+	}
 	if l.Minute == 0 {
 		t.Errorf("%s: expected Minute to be a non-zero value; got 0", n)
 	}

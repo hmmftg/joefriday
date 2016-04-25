@@ -2,6 +2,7 @@
 namespace flat;
 
 table LoadAvg {
+    Timestamp:long;
     Minute:float;
     Five:float;
 	Fifteen:float;

@@ -76,6 +76,7 @@ func (prof *Profiler) Serialize(l loadavg.LoadAvg) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
 	LoadAvgStart(prof.Builder)
+	LoadAvgAddTimestamp(prof.Builder, l.Timestamp)
 	LoadAvgAddMinute(prof.Builder, l.Minute)
 	LoadAvgAddFive(prof.Builder, l.Five)
 	LoadAvgAddFifteen(prof.Builder, l.Fifteen)
@@ -105,6 +106,7 @@ func Serialize(u loadavg.LoadAvg) (p []byte, err error) {
 func Deserialize(p []byte) loadavg.LoadAvg {
 	flatL := GetRootAsLoadAvg(p, 0)
 	var l loadavg.LoadAvg
+	l.Timestamp = flatL.Timestamp()
 	l.Minute = flatL.Minute()
 	l.Five = flatL.Five()
 	l.Fifteen = flatL.Fifteen()

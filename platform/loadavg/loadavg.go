@@ -29,12 +29,13 @@ const procFile = "/proc/loadavg"
 
 // LoadAvg holds loadavg information
 type LoadAvg struct {
-	Minute  float32
-	Five    float32
-	Fifteen float32
-	Running int32
-	Total   int32
-	PID     int32
+	Timestamp int64
+	Minute    float32
+	Five      float32
+	Fifteen   float32
+	Running   int32
+	Total     int32
+	PID       int32
 }
 
 // Profiler processes the loadavg information.
@@ -63,7 +64,7 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 		f                                float64
 		v                                byte
 	)
-
+	l.Timestamp = time.Now().UTC().UnixNano()
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -183,7 +184,7 @@ func (t *Ticker) Run() {
 		case <-t.Done:
 			return
 		case <-t.C:
-			//			l.Timestamp = time.Now().UTC().UnixNano()
+			l.Timestamp = time.Now().UTC().UnixNano()
 			err = t.Reset()
 			line = 0
 		tick:
