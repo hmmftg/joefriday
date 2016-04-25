@@ -10,6 +10,8 @@ import (
 	joeloadavg "github.com/mohae/joefriday/platform/loadavg"
 	joerelease "github.com/mohae/joefriday/platform/release"
 	joeuptime "github.com/mohae/joefriday/platform/uptime"
+	sysload "github.com/mohae/joefriday/sysinfo/load"
+	sysuptime "github.com/mohae/joefriday/sysinfo/uptime"
 	"github.com/shirou/gopsutil/load"
 )
 
@@ -39,6 +41,14 @@ func BenchmarkJoeFridayGetLoadAvg(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func BenchmarkJoeFridayGetSysinfoLoadAvg(b *testing.B) {
+	var tmp sysload.LoadAvg
+	for i := 0; i < b.N; i++ {
+		_ = tmp.Get()
 	}
 	_ = tmp
 }
@@ -90,6 +100,14 @@ func BenchmarkJoeFridayGetUptime(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func BenchmarkJoeFridayGetSysinfoUptime(b *testing.B) {
+	var tmp sysuptime.Uptime
+	for i := 0; i < b.N; i++ {
+		_ = tmp.Get()
 	}
 	_ = tmp
 }
@@ -182,7 +200,7 @@ func TestShirouGopsutilLoadMisc(t *testing.T) {
 }
 
 func TestJoeFridayGetRelease(t *testing.T) {
-	prof, err := joerelease.New()
+	prof, err := joerelease.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
@@ -231,7 +249,7 @@ func TestCloudFoundryGoSigarUptime(t *testing.T) {
 }
 
 func TestJoeFridayGetUptime(t *testing.T) {
-	prof, err := joeuptime.New()
+	prof, err := joeuptime.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
