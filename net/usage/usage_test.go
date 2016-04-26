@@ -21,7 +21,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	p, err := New()
+	p, err := NewProfiler()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
@@ -31,49 +31,49 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkUsage(u, t)
+	checkUsage("get", u, t)
 	t.Logf("%#v\n", u)
 }
 
 func TestTicker(t *testing.T) {
-	results := make(chan *structs.Usage)
-	errs := make(chan error)
-	done := make(chan struct{})
-	go Ticker(time.Duration(400)*time.Millisecond, results, done, errs)
-	var x int
-	for {
-		if x > 0 {
-			close(done)
-			break
-		}
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case u, ok := <-results:
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
 			if !ok {
 				break
 			}
-			checkUsage(u, t)
-		case err := <-errs:
+			checkUsage("ticker", v, t)
+		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
-		x++
 	}
+	tk.Stop()
+	tk.Close()
 }
 
-func checkUsage(u *structs.Usage, t *testing.T) {
+func checkUsage(n string, u *structs.Usage, t *testing.T) {
 	if u.Timestamp == 0 {
-		t.Errorf("expected timestamp to be a non-zero value; was 0")
+		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
 	if u.TimeDelta == 0 {
-		t.Errorf("expected TimeDelta to be a non-zero value; was 0")
+		t.Errorf("%s: expected TimeDelta to be a non-zero value; was 0", n)
 	}
 	if len(u.Interfaces) == 0 {
-		t.Error("expected interfaces; got none")
+		t.Errorf("%s: expected interfaces; got none", n)
 		return
 	}
 	// check name
 	for i, v := range u.Interfaces {
 		if v.Name == "" {
-			t.Errorf("%d: expected inteface to have a name; was empty", i)
+			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
 		}
 	}
 }

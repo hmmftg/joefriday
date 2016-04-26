@@ -21,7 +21,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	p, err := New()
+	p, err := NewProfiler()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
@@ -41,25 +41,32 @@ func TestGet(t *testing.T) {
 }
 
 func TestTicker(t *testing.T) {
-	out := make(chan []byte)
-	done := make(chan struct{})
-	errs := make(chan error)
-	go Ticker(time.Duration(400)*time.Millisecond, out, done, errs)
-
-	for i := 0; i < 1; i++ {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case err := <-errs:
-			t.Errorf("unexpected error: %s", err)
-		case b := <-out:
-			u, err := Deserialize(b)
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			u, err := Deserialize(v)
 			if err != nil {
-				t.Errorf("unexpected deserialization error: %s", err)
+				t.Error(err)
 				continue
 			}
 			checkUsage("ticker", u, t)
-			t.Logf("%#v\n", u)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
 		}
 	}
+	tk.Stop()
+	tk.Close()
 }
 
 func checkUsage(n string, u *structs.Usage, t *testing.T) {

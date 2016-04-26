@@ -23,13 +23,25 @@ import (
 
 const procFile = "/proc/version"
 
+// Kernel holds kernel information.
+type Kernel struct {
+	OS          string `json:"os"`
+	Version     string `json:"version"`
+	CompileUser string `json:"compile_user"`
+	GCC         string `json:"gcc"`
+	OSGCC       string `json:"os_gcc"`
+	Type        string `json:"type"`
+	CompileDate string `json:"compile_date"`
+	Arch        string `json:"arch"`
+}
+
 // Profiler processes the kernel information.
 type Profiler struct {
 	*joe.Proc
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
@@ -55,7 +67,7 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, joe.Error{Type: "platform", Op: "read /proc/version", Err: err}
+			return nil, &joe.ReadError{Err: err}
 		}
 		// The version is everything from the space, 0x20, prior to the version string, up to the first '(', 0x28, - 1 byte
 		for i, v = range prof.Line {
@@ -128,7 +140,7 @@ func Get() (k *Kernel, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -146,16 +158,4 @@ func (k *Kernel) SetArch() {
 			return
 		}
 	}
-}
-
-// Kernel holds kernel information.
-type Kernel struct {
-	OS          string `json:"os"`
-	Version     string `json:"version"`
-	CompileUser string `json:"compile_user"`
-	GCC         string `json:"gcc"`
-	OSGCC       string `json:"os_gcc"`
-	Type        string `json:"type"`
-	CompileDate string `json:"compile_date"`
-	Arch        string `json:"arch"`
 }

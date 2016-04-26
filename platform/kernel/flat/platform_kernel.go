@@ -28,23 +28,23 @@ import (
 // Profiler is used to process the kernel information, /proc/version, using
 // Flatbuffers.
 type Profiler struct {
-	Prof    *kernel.Profiler
-	Builder *fb.Builder
+	*kernel.Profiler
+	*fb.Builder
 }
 
 // Initializes and returns a kernel information profiler that utilizes
 // FlatBuffers.
-func New() (prof *Profiler, err error) {
-	p, err := kernel.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := kernel.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
+	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
 // Get returns the current kernel information as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	k, err := prof.Prof.Get()
+	k, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func Serialize(k *kernel.Kernel) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}

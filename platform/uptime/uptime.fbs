@@ -2,6 +2,7 @@
 namespace flat;
 
 table Uptime {
+    Timestamp:long;
     Total:double;
     Idle:double;
 }

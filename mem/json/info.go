@@ -22,26 +22,27 @@ import (
 	"sync"
 	"time"
 
+	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/mem"
 )
 
 // Profiler is used to process the /proc/meminfo file using JSON.
 type Profiler struct {
-	Prof *mem.Profiler
+	*mem.Profiler
 }
 
 // Initializes and returns a profiler for meminfo that uses JSON.
-func New() (prof *Profiler, err error) {
-	p, err := mem.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := mem.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p}, nil
+	return &Profiler{Profiler: p}, nil
 }
 
 // Get returns the current meminfo as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	inf, err := prof.Prof.Get()
+	inf, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -57,49 +58,12 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
 	}
 	return std.Get()
-}
-
-// Ticker processes meminfo information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
-// channel.  Processing ends when a done signal is received.
-//
-// It is the callers responsibility to close the done and errs channels.
-func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	outCh := make(chan mem.Info)
-	defer close(outCh)
-	go prof.Prof.Ticker(interval, outCh, done, errs)
-	for {
-		select {
-		case inf, ok := <-outCh:
-			if !ok {
-				return
-			}
-			b, err := prof.Serialize(&inf)
-			if err != nil {
-				errs <- err
-				continue
-			}
-			out <- b
-		}
-	}
-}
-
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	p, err := New()
-	if err != nil {
-		errs <- err
-		return
-	}
-	p.Ticker(interval, out, done, errs)
 }
 
 // Serialize mem.Info using JSON
@@ -112,7 +76,7 @@ func Serialize(inf *mem.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -144,4 +108,49 @@ func Deserialize(p []byte) (*mem.Info, error) {
 // Unmarshal is an alias for Deserialize
 func Unmarshal(p []byte) (*mem.Info, error) {
 	return Deserialize(p)
+}
+
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan []byte
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.C:
+			p, err := t.Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- p
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

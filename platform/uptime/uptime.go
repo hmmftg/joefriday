@@ -18,11 +18,19 @@ import (
 	"io"
 	"strconv"
 	"sync"
+	"time"
 
 	joe "github.com/mohae/joefriday"
 )
 
 const procFile = "/proc/uptime"
+
+// Uptime holds uptime information
+type Uptime struct {
+	Timestamp int64
+	Total     float64
+	Idle      float64
+}
 
 // Profiler processes the uptime information.
 type Profiler struct {
@@ -30,7 +38,7 @@ type Profiler struct {
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
@@ -46,13 +54,14 @@ func (prof *Profiler) Get() (u Uptime, err error) {
 	}
 	var i int
 	var v byte
+	u.Timestamp = time.Now().UTC().UnixNano()
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return u, joe.Error{Type: "platform", Op: "read /proc/version", Err: err}
+			return u, &joe.ReadError{Err: err}
 		}
 		// space delimits the two values
 		for i, v = range prof.Line {
@@ -62,11 +71,11 @@ func (prof *Profiler) Get() (u Uptime, err error) {
 		}
 		u.Total, err = strconv.ParseFloat(string(prof.Line[:i]), 64)
 		if err != nil {
-			return u, err
+			return u, &joe.ParseError{Info: "total", Err: err}
 		}
 		u.Idle, err = strconv.ParseFloat(string(prof.Line[i+1:len(prof.Line)-1]), 64)
 		if err != nil {
-			return u, err
+			return u, &joe.ParseError{Info: "idle", Err: err}
 		}
 
 	}
@@ -82,7 +91,7 @@ func Get() (u Uptime, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return u, err
 		}
@@ -90,8 +99,47 @@ func Get() (u Uptime, err error) {
 	return std.Get()
 }
 
-// Uptime holds uptime information
-type Uptime struct {
-	Total float64
-	Idle  float64
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan Uptime
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Uptime), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.C:
+			p, err := t.Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- p
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

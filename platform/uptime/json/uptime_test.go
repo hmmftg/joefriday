@@ -15,6 +15,7 @@ package json
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mohae/joefriday/platform/uptime"
 )
@@ -30,18 +31,54 @@ func TestGet(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	if int(u.Total) == 0 {
-		t.Error("Total: expected a non-zero value, got 0")
+	checkUptime("get", u, t)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	if int(u.Idle) == 0 {
-		t.Error("Idle: expected a non-zero value, got 0")
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			u, err := Deserialize(v)
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+				continue
+			}
+			checkUptime("ticker", u, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+	}
+	tk.Stop()
+	tk.Close()
+}
+
+func checkUptime(n string, u uptime.Uptime, t *testing.T) {
+	if u.Timestamp == 0 {
+		t.Errorf("expected Timestamp to be a non-zero value; got 0")
+	}
+	if u.Total == 0 {
+		t.Errorf("expected total to be a non-zero value; got 0")
+	}
+	if u.Idle == 0 {
+		t.Errorf("expected idle to be a non-zero value; got 0")
 	}
 }
 
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
@@ -52,7 +89,7 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -64,7 +101,7 @@ func BenchmarkSerialize(b *testing.B) {
 func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -73,11 +110,10 @@ func BenchmarkMarshal(b *testing.B) {
 	_ = jsn
 }
 
-var u uptime.Uptime
-
 func BenchmarkDeserialize(b *testing.B) {
+	var u uptime.Uptime
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -87,8 +123,9 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
+	var u uptime.Uptime
 	b.StartTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

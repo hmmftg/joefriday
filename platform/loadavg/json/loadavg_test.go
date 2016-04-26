@@ -35,51 +35,53 @@ func TestGet(t *testing.T) {
 	t.Logf("%#v\n", l)
 }
 
-func TestGetTicker(t *testing.T) {
-	results := make(chan []byte)
-	errs := make(chan error)
-	done := make(chan struct{})
-	go Ticker(time.Duration(400)*time.Millisecond, results, done, errs)
-	var x int
-	for {
-		if x > 0 {
-			close(done)
-			break
-		}
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case b, ok := <-results:
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
 			if !ok {
 				break
 			}
-			l, err := Deserialize(b)
+			l, err := Deserialize(v)
 			if err != nil {
-				t.Errorf("unexpected error: %s", err)
+				t.Error(err)
 				continue
 			}
-			checkLoad("get", l, t)
-			t.Logf("%#v\n", l)
-		case err := <-errs:
+			checkLoad("ticker", l, t)
+		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
-		x++
 	}
+	tk.Stop()
+	tk.Close()
 }
 
 func checkLoad(n string, l loadavg.LoadAvg, t *testing.T) {
-	if l.LastMinute == 0 {
-		t.Errorf("%s: expected LastMinute to be a non-zero value; got 0", n)
+	if l.Timestamp == 0 {
+		t.Errorf("%s: expected Timestamp to be a non-zero value; got 0", n)
 	}
-	if l.LastFive == 0 {
-		t.Errorf("%s: expected LastFive to be a non-zero value; got 0", n)
+	if l.Minute == 0 {
+		t.Errorf("%s: expected Minute to be a non-zero value; got 0", n)
 	}
-	if l.LastTen == 0 {
-		t.Errorf("%s: expected LastTen to be a non-zero value; got 0", n)
+	if l.Five == 0 {
+		t.Errorf("%s: expected Five to be a non-zero value; got 0", n)
 	}
-	if l.RunningProcesses == 0 {
-		t.Errorf("%s: expected RunningProcesses to be a non-zero value; got 0", n)
+	if l.Fifteen == 0 {
+		t.Errorf("%s: expected Fifteen to be a non-zero value; got 0", n)
 	}
-	if l.TotalProcesses == 0 {
-		t.Errorf("%s: expected TotalProcesses to be a non-zero value; got 0", n)
+	if l.Running == 0 {
+		t.Errorf("%s: expected Running to be a non-zero value; got 0", n)
+	}
+	if l.Total == 0 {
+		t.Errorf("%s: expected Total to be a non-zero value; got 0", n)
 	}
 	if l.PID == 0 {
 		t.Errorf("%s: expected PID to be a non-zero value; got 0", n)
@@ -89,7 +91,7 @@ func checkLoad(n string, l loadavg.LoadAvg, t *testing.T) {
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
@@ -100,7 +102,7 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -112,7 +114,7 @@ func BenchmarkSerialize(b *testing.B) {
 func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -121,11 +123,10 @@ func BenchmarkMarshal(b *testing.B) {
 	_ = jsn
 }
 
-var l loadavg.LoadAvg
-
 func BenchmarkDeserialize(b *testing.B) {
+	var l loadavg.LoadAvg
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -135,8 +136,9 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
+	var l loadavg.LoadAvg
 	b.StartTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

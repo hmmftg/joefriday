@@ -28,24 +28,24 @@ import (
 // Profiler is used to process the os information, /etc/os-release using
 // Flatbuffers.
 type Profiler struct {
-	Prof    *release.Profiler
-	Builder *fb.Builder
+	*release.Profiler
+	*fb.Builder
 }
 
 // Initializes and returns an OS information profiler that utilizes
 // FlatBuffers.
-func New() (prof *Profiler, err error) {
-	p, err := release.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := release.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
+	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
 // Get returns the current OS release information as Flatbuffer serialized
 // bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	k, err := prof.Prof.Get()
+	k, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +98,7 @@ func Serialize(r *release.Release) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}

@@ -20,31 +20,33 @@ package flat
 
 import (
 	"sync"
+	"time"
 
 	fb "github.com/google/flatbuffers/go"
+	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/platform/uptime"
 )
 
 // Profiler is used to process the uptime information, /proc/uptime, using
 // Flatbuffers.
 type Profiler struct {
-	Prof    *uptime.Profiler
-	Builder *fb.Builder
+	*uptime.Profiler
+	*fb.Builder
 }
 
 // Initializes and returns an uptime information profiler that utilizes
 // FlatBuffers.
-func New() (prof *Profiler, err error) {
-	p, err := uptime.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := uptime.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Prof: p, Builder: fb.NewBuilder(0)}, nil
+	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
 // Get returns the current uptime information as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	k, err := prof.Prof.Get()
+	k, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +62,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -73,6 +75,7 @@ func (prof *Profiler) Serialize(u uptime.Uptime) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
 	UptimeStart(prof.Builder)
+	UptimeAddTimestamp(prof.Builder, u.Timestamp)
 	UptimeAddTotal(prof.Builder, u.Total)
 	UptimeAddIdle(prof.Builder, u.Idle)
 	prof.Builder.Finish(UptimeEnd(prof.Builder))
@@ -85,7 +88,7 @@ func Serialize(u uptime.Uptime) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +101,53 @@ func Serialize(u uptime.Uptime) (p []byte, err error) {
 func Deserialize(p []byte) uptime.Uptime {
 	flatU := GetRootAsUptime(p, 0)
 	var u uptime.Uptime
+	u.Timestamp = flatU.Timestamp()
 	u.Total = flatU.Total()
 	u.Idle = flatU.Idle()
 	return u
+}
+
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan []byte
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.C:
+			p, err := t.Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- p
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

@@ -2,11 +2,12 @@
 namespace flat;
 
 table LoadAvg {
-    LastMinute:float;
-    LastFive:float;
-	LastTen:float;
-	RunningProcesses:int;
-	TotalProcesses:int;
+    Timestamp:long;
+    Minute:float;
+    Five:float;
+	Fifteen:float;
+	Running:int;
+	Total:int;
     PID:int;
 }
 

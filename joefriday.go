@@ -31,16 +31,62 @@ import (
 	"time"
 )
 
-// TODO: make current/better implementation
-type Error struct {
-	Type string
-	Op   string
+type ResetError struct {
+	Err error
+}
+
+func (e *ResetError) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
+	return e.Err.Error()
+}
+
+func (e *ResetError) Reset() bool { return true }
+func (e *ResetError) Parse() bool { return false }
+func (e *ResetError) Read() bool  { return false }
+
+type ParseError struct {
+	Info string
 	Err  error
 }
 
-func (e Error) Error() string {
-	return fmt.Sprintf("%s: %q: %s", e.Type, e.Op, e.Err)
+func (e *ParseError) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
+	s := e.Info
+	if e.Info != "" {
+		s += ": "
+	}
+	s += e.Err.Error()
+	return s
 }
+
+func (e *ParseError) Reset() bool { return true }
+func (e *ParseError) Parse() bool { return true }
+func (e *ParseError) Read() bool  { return false }
+
+type ReadError struct {
+	Info string
+	Err  error
+}
+
+func (e *ReadError) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
+	s := e.Info
+	if e.Info != "" {
+		s += ": "
+	}
+	s += e.Err.Error()
+	return s
+}
+
+func (e *ReadError) Reset() bool { return true }
+func (e *ReadError) Parse() bool { return false }
+func (e *ReadError) Reade() bool { return true }
 
 // A Proc holds everything related to a proc file and some processing vars.
 type Proc struct {
@@ -63,7 +109,7 @@ func New(fname string) (*Proc, error) {
 func (p *Proc) Reset() error {
 	_, err := p.File.Seek(0, os.SEEK_SET)
 	if err != nil {
-		return err
+		return &ResetError{err}
 	}
 	p.Buf.Reset(p.File)
 	p.Val = p.Val[:0]
@@ -71,8 +117,9 @@ func (p *Proc) Reset() error {
 }
 
 type Tocker interface {
-	Run()  // runs some code on an interval
-	Stop() // stops execution of the code
+	Close() // Close the Tocker's resources.
+	Run()   // Run some code on an interval.
+	Stop()  // Stop the Tocker.
 }
 
 type Ticker struct {

@@ -24,7 +24,7 @@ func TestFacts(t *testing.T) {
 		t.Error("expected timestamp to have a nonzero value, it didn't")
 	}
 	if len(facts.CPU) == 0 {
-		t.Error("Expected at least 1 CPU entrie, got none")
+		t.Error("Expected at least 1 CPU entry, got none")
 	}
 	// spot check some vars
 	for i, fact := range facts.CPU {
@@ -41,11 +41,10 @@ func TestFacts(t *testing.T) {
 	t.Logf("%#v", facts)
 }
 
-var fact *Facts
-
 func BenchmarkGet(b *testing.B) {
+	var fact *Facts
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		fact, _ = p.Get()

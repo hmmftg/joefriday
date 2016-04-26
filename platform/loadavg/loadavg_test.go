@@ -29,37 +29,47 @@ func TestGet(t *testing.T) {
 }
 
 func TestTicker(t *testing.T) {
-	out := make(chan LoadAvg)
-	done := make(chan struct{})
-	errs := make(chan error)
-	go Ticker(time.Duration(400)*time.Millisecond, out, done, errs)
-	for i := 0; i < 1; i++ {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case l := <-out:
-			checkLoad("ticker", l, t)
-			t.Logf("%#v\n", l)
-		case err := <-errs:
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			checkLoad("ticker", v, t)
+		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
 	}
-	close(done)
+	tk.Stop()
+	tk.Close()
 }
 
 func checkLoad(n string, l LoadAvg, t *testing.T) {
-	if l.LastMinute == 0 {
-		t.Errorf("%s: expected LastMinute to be a non-zero value; got 0", n)
+	if l.Timestamp == 0 {
+		t.Errorf("%s: expected Timestamp to be a non-zero value; got 0", n)
 	}
-	if l.LastFive == 0 {
-		t.Errorf("%s: expected LastFive to be a non-zero value; got 0", n)
+	if l.Minute == 0 {
+		t.Errorf("%s: expected Minute to be a non-zero value; got 0", n)
 	}
-	if l.LastTen == 0 {
-		t.Errorf("%s: expected LastTen to be a non-zero value; got 0", n)
+	if l.Five == 0 {
+		t.Errorf("%s: expected Five to be a non-zero value; got 0", n)
 	}
-	if l.RunningProcesses == 0 {
-		t.Errorf("%s: expected RunningProcesses to be a non-zero value; got 0", n)
+	if l.Fifteen == 0 {
+		t.Errorf("%s: expected Fifteen to be a non-zero value; got 0", n)
 	}
-	if l.TotalProcesses == 0 {
-		t.Errorf("%s: expected TotalProcesses to be a non-zero value; got 0", n)
+	if l.Running == 0 {
+		t.Errorf("%s: expected Running to be a non-zero value; got 0", n)
+	}
+	if l.Total == 0 {
+		t.Errorf("%s: expected Total to be a non-zero value; got 0", n)
 	}
 	if l.PID == 0 {
 		t.Errorf("%s: expected PID to be a non-zero value; got 0", n)
@@ -69,7 +79,7 @@ func checkLoad(n string, l LoadAvg, t *testing.T) {
 func BenchmarkGet(b *testing.B) {
 	var l LoadAvg
 	b.StopTimer()
-	p, err := New()
+	p, err := NewProfiler()
 	if err != nil {
 		return
 	}

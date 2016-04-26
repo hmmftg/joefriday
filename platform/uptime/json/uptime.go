@@ -20,19 +20,21 @@ package json
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
+	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/platform/uptime"
 )
 
 // Profiler is used to process the uptime information, /proc/version, using
 // JSON.
 type Profiler struct {
-	Profiler *uptime.Profiler
+	*uptime.Profiler
 }
 
 // Initializes and returns a json.Profiler for uptime information.
-func New() (prof *Profiler, err error) {
-	p, err := uptime.New()
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := uptime.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +59,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +77,7 @@ func Serialize(u uptime.Uptime) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -107,4 +109,49 @@ func Deserialize(p []byte) (uptime.Uptime, error) {
 // Unmarshal is an alias for Deserialize
 func Unmarshal(p []byte) (uptime.Uptime, error) {
 	return Deserialize(p)
+}
+
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan []byte
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.C:
+			p, err := t.Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- p
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

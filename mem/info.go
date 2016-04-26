@@ -16,7 +16,6 @@
 package mem
 
 import (
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -27,13 +26,61 @@ import (
 
 const procFile = "/proc/meminfo"
 
+// Info holds the mem info information.
+type Info struct {
+	Timestamp         int64 `json:"timestamp"`
+	Active            int64 `json:"active"`
+	ActiveAnon        int64 `json:"active_anon"`
+	ActiveFile        int64 `json:"active_file"`
+	AnonHugePages     int64 `json:"anon_huge_pages"`
+	AnonPages         int64 `json:"anon_pages"`
+	Bounce            int64 `json:"bounce"`
+	Buffers           int64 `json:"buffers"`
+	Cached            int64 `json:"cached"`
+	CommitLimit       int64 `json:"commit_limit"`
+	CommittedAS       int64 `json:"commited_as"`
+	DirectMap4K       int64 `json:"direct_map_4k"`
+	DirectMap2M       int64 `json:"direct_map_2m"`
+	Dirty             int64 `json:"dirty"`
+	HardwareCorrupted int64 `json:"hardware_corrupted"`
+	HugePagesFree     int64 `json:"huge_pages_free"`
+	HugePagesRsvd     int64 `json:"huge_pages_rsvd"`
+	HugePagesSize     int64 `json:"huge_pages_size"`
+	HugePagesSurp     int64 `json:"huge_pages_surp"`
+	HugePagesTotal    int64 `json:"huge_pages_total"`
+	Inactive          int64 `json:"inactive"`
+	InactiveAnon      int64 `json:"inactive_anon"`
+	InactiveFile      int64 `json:"inactive_file"`
+	KernelStack       int64 `json:"kernel_stack"`
+	Mapped            int64 `json:"mapped"`
+	MemAvailable      int64 `json:"mem_available"`
+	MemFree           int64 `json:"mem_free"`
+	MemTotal          int64 `json:"mem_total"`
+	Mlocked           int64 `json:"mlocked"`
+	NFSUnstable       int64 `json:"nfs_unstable"`
+	PageTables        int64 `json:"page_tables"`
+	Shmem             int64 `json:"shmem"`
+	Slab              int64 `json:"slab"`
+	SReclaimable      int64 `json:"s_reclaimable"`
+	SUnreclaim        int64 `json:"s_unreclaim"`
+	SwapCached        int64 `json:"swap_cached"`
+	SwapFree          int64 `json:"swap_free"`
+	SwapTotal         int64 `json:"swap_total"`
+	Unevictable       int64 `json:"unevictable"`
+	VmallocChunk      int64 `json:"vmalloc_chunk"`
+	VmallocTotal      int64 `json:"vmalloc_total"`
+	VmallocUsed       int64 `json:"vmalloc_used"`
+	Writeback         int64 `json:"writeback"`
+	WritebackTmp      int64 `json:"writeback_tmp"`
+}
+
 // Profiler is used to process the /proc/meminfo file.
 type Profiler struct {
 	*joe.Proc
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
@@ -46,22 +93,22 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 	var (
 		i, pos, nameLen int
 		v               byte
+		n               uint64
 	)
 	err = prof.Reset()
 	if err != nil {
 		return nil, err
 	}
 	inf = &Info{}
-	for l := 0; l < 16; l++ {
+	inf.Timestamp = time.Now().UTC().UnixNano()
+	for {
+		prof.Val = prof.Val[:0]
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return inf, fmt.Errorf("error reading output bytes: %s", err)
-		}
-		if l > 8 && l < 14 {
-			continue
+			return inf, &joe.ReadError{Err: err}
 		}
 		// first grab the key name (everything up to the ':')
 		for i, v = range prof.Line {
@@ -89,44 +136,182 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 			prof.Val = append(prof.Val, v)
 		}
 		// any conversion error results in 0
-		n, err := helpers.ParseUint(prof.Val[nameLen:])
+		n, err = helpers.ParseUint(prof.Val[nameLen:])
 		if err != nil {
-			return inf, fmt.Errorf("%s: %s", prof.Val[:nameLen], err)
+			return inf, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 		}
 
 		v = prof.Val[0]
-
-		// Reduce evaluations.
+		// evaluate the key
+		if v == 'A' {
+			if prof.Val[5] == 'e' {
+				if nameLen == 6 {
+					inf.Active = int64(n)
+					continue
+				}
+				if prof.Val[7] == 'a' {
+					inf.ActiveAnon = int64(n)
+					continue
+				}
+				inf.ActiveFile = int64(n)
+				continue
+			}
+			if nameLen == 9 {
+				inf.AnonPages = int64(n)
+				continue
+			}
+			inf.AnonHugePages = int64(n)
+			continue
+		}
+		if v == 'C' {
+			if nameLen == 6 {
+				inf.Cached = int64(n)
+				continue
+			}
+			if nameLen == 11 {
+				inf.CommitLimit = int64(n)
+				continue
+			}
+			inf.CommittedAS = int64(n)
+			continue
+		}
+		if v == 'D' {
+			if nameLen == 5 {
+				inf.Dirty = int64(n)
+				continue
+			}
+			if prof.Val[10] == 'k' {
+				inf.DirectMap4K = int64(n)
+				continue
+			}
+			inf.DirectMap2M = int64(n)
+			continue
+		}
+		if v == 'H' {
+			if nameLen == 14 {
+				if prof.Val[10] == 'F' {
+					inf.HugePagesFree = int64(n)
+					continue
+				}
+				if prof.Val[10] == 'R' {
+					inf.HugePagesRsvd = int64(n)
+					continue
+				}
+				inf.HugePagesSurp = int64(n)
+			}
+			if prof.Val[1] == 'a' {
+				inf.HardwareCorrupted = int64(n)
+				continue
+			}
+			if prof.Val[9] == 'i' {
+				inf.HugePagesSize = int64(n)
+				continue
+			}
+			inf.HugePagesTotal = int64(n)
+			continue
+		}
+		if v == 'I' {
+			if nameLen == 8 {
+				inf.Inactive = int64(n)
+				continue
+			}
+			if prof.Val[9] == 'a' {
+				inf.InactiveAnon = int64(n)
+				continue
+			}
+			inf.InactiveFile = int64(n)
+		}
 		if v == 'M' {
 			v = prof.Val[3]
-			if v == 'T' {
-				inf.MemTotal = int64(n)
-			} else if v == 'F' {
-				inf.MemFree = int64(n)
-			} else {
+			if nameLen < 8 {
+				if v == 'p' {
+					inf.Mapped = int64(n)
+					continue
+				}
+				if v == 'F' {
+					inf.MemFree = int64(n)
+					continue
+				}
+				inf.Mlocked = int64(n)
+				continue
+			}
+			if v == 'A' {
 				inf.MemAvailable = int64(n)
+				continue
 			}
-		} else if v == 'S' {
-			v = prof.Val[4]
-			if v == 'C' {
-				inf.SwapCached = int64(n)
-			} else if v == 'T' {
-				inf.SwapTotal = int64(n)
-			} else if v == 'F' {
-				inf.SwapFree = int64(n)
-			}
-		} else if v == 'B' {
-			inf.Buffers = int64(n)
-		} else if v == 'I' {
-			inf.Inactive = int64(n)
-		} else if v == 'C' {
-			inf.Cached = int64(n)
-		} else if v == 'A' {
-			inf.Active = int64(n)
+			inf.MemTotal = int64(n)
+			continue
 		}
-		prof.Val = prof.Val[:0]
+		if v == 'S' {
+			v = prof.Val[1]
+			if v == 'w' {
+				if prof.Val[4] == 'C' {
+					inf.SwapCached = int64(n)
+					continue
+				}
+				if prof.Val[4] == 'F' {
+					inf.SwapFree = int64(n)
+					continue
+				}
+				inf.SwapTotal = int64(n)
+				continue
+			}
+			if v == 'h' {
+				inf.Shmem = int64(n)
+				continue
+			}
+			if v == 'l' {
+				inf.Slab = int64(n)
+				continue
+			}
+			if v == 'R' {
+				inf.SReclaimable = int64(n)
+				continue
+			}
+			inf.SUnreclaim = int64(n)
+			continue
+		}
+		if v == 'V' {
+			if prof.Val[8] == 'C' {
+				inf.VmallocChunk = int64(n)
+				continue
+			}
+			if prof.Val[8] == 'T' {
+				inf.VmallocTotal = int64(n)
+				continue
+			}
+			inf.VmallocUsed = int64(n)
+			continue
+		}
+		if v == 'W' {
+			if nameLen == 9 {
+				inf.Writeback = int64(n)
+				continue
+			}
+			inf.WritebackTmp = int64(n)
+			continue
+		}
+		if v == 'B' {
+			if nameLen == 6 {
+				inf.Bounce = int64(n)
+				continue
+			}
+			inf.Buffers = int64(n)
+			continue
+		}
+		if v == 'K' {
+			inf.KernelStack = int64(n)
+			continue
+		}
+		if v == 'N' {
+			inf.NFSUnstable = int64(n)
+			continue
+		}
+		if v == 'P' {
+			inf.PageTables = int64(n)
+		}
+		inf.Unevictable = int64(n)
 	}
-	inf.Timestamp = time.Now().UTC().UnixNano()
 	return inf, nil
 }
 
@@ -140,7 +325,7 @@ func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -148,139 +333,268 @@ func Get() (inf *Info, err error) {
 	return std.Get()
 }
 
-// Ticker processes meminfo information on a ticker.  The generated data is
-// sent to the out channel.  Any errors encountered are sent to the errs
-// channel.  Processing ends when a done signal is received.
-//
-// It is the callers responsibility to close the done and errs channels.
-func (prof *Profiler) Ticker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan Info
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
 	// predeclare some vars
 	var (
-		l, i, pos, nameLen int
-		v                  byte
-		n                  uint64
-		err                error
-		inf                Info
+		i, pos, nameLen int
+		v               byte
+		n               uint64
+		err             error
+		inf             Info
 	)
 	// ticker
 	for {
 		select {
-		case <-done:
+		case <-t.Done:
 			return
-		case <-ticker.C:
-			err = prof.Reset()
+		case <-t.C:
+			err = t.Profiler.Reset()
 			if err != nil {
-				errs <- joe.Error{Type: "mem", Op: "seek byte 0: /proc/meminfo", Err: err}
+				t.Errs <- err
 				continue
 			}
-			prof.Line, err = prof.Buf.ReadSlice('\n')
-			if err != nil {
-				if err == io.EOF {
-					break
+			inf.Timestamp = time.Now().UTC().UnixNano()
+			for {
+				t.Val = t.Val[:0]
+				t.Line, err = t.Buf.ReadSlice('\n')
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					t.Errs <- &joe.ReadError{Err: err}
 				}
-				errs <- fmt.Errorf("error reading output bytes: %s", err)
-				continue
-			}
-			if l > 8 && l < 14 {
-				continue
-			}
-			// first grab the key name (everything up to the ':')
-			for i, v = range prof.Line {
-				if v == ':' {
-					pos = i + 1
-					break
+				// first grab the key name (everything up to the ':')
+				for i, v = range t.Line {
+					if v == ':' {
+						pos = i + 1
+						break
+					}
+					t.Val = append(t.Val, v)
 				}
-				prof.Val = append(prof.Val, v)
-			}
-			nameLen = len(prof.Val)
+				nameLen = len(t.Val)
 
-			// skip all spaces
-			for i, v = range prof.Line[pos:] {
-				if v != ' ' {
-					pos += i
-					break
+				// skip all spaces
+				for i, v = range t.Line[pos:] {
+					if v != ' ' {
+						pos += i
+						break
+					}
 				}
-			}
 
-			// grab the numbers
-			for _, v = range prof.Line[pos:] {
-				if v == ' ' || v == '\n' {
-					break
+				// grab the numbers
+				for _, v = range t.Line[pos:] {
+					if v == ' ' || v == '\n' {
+						break
+					}
+					t.Val = append(t.Val, v)
 				}
-				prof.Val = append(prof.Val, v)
-			}
-			// any conversion error results in 0
-			n, err = helpers.ParseUint(prof.Val[nameLen:])
-			if err != nil {
-				errs <- fmt.Errorf("%s: %s", prof.Val[:nameLen], err)
-			}
-			v = prof.Val[0]
+				// any conversion error results in 0
+				n, err = helpers.ParseUint(t.Val[nameLen:])
+				if err != nil {
+					t.Errs <- &joe.ParseError{Info: string(t.Val[:nameLen]), Err: err}
+				}
 
-			// Reduce evaluations.
-			if v == 'M' {
-				v = prof.Val[3]
-				if v == 'T' {
-					inf.MemTotal = int64(n)
-				} else if v == 'F' {
-					inf.MemFree = int64(n)
-				} else {
-					inf.MemAvailable = int64(n)
+				v = t.Val[0]
+				// evaluate the key
+				if v == 'A' {
+					if t.Val[5] == 'e' {
+						if nameLen == 6 {
+							inf.Active = int64(n)
+							continue
+						}
+						if t.Val[7] == 'a' {
+							inf.ActiveAnon = int64(n)
+							continue
+						}
+						inf.ActiveFile = int64(n)
+						continue
+					}
+					if nameLen == 9 {
+						inf.AnonPages = int64(n)
+						continue
+					}
+					inf.AnonHugePages = int64(n)
+					continue
 				}
-			} else if v == 'S' {
-				v = prof.Val[4]
 				if v == 'C' {
-					inf.SwapCached = int64(n)
-				} else if v == 'T' {
-					inf.SwapTotal = int64(n)
-				} else if v == 'F' {
-					inf.SwapFree = int64(n)
+					if nameLen == 6 {
+						inf.Cached = int64(n)
+						continue
+					}
+					if nameLen == 11 {
+						inf.CommitLimit = int64(n)
+						continue
+					}
+					inf.CommittedAS = int64(n)
+					continue
 				}
-			} else if v == 'B' {
-				inf.Buffers = int64(n)
-			} else if v == 'I' {
-				inf.Inactive = int64(n)
-			} else if v == 'C' {
-				inf.Cached = int64(n)
-			} else if v == 'A' {
-				inf.Active = int64(n)
+				if v == 'D' {
+					if nameLen == 5 {
+						inf.Dirty = int64(n)
+						continue
+					}
+					if t.Val[10] == 'k' {
+						inf.DirectMap4K = int64(n)
+						continue
+					}
+					inf.DirectMap2M = int64(n)
+					continue
+				}
+				if v == 'H' {
+					if nameLen == 14 {
+						if t.Val[10] == 'F' {
+							inf.HugePagesFree = int64(n)
+							continue
+						}
+						if t.Val[10] == 'R' {
+							inf.HugePagesRsvd = int64(n)
+							continue
+						}
+						inf.HugePagesSurp = int64(n)
+					}
+					if t.Val[1] == 'a' {
+						inf.HardwareCorrupted = int64(n)
+						continue
+					}
+					if t.Val[9] == 'i' {
+						inf.HugePagesSize = int64(n)
+						continue
+					}
+					inf.HugePagesTotal = int64(n)
+					continue
+				}
+				if v == 'I' {
+					if nameLen == 8 {
+						inf.Inactive = int64(n)
+						continue
+					}
+					if t.Val[9] == 'a' {
+						inf.InactiveAnon = int64(n)
+						continue
+					}
+					inf.InactiveFile = int64(n)
+				}
+				if v == 'M' {
+					v = t.Val[3]
+					if nameLen < 8 {
+						if v == 'p' {
+							inf.Mapped = int64(n)
+							continue
+						}
+						if v == 'F' {
+							inf.MemFree = int64(n)
+							continue
+						}
+						inf.Mlocked = int64(n)
+						continue
+					}
+					if v == 'A' {
+						inf.MemAvailable = int64(n)
+						continue
+					}
+					inf.MemTotal = int64(n)
+					continue
+				}
+				if v == 'S' {
+					v = t.Val[1]
+					if v == 'w' {
+						if t.Val[4] == 'C' {
+							inf.SwapCached = int64(n)
+							continue
+						}
+						if t.Val[4] == 'F' {
+							inf.SwapFree = int64(n)
+							continue
+						}
+						inf.SwapTotal = int64(n)
+						continue
+					}
+					if v == 'h' {
+						inf.Shmem = int64(n)
+						continue
+					}
+					if v == 'l' {
+						inf.Slab = int64(n)
+						continue
+					}
+					if v == 'R' {
+						inf.SReclaimable = int64(n)
+						continue
+					}
+					inf.SUnreclaim = int64(n)
+					continue
+				}
+				if v == 'V' {
+					if t.Val[8] == 'C' {
+						inf.VmallocChunk = int64(n)
+						continue
+					}
+					if t.Val[8] == 'T' {
+						inf.VmallocTotal = int64(n)
+						continue
+					}
+					inf.VmallocUsed = int64(n)
+					continue
+				}
+				if v == 'W' {
+					if nameLen == 9 {
+						inf.Writeback = int64(n)
+						continue
+					}
+					inf.WritebackTmp = int64(n)
+					continue
+				}
+				if v == 'B' {
+					if nameLen == 6 {
+						inf.Bounce = int64(n)
+						continue
+					}
+					inf.Buffers = int64(n)
+					continue
+				}
+				if v == 'K' {
+					inf.KernelStack = int64(n)
+					continue
+				}
+				if v == 'N' {
+					inf.NFSUnstable = int64(n)
+					continue
+				}
+				if v == 'P' {
+					inf.PageTables = int64(n)
+				}
+				inf.Unevictable = int64(n)
 			}
-			prof.Val = prof.Val[:0]
+			t.Data <- inf
 		}
-		inf.Timestamp = time.Now().UTC().UnixNano()
-		out <- inf
 	}
 }
 
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan Info, done chan struct{}, errs chan error) {
-	prof, err := New()
-	if err != nil {
-		errs <- err
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
-}
-
-// Info holds the mem info information.
-type Info struct {
-	Timestamp    int64 `json:"timestamp"`
-	MemTotal     int64 `json:"mem_total"`
-	MemFree      int64 `json:"mem_free"`
-	MemAvailable int64 `json:"mem_available"`
-	Buffers      int64 `json:"buffers"`
-	Cached       int64 `json:"cached"`
-	SwapCached   int64 `json:"swap_cached"`
-	Active       int64 `json:"active"`
-	Inactive     int64 `json:"inactive"`
-	SwapTotal    int64 `json:"swap_total"`
-	SwapFree     int64 `json:"swap_free"`
-}
-
-func (i *Info) String() string {
-	return fmt.Sprintf("Timestamp: %v\nMemTotal:\t%d\tMemFree:\t%d\tMemAvailable:\t%d\tActive:\t%d\tInactive:\t%d\nCached:\t\t%d\tBuffers\t:%d\nSwapTotal:\t%d\tSwapCached:\t%d\tSwapFree:\t%d\n", time.Unix(0, i.Timestamp).UTC(), i.MemTotal, i.MemFree, i.MemAvailable, i.Active, i.Inactive, i.Cached, i.Buffers, i.SwapTotal, i.SwapCached, i.SwapFree)
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

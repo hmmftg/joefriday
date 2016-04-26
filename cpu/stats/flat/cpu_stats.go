@@ -11,11 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of CPU stats.  Instead
-// of returning a Go struct, it returns Flatbuffer serialized bytes.
-// A function to deserialize the Flatbuffer serialized bytes into a
-// facts.Facts struct is provided.  After the first use, the flatbuffer
-// builder is reused.
+// Package flat handles Flatbuffer based processing of CPU facts.  Instead of
+// returning a Go struct, it returns Flatbuffer serialized bytes.  A function
+// to deserialize the Flatbuffer serialized bytes into a facts.Facts struct
+// is provided.  After the first use, the flatbuffer builder is reused.
 package flat
 
 import (
@@ -23,19 +22,20 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
+	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/cpu/stats"
 )
 
-// Profiler is used to process the /proc/stat file, as stats, using
-// Flatbuffers.
+// Profiler is used to process the stats, /proc/stat, as Flatbuffers
+// serialized bytes.
 type Profiler struct {
 	*stats.Profiler
 	*fb.Builder
 }
 
-// Initialized a new stats Profiler that utilizes Flatbuffers.
-func New() (prof *Profiler, err error) {
-	p, err := stats.New()
+// Initialized and returns a new stats Profiler that uses Flatbuffers.
+func NewProfiler() (prof *Profiler, err error) {
+	p, err := stats.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -69,43 +69,6 @@ func Get() (p []byte, err error) {
 	}
 
 	return std.Get()
-}
-
-// Ticker processes CPU utilization information on a ticker.  Any errors
-// encountered are sent to errs.  Processing ends when either a done signal
-// is received or the done channel is closed.
-//
-// It is the callers responsibility to close the done and errs channels.
-//
-// TODO: better handle errors, e.g. restore cur from prior so that there
-// isn't the possibility of temporarily having bad data, just a missed
-// collection interval.
-func (prof *Profiler) Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	outCh := make(chan *stats.Stats)
-	defer close(out)
-	go prof.Profiler.Ticker(interval, outCh, done, errs)
-	for {
-		select {
-		case s, ok := <-outCh:
-			if !ok {
-				return
-			}
-			out <- prof.Serialize(s)
-		}
-	}
-}
-
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan []byte, done chan struct{}, errs chan error) {
-	prof, err := New()
-	if err != nil {
-		errs <- err
-		close(out)
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
 }
 
 // Serialize serializes the Stats using Flatbuffers.
@@ -153,7 +116,7 @@ func Serialize(stts *stats.Stats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -192,4 +155,49 @@ func Deserialize(p []byte) *stats.Stats {
 		stts.CPU[i] = stat
 	}
 	return stts
+}
+
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan []byte
+	*Profiler
+}
+
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.C:
+			p, err := t.Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- p
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

@@ -27,48 +27,51 @@ func TestGet(t *testing.T) {
 		return
 	}
 	inf := Deserialize(b)
-	checkInfo(inf, t)
+	checkInfo("get", inf, t)
 	t.Logf("%#v\n", inf)
 }
 
 func TestTicker(t *testing.T) {
-	results := make(chan []byte)
-	errs := make(chan error)
-	done := make(chan struct{})
-	go Ticker(time.Second, results, done, errs)
-	var x int
-	for {
-		if x > 0 {
-			close(done)
-			break
-		}
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case b, ok := <-results:
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
 			if !ok {
 				break
 			}
-			inf := Deserialize(b)
-			t.Logf("%#v\n", inf)
-			checkInfo(inf, t)
-		case err := <-errs:
+			inf := Deserialize(v)
+			if err != nil {
+				t.Error(err)
+				continue
+			}
+			checkInfo("ticker", inf, t)
+		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
-		x++
 	}
+	tk.Stop()
+	tk.Close()
 }
 
-func checkInfo(inf *structs.Info, t *testing.T) {
+func checkInfo(n string, inf *structs.Info, t *testing.T) {
 	if inf.Timestamp == 0 {
-		t.Errorf("expected timestamp to be a non-zero value; was 0")
+		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
 	if len(inf.Interfaces) == 0 {
-		t.Error("expected interfaces; got none")
+		t.Errorf("%s: expected interfaces; got none", n)
 		return
 	}
 	// check name
 	for i, v := range inf.Interfaces {
 		if v.Name == "" {
-			t.Errorf("%d: expected inteface to have a name; was empty", i)
+			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
 		}
 	}
 }
@@ -76,7 +79,7 @@ func checkInfo(inf *structs.Info, t *testing.T) {
 func BenchmarkGet(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -89,8 +92,8 @@ var inf *structs.Info
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := New()
-	inf, _ := p.Prof.Get()
+	p, _ := NewProfiler()
+	inf, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = Serialize(inf)
@@ -100,7 +103,7 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

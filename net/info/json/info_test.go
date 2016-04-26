@@ -31,44 +31,51 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkInfo(info, t)
+	checkInfo("get", info, t)
 	t.Logf("%#v\n", info)
 }
 
 func TestTicker(t *testing.T) {
-	out := make(chan []byte)
-	done := make(chan struct{})
-	errs := make(chan error)
-	go Ticker(time.Duration(400)*time.Millisecond, out, done, errs)
-
-	for i := 0; i < 1; i++ {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
 		select {
-		case err := <-errs:
-			t.Errorf("unexpected error: %s", err)
-		case b := <-out:
-			inf, err := Deserialize(b)
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			inf, err := Deserialize(v)
 			if err != nil {
-				t.Errorf("unexpected deserialization error: %s", err)
+				t.Error(err)
 				continue
 			}
-			checkInfo(inf, t)
-			t.Logf("%#v\n", inf)
+			checkInfo("ticker", inf, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
 		}
 	}
+	tk.Stop()
+	tk.Close()
 }
 
-func checkInfo(inf *structs.Info, t *testing.T) {
+func checkInfo(n string, inf *structs.Info, t *testing.T) {
 	if inf.Timestamp == 0 {
-		t.Errorf("expected timestamp to be a non-zero value; was 0")
+		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
 	if len(inf.Interfaces) == 0 {
-		t.Error("expected interfaces; got none")
+		t.Errorf("%s: expected interfaces; got none", n)
 		return
 	}
 	// check name
 	for i, v := range inf.Interfaces {
 		if v.Name == "" {
-			t.Errorf("%d: expected inteface to have a name; was empty", i)
+			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
 		}
 	}
 }
@@ -76,7 +83,7 @@ func checkInfo(inf *structs.Info, t *testing.T) {
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
@@ -87,8 +94,8 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
-	v, _ := p.Prof.Get()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Serialize(v)
@@ -99,8 +106,8 @@ func BenchmarkSerialize(b *testing.B) {
 func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
 	b.StopTimer()
-	p, _ := New()
-	v, _ := p.Prof.Get()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Marshal(v)
@@ -108,11 +115,10 @@ func BenchmarkMarshal(b *testing.B) {
 	_ = jsn
 }
 
-var inf *structs.Info
-
 func BenchmarkDeserialize(b *testing.B) {
+	var inf *structs.Info
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -122,8 +128,9 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
+	var inf *structs.Info
 	b.StartTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

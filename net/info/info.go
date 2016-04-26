@@ -36,7 +36,7 @@ type Profiler struct {
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(ProcFile)
 	if err != nil {
 		return nil, err
@@ -47,10 +47,10 @@ func New() (prof *Profiler, err error) {
 // Get returns the current network interface information.
 func (prof *Profiler) Get() (*structs.Info, error) {
 	var (
-		l, i, pos, fieldNum int
-		n                   uint64
-		v                   byte
-		iInfo               structs.Interface
+		i, pos, line, fieldNum int
+		n                      uint64
+		v                      byte
+		iInfo                  structs.Interface
 	)
 	err := prof.Reset()
 	if err != nil {
@@ -64,10 +64,10 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, fmt.Errorf("error reading output bytes: %s", err)
+			return nil, &joe.ReadError{Err: err}
 		}
-		l++
-		if l < 3 {
+		line++
+		if line < 3 {
 			continue
 		}
 		prof.Val = prof.Val[:0]
@@ -106,7 +106,7 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 			n, err = helpers.ParseUint(prof.Line[pos : pos+i])
 			pos += i
 			if err != nil {
-				return nil, fmt.Errorf("%s: %s", iInfo.Name, err)
+				return nil, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 			}
 			if fieldNum < 9 {
 				if fieldNum < 5 {
@@ -185,7 +185,7 @@ func Get() (inf *structs.Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -193,40 +193,48 @@ func Get() (inf *structs.Info, err error) {
 	return std.Get()
 }
 
-// Ticker processes network interface information on a ticker.  The generated
-// data is sent to the out channel.  Any errors encountered are sent to the
-// errs channel.  Processing ends when a done signal is received.
-//
-// It is the callers responsibility to close the done and errs channels.
-func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan *structs.Info
+	*Profiler
+}
 
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.Info), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	// ticker
 	for {
 		select {
-		case <-done:
+		case <-t.Done:
 			return
-		case <-ticker.C:
-			info, err := prof.Get()
+		case <-t.C:
+			s, err := t.Get()
 			if err != nil {
-				errs <- err
+				t.Errs <- err
 				continue
 			}
-			out <- info
+			t.Data <- s
 		}
 	}
 }
 
-// Ticker gathers network inferface information on a ticker using the
-// specified interval.  This uses a local Profiler as using the global
-// doesn't make sense for an ongoing ticker.
-func Ticker(interval time.Duration, out chan *structs.Info, done chan struct{}, errs chan error) {
-	prof, err := New()
-	if err != nil {
-		errs <- err
-		close(out)
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

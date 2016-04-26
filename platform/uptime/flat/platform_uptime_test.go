@@ -15,6 +15,7 @@ package flat
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mohae/joefriday/platform/uptime"
 )
@@ -26,18 +27,50 @@ func TestSerializeDeserialize(t *testing.T) {
 		return
 	}
 	u := Deserialize(p)
-	if int(u.Total) == 0 {
-		t.Error("Total: expected a non-zero value, got 0")
+	checkUptime("ticker", u, t)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	if int(u.Idle) == 0 {
-		t.Error("Idle: expected a non-zero value, got 0")
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			u := Deserialize(v)
+			checkUptime("ticker", u, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+	}
+	tk.Stop()
+	tk.Close()
+}
+
+func checkUptime(n string, u uptime.Uptime, t *testing.T) {
+	if u.Timestamp == 0 {
+		t.Errorf("expected Timestamp to be a non-zero value; got 0")
+	}
+	if u.Total == 0 {
+		t.Errorf("expected total to be a non-zero value; got 0")
+	}
+	if u.Idle == 0 {
+		t.Errorf("expected idle to be a non-zero value; got 0")
 	}
 }
 
 func BenchmarkGet(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -48,8 +81,8 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := New()
-	k, _ := p.Prof.Get()
+	p, _ := NewProfiler()
+	k, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = Serialize(k)
@@ -57,11 +90,10 @@ func BenchmarkSerialize(b *testing.B) {
 	_ = tmp
 }
 
-var u uptime.Uptime
-
 func BenchmarkDeserialize(b *testing.B) {
+	var u uptime.Uptime
 	b.StopTimer()
-	p, _ := New()
+	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

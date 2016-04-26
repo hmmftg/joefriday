@@ -15,6 +15,7 @@
 package stats
 
 import (
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -32,7 +33,7 @@ type Profiler struct {
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(procFile)
 	if err != nil {
 		return nil, err
@@ -47,10 +48,10 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 		return nil, err
 	}
 	var (
-		i, priorPos, pos, fieldNum int
-		n                          uint64
-		v                          byte
-		dev                        structs.Device
+		i, priorPos, pos, line, fieldNum int
+		n                                uint64
+		v                                byte
+		dev                              structs.Device
 	)
 
 	stats = &structs.Stats{Timestamp: time.Now().UTC().UnixNano(), Devices: make([]structs.Device, 0, 2)}
@@ -62,8 +63,9 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, joe.Error{Type: "cpu stat", Op: "reading /proc/stat output", Err: err}
+			return nil, &joe.ReadError{Err: err}
 		}
+		line++
 		pos = 0
 		fieldNum = 0
 		// process the fields in the line
@@ -86,7 +88,7 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 			if fieldNum != 3 {
 				n, err = helpers.ParseUint(prof.Line[pos : pos+i])
 				if err != nil {
-					return stats, joe.Error{Type: "cpu stat", Op: "convert cpu data", Err: err}
+					return stats, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
 			}
 			priorPos, pos = pos, pos+i+1
@@ -158,7 +160,7 @@ func Get() (stat *structs.Stats, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
@@ -166,45 +168,48 @@ func Get() (stat *structs.Stats, err error) {
 	return std.Get()
 }
 
-// Ticker processes disk stats on a ticker.  The generated stats are sent to
-// the out channel.  Any errors encountered are sent to the errs channel.
-// Processing ends when a done signal is received.
-//
-// It is the callers responsibility to close the done and errs channels.
-//
-// TODO: better handle errors, e.g. restore cur from prior so that there
-// isn't the possibility of temporarily having bad data, just a missed
-// collection interval.
-func (prof *Profiler) Ticker(interval time.Duration, out chan *structs.Stats, done chan struct{}, errs chan error) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	defer close(out)
+// Ticker delivers the system's memory information at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan *structs.Stats
+	*Profiler
+}
 
-	// read each line until eof
+// NewTicker returns a new Ticker continaing a Data channel that delivers
+// the data at intervals and an error channel that delivers any errors
+// encountered.  Stop the ticker to signal the ticker to stop running; it
+// does not close the Data channel.  Close the ticker to close all ticker
+// channels.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.Stats), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	// ticker
 	for {
 		select {
-		case <-done:
+		case <-t.Done:
 			return
-		case <-ticker.C:
-			s, err := prof.Get()
+		case <-t.C:
+			s, err := t.Get()
 			if err != nil {
-				errs <- err
+				t.Errs <- err
 				continue
 			}
-			out <- s
+			t.Data <- s
 		}
 	}
 }
 
-// Ticker gathers information on a ticker using the specified interval.
-// This uses a local Profiler as using the global doesn't make sense for
-// an ongoing ticker.
-func Ticker(interval time.Duration, out chan *structs.Stats, done chan struct{}, errs chan error) {
-	prof, err := New()
-	if err != nil {
-		errs <- err
-		close(out)
-		return
-	}
-	prof.Ticker(interval, out, done, errs)
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

@@ -23,13 +23,24 @@ import (
 
 const etcFile = "/etc/os-release"
 
+// Release holds information about the OS release.
+type Release struct {
+	ID           string `json:"id"`
+	IDLike       string `json:"id_like"`
+	PrettyName   string `json:"pretty_name"`
+	Version      string `json:"version"`
+	VersionID    string `json:"version_id"`
+	HomeURL      string `json:"home_url"`
+	BugReportURL string `json:"bug_report_url"`
+}
+
 // Profiler processes the OS release information, /etc/os-release.
 type Profiler struct {
 	*joe.Proc
 }
 
 // Returns an initialized Profiler; ready to use.
-func New() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler, err error) {
 	proc, err := joe.New(etcFile)
 	if err != nil {
 		return nil, err
@@ -54,7 +65,7 @@ func (prof *Profiler) Get() (r *Release, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, joe.Error{Type: "platform", Op: "read /proc/verion", Err: err}
+			return nil, &joe.ReadError{Err: err}
 		}
 		// The key is everything up to '='; 0x3D
 		for i, v = range prof.Line {
@@ -112,21 +123,10 @@ func Get() (r *Release, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = New()
+		std, err = NewProfiler()
 		if err != nil {
 			return nil, err
 		}
 	}
 	return std.Get()
-}
-
-// Release holds information about the OS release.
-type Release struct {
-	ID           string `json:"id"`
-	IDLike       string `json:"id_like"`
-	PrettyName   string `json:"pretty_name"`
-	Version      string `json:"version"`
-	VersionID    string `json:"version_id"`
-	HomeURL      string `json:"home_url"`
-	BugReportURL string `json:"bug_report_url"`
 }
