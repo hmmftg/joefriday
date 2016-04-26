@@ -44,7 +44,7 @@ type Utilization struct {
 // Util holds utilization information, as percentages, for a CPU.
 type Util struct {
 	ID     string  `json:"id"`
-	Usage  float32 `json:"total"`
+	Usage  float32 `json:"usage"`
 	User   float32 `json:"user"`
 	Nice   float32 `json:"nice"`
 	System float32 `json:"system"`
