@@ -19,7 +19,6 @@ package flat
 // bytes into a utilization.Utilization struct is provided.  After the first
 // use, the flatbuffer builder is reused.
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -131,7 +130,6 @@ func Deserialize(p []byte) *utilization.Utilization {
 	u := &utilization.Utilization{}
 	uF := &Util{}
 	flatUtil := GetRootAsUtilization(p, 0)
-	fmt.Println("%x\n", flatUtil)
 	u.Timestamp = flatUtil.Timestamp()
 	u.TimeDelta = flatUtil.TimeDelta()
 	u.CtxtDelta = flatUtil.CtxtDelta()
