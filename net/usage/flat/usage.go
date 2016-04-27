@@ -117,7 +117,11 @@ func (prof *Profiler) Serialize(u *structs.Usage) []byte {
 	flat.UsageAddTimeDelta(prof.Builder, u.TimeDelta)
 	flat.UsageAddInterfaces(prof.Builder, ifacesV)
 	prof.Builder.Finish(flat.UsageEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize serializes Usage using Flatbuffers with the package global

@@ -50,7 +50,11 @@ func Serialize(u *uptime.Uptime) []byte {
 	UptimeAddTimestamp(builder, u.Timestamp)
 	UptimeAddUptime(builder, u.Uptime)
 	builder.Finish(UptimeEnd(builder))
-	return builder.Bytes[builder.Head():]
+	p := builder.Bytes[builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them

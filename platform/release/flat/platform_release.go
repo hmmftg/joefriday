@@ -89,7 +89,11 @@ func (prof *Profiler) Serialize(r *release.Release) []byte {
 	ReleaseAddHomeURL(prof.Builder, homeURL)
 	ReleaseAddBugReportURL(prof.Builder, bugReportURL)
 	prof.Builder.Finish(ReleaseEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize serializes OS release information using Flatbuffers with the

@@ -108,7 +108,11 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	StatsAddProcesses(prof.Builder, stts.Processes)
 	StatsAddCPU(prof.Builder, statsV)
 	prof.Builder.Finish(StatsEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize the Stats using the package global Profiler.

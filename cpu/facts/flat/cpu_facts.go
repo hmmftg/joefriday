@@ -146,7 +146,11 @@ func (prof *Profiler) Serialize(fcts *facts.Facts) []byte {
 	FactsAddTimestamp(prof.Builder, fcts.Timestamp)
 	FactsAddCPU(prof.Builder, flatFactsV)
 	prof.Builder.Finish(FactsEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize Facts using the package global Profiler.

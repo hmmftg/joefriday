@@ -19,6 +19,7 @@ package flat
 // bytes into a utilization.Utilization struct is provided.  After the first
 // use, the flatbuffer builder is reused.
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -104,7 +105,11 @@ func (prof *Profiler) Serialize(u *utilization.Utilization) []byte {
 	UtilizationAddProcesses(prof.Builder, u.Processes)
 	UtilizationAddCPU(prof.Builder, utilsV)
 	prof.Builder.Finish(UtilizationEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize the Utilization using the package global Profiler.
@@ -126,6 +131,7 @@ func Deserialize(p []byte) *utilization.Utilization {
 	u := &utilization.Utilization{}
 	uF := &Util{}
 	flatUtil := GetRootAsUtilization(p, 0)
+	fmt.Println("%x\n", flatUtil)
 	u.Timestamp = flatUtil.Timestamp()
 	u.TimeDelta = flatUtil.TimeDelta()
 	u.CtxtDelta = flatUtil.CtxtDelta()

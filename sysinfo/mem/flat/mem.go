@@ -55,7 +55,11 @@ func Serialize(inf *mem.Info) []byte {
 	InfoAddTotalSwap(builder, inf.TotalSwap)
 	InfoAddFreeSwap(builder, inf.FreeSwap)
 	builder.Finish(InfoEnd(builder))
-	return builder.Bytes[builder.Head():]
+	p := builder.Bytes[builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
@@ -98,12 +102,12 @@ func (t *Ticker) Run() {
 		case <-t.Done:
 			return
 		case <-t.Ticker.C:
-			s, err := Get()
+			p, err := Get()
 			if err != nil {
 				t.Errs <- err
 				continue
 			}
-			t.Data <- s
+			t.Data <- p
 		}
 	}
 }

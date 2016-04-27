@@ -90,7 +90,11 @@ func (prof *Profiler) Serialize(k *kernel.Kernel) []byte {
 	KernelAddCompileDate(prof.Builder, compileDate)
 	KernelAddArch(prof.Builder, arch)
 	prof.Builder.Finish(KernelEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize serializes kernel information using Flatbuffers with the

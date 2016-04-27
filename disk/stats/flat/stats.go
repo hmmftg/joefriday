@@ -110,7 +110,11 @@ func (prof *Profiler) Serialize(stts *structs.Stats) []byte {
 	flat.StatsAddTimestamp(prof.Builder, stts.Timestamp)
 	flat.StatsAddDevices(prof.Builder, devV)
 	prof.Builder.Finish(flat.StatsEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize the Stats using the package global Profiler.

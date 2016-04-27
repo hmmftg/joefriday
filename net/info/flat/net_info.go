@@ -109,7 +109,11 @@ func (prof *Profiler) Serialize(inf *structs.Info) []byte {
 	flat.InfoAddTimestamp(prof.Builder, inf.Timestamp)
 	flat.InfoAddInterfaces(prof.Builder, ifacesV)
 	prof.Builder.Finish(flat.InfoEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize serializes Info using Flatbuffers with the package global

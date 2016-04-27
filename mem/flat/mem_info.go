@@ -120,7 +120,11 @@ func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	InfoAddWriteback(prof.Builder, int64(inf.Writeback))
 	InfoAddWritebackTmp(prof.Builder, int64(inf.WritebackTmp))
 	prof.Builder.Finish(InfoEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize mem.Info using Flatbuffers with the package global Profiler.

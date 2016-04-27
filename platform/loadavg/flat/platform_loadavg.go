@@ -84,7 +84,11 @@ func (prof *Profiler) Serialize(l loadavg.LoadAvg) []byte {
 	LoadAvgAddTotal(prof.Builder, l.Total)
 	LoadAvgAddPID(prof.Builder, l.PID)
 	prof.Builder.Finish(LoadAvgEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize serializes uptime information using Flatbuffers with the

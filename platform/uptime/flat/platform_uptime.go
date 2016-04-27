@@ -79,7 +79,11 @@ func (prof *Profiler) Serialize(u uptime.Uptime) []byte {
 	UptimeAddTotal(prof.Builder, u.Total)
 	UptimeAddIdle(prof.Builder, u.Idle)
 	prof.Builder.Finish(UptimeEnd(prof.Builder))
-	return prof.Builder.Bytes[prof.Builder.Head():]
+	p := prof.Builder.Bytes[prof.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Serialize serializes uptime information using Flatbuffers with the

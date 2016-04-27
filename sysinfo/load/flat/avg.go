@@ -52,7 +52,11 @@ func Serialize(l *load.LoadAvg) []byte {
 	LoadAvgAddFive(builder, l.Five)
 	LoadAvgAddFifteen(builder, l.Fifteen)
 	builder.Finish(LoadAvgEnd(builder))
-	return builder.Bytes[builder.Head():]
+	p := builder.Bytes[builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(p))
+	copy(tmp, p)
+	return tmp
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
