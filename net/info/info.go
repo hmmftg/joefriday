@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stat handles processing of network interface information:
-// /proc/net/dev using JSON.
+// Package info handles processing of network interface information,
+// /proc/net/dev, using JSON.
 package info
 
 import (

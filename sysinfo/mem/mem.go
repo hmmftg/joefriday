@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem returns memory information using syscalls,  Only basic
+// Package mem returns memory information using syscalls.  Only basic
 // memory information is provided by this package.
 package mem
 

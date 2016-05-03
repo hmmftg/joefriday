@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package Release processes the OS Release information, /etc/os-release.
+// Package release processes the OS Release information, /etc/os-release.
 package release
 
 import (

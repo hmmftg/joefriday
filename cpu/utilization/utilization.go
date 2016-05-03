@@ -13,7 +13,7 @@
 
 // Package utilization handles processing of CPU utilization information.
 // This information is calculated using the differences of two CPU stats
-// snapshots and represented as a percentage.
+// snapshots, /proc/cpuinfo and represented as a percentage.
 package utilization
 
 import (

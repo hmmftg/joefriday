@@ -11,8 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package avg returns the system;s loadavg information, for 1, 5, and 15
-// minutes, using syscall.
+// Package load returns the system's loadavg information using syscall.
 package load
 
 import (
