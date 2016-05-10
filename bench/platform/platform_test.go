@@ -1,4 +1,4 @@
-package cpu
+package platform
 
 import (
 	"encoding/json"
