@@ -28,8 +28,10 @@ import (
 
 // flags
 var (
-	output string
-	format string
+	output         string
+	format         string
+	section        bool
+	sectionHeaders bool
 )
 
 func init() {
@@ -37,6 +39,10 @@ func init() {
 	flag.StringVar(&output, "o", "stdout", "output destination (short)")
 	flag.StringVar(&format, "format", "txt", "format of output")
 	flag.StringVar(&format, "f", "txt", "format of output")
+	flag.BoolVar(&section, "sections", false, "don't separate groups of tests into sections")
+	flag.BoolVar(&section, "s", false, "don't separate groups of tests into sections")
+	flag.BoolVar(&sectionHeaders, "sectionheader", false, "if there are sections, add a section header row")
+	flag.BoolVar(&sectionHeaders, "h", false, "if there are sections, add a section header row")
 }
 
 func main() {
@@ -69,7 +75,8 @@ func main() {
 	default:
 		bench = benchutil.NewStringBench(w)
 	}
-
+	bench.SectionPerGroup(section)
+	bench.SectionHeaders(sectionHeaders)
 	// CPU
 	runCPUBenches(bench)
 
@@ -82,8 +89,7 @@ func main() {
 	// Platform
 	runPlatformBenches(bench)
 
-	fmt.Println("")
-	fmt.Println("generating output...")
+	fmt.Println("\ngenerating output...\n")
 	err = bench.Out()
 	if err != nil {
 		fmt.Printf("error generating output: %s\n", err)
@@ -92,6 +98,7 @@ func main() {
 
 func runCPUBenches(bench benchutil.Benchmarker) {
 	b := cpu.JoeFridayGetFacts()
+
 	bench.Add(b)
 
 	b = cpu.JoeFridayGetStats()

@@ -10,6 +10,8 @@ import (
 	gopsutilcpu "github.com/shirou/gopsutil/cpu"
 )
 
+const CPUGroup = "CPU"
+
 func BenchJoeFridayGetFacts(b *testing.B) {
 	var fct *joefacts.Facts
 	b.StopTimer()
@@ -23,6 +25,7 @@ func BenchJoeFridayGetFacts(b *testing.B) {
 
 func JoeFridayGetFacts() benchutil.Bench {
 	bench := benchutil.NewBench("joefriday/cpu/facts.Get")
+	bench.Group = CPUGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetFacts))
 	return bench
 }
@@ -40,6 +43,7 @@ func BenchJoeFridayGetStats(b *testing.B) {
 
 func JoeFridayGetStats() benchutil.Bench {
 	bench := benchutil.NewBench("joefriday/cpu/stats.Get")
+	bench.Group = CPUGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetStats))
 	return bench
 }
@@ -59,6 +63,7 @@ func BenchDataDogGohaiCPU(b *testing.B) {
 
 func DataDogGohaiCPU() benchutil.Bench {
 	bench := benchutil.NewBench("DataDog/gohai/cpu.Cpu.Collect")
+	bench.Group = CPUGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchDataDogGohaiCPU))
 	return bench
 }
@@ -73,6 +78,7 @@ func BenchShirouGopsutilInfoStat(b *testing.B) {
 
 func ShirouGopsutilInfoStat() benchutil.Bench {
 	bench := benchutil.NewBench("shirou/gopsutil/cpu.Info")
+	bench.Group = CPUGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchShirouGopsutilInfoStat))
 	return bench
 }
@@ -87,6 +93,7 @@ func BenchShirouGopsutilTimeStat(b *testing.B) {
 
 func ShirouGopsutilTimeStat() benchutil.Bench {
 	bench := benchutil.NewBench("shirou/gopsutil/cpu.Times")
+	bench.Group = CPUGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchShirouGopsutilTimeStat))
 	return bench
 }

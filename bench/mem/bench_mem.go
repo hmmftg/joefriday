@@ -12,6 +12,8 @@ import (
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
 
+const MemGroup = "Memory"
+
 func BenchJoeFridayGetMemInfo(b *testing.B) {
 	var mem *joe.Info
 	b.StopTimer()
@@ -25,6 +27,7 @@ func BenchJoeFridayGetMemInfo(b *testing.B) {
 
 func JoeFridayGetMemInfo() benchutil.Bench {
 	bench := benchutil.NewBench("joefriday/mem.Get")
+	bench.Group = MemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetMemInfo))
 	return bench
 }
@@ -39,6 +42,7 @@ func BenchJoeFridayGetSysinfoMemInfo(b *testing.B) {
 
 func JoeFridayGetSysinfoMemInfo() benchutil.Bench {
 	bench := benchutil.NewBench("joefriday/sysinfo/mem.Info.Get")
+	bench.Group = MemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetSysinfoMemInfo))
 	return bench
 }
@@ -53,6 +57,7 @@ func BenchCloudFoundryGoSigarMem(b *testing.B) {
 
 func CloudFoundryGoSigarMem() benchutil.Bench {
 	bench := benchutil.NewBench("cloudfoundry/gosigar.Mem.Get")
+	bench.Group = MemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCloudFoundryGoSigarMem))
 	return bench
 }
@@ -72,6 +77,7 @@ func BenchDataDogGohaiMem(b *testing.B) {
 
 func DataDogGohaiMem() benchutil.Bench {
 	bench := benchutil.NewBench("DataDog/gohai/memory.Memory.Collect")
+	bench.Group = MemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchDataDogGohaiMem))
 	return bench
 }
@@ -86,6 +92,7 @@ func BenchGuillermoMemInfo(b *testing.B) {
 
 func GuillermoMemInfo() benchutil.Bench {
 	bench := benchutil.NewBench("guillermo/go.procmeminfo.MemInfo.Update")
+	bench.Group = MemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchGuillermoMemInfo))
 	return bench
 }
@@ -100,6 +107,7 @@ func BenchShirouGopsutilMem(b *testing.B) {
 
 func ShirouGopsutilMem() benchutil.Bench {
 	bench := benchutil.NewBench("shirou/gopsutil/mem.VirtualMemory")
+	bench.Group = MemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchShirouGopsutilMem))
 	return bench
 }

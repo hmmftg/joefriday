@@ -11,6 +11,8 @@ import (
 	gopsutilnet "github.com/shirou/gopsutil/net"
 )
 
+const NetGroup = "Network"
+
 func BenchJoeFridayGetInfo(b *testing.B) {
 	var inf *joestructs.Info
 	b.StopTimer()
@@ -24,6 +26,7 @@ func BenchJoeFridayGetInfo(b *testing.B) {
 
 func JoeFridayGetInfo() benchutil.Bench {
 	bench := benchutil.NewBench("joefriday/net/info.Get")
+	bench.Group = NetGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetInfo))
 	return bench
 }
@@ -41,6 +44,7 @@ func BenchJoeFridayGetUsage(b *testing.B) {
 
 func JoeFridayGetUsage() benchutil.Bench {
 	bench := benchutil.NewBench("joefriday/net/usage.Get")
+	bench.Group = NetGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetUsage))
 	return bench
 }
@@ -60,6 +64,7 @@ func BenchDataDogGohaiNetwork(b *testing.B) {
 
 func DataDogGohaiNetwork() benchutil.Bench {
 	bench := benchutil.NewBench("DataDog/gohai/network")
+	bench.Group = NetGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchDataDogGohaiNetwork))
 	return bench
 }
@@ -74,6 +79,7 @@ func BenchShirouGopsutilNetInterfaces(b *testing.B) {
 
 func ShirouGopsutilNetInterfaces() benchutil.Bench {
 	bench := benchutil.NewBench("shirou/gopsutil/net")
+	bench.Group = NetGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchShirouGopsutilNetInterfaces))
 	return bench
 }
@@ -88,6 +94,7 @@ func BenchShirouGopsutilIOCounters(b *testing.B) {
 
 func ShirouGopsutilIOCounters() benchutil.Bench {
 	bench := benchutil.NewBench("shirou/gopsutil/net/IOCounters")
+	bench.Group = NetGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchShirouGopsutilIOCounters))
 	return bench
 }
