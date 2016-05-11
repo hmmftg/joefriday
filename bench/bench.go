@@ -32,6 +32,7 @@ var (
 	format         string
 	section        bool
 	sectionHeaders bool
+	nameSections   bool
 )
 
 func init() {
@@ -39,6 +40,8 @@ func init() {
 	flag.StringVar(&output, "o", "stdout", "output destination (short)")
 	flag.StringVar(&format, "format", "txt", "format of output")
 	flag.StringVar(&format, "f", "txt", "format of output")
+	flag.BoolVar(&nameSections, "namesections", false, "use group as section name: some restrictions apply")
+	flag.BoolVar(&nameSections, "n", false, "use group as section name: some restrictions apply")
 	flag.BoolVar(&section, "sections", false, "don't separate groups of tests into sections")
 	flag.BoolVar(&section, "s", false, "don't separate groups of tests into sections")
 	flag.BoolVar(&sectionHeaders, "sectionheader", false, "if there are sections, add a section header row")
@@ -72,6 +75,7 @@ func main() {
 		bench = benchutil.NewCSVBench(w)
 	case "md":
 		bench = benchutil.NewMDBench(w)
+		bench.(*benchutil.MDBench).GroupAsSectionName = nameSections
 	default:
 		bench = benchutil.NewStringBench(w)
 	}
