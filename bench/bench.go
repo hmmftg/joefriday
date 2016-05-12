@@ -102,7 +102,6 @@ func main() {
 
 func runCPUBenches(bench benchutil.Benchmarker) {
 	b := cpu.JoeFridayGetFacts()
-
 	bench.Add(b)
 
 	b = cpu.JoeFridayGetStats()

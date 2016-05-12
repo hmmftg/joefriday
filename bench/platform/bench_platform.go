@@ -67,7 +67,7 @@ func BenchDataDogGohaiplatform(b *testing.B) {
 }
 
 func DataDogGohaiplatform() benchutil.Bench {
-	bench := benchutil.NewBench("DataDpg/gohai/platform.Platform.Collect")
+	bench := benchutil.NewBench("DataDog/gohai/platform.Platform.Collect")
 	bench.Group = PlatformGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchDataDogGohaiplatform))
 	return bench
