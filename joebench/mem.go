@@ -1,0 +1,150 @@
+package main
+
+import (
+	"testing"
+
+	"github.com/mohae/benchutil"
+	"github.com/mohae/joefriday/mem"
+	mfb "github.com/mohae/joefriday/mem/flat"
+	mjson "github.com/mohae/joefriday/mem/json"
+)
+
+const (
+	MemInfo = "Mem Info"
+)
+
+func BenchMemInfoGet(b *testing.B) {
+	var inf *mem.Info
+	b.StopTimer()
+	p, _ := mem.NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf, _ = p.Get()
+	}
+	_ = inf
+}
+
+func MemInfoGet() benchutil.Bench {
+	bench := benchutil.NewBench("Get")
+	bench.Group = MemInfo
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchMemInfoGet))
+	return bench
+}
+
+func BenchMemInfoGetFB(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := mfb.NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func MemInfoGetFB() benchutil.Bench {
+	bench := benchutil.NewBench("flat.Get")
+	bench.Group = MemInfo
+	bench.Desc = Flat
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchMemInfoGetFB))
+	return bench
+}
+
+func BenchMemInfoSerializeFB(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := mem.NewProfiler()
+	inf, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = mfb.Serialize(inf)
+	}
+	_ = tmp
+}
+
+func MemInfoSerializeFB() benchutil.Bench {
+	bench := benchutil.NewBench("flat.Serialize")
+	bench.Group = MemInfo
+	bench.Desc = Flat
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchMemInfoSerializeFB))
+	return bench
+}
+
+func BenchMemInfoDeserializeFB(b *testing.B) {
+	var inf *mem.Info
+	b.StopTimer()
+	p, _ := mfb.NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf = mfb.Deserialize(tmp)
+	}
+	_ = inf
+}
+
+func MemInfoDeserializeFB() benchutil.Bench {
+	bench := benchutil.NewBench("flat.Deserialize")
+	bench.Group = MemInfo
+	bench.Desc = Flat
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchMemInfoDeserializeFB))
+	return bench
+}
+
+func BenchMemInfoGetJSON(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := mjson.NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func MemInfoGetSON() benchutil.Bench {
+	bench := benchutil.NewBench("json.Get")
+	bench.Group = MemInfo
+	bench.Desc = JSON
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchMemInfoGetJSON))
+	return bench
+}
+
+func BenchMemInfoSerializeJSON(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := mem.NewProfiler()
+	sts, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = mjson.Serialize(sts)
+	}
+	_ = tmp
+}
+
+func MemInfoSerializeJSON() benchutil.Bench {
+	bench := benchutil.NewBench("json.Serialize")
+	bench.Group = MemInfo
+	bench.Desc = JSON
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchMemInfoSerializeJSON))
+	return bench
+}
+
+func BenchMemInfoDeserializeJSON(b *testing.B) {
+	var inf *mem.Info
+	b.StopTimer()
+	p, _ := mjson.NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf, _ = mjson.Deserialize(tmp)
+	}
+	_ = inf
+}
+
+func MemInfoDeserializeJSON() benchutil.Bench {
+	bench := benchutil.NewBench("json.Deserialize")
+	bench.Group = MemInfo
+	bench.Desc = JSON
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchMemInfoDeserializeJSON))
+	return bench
+}
