@@ -82,3 +82,14 @@ func checkUtilization(name string, u *Utilization, t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkUtilization(b *testing.B) {
+	var u *Utilization
+	b.StopTimer()
+	p, _ := NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		u, _ = p.Get()
+	}
+	_ = u
+}

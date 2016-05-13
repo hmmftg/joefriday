@@ -91,7 +91,66 @@ func checkUtilization(name string, u *utilization.Utilization, t *testing.T) {
 	}
 	for i, v := range u.CPU {
 		if v.ID == "" {
-			t.Errorf("%s: %d: expected ID to have a value, was empty", i, name)
+			t.Errorf("%d: %s: expected ID to have a value, was empty", i, name)
 		}
 	}
+}
+
+func BenchmarkGet(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Get()
+	}
+	_ = jsn
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Serialize(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkDeserialize(b *testing.B) {
+	var u *utilization.Utilization
+	b.StopTimer()
+	p, _ := NewProfiler()
+	uB, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		u, _ = Deserialize(uB)
+	}
+	_ = u
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	var u *utilization.Utilization
+	b.StartTimer()
+	p, _ := NewProfiler()
+	uB, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		u, _ = Unmarshal(uB)
+	}
+	_ = u
 }

@@ -86,3 +86,38 @@ func checkUtilization(name string, u *utilization.Utilization, t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkGet(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	st, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = Serialize(st)
+	}
+	_ = tmp
+}
+
+func BenchmarkDeserialize(b *testing.B) {
+	var u *utilization.Utilization
+	b.StopTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		u = Deserialize(tmp)
+	}
+	_ = u
+}
