@@ -73,7 +73,7 @@ func Get() (p []byte, err error) {
 // Serialize mem.Info using Flatbuffers.
 func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	// ensure the Builder is in a usable state.
-	std.Builder.Reset()
+	prof.Builder.Reset()
 	InfoStart(prof.Builder)
 	InfoAddTimestamp(prof.Builder, int64(inf.Timestamp))
 	InfoAddActive(prof.Builder, int64(inf.Active))
