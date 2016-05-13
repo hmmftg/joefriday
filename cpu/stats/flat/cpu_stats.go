@@ -74,7 +74,7 @@ func Get() (p []byte, err error) {
 // Serialize serializes the Stats using Flatbuffers.
 func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	// ensure the Builder is in a usable state.
-	std.Builder.Reset()
+	prof.Builder.Reset()
 	statsF := make([]fb.UOffsetT, len(stts.CPU))
 	ids := make([]fb.UOffsetT, len(stts.CPU))
 	for i := 0; i < len(ids); i++ {

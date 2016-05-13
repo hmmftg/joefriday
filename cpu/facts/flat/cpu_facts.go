@@ -69,7 +69,7 @@ func Get() (p []byte, err error) {
 // Serialize serializes Facts using Flatbuffers.
 func (prof *Profiler) Serialize(fcts *facts.Facts) []byte {
 	// ensure the Builder is in a usable state.
-	std.Builder.Reset()
+	prof.Builder.Reset()
 	flatFacts := make([]fb.UOffsetT, len(fcts.CPU))
 	vendorIDs := make([]fb.UOffsetT, len(fcts.CPU))
 	cpuFamilies := make([]fb.UOffsetT, len(fcts.CPU))
