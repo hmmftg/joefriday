@@ -77,7 +77,7 @@ func Get() (p []byte, err error) {
 // Serialize serializes the Stats using Flatbuffers.
 func (prof *Profiler) Serialize(stts *structs.Stats) []byte {
 	// ensure the Builder is in a usable state.
-	std.Builder.Reset()
+	prof.Builder.Reset()
 	devF := make([]fb.UOffsetT, len(stts.Devices))
 	names := make([]fb.UOffsetT, len(stts.Devices))
 	for i := 0; i < len(names); i++ {
