@@ -33,7 +33,7 @@ func BenchCPUFactsGet(b *testing.B) {
 }
 
 func CPUGetFacts() benchutil.Bench {
-	bench := benchutil.NewBench("cpu/facts.Get")
+	bench := benchutil.NewBench("Get")
 	bench.Group = CPUFact
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFactsGet))
 	return bench
@@ -51,7 +51,7 @@ func BenchCPUFactsGetFB(b *testing.B) {
 }
 
 func CPUGetFactsFB() benchutil.Bench {
-	bench := benchutil.NewBench("cpu/facts/flat.Get")
+	bench := benchutil.NewBench("flat.Get")
 	bench.Group = CPUFact
 	bench.Desc = Flat
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFactsGetFB))
@@ -71,7 +71,7 @@ func BenchCPUFactsSerializeFB(b *testing.B) {
 }
 
 func CPUFactsSerializeFB() benchutil.Bench {
-	bench := benchutil.NewBench("cpu/facts/flat.Serialize")
+	bench := benchutil.NewBench("flat.Serialize")
 	bench.Group = CPUFact
 	bench.Desc = Flat
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFactsSerializeFB))
@@ -91,7 +91,7 @@ func BenchCPUFactsDeserializeFB(b *testing.B) {
 }
 
 func CPUFactsDeserializeFB() benchutil.Bench {
-	bench := benchutil.NewBench("cpu/facts/flat.Deserialize")
+	bench := benchutil.NewBench("flat.Deserialize")
 	bench.Group = CPUFact
 	bench.Desc = Flat
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFactsDeserializeFB))
@@ -110,7 +110,7 @@ func BenchCPUFactsGetJSON(b *testing.B) {
 }
 
 func CPUGetFactsJSON() benchutil.Bench {
-	bench := benchutil.NewBench("cpu/facts/json.Get")
+	bench := benchutil.NewBench("json.Get")
 	bench.Group = CPUFact
 	bench.Desc = JSON
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFactsGetJSON))
@@ -130,7 +130,7 @@ func BenchCPUFactsSerializeJSON(b *testing.B) {
 }
 
 func CPUFactsSerializeJSON() benchutil.Bench {
-	bench := benchutil.NewBench("cpu/facts/json.Serialize")
+	bench := benchutil.NewBench("json.Serialize")
 	bench.Group = CPUFact
 	bench.Desc = JSON
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFactsSerializeJSON))
@@ -150,7 +150,7 @@ func BenchCPUFactsDeserializeJSON(b *testing.B) {
 }
 
 func CPUFactsDeserializeJSON() benchutil.Bench {
-	bench := benchutil.NewBench("cpu/facts/json.Deserialize")
+	bench := benchutil.NewBench("json.Deserialize")
 	bench.Group = CPUFact
 	bench.Desc = JSON
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFactsDeserializeJSON))
