@@ -65,7 +65,7 @@ func main() {
 	bench.SectionPerGroup(section)
 	bench.SectionHeaders(sectionHeaders)
 	// CPU
-	runCPUBenches(bench)
+	runCPUBenchmarks(bench)
 
 	fmt.Println("\ngenerating output...\n")
 	err = bench.Out()
@@ -74,67 +74,67 @@ func main() {
 	}
 }
 
-func runCPUBenches(bench benchutil.Benchmarker) {
-	b := JoeFridayGetFacts()
+func runCPUBenchmarks(bench benchutil.Benchmarker) {
+	b := CPUGetFacts()
 	bench.Add(b)
 
-	b = JoeFridayGetFactsFB()
+	b = CPUGetFactsFB()
 	bench.Add(b)
 
-	b = JoeFridayFactsSerializeFB()
+	b = CPUFactsSerializeFB()
 	bench.Add(b)
 
-	b = JoeFridayFactsDeserializeFB()
+	b = CPUFactsDeserializeFB()
 	bench.Add(b)
 
-	b = JoeFridayGetFactsJSON()
+	b = CPUGetFactsJSON()
 	bench.Add(b)
 
-	b = JoeFridayFactsSerializeJSON()
+	b = CPUFactsSerializeJSON()
 	bench.Add(b)
 
-	b = JoeFridayFactsDeserializeJSON()
+	b = CPUFactsDeserializeJSON()
 	bench.Add(b)
 
-	b = JoeFridayGetStats()
+	b = CPUGetStats()
 	bench.Add(b)
 
-	b = JoeFridayGetStatsFB()
+	b = CPUGetStatsFB()
 	bench.Add(b)
 
-	b = JoeFridayStatsSerializeFB()
+	b = CPUStatsSerializeFB()
 	bench.Add(b)
 
-	b = JoeFridayStatsDeserializeFB()
+	b = CPUStatsDeserializeFB()
 	bench.Add(b)
 
-	b = JoeFridayGetStatsJSON()
+	b = CPUGetStatsJSON()
 	bench.Add(b)
 
-	b = JoeFridayStatsSerializeJSON()
+	b = CPUStatsSerializeJSON()
 	bench.Add(b)
 
-	b = JoeFridayStatsDeserializeJSON()
+	b = CPUStatsDeserializeJSON()
 	bench.Add(b)
 
-	b = JoeFridayGetUtilization()
+	b = CPUGetUtilization()
 	bench.Add(b)
 
-	b = JoeFridayGetUtilizationFB()
+	b = CPUGetUtilizationFB()
 	bench.Add(b)
 
-	b = JoeFridayUtilizationSerializeFB()
+	b = CPUUtilizationSerializeFB()
 	bench.Add(b)
 
-	b = JoeFridayUtilizationDeserializeFB()
+	b = CPUUtilizationDeserializeFB()
 	bench.Add(b)
 
-	b = JoeFridayGetUtilizationJSON()
+	b = CPUGetUtilizationJSON()
 	bench.Add(b)
 
-	b = JoeFridayUtilizationSerializeJSON()
+	b = CPUUtilizationSerializeJSON()
 	bench.Add(b)
 
-	b = JoeFridayUtilizationDeserializeJSON()
+	b = CPUUtilizationDeserializeJSON()
 	bench.Add(b)
 }
