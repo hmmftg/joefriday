@@ -19,8 +19,6 @@ const (
 	CPUFact  = "CPU Facts"
 	CPUStats = "CPU Stats"
 	CPUUtil  = "CPU Utilization"
-	Flat     = "FlatBuffers"
-	JSON     = "JSON"
 )
 
 func BenchCPUFactsGet(b *testing.B) {

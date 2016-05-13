@@ -9,6 +9,11 @@ import (
 	"github.com/mohae/benchutil"
 )
 
+const (
+	Flat = "FlatBuffers"
+	JSON = "JSON"
+)
+
 // flags
 var (
 	output         string
@@ -66,6 +71,9 @@ func main() {
 	bench.SectionHeaders(sectionHeaders)
 	// CPU
 	runCPUBenchmarks(bench)
+
+	// Disk
+	runDiskBenchmarks(bench)
 
 	fmt.Println("\ngenerating output...\n")
 	err = bench.Out()
@@ -136,5 +144,40 @@ func runCPUBenchmarks(bench benchutil.Benchmarker) {
 	bench.Add(b)
 
 	b = CPUUtilizationDeserializeJSON()
+	bench.Add(b)
+}
+
+func runDiskBenchmarks(bench benchutil.Benchmarker) {
+	b := DiskGetStats()
+	bench.Add(b)
+
+	b = DiskGetStatsJSON()
+	bench.Add(b)
+
+	b = DiskStatsSerializeJSON()
+	bench.Add(b)
+
+	b = DiskStatsDeserializeJSON()
+	bench.Add(b)
+
+	b = DiskGetUsage()
+	bench.Add(b)
+
+	b = DiskGetUsageFB()
+	bench.Add(b)
+
+	b = DiskUsageSerializeFB()
+	bench.Add(b)
+
+	b = DiskUsageDeserializeFB()
+	bench.Add(b)
+
+	b = DiskGetUsageJSON()
+	bench.Add(b)
+
+	b = DiskUsageSerializeJSON()
+	bench.Add(b)
+
+	b = DiskUsageDeserializeJSON()
 	bench.Add(b)
 }
