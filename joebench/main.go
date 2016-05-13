@@ -75,6 +75,9 @@ func main() {
 	// Disk
 	runDiskBenchmarks(bench)
 
+	// Memory
+	runMemBenchmarks(bench)
+
 	fmt.Println("\ngenerating output...\n")
 	err = bench.Out()
 	if err != nil {
@@ -179,5 +182,28 @@ func runDiskBenchmarks(bench benchutil.Benchmarker) {
 	bench.Add(b)
 
 	b = DiskUsageDeserializeJSON()
+	bench.Add(b)
+}
+
+func runMemBenchmarks(bench benchutil.Benchmarker) {
+	b := MemInfoGet()
+	bench.Add(b)
+
+	b = MemInfoGetFB()
+	bench.Add(b)
+
+	b = MemInfoSerializeFB()
+	bench.Add(b)
+
+	b = MemInfoDeserializeFB()
+	bench.Add(b)
+
+	b = MemInfoGetSON()
+	bench.Add(b)
+
+	b = MemInfoSerializeJSON()
+	bench.Add(b)
+
+	b = MemInfoDeserializeJSON()
 	bench.Add(b)
 }
