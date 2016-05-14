@@ -77,6 +77,20 @@ func (prof *Profiler) Marshal(u *structs.Usage) ([]byte, error) {
 	return prof.Serialize(u)
 }
 
+// Serialize network interface information using JSON with the package global
+// Profiler.
+func Serialize(inf *structs.Usage) (p []byte, err error) {
+	stdMu.Lock()
+	defer stdMu.Unlock()
+	if std == nil {
+		std, err = NewProfiler()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return std.Serialize(inf)
+}
+
 // Deserialize deserializes JSON serialized bytes.
 func Deserialize(p []byte) (*structs.Usage, error) {
 	u := &structs.Usage{}

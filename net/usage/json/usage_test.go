@@ -77,7 +77,7 @@ func checkUsage(n string, u *structs.Usage, t *testing.T) {
 		t.Errorf("%s: expected TimeDelta to be a non-zero value; was 0", n)
 	}
 	if len(u.Interfaces) == 0 {
-		t.Error("%s: expected interfaces; got none", n)
+		t.Errorf("%s: expected interfaces; got none", n)
 		return
 	}
 	// check name
@@ -86,4 +86,63 @@ func checkUsage(n string, u *structs.Usage, t *testing.T) {
 			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
 		}
 	}
+}
+
+func BenchmarkGet(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Get()
+	}
+	_ = jsn
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Serialize(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkDeserialize(b *testing.B) {
+	var inf *structs.Usage
+	b.StopTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf, _ = Deserialize(tmp)
+	}
+	_ = inf
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	var inf *structs.Usage
+	b.StartTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf, _ = Unmarshal(tmp)
+	}
+	_ = inf
 }
