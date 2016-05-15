@@ -84,6 +84,9 @@ func main() {
 	// Platform
 	runPlatformBenchmarks(bench)
 
+	// Sysinfo
+	runSysinfoBenchmarks(bench)
+
 	fmt.Println("\ngenerating output...\n")
 	err = bench.Out()
 	if err != nil {
