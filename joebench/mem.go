@@ -26,6 +26,29 @@ const (
 	MemInfo = "Mem Info"
 )
 
+func runMemBenchmarks(bench benchutil.Benchmarker) {
+	b := MemInfoGet()
+	bench.Add(b)
+
+	b = MemInfoGetFB()
+	bench.Add(b)
+
+	b = MemInfoSerializeFB()
+	bench.Add(b)
+
+	b = MemInfoDeserializeFB()
+	bench.Add(b)
+
+	b = MemInfoGetSON()
+	bench.Add(b)
+
+	b = MemInfoSerializeJSON()
+	bench.Add(b)
+
+	b = MemInfoDeserializeJSON()
+	bench.Add(b)
+}
+
 func BenchMemInfoGet(b *testing.B) {
 	var inf *mem.Info
 	b.StopTimer()

@@ -34,6 +34,71 @@ const (
 	CPUUtil  = "CPU Utilization"
 )
 
+func runCPUBenchmarks(bench benchutil.Benchmarker) {
+	b := CPUGetFacts()
+	bench.Add(b)
+
+	b = CPUGetFactsFB()
+	bench.Add(b)
+
+	b = CPUFactsSerializeFB()
+	bench.Add(b)
+
+	b = CPUFactsDeserializeFB()
+	bench.Add(b)
+
+	b = CPUGetFactsJSON()
+	bench.Add(b)
+
+	b = CPUFactsSerializeJSON()
+	bench.Add(b)
+
+	b = CPUFactsDeserializeJSON()
+	bench.Add(b)
+
+	b = CPUGetStats()
+	bench.Add(b)
+
+	b = CPUGetStatsFB()
+	bench.Add(b)
+
+	b = CPUStatsSerializeFB()
+	bench.Add(b)
+
+	b = CPUStatsDeserializeFB()
+	bench.Add(b)
+
+	b = CPUGetStatsJSON()
+	bench.Add(b)
+
+	b = CPUStatsSerializeJSON()
+	bench.Add(b)
+
+	b = CPUStatsDeserializeJSON()
+	bench.Add(b)
+
+	b = CPUGetUtilization()
+	bench.Add(b)
+
+	b = CPUGetUtilizationFB()
+	bench.Add(b)
+
+	b = CPUUtilizationSerializeFB()
+	bench.Add(b)
+
+	b = CPUUtilizationDeserializeFB()
+	bench.Add(b)
+
+	b = CPUGetUtilizationJSON()
+	bench.Add(b)
+
+	b = CPUUtilizationSerializeJSON()
+	bench.Add(b)
+
+	b = CPUUtilizationDeserializeJSON()
+	bench.Add(b)
+}
+
 func BenchCPUFactsGet(b *testing.B) {
 	var fct *facts.Facts
 	b.StopTimer()

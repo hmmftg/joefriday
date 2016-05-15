@@ -38,6 +38,92 @@ const (
 	PlatformUptime  = "Platform Uptime"
 )
 
+func runPlatformBenchmarks(bench benchutil.Benchmarker) {
+	b := PlatformKernelGet()
+	bench.Add(b)
+
+	b = PlatformKernelGetFB()
+	bench.Add(b)
+
+	b = PlatformKernelSerializeFB()
+	bench.Add(b)
+
+	b = PlatformKernelDeserializeFB()
+	bench.Add(b)
+
+	b = PlatformKernelGetJSON()
+	bench.Add(b)
+
+	b = PlatformKernelSerializeJSON()
+	bench.Add(b)
+
+	b = PlatformKernelDeserializeJSON()
+	bench.Add(b)
+
+	b = PlatformLoadAvgGet()
+	bench.Add(b)
+
+	b = PlatformLoadAvgGetFB()
+	bench.Add(b)
+
+	b = PlatformLoadAvgSerializeFB()
+	bench.Add(b)
+
+	b = PlatformLoadAvgDeserializeFB()
+	bench.Add(b)
+
+	b = PlatformLoadAvgGetJSON()
+	bench.Add(b)
+
+	b = PlatformLoadAvgSerializeJSON()
+	bench.Add(b)
+
+	b = PlatformLoadAvgDeserializeJSON()
+	bench.Add(b)
+
+	b = PlatformReleaseGet()
+	bench.Add(b)
+
+	b = PlatformReleaseGetFB()
+	bench.Add(b)
+
+	b = PlatformReleaseSerializeFB()
+	bench.Add(b)
+
+	b = PlatformReleaseDeserializeFB()
+	bench.Add(b)
+
+	b = PlatformReleaseGetJSON()
+	bench.Add(b)
+
+	b = PlatformReleaseSerializeJSON()
+	bench.Add(b)
+
+	b = PlatformReleaseDeserializeJSON()
+	bench.Add(b)
+
+	b = PlatformUptimeGet()
+	bench.Add(b)
+
+	b = PlatformUptimeGetFB()
+	bench.Add(b)
+
+	b = PlatformUptimeSerializeFB()
+	bench.Add(b)
+
+	b = PlatformUptimeDeserializeFB()
+	bench.Add(b)
+
+	b = PlatformUptimeGetJSON()
+	bench.Add(b)
+
+	b = PlatformUptimeSerializeJSON()
+	bench.Add(b)
+
+	b = PlatformUptimeDeserializeJSON()
+	bench.Add(b)
+}
+
 func BenchPlatformKernelGet(b *testing.B) {
 	var k *kernel.Kernel
 	b.StopTimer()

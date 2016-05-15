@@ -31,6 +31,50 @@ const (
 	NetUsage = "Net Usage"
 )
 
+func runNetBenchmarks(bench benchutil.Benchmarker) {
+	b := NetInfoGet()
+	bench.Add(b)
+
+	b = NetInfoGetFB()
+	bench.Add(b)
+
+	b = NetInfoSerializeFB()
+	bench.Add(b)
+
+	b = NetInfoDeserializeFB()
+	bench.Add(b)
+
+	b = NetInfoGetSON()
+	bench.Add(b)
+
+	b = NetInfoSerializeJSON()
+	bench.Add(b)
+
+	b = NetInfoDeserializeJSON()
+	bench.Add(b)
+
+	b = NetGetUsage()
+	bench.Add(b)
+
+	b = NetGetUsageFB()
+	bench.Add(b)
+
+	b = NetUsageSerializeFB()
+	bench.Add(b)
+
+	b = NetUsageDeserializeFB()
+	bench.Add(b)
+
+	b = NetGetUsageJSON()
+	bench.Add(b)
+
+	b = NetUsageSerializeJSON()
+	bench.Add(b)
+
+	b = NetUsageDeserializeJSON()
+	bench.Add(b)
+}
+
 func BenchNetInfoGet(b *testing.B) {
 	var inf *structs.Info
 	b.StopTimer()
