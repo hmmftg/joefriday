@@ -28,50 +28,50 @@ const procFile = "/proc/meminfo"
 
 // Info holds the mem info information.
 type Info struct {
-	Timestamp         int64 `json:"timestamp"`
-	Active            int64 `json:"active"`
-	ActiveAnon        int64 `json:"active_anon"`
-	ActiveFile        int64 `json:"active_file"`
-	AnonHugePages     int64 `json:"anon_huge_pages"`
-	AnonPages         int64 `json:"anon_pages"`
-	Bounce            int64 `json:"bounce"`
-	Buffers           int64 `json:"buffers"`
-	Cached            int64 `json:"cached"`
-	CommitLimit       int64 `json:"commit_limit"`
-	CommittedAS       int64 `json:"commited_as"`
-	DirectMap4K       int64 `json:"direct_map_4k"`
-	DirectMap2M       int64 `json:"direct_map_2m"`
-	Dirty             int64 `json:"dirty"`
-	HardwareCorrupted int64 `json:"hardware_corrupted"`
-	HugePagesFree     int64 `json:"huge_pages_free"`
-	HugePagesRsvd     int64 `json:"huge_pages_rsvd"`
-	HugePagesSize     int64 `json:"huge_pages_size"`
-	HugePagesSurp     int64 `json:"huge_pages_surp"`
-	HugePagesTotal    int64 `json:"huge_pages_total"`
-	Inactive          int64 `json:"inactive"`
-	InactiveAnon      int64 `json:"inactive_anon"`
-	InactiveFile      int64 `json:"inactive_file"`
-	KernelStack       int64 `json:"kernel_stack"`
-	Mapped            int64 `json:"mapped"`
-	MemAvailable      int64 `json:"mem_available"`
-	MemFree           int64 `json:"mem_free"`
-	MemTotal          int64 `json:"mem_total"`
-	Mlocked           int64 `json:"mlocked"`
-	NFSUnstable       int64 `json:"nfs_unstable"`
-	PageTables        int64 `json:"page_tables"`
-	Shmem             int64 `json:"shmem"`
-	Slab              int64 `json:"slab"`
-	SReclaimable      int64 `json:"s_reclaimable"`
-	SUnreclaim        int64 `json:"s_unreclaim"`
-	SwapCached        int64 `json:"swap_cached"`
-	SwapFree          int64 `json:"swap_free"`
-	SwapTotal         int64 `json:"swap_total"`
-	Unevictable       int64 `json:"unevictable"`
-	VmallocChunk      int64 `json:"vmalloc_chunk"`
-	VmallocTotal      int64 `json:"vmalloc_total"`
-	VmallocUsed       int64 `json:"vmalloc_used"`
-	Writeback         int64 `json:"writeback"`
-	WritebackTmp      int64 `json:"writeback_tmp"`
+	Timestamp         int64  `json:"timestamp"`
+	Active            uint64 `json:"active"`
+	ActiveAnon        uint64 `json:"active_anon"`
+	ActiveFile        uint64 `json:"active_file"`
+	AnonHugePages     uint64 `json:"anon_huge_pages"`
+	AnonPages         uint64 `json:"anon_pages"`
+	Bounce            uint64 `json:"bounce"`
+	Buffers           uint64 `json:"buffers"`
+	Cached            uint64 `json:"cached"`
+	CommitLimit       uint64 `json:"commit_limit"`
+	CommittedAS       uint64 `json:"commited_as"`
+	DirectMap4K       uint64 `json:"direct_map_4k"`
+	DirectMap2M       uint64 `json:"direct_map_2m"`
+	Dirty             uint64 `json:"dirty"`
+	HardwareCorrupted uint64 `json:"hardware_corrupted"`
+	HugePagesFree     uint64 `json:"huge_pages_free"`
+	HugePagesRsvd     uint64 `json:"huge_pages_rsvd"`
+	HugePagesSize     uint64 `json:"huge_pages_size"`
+	HugePagesSurp     uint64 `json:"huge_pages_surp"`
+	HugePagesTotal    uint64 `json:"huge_pages_total"`
+	Inactive          uint64 `json:"inactive"`
+	InactiveAnon      uint64 `json:"inactive_anon"`
+	InactiveFile      uint64 `json:"inactive_file"`
+	KernelStack       uint64 `json:"kernel_stack"`
+	Mapped            uint64 `json:"mapped"`
+	MemAvailable      uint64 `json:"mem_available"`
+	MemFree           uint64 `json:"mem_free"`
+	MemTotal          uint64 `json:"mem_total"`
+	Mlocked           uint64 `json:"mlocked"`
+	NFSUnstable       uint64 `json:"nfs_unstable"`
+	PageTables        uint64 `json:"page_tables"`
+	Shmem             uint64 `json:"shmem"`
+	Slab              uint64 `json:"slab"`
+	SReclaimable      uint64 `json:"s_reclaimable"`
+	SUnreclaim        uint64 `json:"s_unreclaim"`
+	SwapCached        uint64 `json:"swap_cached"`
+	SwapFree          uint64 `json:"swap_free"`
+	SwapTotal         uint64 `json:"swap_total"`
+	Unevictable       uint64 `json:"unevictable"`
+	VmallocChunk      uint64 `json:"vmalloc_chunk"`
+	VmallocTotal      uint64 `json:"vmalloc_total"`
+	VmallocUsed       uint64 `json:"vmalloc_used"`
+	Writeback         uint64 `json:"writeback"`
+	WritebackTmp      uint64 `json:"writeback_tmp"`
 }
 
 // Profiler is used to process the /proc/meminfo file.
@@ -146,171 +146,171 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		if v == 'A' {
 			if prof.Val[5] == 'e' {
 				if nameLen == 6 {
-					inf.Active = int64(n)
+					inf.Active = n
 					continue
 				}
 				if prof.Val[7] == 'a' {
-					inf.ActiveAnon = int64(n)
+					inf.ActiveAnon = n
 					continue
 				}
-				inf.ActiveFile = int64(n)
+				inf.ActiveFile = n
 				continue
 			}
 			if nameLen == 9 {
-				inf.AnonPages = int64(n)
+				inf.AnonPages = n
 				continue
 			}
-			inf.AnonHugePages = int64(n)
+			inf.AnonHugePages = n
 			continue
 		}
 		if v == 'C' {
 			if nameLen == 6 {
-				inf.Cached = int64(n)
+				inf.Cached = n
 				continue
 			}
 			if nameLen == 11 {
-				inf.CommitLimit = int64(n)
+				inf.CommitLimit = n
 				continue
 			}
-			inf.CommittedAS = int64(n)
+			inf.CommittedAS = n
 			continue
 		}
 		if v == 'D' {
 			if nameLen == 5 {
-				inf.Dirty = int64(n)
+				inf.Dirty = n
 				continue
 			}
 			if prof.Val[10] == 'k' {
-				inf.DirectMap4K = int64(n)
+				inf.DirectMap4K = n
 				continue
 			}
-			inf.DirectMap2M = int64(n)
+			inf.DirectMap2M = n
 			continue
 		}
 		if v == 'H' {
 			if nameLen == 14 {
 				if prof.Val[10] == 'F' {
-					inf.HugePagesFree = int64(n)
+					inf.HugePagesFree = n
 					continue
 				}
 				if prof.Val[10] == 'R' {
-					inf.HugePagesRsvd = int64(n)
+					inf.HugePagesRsvd = n
 					continue
 				}
-				inf.HugePagesSurp = int64(n)
+				inf.HugePagesSurp = n
 			}
 			if prof.Val[1] == 'a' {
-				inf.HardwareCorrupted = int64(n)
+				inf.HardwareCorrupted = n
 				continue
 			}
 			if prof.Val[9] == 'i' {
-				inf.HugePagesSize = int64(n)
+				inf.HugePagesSize = n
 				continue
 			}
-			inf.HugePagesTotal = int64(n)
+			inf.HugePagesTotal = n
 			continue
 		}
 		if v == 'I' {
 			if nameLen == 8 {
-				inf.Inactive = int64(n)
+				inf.Inactive = n
 				continue
 			}
 			if prof.Val[9] == 'a' {
-				inf.InactiveAnon = int64(n)
+				inf.InactiveAnon = n
 				continue
 			}
-			inf.InactiveFile = int64(n)
+			inf.InactiveFile = n
 		}
 		if v == 'M' {
 			v = prof.Val[3]
 			if nameLen < 8 {
 				if v == 'p' {
-					inf.Mapped = int64(n)
+					inf.Mapped = n
 					continue
 				}
 				if v == 'F' {
-					inf.MemFree = int64(n)
+					inf.MemFree = n
 					continue
 				}
-				inf.Mlocked = int64(n)
+				inf.Mlocked = n
 				continue
 			}
 			if v == 'A' {
-				inf.MemAvailable = int64(n)
+				inf.MemAvailable = n
 				continue
 			}
-			inf.MemTotal = int64(n)
+			inf.MemTotal = n
 			continue
 		}
 		if v == 'S' {
 			v = prof.Val[1]
 			if v == 'w' {
 				if prof.Val[4] == 'C' {
-					inf.SwapCached = int64(n)
+					inf.SwapCached = n
 					continue
 				}
 				if prof.Val[4] == 'F' {
-					inf.SwapFree = int64(n)
+					inf.SwapFree = n
 					continue
 				}
-				inf.SwapTotal = int64(n)
+				inf.SwapTotal = n
 				continue
 			}
 			if v == 'h' {
-				inf.Shmem = int64(n)
+				inf.Shmem = n
 				continue
 			}
 			if v == 'l' {
-				inf.Slab = int64(n)
+				inf.Slab = n
 				continue
 			}
 			if v == 'R' {
-				inf.SReclaimable = int64(n)
+				inf.SReclaimable = n
 				continue
 			}
-			inf.SUnreclaim = int64(n)
+			inf.SUnreclaim = n
 			continue
 		}
 		if v == 'V' {
 			if prof.Val[8] == 'C' {
-				inf.VmallocChunk = int64(n)
+				inf.VmallocChunk = n
 				continue
 			}
 			if prof.Val[8] == 'T' {
-				inf.VmallocTotal = int64(n)
+				inf.VmallocTotal = n
 				continue
 			}
-			inf.VmallocUsed = int64(n)
+			inf.VmallocUsed = n
 			continue
 		}
 		if v == 'W' {
 			if nameLen == 9 {
-				inf.Writeback = int64(n)
+				inf.Writeback = n
 				continue
 			}
-			inf.WritebackTmp = int64(n)
+			inf.WritebackTmp = n
 			continue
 		}
 		if v == 'B' {
 			if nameLen == 6 {
-				inf.Bounce = int64(n)
+				inf.Bounce = n
 				continue
 			}
-			inf.Buffers = int64(n)
+			inf.Buffers = n
 			continue
 		}
 		if v == 'K' {
-			inf.KernelStack = int64(n)
+			inf.KernelStack = n
 			continue
 		}
 		if v == 'N' {
-			inf.NFSUnstable = int64(n)
+			inf.NFSUnstable = n
 			continue
 		}
 		if v == 'P' {
-			inf.PageTables = int64(n)
+			inf.PageTables = n
 		}
-		inf.Unevictable = int64(n)
+		inf.Unevictable = n
 	}
 	return inf, nil
 }
@@ -422,171 +422,171 @@ func (t *Ticker) Run() {
 				if v == 'A' {
 					if t.Val[5] == 'e' {
 						if nameLen == 6 {
-							inf.Active = int64(n)
+							inf.Active = n
 							continue
 						}
 						if t.Val[7] == 'a' {
-							inf.ActiveAnon = int64(n)
+							inf.ActiveAnon = n
 							continue
 						}
-						inf.ActiveFile = int64(n)
+						inf.ActiveFile = n
 						continue
 					}
 					if nameLen == 9 {
-						inf.AnonPages = int64(n)
+						inf.AnonPages = n
 						continue
 					}
-					inf.AnonHugePages = int64(n)
+					inf.AnonHugePages = n
 					continue
 				}
 				if v == 'C' {
 					if nameLen == 6 {
-						inf.Cached = int64(n)
+						inf.Cached = n
 						continue
 					}
 					if nameLen == 11 {
-						inf.CommitLimit = int64(n)
+						inf.CommitLimit = n
 						continue
 					}
-					inf.CommittedAS = int64(n)
+					inf.CommittedAS = n
 					continue
 				}
 				if v == 'D' {
 					if nameLen == 5 {
-						inf.Dirty = int64(n)
+						inf.Dirty = n
 						continue
 					}
 					if t.Val[10] == 'k' {
-						inf.DirectMap4K = int64(n)
+						inf.DirectMap4K = n
 						continue
 					}
-					inf.DirectMap2M = int64(n)
+					inf.DirectMap2M = n
 					continue
 				}
 				if v == 'H' {
 					if nameLen == 14 {
 						if t.Val[10] == 'F' {
-							inf.HugePagesFree = int64(n)
+							inf.HugePagesFree = n
 							continue
 						}
 						if t.Val[10] == 'R' {
-							inf.HugePagesRsvd = int64(n)
+							inf.HugePagesRsvd = n
 							continue
 						}
-						inf.HugePagesSurp = int64(n)
+						inf.HugePagesSurp = n
 					}
 					if t.Val[1] == 'a' {
-						inf.HardwareCorrupted = int64(n)
+						inf.HardwareCorrupted = n
 						continue
 					}
 					if t.Val[9] == 'i' {
-						inf.HugePagesSize = int64(n)
+						inf.HugePagesSize = n
 						continue
 					}
-					inf.HugePagesTotal = int64(n)
+					inf.HugePagesTotal = n
 					continue
 				}
 				if v == 'I' {
 					if nameLen == 8 {
-						inf.Inactive = int64(n)
+						inf.Inactive = n
 						continue
 					}
 					if t.Val[9] == 'a' {
-						inf.InactiveAnon = int64(n)
+						inf.InactiveAnon = n
 						continue
 					}
-					inf.InactiveFile = int64(n)
+					inf.InactiveFile = n
 				}
 				if v == 'M' {
 					v = t.Val[3]
 					if nameLen < 8 {
 						if v == 'p' {
-							inf.Mapped = int64(n)
+							inf.Mapped = n
 							continue
 						}
 						if v == 'F' {
-							inf.MemFree = int64(n)
+							inf.MemFree = n
 							continue
 						}
-						inf.Mlocked = int64(n)
+						inf.Mlocked = n
 						continue
 					}
 					if v == 'A' {
-						inf.MemAvailable = int64(n)
+						inf.MemAvailable = n
 						continue
 					}
-					inf.MemTotal = int64(n)
+					inf.MemTotal = n
 					continue
 				}
 				if v == 'S' {
 					v = t.Val[1]
 					if v == 'w' {
 						if t.Val[4] == 'C' {
-							inf.SwapCached = int64(n)
+							inf.SwapCached = n
 							continue
 						}
 						if t.Val[4] == 'F' {
-							inf.SwapFree = int64(n)
+							inf.SwapFree = n
 							continue
 						}
-						inf.SwapTotal = int64(n)
+						inf.SwapTotal = n
 						continue
 					}
 					if v == 'h' {
-						inf.Shmem = int64(n)
+						inf.Shmem = n
 						continue
 					}
 					if v == 'l' {
-						inf.Slab = int64(n)
+						inf.Slab = n
 						continue
 					}
 					if v == 'R' {
-						inf.SReclaimable = int64(n)
+						inf.SReclaimable = n
 						continue
 					}
-					inf.SUnreclaim = int64(n)
+					inf.SUnreclaim = n
 					continue
 				}
 				if v == 'V' {
 					if t.Val[8] == 'C' {
-						inf.VmallocChunk = int64(n)
+						inf.VmallocChunk = n
 						continue
 					}
 					if t.Val[8] == 'T' {
-						inf.VmallocTotal = int64(n)
+						inf.VmallocTotal = n
 						continue
 					}
-					inf.VmallocUsed = int64(n)
+					inf.VmallocUsed = n
 					continue
 				}
 				if v == 'W' {
 					if nameLen == 9 {
-						inf.Writeback = int64(n)
+						inf.Writeback = n
 						continue
 					}
-					inf.WritebackTmp = int64(n)
+					inf.WritebackTmp = n
 					continue
 				}
 				if v == 'B' {
 					if nameLen == 6 {
-						inf.Bounce = int64(n)
+						inf.Bounce = n
 						continue
 					}
-					inf.Buffers = int64(n)
+					inf.Buffers = n
 					continue
 				}
 				if v == 'K' {
-					inf.KernelStack = int64(n)
+					inf.KernelStack = n
 					continue
 				}
 				if v == 'N' {
-					inf.NFSUnstable = int64(n)
+					inf.NFSUnstable = n
 					continue
 				}
 				if v == 'P' {
-					inf.PageTables = int64(n)
+					inf.PageTables = n
 				}
-				inf.Unevictable = int64(n)
+				inf.Unevictable = n
 			}
 			t.Data <- inf
 		}
