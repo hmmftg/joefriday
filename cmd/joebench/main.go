@@ -48,8 +48,8 @@ func init() {
 	flag.BoolVar(&section, "s", false, "don't separate groups of tests into sections")
 	flag.BoolVar(&sectionHeaders, "sectionheader", false, "if there are sections, add a section header row")
 	flag.BoolVar(&sectionHeaders, "h", false, "if there are sections, add a section header row")
-	flag.BoolVar(&systemInfo, "sysinfo", false, "add the system information to the outpu")
-	flag.BoolVar(&systemInfo, "i", false, "add the system information to the outpu")
+	flag.BoolVar(&systemInfo, "sysinfo", false, "add the system information to the output")
+	flag.BoolVar(&systemInfo, "i", false, "add the system information to the output")
 }
 
 func main() {
