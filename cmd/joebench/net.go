@@ -33,46 +33,46 @@ const (
 
 func runNetBenchmarks(bench benchutil.Benchmarker) {
 	b := NetInfoGet()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetInfoGetFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetInfoSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetInfoDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetInfoGetSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetInfoSerializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetInfoDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetGetUsage()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetGetUsageFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetUsageSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetUsageDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetGetUsageJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetUsageSerializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = NetUsageDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 }
 
 func BenchNetInfoGet(b *testing.B) {

@@ -28,25 +28,25 @@ const (
 
 func runMemBenchmarks(bench benchutil.Benchmarker) {
 	b := MemInfoGet()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = MemInfoGetFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = MemInfoSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = MemInfoDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = MemInfoGetSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = MemInfoSerializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = MemInfoDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 }
 
 func BenchMemInfoGet(b *testing.B) {

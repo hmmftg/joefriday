@@ -33,37 +33,37 @@ const (
 
 func runDiskBenchmarks(bench benchutil.Benchmarker) {
 	b := DiskGetStats()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskGetStatsJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskStatsSerializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskStatsDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskGetUsage()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskGetUsageFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskUsageSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskUsageDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskGetUsageJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskUsageSerializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = DiskUsageDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 }
 
 func BenchDiskGetStats(b *testing.B) {

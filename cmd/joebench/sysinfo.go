@@ -36,60 +36,60 @@ const (
 
 func runSysinfoBenchmarks(bench benchutil.Benchmarker) {
 	b := SysinfoLoadAvgGet()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoLoadAvgGetFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoLoadAvgSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoLoadAvgDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoLoadAvgGetJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoLoadAvgDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	// Mem Info
 	b = SysinfoMemInfoGet()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoMemInfoGetFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoMemInfoSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoMemInfoDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoMemInfoGetJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoMemInfoDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	// Uptime
 	b = SysinfoUptimeGet()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoUptimeGetFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoUptimeSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoUptimeDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoUptimeGetJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = SysinfoUptimeDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 }
 
 // LoadAvg

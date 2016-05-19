@@ -36,67 +36,67 @@ const (
 
 func runCPUBenchmarks(bench benchutil.Benchmarker) {
 	b := CPUGetFacts()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUGetFactsFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUFactsSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUFactsDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUGetFactsJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUFactsSerializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUFactsDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUGetStats()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUGetStatsFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUStatsSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUStatsDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUGetStatsJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUStatsSerializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUStatsDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUGetUtilization()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUGetUtilizationFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUUtilizationSerializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUUtilizationDeserializeFB()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUGetUtilizationJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUUtilizationSerializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = CPUUtilizationDeserializeJSON()
-	bench.Add(b)
+	bench.Append(b)
 }
 
 func BenchCPUFactsGet(b *testing.B) {
