@@ -61,16 +61,16 @@ func (i *MemInfo) SerializeFlat() []byte {
 	bldrL := fb.NewBuilder(0)
 	flat.InfoStart(bldrL)
 	flat.InfoAddTimestamp(bldrL, int64(i.Timestamp))
-	flat.InfoAddMemTotal(bldrL, int64(i.MemTotal))
-	flat.InfoAddMemFree(bldrL, int64(i.MemFree))
-	flat.InfoAddMemAvailable(bldrL, int64(i.MemAvailable))
-	flat.InfoAddBuffers(bldrL, int64(i.Buffers))
-	flat.InfoAddCached(bldrL, int64(i.Cached))
-	flat.InfoAddSwapCached(bldrL, int64(i.SwapCached))
-	flat.InfoAddActive(bldrL, int64(i.Active))
-	flat.InfoAddInactive(bldrL, int64(i.Inactive))
-	flat.InfoAddSwapTotal(bldrL, int64(i.SwapTotal))
-	flat.InfoAddSwapFree(bldrL, int64(i.SwapFree))
+	flat.InfoAddMemTotal(bldrL, uint64(i.MemTotal))
+	flat.InfoAddMemFree(bldrL, uint64(i.MemFree))
+	flat.InfoAddMemAvailable(bldrL, uint64(i.MemAvailable))
+	flat.InfoAddBuffers(bldrL, uint64(i.Buffers))
+	flat.InfoAddCached(bldrL, uint64(i.Cached))
+	flat.InfoAddSwapCached(bldrL, uint64(i.SwapCached))
+	flat.InfoAddActive(bldrL, uint64(i.Active))
+	flat.InfoAddInactive(bldrL, uint64(i.Inactive))
+	flat.InfoAddSwapTotal(bldrL, uint64(i.SwapTotal))
+	flat.InfoAddSwapFree(bldrL, uint64(i.SwapFree))
 	bldrL.Finish(flat.InfoEnd(bldrL))
 	return bldrL.Bytes[bldrL.Head():]
 }
@@ -81,16 +81,16 @@ func (i *MemInfo) BldrSerializeFlat() []byte {
 	bldr.Reset()
 	flat.InfoStart(bldr)
 	flat.InfoAddTimestamp(bldr, int64(i.Timestamp))
-	flat.InfoAddMemTotal(bldr, int64(i.MemTotal))
-	flat.InfoAddMemFree(bldr, int64(i.MemFree))
-	flat.InfoAddMemAvailable(bldr, int64(i.MemAvailable))
-	flat.InfoAddBuffers(bldr, int64(i.Buffers))
-	flat.InfoAddCached(bldr, int64(i.Cached))
-	flat.InfoAddSwapCached(bldr, int64(i.SwapCached))
-	flat.InfoAddActive(bldr, int64(i.Active))
-	flat.InfoAddInactive(bldr, int64(i.Inactive))
-	flat.InfoAddSwapTotal(bldr, int64(i.SwapTotal))
-	flat.InfoAddSwapFree(bldr, int64(i.SwapFree))
+	flat.InfoAddMemTotal(bldr, uint64(i.MemTotal))
+	flat.InfoAddMemFree(bldr, uint64(i.MemFree))
+	flat.InfoAddMemAvailable(bldr, uint64(i.MemAvailable))
+	flat.InfoAddBuffers(bldr, uint64(i.Buffers))
+	flat.InfoAddCached(bldr, uint64(i.Cached))
+	flat.InfoAddSwapCached(bldr, uint64(i.SwapCached))
+	flat.InfoAddActive(bldr, uint64(i.Active))
+	flat.InfoAddInactive(bldr, uint64(i.Inactive))
+	flat.InfoAddSwapTotal(bldr, uint64(i.SwapTotal))
+	flat.InfoAddSwapFree(bldr, uint64(i.SwapFree))
 	bldr.Finish(flat.InfoEnd(bldr))
 	return bldr.Bytes[bldr.Head():]
 }
@@ -101,16 +101,16 @@ func DeserializeFlat(p []byte) *MemInfo {
 	infoFlat := flat.GetRootAsInfo(p, 0)
 	info := &MemInfo{}
 	info.Timestamp = infoFlat.Timestamp()
-	info.MemTotal = infoFlat.MemTotal()
-	info.MemFree = infoFlat.MemFree()
-	info.MemAvailable = infoFlat.MemAvailable()
-	info.Buffers = infoFlat.Buffers()
-	info.Cached = infoFlat.Cached()
-	info.SwapCached = infoFlat.SwapCached()
-	info.Active = infoFlat.Active()
-	info.Inactive = infoFlat.Inactive()
-	info.SwapTotal = infoFlat.SwapTotal()
-	info.SwapFree = infoFlat.SwapFree()
+	info.MemTotal = int64(infoFlat.MemTotal())
+	info.MemFree = int64(infoFlat.MemFree())
+	info.MemAvailable = int64(infoFlat.MemAvailable())
+	info.Buffers = int64(infoFlat.Buffers())
+	info.Cached = int64(infoFlat.Cached())
+	info.SwapCached = int64(infoFlat.SwapCached())
+	info.Active = int64(infoFlat.Active())
+	info.Inactive = int64(infoFlat.Inactive())
+	info.SwapTotal = int64(infoFlat.SwapTotal())
+	info.SwapFree = int64(infoFlat.SwapFree())
 	return info
 }
 
@@ -581,43 +581,43 @@ func GetMemInfoToFlatbuffersReuseBldr() ([]byte, error) {
 		}
 		val = val[:0]
 		if name == "MemTotal" {
-			flat.InfoAddMemTotal(bldr, int64(i))
+			flat.InfoAddMemTotal(bldr, uint64(i))
 			continue
 		}
 		if name == "MemFree" {
-			flat.InfoAddMemFree(bldr, int64(i))
+			flat.InfoAddMemFree(bldr, uint64(i))
 			continue
 		}
 		if name == "MemAvailable" {
-			flat.InfoAddMemAvailable(bldr, int64(i))
+			flat.InfoAddMemAvailable(bldr, uint64(i))
 			continue
 		}
 		if name == "Buffers" {
-			flat.InfoAddBuffers(bldr, int64(i))
+			flat.InfoAddBuffers(bldr, uint64(i))
 			continue
 		}
 		if name == "Cached" {
-			flat.InfoAddMemAvailable(bldr, int64(i))
+			flat.InfoAddMemAvailable(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapCached" {
-			flat.InfoAddSwapCached(bldr, int64(i))
+			flat.InfoAddSwapCached(bldr, uint64(i))
 			continue
 		}
 		if name == "Active" {
-			flat.InfoAddActive(bldr, int64(i))
+			flat.InfoAddActive(bldr, uint64(i))
 			continue
 		}
 		if name == "Inactive" {
-			flat.InfoAddInactive(bldr, int64(i))
+			flat.InfoAddInactive(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapTotal" {
-			flat.InfoAddSwapTotal(bldr, int64(i))
+			flat.InfoAddSwapTotal(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapFree" {
-			flat.InfoAddSwapFree(bldr, int64(i))
+			flat.InfoAddSwapFree(bldr, uint64(i))
 			continue
 		}
 	}
@@ -689,43 +689,43 @@ func GetMemInfoToFlatbuffersMinAllocs() ([]byte, error) {
 			goto fclose
 		}
 		if name == "MemTotal" {
-			flat.InfoAddMemTotal(bldr, int64(i))
+			flat.InfoAddMemTotal(bldr, uint64(i))
 			continue
 		}
 		if name == "MemFree" {
-			flat.InfoAddMemFree(bldr, int64(i))
+			flat.InfoAddMemFree(bldr, uint64(i))
 			continue
 		}
 		if name == "MemAvailable" {
-			flat.InfoAddMemAvailable(bldr, int64(i))
+			flat.InfoAddMemAvailable(bldr, uint64(i))
 			continue
 		}
 		if name == "Buffers" {
-			flat.InfoAddBuffers(bldr, int64(i))
+			flat.InfoAddBuffers(bldr, uint64(i))
 			continue
 		}
 		if name == "Cached" {
-			flat.InfoAddMemAvailable(bldr, int64(i))
+			flat.InfoAddMemAvailable(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapCached" {
-			flat.InfoAddSwapCached(bldr, int64(i))
+			flat.InfoAddSwapCached(bldr, uint64(i))
 			continue
 		}
 		if name == "Active" {
-			flat.InfoAddActive(bldr, int64(i))
+			flat.InfoAddActive(bldr, uint64(i))
 			continue
 		}
 		if name == "Inactive" {
-			flat.InfoAddInactive(bldr, int64(i))
+			flat.InfoAddInactive(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapTotal" {
-			flat.InfoAddSwapTotal(bldr, int64(i))
+			flat.InfoAddSwapTotal(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapFree" {
-			flat.InfoAddSwapFree(bldr, int64(i))
+			flat.InfoAddSwapFree(bldr, uint64(i))
 			continue
 		}
 	}
@@ -789,43 +789,43 @@ func GetMemInfoToFlatbuffersMinAllocsSeek(f *os.File) ([]byte, error) {
 			return nil, fmt.Errorf("%s: %s", name, err)
 		}
 		if name == "MemTotal" {
-			flat.InfoAddMemTotal(bldr, int64(i))
+			flat.InfoAddMemTotal(bldr, uint64(i))
 			continue
 		}
 		if name == "MemFree" {
-			flat.InfoAddMemFree(bldr, int64(i))
+			flat.InfoAddMemFree(bldr, uint64(i))
 			continue
 		}
 		if name == "MemAvailable" {
-			flat.InfoAddMemAvailable(bldr, int64(i))
+			flat.InfoAddMemAvailable(bldr, uint64(i))
 			continue
 		}
 		if name == "Buffers" {
-			flat.InfoAddBuffers(bldr, int64(i))
+			flat.InfoAddBuffers(bldr, uint64(i))
 			continue
 		}
 		if name == "Cached" {
-			flat.InfoAddMemAvailable(bldr, int64(i))
+			flat.InfoAddMemAvailable(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapCached" {
-			flat.InfoAddSwapCached(bldr, int64(i))
+			flat.InfoAddSwapCached(bldr, uint64(i))
 			continue
 		}
 		if name == "Active" {
-			flat.InfoAddActive(bldr, int64(i))
+			flat.InfoAddActive(bldr, uint64(i))
 			continue
 		}
 		if name == "Inactive" {
-			flat.InfoAddInactive(bldr, int64(i))
+			flat.InfoAddInactive(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapTotal" {
-			flat.InfoAddSwapTotal(bldr, int64(i))
+			flat.InfoAddSwapTotal(bldr, uint64(i))
 			continue
 		}
 		if name == "SwapFree" {
-			flat.InfoAddSwapFree(bldr, int64(i))
+			flat.InfoAddSwapFree(bldr, uint64(i))
 			continue
 		}
 	}
@@ -893,29 +893,29 @@ func GetMemInfoEmulateCurrentFlatTicker(f *os.File) ([]byte, error) {
 		if v == 'M' {
 			v = val[3]
 			if v == 'T' {
-				flat.InfoAddMemTotal(bldr, int64(n))
+				flat.InfoAddMemTotal(bldr, uint64(n))
 			} else if v == 'F' {
-				flat.InfoAddMemFree(bldr, int64(n))
+				flat.InfoAddMemFree(bldr, uint64(n))
 			} else {
-				flat.InfoAddMemAvailable(bldr, int64(n))
+				flat.InfoAddMemAvailable(bldr, uint64(n))
 			}
 		} else if v == 'S' {
 			v = val[4]
 			if v == 'C' {
-				flat.InfoAddSwapCached(bldr, int64(n))
+				flat.InfoAddSwapCached(bldr, uint64(n))
 			} else if v == 'T' {
-				flat.InfoAddSwapTotal(bldr, int64(n))
+				flat.InfoAddSwapTotal(bldr, uint64(n))
 			} else if v == 'F' {
-				flat.InfoAddSwapFree(bldr, int64(n))
+				flat.InfoAddSwapFree(bldr, uint64(n))
 			}
 		} else if v == 'B' {
-			flat.InfoAddBuffers(bldr, int64(n))
+			flat.InfoAddBuffers(bldr, uint64(n))
 		} else if v == 'I' {
-			flat.InfoAddInactive(bldr, int64(n))
+			flat.InfoAddInactive(bldr, uint64(n))
 		} else if v == 'C' {
-			flat.InfoAddMemAvailable(bldr, int64(n))
+			flat.InfoAddMemAvailable(bldr, uint64(n))
 		} else if v == 'A' {
-			flat.InfoAddInactive(bldr, int64(n))
+			flat.InfoAddInactive(bldr, uint64(n))
 		}
 	}
 	bldr.Finish(flat.InfoEnd(bldr))
