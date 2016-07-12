@@ -102,89 +102,89 @@ func main() {
 
 func runCPUBenches(bench benchutil.Benchmarker) {
 	b := cpu.JoeFridayGetFacts()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = cpu.JoeFridayGetStats()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = cpu.DataDogGohaiCPU()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = cpu.ShirouGopsutilInfoStat()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = cpu.ShirouGopsutilTimeStat()
-	bench.Add(b)
+	bench.Append(b)
 }
 
 func runMemBenches(bench benchutil.Benchmarker) {
 	b := mem.JoeFridayGetMemInfo()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = mem.JoeFridayGetSysinfoMemInfo()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = mem.CloudFoundryGoSigarMem()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = mem.DataDogGohaiMem()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = mem.GuillermoMemInfo()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = mem.ShirouGopsutilMem()
-	bench.Add(b)
+	bench.Append(b)
 }
 
 func runNetBenches(bench benchutil.Benchmarker) {
 	b := net.JoeFridayGetInfo()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = net.JoeFridayGetUsage()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = net.DataDogGohaiNetwork()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = net.ShirouGopsutilNetInterfaces()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = net.ShirouGopsutilIOCounters()
-	bench.Add(b)
+	bench.Append(b)
 }
 
 func runPlatformBenches(bench benchutil.Benchmarker) {
 	b := platform.JoeFridayGetKernel()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.JoeFridayGetRelease()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.DataDogGohaiplatform()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.JoeFridayGetLoadAvg()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.JoeFridayGetSysinfoLoadAvg()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.CloudFoundryGoSigarLoadAverage()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.ShirouGopsutilLoadAvg()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.ShirouGopsutilLoadMisc()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.JoeFridayGetUptime()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.JoeFridayGetSysinfoUptime()
-	bench.Add(b)
+	bench.Append(b)
 
 	b = platform.CloudFoundryGoSigarUptime()
-	bench.Add(b)
+	bench.Append(b)
 }
