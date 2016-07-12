@@ -257,7 +257,8 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			}
 			continue
 		}
-		if v == 'b' { // bogomips
+		// also check 2nd name pos for o as some output also have a bugs line.
+		if v == 'b' && prof.Val[1] == 'o' { // bogomips
 			f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
 			if err != nil {
 				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
