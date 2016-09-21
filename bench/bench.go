@@ -78,7 +78,7 @@ func main() {
 		bench = benchutil.NewCSVBench(w)
 	case "md":
 		bench = benchutil.NewMDBench(w)
-		bench.(*benchutil.MDBench).GroupAsSectionName = nameSections
+		bench.NameSections(nameSections)
 	default:
 		bench = benchutil.NewStringBench(w)
 	}
