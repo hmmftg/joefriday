@@ -1,0 +1,17 @@
+//meminfo.fbs
+namespace flat;
+
+table MemInfo {
+	Timestamp:long;
+	Active:ulong;
+	Inactive:ulong;
+	Mapped:ulong;
+	MemAvailable:ulong;
+	MemFree:ulong;
+	MemTotal:ulong;
+	SwapCached:ulong;
+	SwapFree:ulong;
+	SwapTotal:ulong;
+}
+
+root_type MemInfo;
