@@ -34,7 +34,7 @@ func TestFacts(t *testing.T) {
 		if fact.CPUCores == 0 {
 			t.Errorf("%d: expected cpu cores to have a non-zero value; it was 0", i)
 		}
-		if fact.Flags == "" {
+		if len(fact.Flags) == 0 {
 			t.Errorf("%d: expected flags to be not be empty; it was", i)
 		}
 	}

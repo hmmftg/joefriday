@@ -40,7 +40,7 @@ func TestGet(t *testing.T) {
 		if v.VendorID == "" {
 			t.Errorf("%d: expected vendor_id to have a value; it was empty", i)
 		}
-		if v.Flags == "" {
+		if len(v.Flags) == 0 {
 			t.Errorf("%d: expected flags to have values; it was empty", i)
 		}
 	}

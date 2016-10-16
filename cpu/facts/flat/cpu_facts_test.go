@@ -41,6 +41,9 @@ func TestSerialize(t *testing.T) {
 		if factsD.CPU[i].CPUCores == 0 {
 			t.Errorf("%d: CPUCores: expected non-zero value; was 0", i)
 		}
+		if len(factsD.CPU[i].Flags) == 0 {
+			t.Errorf("%d: Flags: expected some flags, none were found", i)
+		}
 	}
 	_, err = Serialize(factsD)
 	if err != nil {

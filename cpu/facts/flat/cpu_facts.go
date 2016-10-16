@@ -24,7 +24,7 @@ import (
 	"github.com/mohae/joefriday/cpu/facts"
 )
 
-// Profiler is used to process the cpuinfo (facts) as Flatbuffers serialized
+// profiler is used to process the cpuinfo (facts) as Flatbuffers serialized
 // bytes.
 type Profiler struct {
 	*facts.Profiler
@@ -32,28 +32,28 @@ type Profiler struct {
 }
 
 // Initializes and returns a cpu facts profiler that utilizes FlatBuffers.
-func NewProfiler() (prof *Profiler, err error) {
-	p, err := facts.NewProfiler()
+func NewProfiler() (p *Profiler, err error) {
+	prof, err := facts.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
+	return &Profiler{Profiler: prof, Builder: fb.NewBuilder(0)}, nil
 }
 
 // Get returns the current cpuinfo (facts) as Flatbuffer serialized bytes.
-func (prof *Profiler) Get() ([]byte, error) {
-	facts, err := prof.Profiler.Get()
+func (p *Profiler) Get() ([]byte, error) {
+	facts, err := p.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.Serialize(facts), nil
+	return p.Serialize(facts), nil
 }
 
 var std *Profiler    // global for convenience; lazily instantiated.
 var stdMu sync.Mutex // protects access
 
 // Get returns the current cpuinfo (facts) as Flatbuffer serialized bytes
-// using the package global Profiler.
+// using the package global profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -67,93 +67,86 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes Facts using Flatbuffers.
-func (prof *Profiler) Serialize(fcts *facts.Facts) []byte {
+func (p *Profiler) Serialize(fcts *facts.Facts) []byte {
 	// ensure the Builder is in a usable state.
-	prof.Builder.Reset()
-	flatFacts := make([]fb.UOffsetT, len(fcts.CPU))
-	vendorIDs := make([]fb.UOffsetT, len(fcts.CPU))
-	cpuFamilies := make([]fb.UOffsetT, len(fcts.CPU))
-	models := make([]fb.UOffsetT, len(fcts.CPU))
-	modelNames := make([]fb.UOffsetT, len(fcts.CPU))
-	steppings := make([]fb.UOffsetT, len(fcts.CPU))
-	microcodes := make([]fb.UOffsetT, len(fcts.CPU))
-	cacheSizes := make([]fb.UOffsetT, len(fcts.CPU))
-	fpus := make([]fb.UOffsetT, len(fcts.CPU))
-	fpuExceptions := make([]fb.UOffsetT, len(fcts.CPU))
-	cpuIDLevels := make([]fb.UOffsetT, len(fcts.CPU))
-	wps := make([]fb.UOffsetT, len(fcts.CPU))
-	flags := make([]fb.UOffsetT, len(fcts.CPU))
-	clFlushSizes := make([]fb.UOffsetT, len(fcts.CPU))
-	cacheAlignments := make([]fb.UOffsetT, len(fcts.CPU))
-	addressSizes := make([]fb.UOffsetT, len(fcts.CPU))
-	powerManagements := make([]fb.UOffsetT, len(fcts.CPU))
-	// create the strings
-	for i := 0; i < len(fcts.CPU); i++ {
-		vendorIDs[i] = prof.Builder.CreateString(fcts.CPU[i].VendorID)
-		cpuFamilies[i] = prof.Builder.CreateString(fcts.CPU[i].CPUFamily)
-		models[i] = prof.Builder.CreateString(fcts.CPU[i].Model)
-		modelNames[i] = prof.Builder.CreateString(fcts.CPU[i].ModelName)
-		steppings[i] = prof.Builder.CreateString(fcts.CPU[i].Stepping)
-		microcodes[i] = prof.Builder.CreateString(fcts.CPU[i].Microcode)
-		cacheSizes[i] = prof.Builder.CreateString(fcts.CPU[i].CacheSize)
-		fpus[i] = prof.Builder.CreateString(fcts.CPU[i].FPU)
-		fpuExceptions[i] = prof.Builder.CreateString(fcts.CPU[i].FPUException)
-		cpuIDLevels[i] = prof.Builder.CreateString(fcts.CPU[i].CPUIDLevel)
-		wps[i] = prof.Builder.CreateString(fcts.CPU[i].WP)
-		flags[i] = prof.Builder.CreateString(fcts.CPU[i].Flags)
-		clFlushSizes[i] = prof.Builder.CreateString(fcts.CPU[i].CLFlushSize)
-		cacheAlignments[i] = prof.Builder.CreateString(fcts.CPU[i].CacheAlignment)
-		addressSizes[i] = prof.Builder.CreateString(fcts.CPU[i].AddressSizes)
-		powerManagements[i] = prof.Builder.CreateString(fcts.CPU[i].PowerManagement)
+	p.Builder.Reset()
+	uoffs := make([]fb.UOffsetT, len(fcts.CPU))
+	for i, cpu := range fcts.CPU {
+		uoffs[i] = p.SerializeFact(&cpu)
 	}
-	// create the CPUs
-	for i := 0; i < len(fcts.CPU); i++ {
-		FactStart(prof.Builder)
-		FactAddProcessor(prof.Builder, fcts.CPU[i].Processor)
-		FactAddVendorID(prof.Builder, vendorIDs[i])
-		FactAddCPUFamily(prof.Builder, cpuFamilies[i])
-		FactAddModel(prof.Builder, models[i])
-		FactAddModelName(prof.Builder, modelNames[i])
-		FactAddStepping(prof.Builder, steppings[i])
-		FactAddMicrocode(prof.Builder, microcodes[i])
-		FactAddCPUMHz(prof.Builder, fcts.CPU[i].CPUMHz)
-		FactAddCacheSize(prof.Builder, cacheSizes[i])
-		FactAddPhysicalID(prof.Builder, fcts.CPU[i].PhysicalID)
-		FactAddSiblings(prof.Builder, fcts.CPU[i].Siblings)
-		FactAddCoreID(prof.Builder, fcts.CPU[i].CoreID)
-		FactAddCPUCores(prof.Builder, fcts.CPU[i].CPUCores)
-		FactAddApicID(prof.Builder, fcts.CPU[i].ApicID)
-		FactAddInitialApicID(prof.Builder, fcts.CPU[i].InitialApicID)
-		FactAddFPU(prof.Builder, fpus[i])
-		FactAddFPUException(prof.Builder, fpuExceptions[i])
-		FactAddCPUIDLevel(prof.Builder, cpuIDLevels[i])
-		FactAddWP(prof.Builder, wps[i])
-		FactAddFlags(prof.Builder, flags[i])
-		FactAddBogoMIPS(prof.Builder, fcts.CPU[i].BogoMIPS)
-		FactAddCLFlushSize(prof.Builder, clFlushSizes[i])
-		FactAddCacheAlignment(prof.Builder, cacheAlignments[i])
-		FactAddAddressSizes(prof.Builder, addressSizes[i])
-		FactAddPowerManagement(prof.Builder, powerManagements[i])
-		flatFacts[i] = FactEnd(prof.Builder)
+	FactsStartCPUVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
 	}
-	// Process the flat.Facts vector
-	FactsStartCPUVector(prof.Builder, len(flatFacts))
-	for i := len(flatFacts) - 1; i >= 0; i-- {
-		prof.Builder.PrependUOffsetT(flatFacts[i])
-	}
-	flatFactsV := prof.Builder.EndVector(len(flatFacts))
-	FactsStart(prof.Builder)
-	FactsAddTimestamp(prof.Builder, fcts.Timestamp)
-	FactsAddCPU(prof.Builder, flatFactsV)
-	prof.Builder.Finish(FactsEnd(prof.Builder))
-	p := prof.Builder.Bytes[prof.Builder.Head():]
+	cpus := p.Builder.EndVector(len(uoffs))
+	FactsStart(p.Builder)
+	FactsAddTimestamp(p.Builder, fcts.Timestamp)
+	FactsAddCPU(p.Builder, cpus)
+	p.Builder.Finish(FactsEnd(p.Builder))
+	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
-	tmp := make([]byte, len(p))
-	copy(tmp, p)
+	tmp := make([]byte, len(b))
+	copy(tmp, b)
 	return tmp
 }
 
-// Serialize Facts using the package global Profiler.
+// Serialize serializes a CPU's Fact using flatbuffers and returns the
+// resulting UOffsetT.
+func (p *Profiler) SerializeFact(f *facts.Fact) fb.UOffsetT {
+	vendorID := p.Builder.CreateString(f.VendorID)
+	cpuFamily := p.Builder.CreateString(f.CPUFamily)
+	model := p.Builder.CreateString(f.Model)
+	modelName := p.Builder.CreateString(f.ModelName)
+	stepping := p.Builder.CreateString(f.Stepping)
+	microcode := p.Builder.CreateString(f.Microcode)
+	cacheSize := p.Builder.CreateString(f.CacheSize)
+	fpu := p.Builder.CreateString(f.FPU)
+	fpuException := p.Builder.CreateString(f.FPUException)
+	cpuIDLevel := p.Builder.CreateString(f.CPUIDLevel)
+	wp := p.Builder.CreateString(f.WP)
+	clFlushSize := p.Builder.CreateString(f.CLFlushSize)
+	cacheAlignment := p.Builder.CreateString(f.CacheAlignment)
+	addressSize := p.Builder.CreateString(f.AddressSizes)
+	powerManagement := p.Builder.CreateString(f.PowerManagement)
+	uoffs := make([]fb.UOffsetT, len(f.Flags))
+	for i, flag := range f.Flags {
+		uoffs[i] = p.Builder.CreateString(flag)
+	}
+	FactsStartCPUVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
+	}
+	flags := p.Builder.EndVector(len(uoffs))
+	FactStart(p.Builder)
+	FactAddProcessor(p.Builder, f.Processor)
+	FactAddVendorID(p.Builder, vendorID)
+	FactAddCPUFamily(p.Builder, cpuFamily)
+	FactAddModel(p.Builder, model)
+	FactAddModelName(p.Builder, modelName)
+	FactAddStepping(p.Builder, stepping)
+	FactAddMicrocode(p.Builder, microcode)
+	FactAddCPUMHz(p.Builder, f.CPUMHz)
+	FactAddCacheSize(p.Builder, cacheSize)
+	FactAddPhysicalID(p.Builder, f.PhysicalID)
+	FactAddSiblings(p.Builder, f.Siblings)
+	FactAddCoreID(p.Builder, f.CoreID)
+	FactAddCPUCores(p.Builder, f.CPUCores)
+	FactAddApicID(p.Builder, f.ApicID)
+	FactAddInitialApicID(p.Builder, f.InitialApicID)
+	FactAddFPU(p.Builder, fpu)
+	FactAddFPUException(p.Builder, fpuException)
+	FactAddCPUIDLevel(p.Builder, cpuIDLevel)
+	FactAddWP(p.Builder, wp)
+	FactAddBogoMIPS(p.Builder, f.BogoMIPS)
+	FactAddCLFlushSize(p.Builder, clFlushSize)
+	FactAddCacheAlignment(p.Builder, cacheAlignment)
+	FactAddAddressSizes(p.Builder, addressSize)
+	FactAddPowerManagement(p.Builder, powerManagement)
+	FactAddFlags(p.Builder, flags)
+	return FactEnd(p.Builder)
+}
+
+// Serialize Facts using the package global profiler.
 func Serialize(fcts *facts.Facts) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -198,7 +191,10 @@ func Deserialize(p []byte) *facts.Facts {
 		fct.FPUException = string(flatFact.FPUException())
 		fct.CPUIDLevel = string(flatFact.CPUIDLevel())
 		fct.WP = string(flatFact.WP())
-		fct.Flags = string(flatFact.Flags())
+		fct.Flags = make([]string, flatFact.FlagsLength())
+		for i := 0; i < len(fct.Flags); i++ {
+			fct.Flags[i] = string(flatFact.Flags(i))
+		}
 		fct.BogoMIPS = flatFact.BogoMIPS()
 		fct.CLFlushSize = string(flatFact.CLFlushSize())
 		fct.CacheAlignment = string(flatFact.CacheAlignment())
