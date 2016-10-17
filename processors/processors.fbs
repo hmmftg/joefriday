@@ -1,0 +1,24 @@
+// processors.fbs
+namespace flat;
+
+table Processors {
+	Timestamp:long;
+	Count:short;
+	Chips:[Chip];
+}
+
+table Chip {
+	PhysicalID:short;
+	VendorID:string;
+	CPUFamily:string;
+	Model:string;
+	ModelName:string;
+	Stepping:string;
+	Microcode:string;
+	CPUMHz:float;
+	CacheSize:string;
+	CPUCores:short;
+	Flags:[string];
+}
+
+root_type Processors;
