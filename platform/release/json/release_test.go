@@ -35,6 +35,9 @@ func TestGet(t *testing.T) {
 		t.Errorf("deserialize: unexpected error: %s", err)
 		return
 	}
+	if r.Name != rD.Name {
+		t.Errorf("Name: got %s; want %s", rD.Name, r.Name)
+	}
 	if r.ID != rD.ID {
 		t.Errorf("ID: got %s; want %s", rD.ID, r.ID)
 	}

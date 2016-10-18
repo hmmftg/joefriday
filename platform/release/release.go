@@ -25,6 +25,7 @@ const etcFile = "/etc/os-release"
 
 // Release holds information about the OS release.
 type Release struct {
+	Name         string `json:"name"`
 	ID           string `json:"id"`
 	IDLike       string `json:"id_like"`
 	PrettyName   string `json:"pretty_name"`
@@ -96,6 +97,10 @@ func (prof *Profiler) Get() (r *Release, err error) {
 				continue
 			}
 			release.Version = string(prof.Val[keyLen:])
+			continue
+		}
+		if v == 'N' {
+			release.Name = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'P' {

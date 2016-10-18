@@ -73,6 +73,7 @@ func Get() (p []byte, err error) {
 func (prof *Profiler) Serialize(r *release.Release) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
+	name := prof.Builder.CreateString(r.Name)
 	id := prof.Builder.CreateString(r.ID)
 	idLike := prof.Builder.CreateString(r.IDLike)
 	prettyName := prof.Builder.CreateString(r.PrettyName)
@@ -81,6 +82,7 @@ func (prof *Profiler) Serialize(r *release.Release) []byte {
 	homeURL := prof.Builder.CreateString(r.HomeURL)
 	bugReportURL := prof.Builder.CreateString(r.BugReportURL)
 	ReleaseStart(prof.Builder)
+	ReleaseAddName(prof.Builder, name)
 	ReleaseAddID(prof.Builder, id)
 	ReleaseAddIDLike(prof.Builder, idLike)
 	ReleaseAddPrettyName(prof.Builder, prettyName)
@@ -115,6 +117,7 @@ func Serialize(r *release.Release) (p []byte, err error) {
 func Deserialize(p []byte) *release.Release {
 	flatR := GetRootAsRelease(p, 0)
 	var r release.Release
+	r.Name = string(flatR.Name())
 	r.ID = string(flatR.ID())
 	r.IDLike = string(flatR.IDLike())
 	r.HomeURL = string(flatR.HomeURL())

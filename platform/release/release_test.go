@@ -20,6 +20,9 @@ func TestGet(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
+	if r.Name == "" {
+		t.Error("Name: expected a value; was empty")
+	}
 	if r.ID == "" {
 		t.Error("ID: expected a value; was empty")
 	}

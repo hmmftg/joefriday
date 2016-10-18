@@ -2,6 +2,7 @@
 namespace flat;
 
 table Release {
+	Name:string;
     ID:string;
     IDLike:string;
     PrettyName:string;
