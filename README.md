@@ -1,6 +1,11 @@
 joefriday
 =========
 
+### WARNING
+This will be going through some changes sometime in the near future.  Utilization and Usage related packages should be considered deprecated.  Usage data will be replaced by code that returns the delta between two snap-shots.  How this will be organized has not yet been determined; which is why the changes haven't been made yet.
+
+Utilization related functionality will be removed and moved to a separate package.  The yet to be determined package will leverage JoeFriday and provide Utilization and other calculated metrics using more statistically sound methods.  These changes will occur after the delta changes.
+
 > "All we want are the facts, ma'am"  
 >   - Joe Friday
 
@@ -36,8 +41,14 @@ Net provides information about the system's network information.  Info is the cu
 ### Platform
 Platform provides information about the system's kernel, loadavg, release, and uptime.  For loadavg and uptime, the `sysinfo` packages should be used, unless there is a need for information that this package makes available.
 
+### Processors
+Processors provides information about the physical Chips on a system.  This differs from CPU in that it provides less detail about the Chips and it only provides information at the Chip level.  There will be one Chip entry per physical CPU chip on the system; CPU provides detailed information about all CPU cores on a system, physical and logical.
+
 ### Sysinfo
 Sysinfo provides information about the system via syscalls: load information (loadavg), memory information, and uptime.  Less memory and a lot less CPU cycles are used to obtain the information in this manner.
 
 ## Notes:
 A big thanks to [Eric Lagergren](https://github.com/EricLagergren) for all of his help and his contributions.
+
+## TODO:
+Rename files to reflect GOOS and Arch they support.
