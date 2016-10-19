@@ -153,6 +153,10 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 					continue
 				}
 				chip.ModelName = string(prof.Val[nameLen:])
+				continue
+			}
+			if prof.Val[1] == 'i' {
+				chip.Microcode = string(prof.Val[nameLen:])
 			}
 			continue
 		}
