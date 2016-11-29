@@ -19,6 +19,7 @@ package json
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/mohae/joefriday/cpu/facts"
@@ -95,6 +96,7 @@ func Marshal(fct *facts.Facts) ([]byte, error) {
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // facts.Facts
 func Deserialize(p []byte) (*facts.Facts, error) {
+	fmt.Println("deserialize cpu: ", len(p))
 	fct := &facts.Facts{}
 	err := json.Unmarshal(p, fct)
 	if err != nil {
