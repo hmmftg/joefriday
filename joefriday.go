@@ -42,10 +42,6 @@ func (e *ResetError) Error() string {
 	return e.Err.Error()
 }
 
-func (e *ResetError) Reset() bool { return true }
-func (e *ResetError) Parse() bool { return false }
-func (e *ResetError) Read() bool  { return false }
-
 type ParseError struct {
 	Info string
 	Err  error
@@ -62,10 +58,6 @@ func (e *ParseError) Error() string {
 	s += e.Err.Error()
 	return s
 }
-
-func (e *ParseError) Reset() bool { return false }
-func (e *ParseError) Parse() bool { return true }
-func (e *ParseError) Read() bool  { return false }
 
 type ReadError struct {
 	Info string
@@ -84,9 +76,32 @@ func (e *ReadError) Error() string {
 	return s
 }
 
-func (e *ReadError) Reset() bool { return false }
-func (e *ReadError) Parse() bool { return false }
-func (e *ReadError) Read() bool  { return true }
+// IsReadError returns a boolean indicating whether the error is a result of
+// a read problem.
+func IsReadError(e error) bool {
+	if _, ok := e.(*ReadError); ok {
+		return true
+	}
+	return false
+}
+
+// IsResetError returns a boolean indicating whether the error is a result of
+// a problem resetting the file buffer.
+func IsResetError(e error) bool {
+	if _, ok := e.(*ResetError); ok {
+		return true
+	}
+	return false
+}
+
+// IsParseError r eturns a boolean indicating whether the error is a result of
+// encountering a problem while trying to parse the file data.
+func IsParseError(e error) bool {
+	if _, ok := e.(*ParseError); ok {
+		return true
+	}
+	return false
+}
 
 // A Proc holds everything related to a proc file and some processing vars.
 type Proc struct {

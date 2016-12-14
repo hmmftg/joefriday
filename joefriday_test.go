@@ -14,9 +14,39 @@ package joefriday
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 )
+
+func TestErrorCheck(t *testing.T) {
+	tests := []struct {
+		name    string
+		err     error
+		isRead  bool
+		isReset bool
+		isParse bool
+	}{
+		{"standard error", errors.New("test"), false, false, false},
+		{"read error", &ReadError{}, true, false, false},
+		{"reset error", &ResetError{}, false, true, false},
+		{"parse error", &ParseError{}, false, false, true},
+	}
+	for _, test := range tests {
+		b := IsReadError(test.err)
+		if b != test.isRead {
+			t.Errorf("%s IsReadError: got %t want %t", test.name, b, test.isRead)
+		}
+		b = IsResetError(test.err)
+		if b != test.isReset {
+			t.Errorf("%s IsResetError: got %t want %t", test.name, b, test.isReset)
+		}
+		b = IsParseError(test.err)
+		if b != test.isParse {
+			t.Errorf("%s IsParseError: got %t want %t", test.name, b, test.isParse)
+		}
+	}
+}
 
 var trailingVals = []struct {
 	val      []byte
