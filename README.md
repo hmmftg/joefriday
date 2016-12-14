@@ -1,11 +1,11 @@
-joefriday
-=========
-
 ### WARNING
 This will be going through some changes sometime in the near future.  Utilization and Usage related packages should be considered deprecated.  Usage data will be replaced by code that returns the delta between two snap-shots.  How this will be organized has not yet been determined; which is why the changes haven't been made yet.
 
 Utilization related functionality will be removed and moved to a separate package.  The yet to be determined package will leverage JoeFriday and provide Utilization and other calculated metrics using more statistically sound methods.  These changes will occur after the delta changes.
 
+joefriday
+=========
+[![GoDoc](https://godoc.org/github.com/mohae/joefriday?status.svg)](https://godoc.org/github.com/mohae/joefriday)[![Build Status](https://travis-ci.org/mohae/joefriday.png)](https://travis-ci.org/mohae/joefriday)
 > "All we want are the facts, ma'am"  
 >   - Joe Friday
 
