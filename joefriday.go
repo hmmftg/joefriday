@@ -63,7 +63,7 @@ func (e *ParseError) Error() string {
 	return s
 }
 
-func (e *ParseError) Reset() bool { return true }
+func (e *ParseError) Reset() bool { return false }
 func (e *ParseError) Parse() bool { return true }
 func (e *ParseError) Read() bool  { return false }
 
@@ -84,9 +84,9 @@ func (e *ReadError) Error() string {
 	return s
 }
 
-func (e *ReadError) Reset() bool { return true }
+func (e *ReadError) Reset() bool { return false }
 func (e *ReadError) Parse() bool { return false }
-func (e *ReadError) Reade() bool { return true }
+func (e *ReadError) Read() bool  { return true }
 
 // A Proc holds everything related to a proc file and some processing vars.
 type Proc struct {
