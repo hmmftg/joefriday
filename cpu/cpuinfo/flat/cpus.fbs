@@ -1,12 +1,12 @@
-// facts.fbs
+// cpus.fbs
 namespace flat;
 
-table Facts {
+table CPUs {
 	Timestamp:long;
-	CPU:[Fact];
+	CPU:[CPU];
 }
 
-table Fact {
+table CPU {
 	Processor:short;
 	VendorID:string;
 	CPUFamily:string;
@@ -34,4 +34,4 @@ table Fact {
 	PowerManagement:string;
 }
 
-root_type Facts;
+root_type CPUs;

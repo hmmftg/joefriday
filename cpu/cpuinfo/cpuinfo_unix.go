@@ -11,8 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package facts handles processong of the /procs/cpuinfo file as facts.
-package facts
+// Package cpuinfo handles processong of the /procs/cpuinfo as CPUs.
+package cpuinfo
 
 import (
 	"io"
@@ -27,14 +27,14 @@ import (
 
 const procFile = "/proc/cpuinfo"
 
-// Facts are a collection of facts, cpuinfo, about the system's cpus.
-type Facts struct {
+// CPUs are a collection of information about the system's cpus.
+type CPUs struct {
 	Timestamp int64
-	CPU       []Fact `json:"cpu"`
+	CPU       []CPU `json:"cpu"`
 }
 
-// Fact holds the /proc/cpuinfo for a single processor.
-type Fact struct {
+// CPU holds the /proc/cpuinfo for a single processor.
+type CPU struct {
 	Processor       int16    `json:"processor"`
 	VendorID        string   `json:"vendor_id"`
 	CPUFamily       string   `json:"cpu_family"`
@@ -76,19 +76,19 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns the current cpuinfo (Facts).
-func (prof *Profiler) Get() (facts *Facts, err error) {
+// Get returns the current cpuinfo.
+func (prof *Profiler) Get() (cpus *CPUs, err error) {
 	var (
 		cpuCnt, i, pos, nameLen int
 		n                       uint64
 		v                       byte
-		cpu                     Fact
+		cpu                     CPU
 	)
 	err = prof.Reset()
 	if err != nil {
 		return nil, err
 	}
-	facts = &Facts{Timestamp: time.Now().UTC().UnixNano()}
+	cpus = &CPUs{Timestamp: time.Now().UTC().UnixNano()}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -232,14 +232,14 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 			// processor starts information about a processor.
 			if v == 'r' { // processor
 				if cpuCnt > 0 {
-					facts.CPU = append(facts.CPU, cpu)
+					cpus.CPU = append(cpus.CPU, cpu)
 				}
 				cpuCnt++
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu = Fact{Processor: int16(n)}
+				cpu = CPU{Processor: int16(n)}
 			}
 			continue
 		}
@@ -284,8 +284,8 @@ func (prof *Profiler) Get() (facts *Facts, err error) {
 		}
 	}
 	// append the current processor informatin
-	facts.CPU = append(facts.CPU, cpu)
-	return facts, nil
+	cpus.CPU = append(cpus.CPU, cpu)
+	return cpus, nil
 }
 
 var std *Profiler
@@ -293,7 +293,7 @@ var stdMu sync.Mutex
 
 // Get returns the current cpuinfo (Facts) using the package's global
 // Profiler.
-func Get() (facts *Facts, err error) {
+func Get() (cpus *CPUs, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {

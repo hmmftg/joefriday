@@ -11,32 +11,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package cpuinfo
 
 import (
 	"testing"
 
-	"github.com/mohae/joefriday/cpu/facts"
+	inf "github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
 func TestGet(t *testing.T) {
-	fct, err := Get()
+	cpus, err := Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	fcts, err := Unmarshal(fct)
+	cpuS, err := Unmarshal(cpus)
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	if fcts.Timestamp == 0 {
+	if cpuS.Timestamp == 0 {
 		t.Error("expected timestamp to be a non-zero value; got 0")
 	}
-	if len(fcts.CPU) == 0 {
+	if len(cpuS.CPU) == 0 {
 		t.Error("expected CPUs to be a non-zero value; got 0")
 	}
-	for i, v := range fcts.CPU {
+	for i, v := range cpuS.CPU {
 		if v.VendorID == "" {
 			t.Errorf("%d: expected vendor_id to have a value; it was empty", i)
 		}
@@ -44,7 +44,7 @@ func TestGet(t *testing.T) {
 			t.Errorf("%d: expected flags to have values; it was empty", i)
 		}
 	}
-	t.Logf("%#v\n", fcts)
+	t.Logf("%#v\n", cpuS)
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -83,25 +83,25 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var fct *facts.Facts
+	var cpus *inf.CPUs
 	b.StopTimer()
 	p, _ := NewProfiler()
-	fctB, _ := p.Get()
+	cpusB, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		fct, _ = Deserialize(fctB)
+		cpus, _ = Deserialize(cpusB)
 	}
-	_ = fct
+	_ = cpus
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var fct *facts.Facts
+	var cpus *inf.CPUs
 	b.StartTimer()
 	p, _ := NewProfiler()
-	fctB, _ := p.Get()
+	cpusB, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		fct, _ = Unmarshal(fctB)
+		cpus, _ = Unmarshal(cpusB)
 	}
-	_ = fct
+	_ = cpus
 }

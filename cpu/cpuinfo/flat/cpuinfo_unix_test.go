@@ -11,41 +11,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package cpuinfo
 
 import (
 	"testing"
 
-	"github.com/mohae/joefriday/cpu/facts"
+	inf "github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
 func TestSerialize(t *testing.T) {
-	facts, err := Get()
+	cpus, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	factsD := Deserialize(facts)
-	if factsD.Timestamp == 0 {
+	cpusD := Deserialize(cpus)
+	if cpusD.Timestamp == 0 {
 		t.Error("timestamp: expected non-zero timestamp")
 	}
-	if len(factsD.CPU) == 0 {
+	if len(cpusD.CPU) == 0 {
 		t.Error("expected at least 1 cpu entries; got none")
 	}
-	for i := 0; i < len(factsD.CPU); i++ {
-		if factsD.CPU[i].VendorID == "" {
+	for i := 0; i < len(cpusD.CPU); i++ {
+		if cpusD.CPU[i].VendorID == "" {
 			t.Errorf("%d: VendorID: expected Vendor ID to not be empty, it was", i)
 		}
-		if factsD.CPU[i].Model == "" {
+		if cpusD.CPU[i].Model == "" {
 			t.Errorf("%d: Model: expected model to not be empty; it was", i)
 		}
-		if factsD.CPU[i].CPUCores == 0 {
+		if cpusD.CPU[i].CPUCores == 0 {
 			t.Errorf("%d: CPUCores: expected non-zero value; was 0", i)
 		}
-		if len(factsD.CPU[i].Flags) == 0 {
+		if len(cpusD.CPU[i].Flags) == 0 {
 			t.Errorf("%d: Flags: expected some flags, none were found", i)
 		}
 	}
-	_, err = Serialize(factsD)
+	_, err = Serialize(cpusD)
 	if err != nil {
 		t.Errorf("unexpected serialization error: %s", err)
 		return
@@ -67,22 +67,22 @@ func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
-	fct, _ := p.Profiler.Get()
+	cpus, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = Serialize(fct)
+		tmp, _ = Serialize(cpus)
 	}
 	_ = tmp
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var fct *facts.Facts
+	var cpus *inf.CPUs
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		fct = Deserialize(tmp)
+		cpus = Deserialize(tmp)
 	}
-	_ = fct
+	_ = cpus
 }
