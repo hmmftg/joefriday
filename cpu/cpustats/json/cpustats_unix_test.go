@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package cpustats
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/cpu/stats"
+	stats "github.com/mohae/joefriday/cpu/cpustats"
 )
 
 func TestGet(t *testing.T) {

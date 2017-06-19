@@ -11,11 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of CPU facts.  Instead of
-// returning a Go struct, it returns Flatbuffer serialized bytes.  A function
-// to deserialize the Flatbuffer serialized bytes into a facts.Facts struct
-// is provided.  After the first use, the flatbuffer builder is reused.
-package flat
+// Package cpustats handles Flatbuffer based processing of kernel activity,
+// /proc/stat. Instead of returning a Go struct, it returns Flatbuffer
+// serialized bytes. A function to deserialize the Flatbuffer serialized bytes
+// into a cpustats.Stats struct is provided.  After the first use, the
+// flatbuffer builder is re-used.
+//
+// Note: the package name is cpustats and not the final elemant of the import
+// path (flat). 
+package cpustats
 
 import (
 	"sync"
@@ -23,7 +27,8 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/stats"
+	stats "github.com/mohae/joefriday/cpu/cpustats"
+	"github.com/mohae/joefriday/cpu/cpustats/flat/flat"
 )
 
 // Profiler is used to process the stats, /proc/stat, as Flatbuffers
@@ -81,33 +86,33 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 		ids[i] = prof.Builder.CreateString(stts.CPU[i].ID)
 	}
 	for i := 0; i < len(statsF); i++ {
-		StatStart(prof.Builder)
-		StatAddID(prof.Builder, ids[i])
-		StatAddUser(prof.Builder, stts.CPU[i].User)
-		StatAddNice(prof.Builder, stts.CPU[i].Nice)
-		StatAddSystem(prof.Builder, stts.CPU[i].System)
-		StatAddIdle(prof.Builder, stts.CPU[i].Idle)
-		StatAddIOWait(prof.Builder, stts.CPU[i].IOWait)
-		StatAddIRQ(prof.Builder, stts.CPU[i].IRQ)
-		StatAddSoftIRQ(prof.Builder, stts.CPU[i].SoftIRQ)
-		StatAddSteal(prof.Builder, stts.CPU[i].Steal)
-		StatAddQuest(prof.Builder, stts.CPU[i].Quest)
-		StatAddQuestNice(prof.Builder, stts.CPU[i].QuestNice)
-		statsF[i] = StatEnd(prof.Builder)
+		flat.StatStart(prof.Builder)
+		flat.StatAddID(prof.Builder, ids[i])
+		flat.StatAddUser(prof.Builder, stts.CPU[i].User)
+		flat.StatAddNice(prof.Builder, stts.CPU[i].Nice)
+		flat.StatAddSystem(prof.Builder, stts.CPU[i].System)
+		flat.StatAddIdle(prof.Builder, stts.CPU[i].Idle)
+		flat.StatAddIOWait(prof.Builder, stts.CPU[i].IOWait)
+		flat.StatAddIRQ(prof.Builder, stts.CPU[i].IRQ)
+		flat.StatAddSoftIRQ(prof.Builder, stts.CPU[i].SoftIRQ)
+		flat.StatAddSteal(prof.Builder, stts.CPU[i].Steal)
+		flat.StatAddQuest(prof.Builder, stts.CPU[i].Quest)
+		flat.StatAddQuestNice(prof.Builder, stts.CPU[i].QuestNice)
+		statsF[i] = flat.StatEnd(prof.Builder)
 	}
-	StatsStartCPUVector(prof.Builder, len(statsF))
+	flat.StatsStartCPUVector(prof.Builder, len(statsF))
 	for i := len(statsF) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(statsF[i])
 	}
 	statsV := prof.Builder.EndVector(len(statsF))
-	StatsStart(prof.Builder)
-	StatsAddClkTck(prof.Builder, stts.ClkTck)
-	StatsAddTimestamp(prof.Builder, stts.Timestamp)
-	StatsAddCtxt(prof.Builder, stts.Ctxt)
-	StatsAddBTime(prof.Builder, stts.BTime)
-	StatsAddProcesses(prof.Builder, stts.Processes)
-	StatsAddCPU(prof.Builder, statsV)
-	prof.Builder.Finish(StatsEnd(prof.Builder))
+	flat.StatsStart(prof.Builder)
+	flat.StatsAddClkTck(prof.Builder, stts.ClkTck)
+	flat.StatsAddTimestamp(prof.Builder, stts.Timestamp)
+	flat.StatsAddCtxt(prof.Builder, stts.Ctxt)
+	flat.StatsAddBTime(prof.Builder, stts.BTime)
+	flat.StatsAddProcesses(prof.Builder, stts.Processes)
+	flat.StatsAddCPU(prof.Builder, statsV)
+	prof.Builder.Finish(flat.StatsEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -132,8 +137,8 @@ func Serialize(stts *stats.Stats) (p []byte, err error) {
 // as a stats.Stats.
 func Deserialize(p []byte) *stats.Stats {
 	stts := &stats.Stats{}
-	statF := &Stat{}
-	statsFlat := GetRootAsStats(p, 0)
+	statF := &flat.Stat{}
+	statsFlat := flat.GetRootAsStats(p, 0)
 	stts.ClkTck = statsFlat.ClkTck()
 	stts.Timestamp = statsFlat.Timestamp()
 	stts.Ctxt = statsFlat.Ctxt()

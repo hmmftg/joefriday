@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stats handles the processing of information about kernel activity,
+// Package cpustats handles the processing of information about kernel activity,
 // /proc/stat, as Stats.
-package stats
+package cpustats
 
 import (
 	"bytes"

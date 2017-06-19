@@ -11,23 +11,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package cpustats
 
 import (
 	"testing"
 	"time"
-
-	"github.com/mohae/joefriday/cpu/stats"
 )
 
+func TestClkTck(t *testing.T) {
+	err := ClkTck()
+	if err != nil {
+		t.Errorf("expected error to be nil; got %s", err)
+	}
+	if CLK_TCK == 0 {
+		t.Errorf("got %d, want a value > 0", CLK_TCK)
+	}
+}
+
 func TestGet(t *testing.T) {
-	p, err := Get()
+	s, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	statsD := Deserialize(p)
-	checkStats("get", statsD, t)
+	checkStats("get", s, t)
 }
 
 func TestTicker(t *testing.T) {
@@ -45,8 +52,7 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			st := Deserialize(v)
-			checkStats("ticker", st, t)
+			checkStats("ticker", v, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -55,9 +61,9 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkStats(n string, s *stats.Stats, t *testing.T) {
-	if int16(stats.CLK_TCK) != s.ClkTck {
-		t.Errorf("ClkTck: got %s; want %s", n, s.ClkTck, stats.CLK_TCK)
+func checkStats(n string, s *Stats, t *testing.T) {
+	if int16(CLK_TCK) != s.ClkTck {
+		t.Errorf("%s: ClkTck: got %s; want %s", n, s.ClkTck, CLK_TCK)
 	}
 	if s.Timestamp == 0 {
 		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)
@@ -87,37 +93,14 @@ func checkStats(n string, s *stats.Stats, t *testing.T) {
 	}
 }
 
+var stts *Stats
+
 func BenchmarkGet(b *testing.B) {
-	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = p.Get()
+		stts, _ = p.Get()
 	}
-	_ = tmp
-}
-
-func BenchmarkSerialize(b *testing.B) {
-	var tmp []byte
-	b.StopTimer()
-	p, _ := NewProfiler()
-	st, _ := p.Profiler.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		tmp, _ = Serialize(st)
-	}
-	_ = tmp
-}
-
-func BenchmarkDeserialize(b *testing.B) {
-	var st *stats.Stats
-	b.StopTimer()
-	p, _ := NewProfiler()
-	tmp, _ := p.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		st = Deserialize(tmp)
-	}
-	_ = st
+	_ = stts
 }

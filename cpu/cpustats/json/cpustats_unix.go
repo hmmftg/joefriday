@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of CPU stats.  Instead of
-// returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a stats.Stats struct is
-// provided.
-package json
+// Package cpustats handles JSON based processing of kernel activity.
+// /proc/stat. Instead of returning a Go struct, it returns JSON serialized
+// bytes. A function to deserialize the JSON serialized bytes into a 
+// cpustats.Stats struct is provided.
+//
+// Note: the package name is cpustats and not the final elemant of the import
+// path (json). 
+package cpustats
 
 import (
 	"encoding/json"
@@ -23,7 +26,7 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/stats"
+	stats "github.com/mohae/joefriday/cpu/cpustats"
 )
 
 // Profiler is used to process Stats, /proc/stats, as JSON serialized bytes.
@@ -95,7 +98,7 @@ func Marshal(st *stats.Stats) ([]byte, error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// stats.Stats
+// cpustats.Stats
 func Deserialize(p []byte) (*stats.Stats, error) {
 	st := &stats.Stats{}
 	err := json.Unmarshal(p, st)
