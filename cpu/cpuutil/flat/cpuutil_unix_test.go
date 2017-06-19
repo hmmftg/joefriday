@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package cpuutil
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/cpu/utilization"
+	util "github.com/mohae/joefriday/cpu/cpuutil"
 )
 
 func TestGet(t *testing.T) {
@@ -61,7 +61,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUtilization(name string, u *utilization.Utilization, t *testing.T) {
+func checkUtilization(name string, u *util.Utilization, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: timestamp: expected on-zero", name)
 	}
@@ -111,7 +111,7 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var u *utilization.Utilization
+	var u *util.Utilization
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()

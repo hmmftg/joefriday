@@ -11,11 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package utilization
+package cpuutil
 
 import (
 	"testing"
 	"time"
+
+	util "github.com/mohae/joefriday/cpu/cpuutil"
 )
 
 func TestGet(t *testing.T) {
@@ -24,17 +26,23 @@ func TestGet(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	time.Sleep(time.Duration(200) * time.Millisecond)
+	time.Sleep(time.Duration(300) * time.Millisecond)
 	u, err := p.Get()
 	if err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkUtilization("get", u, t)
+	ut, err := Unmarshal(u)
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	checkUtilization("get", ut, t)
+	t.Logf("%#v\n", ut)
 }
 
 func TestTicker(t *testing.T) {
-	tkr, err := NewTicker(time.Millisecond)
+	tkr, err := NewTicker(time.Duration(200) * time.Millisecond)
 	if err != nil {
 		t.Error(err)
 		return
@@ -48,7 +56,12 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			checkUtilization("ticker", v, t)
+			st, err := Deserialize(v)
+			if err != nil {
+				t.Error(err)
+				continue
+			}
+			checkUtilization("ticker", st, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -57,7 +70,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUtilization(name string, u *Utilization, t *testing.T) {
+func checkUtilization(name string, u *util.Utilization, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: timestamp: expected on-zero", name)
 	}
@@ -78,18 +91,66 @@ func checkUtilization(name string, u *Utilization, t *testing.T) {
 	}
 	for i, v := range u.CPU {
 		if v.ID == "" {
-			t.Errorf("%s: %d: expected ID to have a value, was empty", name, i)
+			t.Errorf("%d: %s: expected ID to have a value, was empty", i, name)
 		}
 	}
 }
 
-func BenchmarkUtilization(b *testing.B) {
-	var u *Utilization
+func BenchmarkGet(b *testing.B) {
+	var jsn []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		u, _ = p.Get()
+		jsn, _ = p.Get()
+	}
+	_ = jsn
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Serialize(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkDeserialize(b *testing.B) {
+	var u *util.Utilization
+	b.StopTimer()
+	p, _ := NewProfiler()
+	uB, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		u, _ = Deserialize(uB)
+	}
+	_ = u
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	var u *util.Utilization
+	b.StartTimer()
+	p, _ := NewProfiler()
+	uB, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		u, _ = Unmarshal(uB)
 	}
 	_ = u
 }

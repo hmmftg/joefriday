@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package utilization handles processing of CPU utilization information.
-// This information is calculated using the differences of two CPU stats
-// snapshots, /proc/cpuinfo and represented as a percentage.
-package utilization
+// Package cpuutil handles processing of CPU utilization information. This
+// information is calculated using the differences of two CPU stats snapshots,
+// /proc/stat and represented as a percentage.
+package cpuutil
 
 import (
 	"io"
@@ -23,7 +23,7 @@ import (
 
 	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/stats"
+	stats "github.com/mohae/joefriday/cpu/cpustats"
 )
 
 // Utilization holds information about cpu utilization.

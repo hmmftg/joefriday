@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of CPU utilization.  Instead of
-// returning a Go struct, it returns JSON serialized bytes.  A function to
+// Package cpuutil handles JSON based processing of CPU utilization. Instead of
+// returning a Go struct, it returns JSON serialized bytes. A function to
 // deserialize the JSON serialized bytes into a utlization.Utilization struct
 // is provided.
-package json
+//
+// Note: the package name is cpuutil and not the final element of the import
+// path (json). 
+package cpuutil
 
 import (
 	"encoding/json"
@@ -23,17 +26,17 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/utilization"
+	util "github.com/mohae/joefriday/cpu/cpuutil"
 )
 
 // Profiler is used to process the cpu utilization information using JSON.
 type Profiler struct {
-	*utilization.Profiler
+	*util.Profiler
 }
 
 // Initializes and returns a cpu utlization profiler.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := utilization.NewProfiler()
+	p, err := util.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +71,12 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize cpu Utilization using JSON
-func (prof *Profiler) Serialize(ut *utilization.Utilization) ([]byte, error) {
+func (prof *Profiler) Serialize(ut *util.Utilization) ([]byte, error) {
 	return json.Marshal(ut)
 }
 
 // Serialize cpu Utilization as JSON using the package global Profiler.
-func Serialize(ut *utilization.Utilization) (p []byte, err error) {
+func Serialize(ut *util.Utilization) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -86,19 +89,19 @@ func Serialize(ut *utilization.Utilization) (p []byte, err error) {
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(ut *utilization.Utilization) ([]byte, error) {
+func (prof *Profiler) Marshal(ut *util.Utilization) ([]byte, error) {
 	return prof.Serialize(ut)
 }
 
 // Marsha is an alias for Serialize using the package global Profiler.
-func Marshal(ut *utilization.Utilization) ([]byte, error) {
+func Marshal(ut *util.Utilization) ([]byte, error) {
 	return Serialize(ut)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// utilization.Utilization.
-func Deserialize(p []byte) (*utilization.Utilization, error) {
-	ut := &utilization.Utilization{}
+// cpuutil.Utilization.
+func Deserialize(p []byte) (*util.Utilization, error) {
+	ut := &util.Utilization{}
 	err := json.Unmarshal(p, ut)
 	if err != nil {
 		return nil, err
@@ -107,7 +110,7 @@ func Deserialize(p []byte) (*utilization.Utilization, error) {
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*utilization.Utilization, error) {
+func Unmarshal(p []byte) (*util.Utilization, error) {
 	return Deserialize(p)
 }
 
