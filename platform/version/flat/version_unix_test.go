@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package version
 
 import (
 	"testing"
 
-	"github.com/mohae/joefriday/platform/kernel"
+	v "github.com/mohae/joefriday/platform/version"
 )
 
 func TestSerializeDeserialize(t *testing.T) {
@@ -25,35 +25,35 @@ func TestSerializeDeserialize(t *testing.T) {
 		t.Errorf("Get(): got %s, want nil", err)
 		return
 	}
-	k, err := kernel.Get()
+	inf, err := v.Get()
 	if err != nil {
-		t.Errorf("kernel.Get(): got %s, want nil", err)
+		t.Errorf("version.Get(): got %s, want nil", err)
 		return
 	}
-	kD := Deserialize(p)
-	if k.OS != kD.OS {
-		t.Errorf("OS: got %s; want %s", kD.OS, k.OS)
+	infD := Deserialize(p)
+	if inf.OS != infD.OS {
+		t.Errorf("OS: got %s; want %s", infD.OS, inf.OS)
 	}
-	if k.Version != kD.Version {
-		t.Errorf("Version: got %s; want %s", kD.Version, k.Version)
+	if inf.Version != infD.Version {
+		t.Errorf("Version: got %s; want %s", infD.Version, inf.Version)
 	}
-	if k.CompileUser != kD.CompileUser {
-		t.Errorf("CompileUser: got %s; want %s", kD.CompileUser, k.CompileUser)
+	if inf.CompileUser != infD.CompileUser {
+		t.Errorf("CompileUser: got %s; want %s", infD.CompileUser, inf.CompileUser)
 	}
-	if k.GCC != kD.GCC {
-		t.Errorf("GCC: got %s; want %s", kD.GCC, k.GCC)
+	if inf.GCC != infD.GCC {
+		t.Errorf("GCC: got %s; want %s", infD.GCC, inf.GCC)
 	}
-	if k.OSGCC != kD.OSGCC {
-		t.Errorf("Version: got %s; want %s", kD.OSGCC, k.OSGCC)
+	if inf.OSGCC != infD.OSGCC {
+		t.Errorf("Version: got %s; want %s", infD.OSGCC, inf.OSGCC)
 	}
-	if k.Type != kD.Type {
-		t.Errorf("Version: got %s; want %s", kD.Type, k.Type)
+	if inf.Type != infD.Type {
+		t.Errorf("Version: got %s; want %s", infD.Type, inf.Type)
 	}
-	if k.CompileDate != kD.CompileDate {
-		t.Errorf("CompileDate: got %s; want %s", kD.CompileDate, k.CompileDate)
+	if inf.CompileDate != infD.CompileDate {
+		t.Errorf("CompileDate: got %s; want %s", infD.CompileDate, inf.CompileDate)
 	}
-	if k.Arch != kD.Arch {
-		t.Errorf("Arch: got %s; want %s", kD.Arch, k.Arch)
+	if inf.Arch != infD.Arch {
+		t.Errorf("Arch: got %s; want %s", infD.Arch, inf.Arch)
 	}
 }
 
@@ -72,22 +72,22 @@ func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
-	k, _ := p.Profiler.Get()
+	inf, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = Serialize(k)
+		tmp, _ = Serialize(inf)
 	}
 	_ = tmp
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var k *kernel.Kernel
+	var inf *v.Info
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		k = Deserialize(tmp)
+		inf = Deserialize(tmp)
 	}
-	_ = k
+	_ = inf
 }

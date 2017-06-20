@@ -11,8 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package Kernel processes Kernel information from the /proc/version file.
-package kernel
+// Package version processes Kernel and version information from the
+// /proc/version file.
+package version
 
 import (
 	"io"
@@ -23,8 +24,8 @@ import (
 
 const procFile = "/proc/version"
 
-// Kernel holds kernel information.
-type Kernel struct {
+// Info holds information about the kernel and version.
+type Info struct {
 	OS          string `json:"os"`
 	Version     string `json:"version"`
 	CompileUser string `json:"compile_user"`
@@ -35,7 +36,7 @@ type Kernel struct {
 	Arch        string `json:"arch"`
 }
 
-// Profiler processes the kernel information.
+// Profiler processes the version information.
 type Profiler struct {
 	*joe.Proc
 }
@@ -49,8 +50,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get populates Kernel with /proc/version information.
-func (prof *Profiler) Get() (k *Kernel, err error) {
+// Get populates Info with /proc/version information.
+func (prof *Profiler) Get() (inf *Info, err error) {
 	var (
 		i, pos, pos2 int
 		v            byte
@@ -60,7 +61,7 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 		return nil, err
 	}
 	// This will always be linux, I think.
-	k = &Kernel{OS: "linux"}
+	inf = &Info{OS: "linux"}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -73,7 +74,7 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 		for i, v = range prof.Line {
 			if v == 0x28 {
 				// get the OS
-				k.Version = string(prof.Line[pos2+1 : i-1])
+				inf.Version = string(prof.Line[pos2+1 : i-1])
 				pos = i + 1
 				break
 			}
@@ -84,11 +85,11 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 			}
 		}
 		// Set the arch
-		k.SetArch()
+		inf.SetArch()
 		// The CompileUser is everything up to the next ')', 0x29
 		for i, v = range prof.Line[pos:] {
 			if v == 0x29 {
-				k.CompileUser = string(prof.Line[pos : pos+i])
+				inf.CompileUser = string(prof.Line[pos : pos+i])
 				pos += i + 3
 				break
 			}
@@ -99,13 +100,13 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 		for i, v = range prof.Line[pos:] {
 			if v == 0x28 {
 				inOSGCC = true
-				k.GCC = string(prof.Line[pos : pos+i-1])
+				inf.GCC = string(prof.Line[pos : pos+i-1])
 				pos2 = i + pos + 1
 				continue
 			}
 			if v == 0x29 {
 				if inOSGCC {
-					k.OSGCC = string(prof.Line[pos2 : pos+i])
+					inf.OSGCC = string(prof.Line[pos2 : pos+i])
 					inOSGCC = false
 					continue
 				}
@@ -114,21 +115,21 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 			}
 		}
 		// Check if GCC is empty, this happens if there wasn't an OSGCC value
-		if k.GCC == "" {
-			k.GCC = string(prof.Line[pos2 : pos-1])
+		if inf.GCC == "" {
+			inf.GCC = string(prof.Line[pos2 : pos-1])
 		}
 		// Get the type information, everything up to '('
 		for i, v = range prof.Line[pos:] {
 			if v == 0x28 {
-				k.Type = string(prof.Line[pos : pos+i-1])
+				inf.Type = string(prof.Line[pos : pos+i-1])
 				pos += i + 1
 				break
 			}
 		}
 		// The rest is the compile date.
-		k.CompileDate = string(prof.Line[pos : len(prof.Line)-2])
+		inf.CompileDate = string(prof.Line[pos : len(prof.Line)-2])
 	}
-	return k, nil
+	return inf, nil
 }
 
 var std *Profiler
@@ -136,7 +137,7 @@ var stdMu sync.Mutex
 
 // Get gets the kernel information using the package's global Profiler, which
 // is lazily instantiated.
-func Get() (k *Kernel, err error) {
+func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -148,13 +149,13 @@ func Get() (k *Kernel, err error) {
 	return std.Get()
 }
 
-// Set the Kernel's architecture information.  This is the last segment of
+// Set the Version's architecture information.  This is the last segment of
 // the Version.
-func (k *Kernel) SetArch() {
+func (inf *Info) SetArch() {
 	// get everything after the last -
-	for i := len(k.Version) - 1; i > 0; i-- {
-		if k.Version[i] == '-' {
-			k.Arch = string(k.Version[i+1:])
+	for i := len(inf.Version) - 1; i > 0; i-- {
+		if inf.Version[i] == '-' {
+			inf.Arch = string(inf.Version[i+1:])
 			return
 		}
 	}

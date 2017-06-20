@@ -11,47 +11,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of kernel information.  Instead
-// of returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a kernel.Kernel struct is
-// provided.
-package json
+// Package version handles JSON based processing of kernel and version
+// information: /proc/version. Instead of returning a Go struct, it returns
+// JSON serialized bytes. A function to deserialize the JSON serialized bytes
+// into a version.Info struct is provided.
+//
+// Note: the package name is version and not the final element of the import
+// path (json). 
+package version
 
 import (
 	"encoding/json"
 	"sync"
 
-	"github.com/mohae/joefriday/platform/kernel"
+	v "github.com/mohae/joefriday/platform/version"
 )
 
-// Profiler is used to process the kernel information, /proc/version, using
+// Profiler is used to process the version information, /proc/version, using
 // JSON.
 type Profiler struct {
-	*kernel.Profiler
+	*v.Profiler
 }
 
-// Initializes and returns a json.Profiler for kernel information.
+// Initializes and returns a json.Profiler for version information.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := kernel.NewProfiler()
+	p, err := v.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current kernel information as JSON serialized bytes.
+// Get returns the current version information as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	k, err := prof.Profiler.Get()
+	inf, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.Serialize(k)
+	return prof.Serialize(inf)
 }
 
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current kernel information as JSON serialized bytes using
+// Get returns the current version information as JSON serialized bytes using
 // the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -65,13 +68,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize kernel.Kernel using JSON
-func (prof *Profiler) Serialize(k *kernel.Kernel) ([]byte, error) {
-	return json.Marshal(k)
+// Serialize version.Info using JSON
+func (prof *Profiler) Serialize(inf *v.Info) ([]byte, error) {
+	return json.Marshal(inf)
 }
 
-// Serialize kernel.Kernel using JSON with the package global Profiler.
-func Serialize(k *kernel.Kernel) (p []byte, err error) {
+// Serialize version.Info using JSON with the package global Profiler.
+func Serialize(inf *v.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -80,31 +83,31 @@ func Serialize(k *kernel.Kernel) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(k)
+	return std.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(inf *kernel.Kernel) ([]byte, error) {
+func (prof *Profiler) Marshal(inf *v.Info) ([]byte, error) {
 	return prof.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize that uses the package's global profiler.
-func Marshal(k *kernel.Kernel) ([]byte, error) {
-	return Serialize(k)
+func Marshal(inf *v.Info) ([]byte, error) {
+	return Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// kernel.Kernel.
-func Deserialize(p []byte) (*kernel.Kernel, error) {
-	k := &kernel.Kernel{}
-	err := json.Unmarshal(p, k)
+// version.Info.
+func Deserialize(p []byte) (*v.Info, error) {
+	inf := &v.Info{}
+	err := json.Unmarshal(p, inf)
 	if err != nil {
 		return nil, err
 	}
-	return k, nil
+	return inf, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*kernel.Kernel, error) {
+func Unmarshal(p []byte) (*v.Info, error) {
 	return Deserialize(p)
 }
