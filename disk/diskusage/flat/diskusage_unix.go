@@ -11,12 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of disk stats.  Instead
-// of returning a Go struct, it returns Flatbuffer serialized bytes.  A
+// Package diskusage handles Flatbuffer based processing of block device usage.
+// Instead of returning a Go struct, it returns Flatbuffer serialized bytes. A
 // function to deserialize the Flatbuffer serialized bytes into a
-// structs.Stats struct is provided.  After the first use, the flatbuffer
+// structs.DiskUsage struct is provided.  After the first use, the flatbuffer
 // builder is reused.
-package flat
+//
+// Note: the package name is diskusage and not the final element of the import
+// path (flat). 
+package diskusage
 
 import (
 	"sync"
@@ -24,40 +27,40 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/disk/stats"
 	"github.com/mohae/joefriday/disk/structs"
 	"github.com/mohae/joefriday/disk/structs/flat"
+	usage "github.com/mohae/joefriday/disk/diskusage"
 )
 
-// Profiler is used to process the /proc/stat file, as stats, using
-// Flatbuffers.
+// Profiler is used to process the disk usage; generating flatbuffers
+// serialized bytes.
 type Profiler struct {
-	*stats.Profiler
+	*usage.Profiler
 	*fb.Builder
 }
 
-// Initialized a new stats Profiler that utilizes Flatbuffers.
+// Initialized a new disk usage Profiler that utilizes Flatbuffers.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := stats.NewProfiler()
+	p, err := usage.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current Stats as Flatbuffer serialized bytes.
+// Get returns the current Usage as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	stts, err := prof.Profiler.Get()
+	u, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.Serialize(stts), nil
+	return prof.Serialize(u), nil
 }
 
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current Stats as Flatbuffer serialized bytes using the
+// Get returns the current Usage as Flatbuffer serialized bytes using the
 // package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -74,42 +77,43 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes the Stats using Flatbuffers.
-func (prof *Profiler) Serialize(stts *structs.Stats) []byte {
+// Serialize serializes the Usage using Flatbuffers.
+func (prof *Profiler) Serialize(u *structs.DiskUsage) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	devF := make([]fb.UOffsetT, len(stts.Devices))
-	names := make([]fb.UOffsetT, len(stts.Devices))
+	devF := make([]fb.UOffsetT, len(u.Devices))
+	names := make([]fb.UOffsetT, len(u.Devices))
 	for i := 0; i < len(names); i++ {
-		names[i] = prof.Builder.CreateString(stts.Devices[i].Name)
+		names[i] = prof.Builder.CreateString(u.Devices[i].Name)
 	}
 	for i := 0; i < len(devF); i++ {
 		flat.DeviceStart(prof.Builder)
-		flat.DeviceAddMajor(prof.Builder, stts.Devices[i].Major)
-		flat.DeviceAddMinor(prof.Builder, stts.Devices[i].Minor)
+		flat.DeviceAddMajor(prof.Builder, u.Devices[i].Major)
+		flat.DeviceAddMinor(prof.Builder, u.Devices[i].Minor)
 		flat.DeviceAddName(prof.Builder, names[i])
-		flat.DeviceAddReadsCompleted(prof.Builder, stts.Devices[i].ReadsCompleted)
-		flat.DeviceAddReadsMerged(prof.Builder, stts.Devices[i].ReadsMerged)
-		flat.DeviceAddReadSectors(prof.Builder, stts.Devices[i].ReadSectors)
-		flat.DeviceAddReadingTime(prof.Builder, stts.Devices[i].ReadingTime)
-		flat.DeviceAddWritesCompleted(prof.Builder, stts.Devices[i].WritesCompleted)
-		flat.DeviceAddWritesMerged(prof.Builder, stts.Devices[i].WritesMerged)
-		flat.DeviceAddWrittenSectors(prof.Builder, stts.Devices[i].WrittenSectors)
-		flat.DeviceAddWritingTime(prof.Builder, stts.Devices[i].WritingTime)
-		flat.DeviceAddIOInProgress(prof.Builder, stts.Devices[i].IOInProgress)
-		flat.DeviceAddIOTime(prof.Builder, stts.Devices[i].IOTime)
-		flat.DeviceAddWeightedIOTime(prof.Builder, stts.Devices[i].WeightedIOTime)
+		flat.DeviceAddReadsCompleted(prof.Builder, u.Devices[i].ReadsCompleted)
+		flat.DeviceAddReadsMerged(prof.Builder, u.Devices[i].ReadsMerged)
+		flat.DeviceAddReadSectors(prof.Builder, u.Devices[i].ReadSectors)
+		flat.DeviceAddReadingTime(prof.Builder, u.Devices[i].ReadingTime)
+		flat.DeviceAddWritesCompleted(prof.Builder, u.Devices[i].WritesCompleted)
+		flat.DeviceAddWritesMerged(prof.Builder, u.Devices[i].WritesMerged)
+		flat.DeviceAddWrittenSectors(prof.Builder, u.Devices[i].WrittenSectors)
+		flat.DeviceAddWritingTime(prof.Builder, u.Devices[i].WritingTime)
+		flat.DeviceAddIOInProgress(prof.Builder, u.Devices[i].IOInProgress)
+		flat.DeviceAddIOTime(prof.Builder, u.Devices[i].IOTime)
+		flat.DeviceAddWeightedIOTime(prof.Builder, u.Devices[i].WeightedIOTime)
 		devF[i] = flat.DeviceEnd(prof.Builder)
 	}
-	flat.StatsStartDevicesVector(prof.Builder, len(devF))
+	flat.DiskUsageStartDevicesVector(prof.Builder, len(devF))
 	for i := len(devF) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(devF[i])
 	}
 	devV := prof.Builder.EndVector(len(devF))
-	flat.StatsStart(prof.Builder)
-	flat.StatsAddTimestamp(prof.Builder, stts.Timestamp)
-	flat.StatsAddDevices(prof.Builder, devV)
-	prof.Builder.Finish(flat.StatsEnd(prof.Builder))
+	flat.DiskUsageStart(prof.Builder)
+	flat.DiskUsageAddTimestamp(prof.Builder, u.Timestamp)
+	flat.DiskUsageAddTimeDelta(prof.Builder, u.TimeDelta)
+	flat.DiskUsageAddDevices(prof.Builder, devV)
+	prof.Builder.Finish(flat.DiskUsageEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -117,8 +121,8 @@ func (prof *Profiler) Serialize(stts *structs.Stats) []byte {
 	return tmp
 }
 
-// Serialize the Stats using the package global Profiler.
-func Serialize(stts *structs.Stats) (p []byte, err error) {
+// Serialize the Usage using the package global Profiler.
+func Serialize(u *structs.DiskUsage) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -127,21 +131,22 @@ func Serialize(stts *structs.Stats) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(stts), nil
+	return std.Serialize(u), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as a structs.Stats.
-func Deserialize(p []byte) *structs.Stats {
-	stts := &structs.Stats{}
+// as a structs.Usage.
+func Deserialize(p []byte) *structs.DiskUsage {
+	u := &structs.DiskUsage{}
 	devF := &flat.Device{}
-	statsFlat := flat.GetRootAsStats(p, 0)
-	stts.Timestamp = statsFlat.Timestamp()
-	len := statsFlat.DevicesLength()
-	stts.Devices = make([]structs.Device, len)
+	uF := flat.GetRootAsDiskUsage(p, 0)
+	u.Timestamp = uF.Timestamp()
+	u.TimeDelta = uF.TimeDelta()
+	len := uF.DevicesLength()
+	u.Devices = make([]structs.Device, len)
 	for i := 0; i < len; i++ {
 		var dev structs.Device
-		if statsFlat.Devices(devF, i) {
+		if uF.Devices(devF, i) {
 			dev.Major = devF.Major()
 			dev.Minor = devF.Minor()
 			dev.Name = string(devF.Name())
@@ -157,9 +162,9 @@ func Deserialize(p []byte) *structs.Stats {
 			dev.IOTime = devF.IOTime()
 			dev.WeightedIOTime = devF.WeightedIOTime()
 		}
-		stts.Devices[i] = dev
+		u.Devices[i] = dev
 	}
-	return stts
+	return u
 }
 
 // Ticker delivers the system's memory information at intervals.

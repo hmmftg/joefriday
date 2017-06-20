@@ -11,8 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stats handles processing of disk stats, /proc/diskstats.
-package stats
+// Package diskstats handles processing of information about block devices:
+// /proc/diskstats.
+package diskstats
 
 import (
 	"fmt"
@@ -42,7 +43,7 @@ func NewProfiler() (prof *Profiler, err error) {
 }
 
 // Get returns information about current disk activity.
-func (prof *Profiler) Get() (stats *structs.Stats, err error) {
+func (prof *Profiler) Get() (stats *structs.DiskStats, err error) {
 	err = prof.Reset()
 	if err != nil {
 		return nil, err
@@ -54,7 +55,7 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 		dev                              structs.Device
 	)
 
-	stats = &structs.Stats{Timestamp: time.Now().UTC().UnixNano(), Devices: make([]structs.Device, 0, 2)}
+	stats = &structs.DiskStats{Timestamp: time.Now().UTC().UnixNano(), Devices: make([]structs.Device, 0, 2)}
 
 	// read each line until eof
 	for {
@@ -155,8 +156,9 @@ func (prof *Profiler) Get() (stats *structs.Stats, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current disk stats using the package's global Profiler.
-func Get() (stat *structs.Stats, err error) {
+// Get returns the current block device stats using the package's global
+// Profiler.
+func Get() (stat *structs.DiskStats, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -171,11 +173,11 @@ func Get() (stat *structs.Stats, err error) {
 // Ticker delivers the system's memory information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan *structs.Stats
+	Data chan *structs.DiskStats
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
+// NewTicker returns a new Ticker contianing a Data channel that delivers
 // the data at intervals and an error channel that delivers any errors
 // encountered.  Stop the ticker to signal the ticker to stop running; it
 // does not close the Data channel.  Close the ticker to close all ticker
@@ -185,7 +187,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.Stats), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.DiskStats), Profiler: p}
 	go t.Run()
 	return &t, nil
 }

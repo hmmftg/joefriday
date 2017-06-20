@@ -1,10 +1,10 @@
-// stats.fbs
+// diskstats.fbs
 include "device.fbs";
 namespace flat;
 
-table Stats {
+table DiskStats {
 	Timestamp:long;
 	Devices:[Device];
 }
 
-root_type Stats;
+root_type DiskStats;

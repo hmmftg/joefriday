@@ -11,10 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package usage calculates disk usage.  Usage is calculated by taking the
-// difference in two /proc/diskstats snapshots and reflect the difference
-// between the two snapshots.
-package usage
+// Package diskusage calculates block device usage. Usage is calculated by
+// taking the difference of two /proc/diskstats snapshots.
+package diskusage
 
 import (
 	"fmt"
@@ -24,14 +23,14 @@ import (
 
 	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/disk/stats"
+	stats "github.com/mohae/joefriday/disk/diskstats"
 	"github.com/mohae/joefriday/disk/structs"
 )
 
 // Profiler is used to process the disk usage..
 type Profiler struct {
 	*stats.Profiler
-	prior *structs.Stats
+	prior *structs.DiskStats
 }
 
 // Returns an initialized Profiler; ready to use.  The prior stats is set to
@@ -50,7 +49,7 @@ func NewProfiler() (prof *Profiler, err error) {
 
 // Get returns the current disk usage.  Usage is calculated as the difference
 // between the prior stats snapshot and the current one.
-func (prof *Profiler) Get() (u *structs.Usage, err error) {
+func (prof *Profiler) Get() (u *structs.DiskUsage, err error) {
 	st, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
@@ -68,7 +67,7 @@ var stdMu sync.Mutex
 // the first utilization snapshot returning inaccurate information is high
 // due to the lack of time elapsing between the initial and current
 // snapshot for utilization calculation.
-func Get() (u *structs.Usage, err error) {
+func Get() (u *structs.DiskUsage, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -82,8 +81,8 @@ func Get() (u *structs.Usage, err error) {
 
 // CalculateUsage returns the difference between the current /proc/net/dev
 // data and the prior one.
-func (prof *Profiler) CalculateUsage(cur *structs.Stats) *structs.Usage {
-	u := &structs.Usage{Timestamp: cur.Timestamp, Devices: make([]structs.Device, len(cur.Devices))}
+func (prof *Profiler) CalculateUsage(cur *structs.DiskStats) *structs.DiskUsage {
+	u := &structs.DiskUsage{Timestamp: cur.Timestamp, Devices: make([]structs.Device, len(cur.Devices))}
 	u.TimeDelta = cur.Timestamp - prof.prior.Timestamp
 	for i := 0; i < len(cur.Devices); i++ {
 		u.Devices[i].Major = cur.Devices[i].Major
@@ -107,7 +106,7 @@ func (prof *Profiler) CalculateUsage(cur *structs.Stats) *structs.Usage {
 // Ticker delivers the system's memory information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan *structs.Usage
+	Data chan *structs.DiskUsage
 	*Profiler
 }
 
@@ -121,7 +120,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.Usage), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.DiskUsage), Profiler: p}
 	go t.Run()
 	return &t, nil
 }
@@ -134,7 +133,7 @@ func (t *Ticker) Run() {
 		v                                byte
 		err                              error
 		dev                              structs.Device
-		cur                              structs.Stats
+		cur                              structs.DiskStats
 	)
 	// ticker
 	for {

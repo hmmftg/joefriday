@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package stats
+package diskstats
 
 import (
 	"testing"
@@ -20,13 +20,15 @@ import (
 	"github.com/mohae/joefriday/disk/structs"
 )
 
-func TestGet(t *testing.T) {
-	s, err := Get()
+func TestSerializeDeserialize(t *testing.T) {
+	p, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	checkStats("get", s, t)
+	statsD := Deserialize(p)
+	checkStats("get", statsD, t)
+	t.Logf("%#v\n", statsD)
 }
 
 func TestTicker(t *testing.T) {
@@ -44,7 +46,8 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			checkStats("ticker", v, t)
+			st := Deserialize(v)
+			checkStats("ticker", st, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -53,7 +56,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkStats(n string, s *structs.Stats, t *testing.T) {
+func checkStats(n string, s *structs.DiskStats, t *testing.T) {
 	if s.Timestamp == 0 {
 		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)
 	}
@@ -70,14 +73,38 @@ func checkStats(n string, s *structs.Stats, t *testing.T) {
 	}
 }
 
-var stts *structs.Stats
-
 func BenchmarkGet(b *testing.B) {
+	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		stts, _ = p.Get()
+		tmp, _ = p.Get()
 	}
-	_ = stts
+	_ = tmp
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	st, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = Serialize(st)
+	}
+	_ = tmp
+}
+
+var st *structs.DiskStats
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		st = Deserialize(tmp)
+	}
+	_ = st
 }

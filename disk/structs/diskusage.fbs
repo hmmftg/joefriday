@@ -1,11 +1,11 @@
-// usage.fbs
+// diskusage.fbs
 include "device.fbs";
 namespace flat;
 
-table Usage {
+table DiskUsage {
 	Timestamp:long;
 	TimeDelta:long;
 	Devices:[Device];
 }
 
-root_type Usage;
+root_type DiskUsage;

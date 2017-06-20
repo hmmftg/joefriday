@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of disk stats.  Instead of
-// returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a structs.Stats struct is
-// provided.
-package json
+// Package diskusage handles JSON based processing of block device usage.
+// Instead of returning a Go struct, it returns JSON serialized bytes. A
+// function to deserialize the JSON serialized bytes into a struct.DiskUsage
+// struct is provided.
+//
+// Note: the package name is diskusage and not the final element of the import
+// path (json). 
+package diskusage
 
 import (
 	"encoding/json"
@@ -23,38 +26,39 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/disk/stats"
 	"github.com/mohae/joefriday/disk/structs"
+	usage "github.com/mohae/joefriday/disk/diskusage"
 )
 
-// Profiler is used to process the /proc/diskstats file, as stats, using JSON.
+// Profiler is used to process the disk usage information using JSON.
 type Profiler struct {
-	*stats.Profiler
+	*usage.Profiler
 }
 
-// Initializes and returns a disk stats profiler.
+// Initializes and returns a disk usage profiler.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := stats.NewProfiler()
+	p, err := usage.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current disk stats as JSON serialized bytes.
+// Get returns the current disk usage information as JSON serialized
+// bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	st, err := prof.Profiler.Get()
+	u, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.Serialize(st)
+	return prof.Serialize(u)
 }
 
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current disk stats as JSON serialized bytes using the
-// package's globla Profiler.
+// Get returns the current disk usage information as JSON serialized bytes
+// using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -67,13 +71,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize disk stats using JSON
-func (prof *Profiler) Serialize(st *structs.Stats) ([]byte, error) {
-	return json.Marshal(st)
+// Serialize block device usage using JSON.
+func (prof *Profiler) Serialize(u *structs.DiskUsage) ([]byte, error) {
+	return json.Marshal(u)
 }
 
-// Serialize disk stats using JSON with the package global Profiler.
-func Serialize(st *structs.Stats) (p []byte, err error) {
+// Serialize disk usage as JSON using the package global Profiler.
+func Serialize(u *structs.DiskUsage) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -82,32 +86,32 @@ func Serialize(st *structs.Stats) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(st)
+	return std.Serialize(u)
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(st *structs.Stats) ([]byte, error) {
-	return prof.Serialize(st)
+func (prof *Profiler) Marshal(u *structs.DiskUsage) ([]byte, error) {
+	return prof.Serialize(u)
 }
 
-// Marshal is an alias for Serialize; uses the package global Profiler.
-func Marshal(st *structs.Stats) ([]byte, error) {
-	return Serialize(st)
+// Marsha is an alias for Serialize using the package global Profiler.
+func Marshal(u *structs.DiskUsage) ([]byte, error) {
+	return Serialize(u)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// info.Info
-func Deserialize(p []byte) (*structs.Stats, error) {
-	st := &structs.Stats{}
-	err := json.Unmarshal(p, st)
+// structs.DiskUsage.
+func Deserialize(p []byte) (*structs.DiskUsage, error) {
+	u := &structs.DiskUsage{}
+	err := json.Unmarshal(p, u)
 	if err != nil {
 		return nil, err
 	}
-	return st, nil
+	return u, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*structs.Stats, error) {
+func Unmarshal(p []byte) (*structs.DiskUsage, error) {
 	return Deserialize(p)
 }
 

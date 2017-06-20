@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package diskstats
 
 import (
 	"testing"
@@ -64,7 +64,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkStats(n string, s *structs.Stats, t *testing.T) {
+func checkStats(n string, s *structs.DiskStats, t *testing.T) {
 	if s.Timestamp == 0 {
 		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)
 	}
@@ -117,7 +117,7 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var st *structs.Stats
+	var st *structs.DiskStats
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
@@ -129,7 +129,7 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var st *structs.Stats
+	var st *structs.DiskStats
 	b.StartTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()

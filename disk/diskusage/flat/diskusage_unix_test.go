@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package diskusage
 
 import (
 	"testing"
@@ -21,14 +21,18 @@ import (
 )
 
 func TestSerializeDeserialize(t *testing.T) {
-	p, err := Get()
+	p, err := NewProfiler()
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	b, err := p.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	statsD := Deserialize(p)
-	checkStats("get", statsD, t)
-	t.Logf("%#v\n", statsD)
+	u := Deserialize(b)
+	checkUsage("get", u, t)
 }
 
 func TestTicker(t *testing.T) {
@@ -46,8 +50,8 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			st := Deserialize(v)
-			checkStats("ticker", st, t)
+			u := Deserialize(v)
+			checkUsage("ticker", u, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -56,55 +60,46 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkStats(n string, s *structs.Stats, t *testing.T) {
-	if s.Timestamp == 0 {
+func checkUsage(n string, u *structs.DiskUsage, t *testing.T) {
+	if u.Timestamp == 0 {
 		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)
 	}
-	if len(s.Devices) == 0 {
+	if u.TimeDelta == 0 {
+		t.Errorf("%s: TimeDelta: wanted non-zero value; got 0", n)
+	}
+	if len(u.Devices) == 0 {
 		t.Errorf("%s: expected there to be devices; didn't get any", n)
 	}
-	for i := 0; i < len(s.Devices); i++ {
-		if s.Devices[i].Major == 0 {
+	for i := 0; i < len(u.Devices); i++ {
+		if u.Devices[i].Major == 0 {
 			t.Errorf("%s: Device %d: Major: wanted a non-zero value, was 0", n, i)
 		}
-		if s.Devices[i].Name == "" {
+		if u.Devices[i].Name == "" {
 			t.Errorf("%s: Device %d: Name: wanted a non-empty value; was empty", n, i)
 		}
 	}
-}
-
-func BenchmarkGet(b *testing.B) {
-	var tmp []byte
-	b.StopTimer()
-	p, _ := NewProfiler()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		tmp, _ = p.Get()
-	}
-	_ = tmp
 }
 
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
-	st, _ := p.Profiler.Get()
+	u, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = Serialize(st)
+		tmp, _ = Serialize(u)
 	}
 	_ = tmp
 }
 
-var st *structs.Stats
-
 func BenchmarkDeserialize(b *testing.B) {
+	var u *structs.DiskUsage
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		st = Deserialize(tmp)
+		u = Deserialize(tmp)
 	}
-	_ = st
+	_ = u
 }
