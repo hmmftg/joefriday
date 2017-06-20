@@ -17,7 +17,7 @@
 // cpuinfo.CPUs struct is provided. After the first use, the flatbuffer builder
 // is reused.
 //
-// Note: the package name is cpuinfo and not the final elemant of the import
+// Note: the package name is cpuinfo and not the final element of the import
 // path (flat). 
 package cpuinfo
 

@@ -17,7 +17,7 @@
 // into a cpustats.Stats struct is provided.  After the first use, the
 // flatbuffer builder is re-used.
 //
-// Note: the package name is cpustats and not the final elemant of the import
+// Note: the package name is cpustats and not the final element of the import
 // path (flat). 
 package cpustats
 

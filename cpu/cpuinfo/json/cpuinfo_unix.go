@@ -16,7 +16,7 @@
 // deserialize the JSON serialized bytes into a cpuinfo.CPUs struct is
 // provided.
 //
-// Note: the package name is cpuinfo and not the final elemant of the import
+// Note: the package name is cpuinfo and not the final element of the import
 // path (json). 
 package cpuinfo
 

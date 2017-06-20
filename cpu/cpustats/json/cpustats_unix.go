@@ -16,7 +16,7 @@
 // bytes. A function to deserialize the JSON serialized bytes into a 
 // cpustats.Stats struct is provided.
 //
-// Note: the package name is cpustats and not the final elemant of the import
+// Note: the package name is cpustats and not the final element of the import
 // path (json). 
 package cpustats
 
