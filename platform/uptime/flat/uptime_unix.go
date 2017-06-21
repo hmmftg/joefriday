@@ -11,12 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of a platform's uptime
-// information: /proc/uptime.  Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes.  A function to deserialize the Flatbuffer
-// serialized bytes into a uptime.Uptime struct is provided.  After the first
-// use, the flatbuffer builder is reused.
-package flat
+// Package uptime handles Flatbuffer based processing of a platform's uptime
+// information: /proc/uptime. Instead of returning a Go struct, it returns
+// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
+// serialized bytes into a uptime.Info struct is provided. After the first use,
+// the flatbuffer builder is reused.
+//
+// Note: the package name is uptime and not the final element of the import
+// path (flat). 
+package uptime
 
 import (
 	"sync"
@@ -24,20 +27,21 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/platform/uptime"
+	u "github.com/mohae/joefriday/platform/uptime"
+	"github.com/mohae/joefriday/platform/uptime/flat/structs"
 )
 
 // Profiler is used to process the uptime information, /proc/uptime, using
 // Flatbuffers.
 type Profiler struct {
-	*uptime.Profiler
+	*u.Profiler
 	*fb.Builder
 }
 
 // Initializes and returns an uptime information profiler that utilizes
 // FlatBuffers.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := uptime.NewProfiler()
+	p, err := u.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -71,14 +75,14 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes uptime information using Flatbuffers.
-func (prof *Profiler) Serialize(u uptime.Uptime) []byte {
+func (prof *Profiler) Serialize(inf u.Info) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	UptimeStart(prof.Builder)
-	UptimeAddTimestamp(prof.Builder, u.Timestamp)
-	UptimeAddTotal(prof.Builder, u.Total)
-	UptimeAddIdle(prof.Builder, u.Idle)
-	prof.Builder.Finish(UptimeEnd(prof.Builder))
+	structs.InfoStart(prof.Builder)
+	structs.InfoAddTimestamp(prof.Builder, inf.Timestamp)
+	structs.InfoAddTotal(prof.Builder, inf.Total)
+	structs.InfoAddIdle(prof.Builder, inf.Idle)
+	prof.Builder.Finish(structs.InfoEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -88,7 +92,7 @@ func (prof *Profiler) Serialize(u uptime.Uptime) []byte {
 
 // Serialize serializes uptime information using Flatbuffers with the
 // package's global Profiler.
-func Serialize(u uptime.Uptime) (p []byte, err error) {
+func Serialize(inf u.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -97,18 +101,18 @@ func Serialize(u uptime.Uptime) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(u), nil
+	return std.Serialize(inf), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as uptime.Uptime.
-func Deserialize(p []byte) uptime.Uptime {
-	flatU := GetRootAsUptime(p, 0)
-	var u uptime.Uptime
-	u.Timestamp = flatU.Timestamp()
-	u.Total = flatU.Total()
-	u.Idle = flatU.Idle()
-	return u
+func Deserialize(p []byte) u.Info {
+	flatInf := structs.GetRootAsInfo(p, 0)
+	var inf u.Info
+	inf.Timestamp = flatInf.Timestamp()
+	inf.Total = flatInf.Total()
+	inf.Idle = flatInf.Idle()
+	return inf
 }
 
 // Ticker delivers the system's memory information at intervals.

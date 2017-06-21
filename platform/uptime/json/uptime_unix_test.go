@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package uptime
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/platform/uptime"
+	u "github.com/mohae/joefriday/platform/uptime"
 )
 
 func TestGet(t *testing.T) {
@@ -63,14 +63,14 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUptime(n string, u uptime.Uptime, t *testing.T) {
-	if u.Timestamp == 0 {
+func checkUptime(n string, inf u.Info, t *testing.T) {
+	if inf.Timestamp == 0 {
 		t.Errorf("expected Timestamp to be a non-zero value; got 0")
 	}
-	if u.Total == 0 {
+	if inf.Total == 0 {
 		t.Errorf("expected total to be a non-zero value; got 0")
 	}
-	if u.Idle == 0 {
+	if inf.Idle == 0 {
 		t.Errorf("expected idle to be a non-zero value; got 0")
 	}
 }
@@ -111,25 +111,25 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var u uptime.Uptime
+	var inf u.Info
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		u, _ = Deserialize(tmp)
+		inf, _ = Deserialize(tmp)
 	}
-	_ = u
+	_ = inf
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var u uptime.Uptime
+	var inf u.Info
 	b.StartTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		u, _ = Unmarshal(tmp)
+		inf, _ = Unmarshal(tmp)
 	}
-	_ = u
+	_ = inf
 }

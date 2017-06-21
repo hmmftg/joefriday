@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of uptime information.  Instead
-// of returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into an uptime.Uptime struct is
+// Package json handles JSON based processing of uptime information. Instead
+// of returning a Go struct, it returns JSON serialized bytes. A function to
+// deserialize the JSON serialized bytes into an uptime.Info struct is
 // provided.
-package json
+//
+// Note: the package name is uptime and not the final element of the import
+// path (json). 
+package uptime
 
 import (
 	"encoding/json"
@@ -23,18 +26,18 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/platform/uptime"
+	u "github.com/mohae/joefriday/platform/uptime"
 )
 
 // Profiler is used to process the uptime information, /proc/version, using
 // JSON.
 type Profiler struct {
-	*uptime.Profiler
+	*u.Profiler
 }
 
 // Initializes and returns a json.Profiler for uptime information.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := uptime.NewProfiler()
+	p, err := u.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +70,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize uptime.Uptime using JSON
-func (prof *Profiler) Serialize(u uptime.Uptime) ([]byte, error) {
-	return json.Marshal(u)
+// Serialize uptime.Info using JSON.
+func (prof *Profiler) Serialize(inf u.Info) ([]byte, error) {
+	return json.Marshal(inf)
 }
 
-// Serialize uptime.Uptime using JSON with the package global Profiler.
-func Serialize(u uptime.Uptime) (p []byte, err error) {
+// Serialize uptime.Info using JSON with the package global Profiler.
+func Serialize(inf u.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -82,32 +85,31 @@ func Serialize(u uptime.Uptime) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(u)
+	return std.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(u uptime.Uptime) ([]byte, error) {
-	return prof.Serialize(u)
+func (prof *Profiler) Marshal(inf u.Info) ([]byte, error) {
+	return prof.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize that uses the package's global profiler.
-func Marshal(u uptime.Uptime) ([]byte, error) {
-	return Serialize(u)
+func Marshal(inf u.Info) ([]byte, error) {
+	return Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // uptime.Uptime.
-func Deserialize(p []byte) (uptime.Uptime, error) {
-	var u uptime.Uptime
-	err := json.Unmarshal(p, &u)
+func Deserialize(p []byte) (inf u.Info, err error) {
+	err = json.Unmarshal(p, &inf)
 	if err != nil {
-		return u, err
+		return inf, err
 	}
-	return u, nil
+	return inf, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (uptime.Uptime, error) {
+func Unmarshal(p []byte) (inf u.Info, err error) {
 	return Deserialize(p)
 }
 
