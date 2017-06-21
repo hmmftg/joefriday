@@ -45,9 +45,9 @@ func TestGet(t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	var r *Release
+	var inf *Info
 	for i := 0; i < b.N; i++ {
-		r, _ = Get()
+		inf, _ = Get()
 	}
-	_ = r
+	_ = inf
 }

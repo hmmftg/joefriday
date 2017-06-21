@@ -23,8 +23,8 @@ import (
 
 const etcFile = "/etc/os-release"
 
-// Release holds information about the OS release.
-type Release struct {
+// Info holds information about the OS release.
+type Info struct {
 	Name         string `json:"name"`
 	ID           string `json:"id"`
 	IDLike       string `json:"id_like"`
@@ -49,13 +49,13 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get populates Release with /etc/os-release information.
-func (prof *Profiler) Get() (r *Release, err error) {
+// Get populates Info with /etc/os-release information.
+func (prof *Profiler) Get() (inf *Info, err error) {
 	var (
 		i, keyLen int
 		v         byte
-		release   Release
 	)
+	inf = &Info{}
 	err = prof.Reset()
 	if err != nil {
 		return nil, err
@@ -85,38 +85,38 @@ func (prof *Profiler) Get() (r *Release, err error) {
 		v = prof.Val[0]
 		if v == 'I' {
 			if prof.Val[2] == '_' {
-				release.IDLike = string(prof.Val[keyLen:])
+				inf.IDLike = string(prof.Val[keyLen:])
 				continue
 			}
-			release.ID = string(prof.Val[keyLen:])
+			inf.ID = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'V' {
 			if prof.Val[7] == '_' {
-				release.VersionID = string(prof.Val[keyLen:])
+				inf.VersionID = string(prof.Val[keyLen:])
 				continue
 			}
-			release.Version = string(prof.Val[keyLen:])
+			inf.Version = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'N' {
-			release.Name = string(prof.Val[keyLen:])
+			inf.Name = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'P' {
-			release.PrettyName = string(prof.Val[keyLen:])
+			inf.PrettyName = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'H' {
-			release.HomeURL = string(prof.Val[keyLen:])
+			inf.HomeURL = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'B' {
-			release.BugReportURL = string(prof.Val[keyLen:])
+			inf.BugReportURL = string(prof.Val[keyLen:])
 			continue
 		}
 	}
-	return &release, nil
+	return inf, nil
 }
 
 var std *Profiler
@@ -124,7 +124,7 @@ var stdMu sync.Mutex
 
 // Get gets the OS release information using the package's global Profiler,
 // which is lazily instantiated.
-func Get() (r *Release, err error) {
+func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {

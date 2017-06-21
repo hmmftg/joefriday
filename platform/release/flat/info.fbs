@@ -1,7 +1,7 @@
-// platform_release.fbs
-namespace flat;
+// info.fbs
+namespace structs;
 
-table Release {
+table Info {
 	Name:string;
     ID:string;
     IDLike:string;
@@ -12,4 +12,4 @@ table Release {
     BugReportURL:string;
 }
 
-root_type Release;
+root_type Info;

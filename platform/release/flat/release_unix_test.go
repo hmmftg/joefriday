@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package release
 
 import (
 	"testing"
 
-	"github.com/mohae/joefriday/platform/release"
+	r "github.com/mohae/joefriday/platform/release"
 )
 
 func TestSerializeDeserialize(t *testing.T) {
@@ -25,35 +25,35 @@ func TestSerializeDeserialize(t *testing.T) {
 		t.Errorf("Get(): got %s, want nil", err)
 		return
 	}
-	r, err := release.Get()
+	inf, err := r.Get()
 	if err != nil {
 		t.Errorf("release.Get(): got %s, want nil", err)
 		return
 	}
-	rD := Deserialize(p)
-	if r.Name != rD.Name {
-		t.Errorf("Name: got %s; want %s", rD.Name, r.Name)
+	infD := Deserialize(p)
+	if inf.Name != infD.Name {
+		t.Errorf("Name: got %s; want %s", infD.Name, inf.Name)
 	}
-	if r.ID != rD.ID {
-		t.Errorf("ID: got %s; want %s", rD.ID, r.ID)
+	if inf.ID != infD.ID {
+		t.Errorf("ID: got %s; want %s", infD.ID, inf.ID)
 	}
-	if r.IDLike != rD.IDLike {
-		t.Errorf("IDLike: got %s; want %s", rD.IDLike, r.IDLike)
+	if inf.IDLike != infD.IDLike {
+		t.Errorf("IDLike: got %s; want %s", infD.IDLike, inf.IDLike)
 	}
-	if r.PrettyName != rD.PrettyName {
-		t.Errorf("PrettyName: got %s; want %s", rD.PrettyName, r.PrettyName)
+	if inf.PrettyName != infD.PrettyName {
+		t.Errorf("PrettyName: got %s; want %s", infD.PrettyName, inf.PrettyName)
 	}
-	if r.Version != rD.Version {
-		t.Errorf("Version: got %s; want %s", rD.Version, r.Version)
+	if inf.Version != infD.Version {
+		t.Errorf("Version: got %s; want %s", infD.Version, inf.Version)
 	}
-	if r.VersionID != rD.VersionID {
-		t.Errorf("VersionID: got %s; want %s", rD.VersionID, r.VersionID)
+	if inf.VersionID != infD.VersionID {
+		t.Errorf("VersionID: got %s; want %s", infD.VersionID, inf.VersionID)
 	}
-	if r.HomeURL != rD.HomeURL {
-		t.Errorf("HomeURL: got %s; want %s", rD.HomeURL, r.HomeURL)
+	if inf.HomeURL != infD.HomeURL {
+		t.Errorf("HomeURL: got %s; want %s", infD.HomeURL, inf.HomeURL)
 	}
-	if r.BugReportURL != rD.BugReportURL {
-		t.Errorf("BugReportURL: got %s; want %s", rD.BugReportURL, r.BugReportURL)
+	if inf.BugReportURL != infD.BugReportURL {
+		t.Errorf("BugReportURL: got %s; want %s", infD.BugReportURL, inf.BugReportURL)
 	}
 }
 
@@ -81,13 +81,13 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var r *release.Release
+	var inf *r.Info
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		r = Deserialize(tmp)
+		inf = Deserialize(tmp)
 	}
-	_ = r
+	_ = inf
 }

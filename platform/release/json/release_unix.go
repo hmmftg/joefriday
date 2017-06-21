@@ -11,27 +11,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of OS release information,
+// Package release handles JSON based processing of OS release information,
 // /etc/os-release.  Instead of returning a Go struct, it returns JSON
 // serialized bytes.  A function to deserialize the JSON serialized bytes
 // into a release.Release struct is provided.
-package json
+//
+// Note: the package name is release and not the final element of the import
+// path (json).
+package release
 
 import (
 	"encoding/json"
 	"sync"
 
-	"github.com/mohae/joefriday/platform/release"
+	r "github.com/mohae/joefriday/platform/release"
 )
 
 // Profiler is used to process the OS release information file using JSON.
 type Profiler struct {
-	*release.Profiler
+	*r.Profiler
 }
 
 // Initializes and returns a json.Profiler for OS release information.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := release.NewProfiler()
+	p, err := r.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -64,13 +67,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize release.Release using JSON
-func (prof *Profiler) Serialize(r *release.Release) ([]byte, error) {
-	return json.Marshal(r)
+// Serialize release.Info using JSON
+func (prof *Profiler) Serialize(inf *r.Info) ([]byte, error) {
+	return json.Marshal(inf)
 }
 
-// Serialize release.Release using JSON with the package global Profiler.
-func Serialize(r *release.Release) (p []byte, err error) {
+// Serialize release.Info using JSON with the package global Profiler.
+func Serialize(inf *r.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -79,31 +82,31 @@ func Serialize(r *release.Release) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(r)
+	return std.Serialize(inf)
 }
 
-// Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(r *release.Release) ([]byte, error) {
-	return prof.Serialize(r)
+// Marshal is an alias for Serialize.
+func (prof *Profiler) Marshal(inf *r.Info) ([]byte, error) {
+	return prof.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize using the package's global profiler.
-func Marshal(r *release.Release) ([]byte, error) {
-	return Serialize(r)
+func Marshal(inf *r.Info) ([]byte, error) {
+	return Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// release.Release.
-func Deserialize(p []byte) (*release.Release, error) {
-	k := &release.Release{}
-	err := json.Unmarshal(p, k)
+// release.Info.
+func Deserialize(p []byte) (*r.Info, error) {
+	inf := &r.Info{}
+	err := json.Unmarshal(p, inf)
 	if err != nil {
 		return nil, err
 	}
-	return k, nil
+	return inf, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*release.Release, error) {
+func Unmarshal(p []byte) (*r.Info, error) {
 	return Deserialize(p)
 }
