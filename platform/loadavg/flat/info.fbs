@@ -1,7 +1,7 @@
-// loadavg.fbs
-namespace flat;
+// info.fbs
+namespace structs;
 
-table LoadAvg {
+table Info {
     Timestamp:long;
     Minute:float;
     Five:float;
@@ -11,4 +11,4 @@ table LoadAvg {
     PID:int;
 }
 
-root_type LoadAvg;
+root_type Info;

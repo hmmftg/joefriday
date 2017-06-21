@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package loadavg
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/platform/loadavg"
+	l "github.com/mohae/joefriday/platform/loadavg"
 )
 
 func TestGet(t *testing.T) {
@@ -45,12 +45,12 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			l := Deserialize(v)
+			inf := Deserialize(v)
 			if err != nil {
 				t.Error(err)
 				continue
 			}
-			checkLoad("ticker", l, t)
+			checkLoad("ticker", inf, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -59,26 +59,26 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkLoad(n string, l loadavg.LoadAvg, t *testing.T) {
-	if l.Timestamp == 0 {
+func checkLoad(n string, inf l.Info, t *testing.T) {
+	if inf.Timestamp == 0 {
 		t.Errorf("%s: expected Timestamp to be a non-zero value; got 0", n)
 	}
-	if l.Minute == 0 {
+	if inf.Minute == 0 {
 		t.Errorf("%s: expected Minute to be a non-zero value; got 0", n)
 	}
-	if l.Five == 0 {
+	if inf.Five == 0 {
 		t.Errorf("%s: expected Five to be a non-zero value; got 0", n)
 	}
-	if l.Fifteen == 0 {
+	if inf.Fifteen == 0 {
 		t.Errorf("%s: expected Fifteen to be a non-zero value; got 0", n)
 	}
-	if l.Running == 0 {
+	if inf.Running == 0 {
 		t.Errorf("%s: expected Running to be a non-zero value; got 0", n)
 	}
-	if l.Total == 0 {
+	if inf.Total == 0 {
 		t.Errorf("%s: expected Total to be a non-zero value; got 0", n)
 	}
-	if l.PID == 0 {
+	if inf.PID == 0 {
 		t.Errorf("%s: expected PID to be a non-zero value; got 0", n)
 	}
 }
@@ -107,13 +107,13 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var l loadavg.LoadAvg
+	var inf l.Info
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		l = Deserialize(tmp)
+		inf = Deserialize(tmp)
 	}
-	_ = l
+	_ = inf
 }

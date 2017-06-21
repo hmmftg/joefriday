@@ -11,12 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of a platform's uptime
-// information: /proc/uptime.  Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes.  A function to deserialize the Flatbuffer
-// serialized bytes into a uptime.LoadAvg struct is provided.  After the first
+// Package flat handles Flatbuffer based processing of a platform's loadavg
+// information: /proc/loadavg. Instead of returning a Go struct, it returns
+// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
+// serialized bytes into a loadavg.Info struct is provided. After the first
 // use, the flatbuffer builder is reused.
-package flat
+//
+// Note: the package name is loadavg and not the final element of the import
+// path (flat). 
+package loadavg
 
 import (
 	"sync"
@@ -24,20 +27,21 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/platform/loadavg"
+	l "github.com/mohae/joefriday/platform/loadavg"
+	"github.com/mohae/joefriday/platform/loadavg/flat/structs"
 )
 
 // Profiler is used to process the loadavg information, /proc/loadavg, using
 // Flatbuffers.
 type Profiler struct {
-	*loadavg.Profiler
+	*l.Profiler
 	*fb.Builder
 }
 
 // Initializes and returns an loadavg information profiler that utilizes
 // FlatBuffers.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := loadavg.NewProfiler()
+	p, err := l.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +51,11 @@ func NewProfiler() (prof *Profiler, err error) {
 // Get returns the current loadavg information as Flatbuffer serialized
 // bytes.
 func (prof *Profiler) Get() ([]byte, error) {
-	k, err := prof.Profiler.Get()
+	inf, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.Serialize(k), nil
+	return prof.Serialize(inf), nil
 }
 
 var std *Profiler
@@ -72,18 +76,18 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes loadavg information using Flatbuffers.
-func (prof *Profiler) Serialize(l loadavg.LoadAvg) []byte {
+func (prof *Profiler) Serialize(inf l.Info) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	LoadAvgStart(prof.Builder)
-	LoadAvgAddTimestamp(prof.Builder, l.Timestamp)
-	LoadAvgAddMinute(prof.Builder, l.Minute)
-	LoadAvgAddFive(prof.Builder, l.Five)
-	LoadAvgAddFifteen(prof.Builder, l.Fifteen)
-	LoadAvgAddRunning(prof.Builder, l.Running)
-	LoadAvgAddTotal(prof.Builder, l.Total)
-	LoadAvgAddPID(prof.Builder, l.PID)
-	prof.Builder.Finish(LoadAvgEnd(prof.Builder))
+	structs.InfoStart(prof.Builder)
+	structs.InfoAddTimestamp(prof.Builder, inf.Timestamp)
+	structs.InfoAddMinute(prof.Builder, inf.Minute)
+	structs.InfoAddFive(prof.Builder, inf.Five)
+	structs.InfoAddFifteen(prof.Builder, inf.Fifteen)
+	structs.InfoAddRunning(prof.Builder, inf.Running)
+	structs.InfoAddTotal(prof.Builder, inf.Total)
+	structs.InfoAddPID(prof.Builder, inf.PID)
+	prof.Builder.Finish(structs.InfoEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -91,9 +95,9 @@ func (prof *Profiler) Serialize(l loadavg.LoadAvg) []byte {
 	return tmp
 }
 
-// Serialize serializes uptime information using Flatbuffers with the
+// Serialize serializes loadavg information using Flatbuffers with the
 // package's global Profiler.
-func Serialize(u loadavg.LoadAvg) (p []byte, err error) {
+func Serialize(inf l.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -102,25 +106,25 @@ func Serialize(u loadavg.LoadAvg) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(u), nil
+	return std.Serialize(inf), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as loadavg.LoadAvg.
-func Deserialize(p []byte) loadavg.LoadAvg {
-	flatL := GetRootAsLoadAvg(p, 0)
-	var l loadavg.LoadAvg
-	l.Timestamp = flatL.Timestamp()
-	l.Minute = flatL.Minute()
-	l.Five = flatL.Five()
-	l.Fifteen = flatL.Fifteen()
-	l.Running = flatL.Running()
-	l.Total = flatL.Total()
-	l.PID = flatL.PID()
-	return l
+// as loadavg.Info.
+func Deserialize(p []byte) l.Info {
+	flatInf := structs.GetRootAsInfo(p, 0)
+	var inf l.Info
+	inf.Timestamp = flatInf.Timestamp()
+	inf.Minute = flatInf.Minute()
+	inf.Five = flatInf.Five()
+	inf.Fifteen = flatInf.Fifteen()
+	inf.Running = flatInf.Running()
+	inf.Total = flatInf.Total()
+	inf.PID = flatInf.PID()
+	return inf
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's loadavg information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte

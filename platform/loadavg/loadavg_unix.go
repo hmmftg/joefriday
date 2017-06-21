@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package LoadAvg processes loadavg information from the /proc/loadavg file.
+// Package loadAvg processes loadavg information from the /proc/loadavg file.
 package loadavg
 
 import (
@@ -27,8 +27,8 @@ import (
 
 const procFile = "/proc/loadavg"
 
-// LoadAvg holds loadavg information
-type LoadAvg struct {
+// Info holds loadavg information
+type Info struct {
 	Timestamp int64
 	Minute    float32
 	Five      float32
@@ -53,10 +53,10 @@ func NewProfiler() (prof *Profiler, err error) {
 }
 
 // Get populates LoadAvg with /proc/loadavg information.
-func (prof *Profiler) Get() (l LoadAvg, err error) {
+func (prof *Profiler) Get() (inf Info, err error) {
 	err = prof.Reset()
 	if err != nil {
-		return l, err
+		return inf, err
 	}
 	var (
 		i, priorPos, pos, line, fieldNum int
@@ -64,14 +64,14 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 		f                                float64
 		v                                byte
 	)
-	l.Timestamp = time.Now().UTC().UnixNano()
+	inf.Timestamp = time.Now().UTC().UnixNano()
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return l, &joe.ReadError{Err: err}
+			return inf, &joe.ReadError{Err: err}
 		}
 		line++
 		for {
@@ -86,17 +86,17 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 			if fieldNum <= 3 {
 				f, err = strconv.ParseFloat(string(prof.Line[priorPos:pos-1]), 64)
 				if err != nil {
-					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
+					return inf, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
 				if fieldNum == 1 {
-					l.Minute = float32(f)
+					inf.Minute = float32(f)
 					continue
 				}
 				if fieldNum == 2 {
-					l.Five = float32(f)
+					inf.Five = float32(f)
 					continue
 				}
-				l.Fifteen = float32(f)
+				inf.Fifteen = float32(f)
 				continue
 			}
 			if fieldNum == 4 {
@@ -108,25 +108,25 @@ func (prof *Profiler) Get() (l LoadAvg, err error) {
 				}
 				n, err = helpers.ParseUint(prof.Line[priorPos : priorPos+i])
 				if err != nil {
-					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
+					return inf, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
-				l.Running = int32(n)
+				inf.Running = int32(n)
 				n, err = helpers.ParseUint(prof.Line[priorPos+i+1 : pos-1])
 				if err != nil {
-					return l, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
+					return inf, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
-				l.Total = int32(n)
+				inf.Total = int32(n)
 				continue
 			}
 			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
-				return l, err
+				return inf, err
 			}
-			l.PID = int32(n)
+			inf.PID = int32(n)
 			break
 		}
 	}
-	return l, nil
+	return inf, nil
 }
 
 var std *Profiler
@@ -134,22 +134,22 @@ var stdMu sync.Mutex
 
 // Get gets the loadavg information using the package's global Profiler, which
 // is lazily instantiated.
-func Get() (l LoadAvg, err error) {
+func Get() (inf Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
 		std, err = NewProfiler()
 		if err != nil {
-			return l, err
+			return inf, err
 		}
 	}
 	return std.Get()
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's LoadAvg information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan LoadAvg
+	Data chan Info
 	*Profiler
 }
 
@@ -163,7 +163,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan LoadAvg), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info), Profiler: p}
 	go t.Run()
 	return &t, nil
 }
@@ -175,7 +175,7 @@ func (t *Ticker) Run() {
 		n                                uint64
 		f                                float64
 		v                                byte
-		l                                LoadAvg
+		inf                              Info
 		err                              error
 	)
 	// ticker
@@ -184,7 +184,7 @@ func (t *Ticker) Run() {
 		case <-t.Done:
 			return
 		case <-t.C:
-			l.Timestamp = time.Now().UTC().UnixNano()
+			inf.Timestamp = time.Now().UTC().UnixNano()
 			err = t.Reset()
 			line = 0
 		tick:
@@ -214,14 +214,14 @@ func (t *Ticker) Run() {
 							break tick
 						}
 						if fieldNum == 1 {
-							l.Minute = float32(f)
+							inf.Minute = float32(f)
 							continue
 						}
 						if fieldNum == 2 {
-							l.Five = float32(f)
+							inf.Five = float32(f)
 							continue
 						}
-						l.Fifteen = float32(f)
+						inf.Fifteen = float32(f)
 						continue
 					}
 					if fieldNum == 4 {
@@ -236,13 +236,13 @@ func (t *Ticker) Run() {
 							t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break tick
 						}
-						l.Running = int32(n)
+						inf.Running = int32(n)
 						n, err = helpers.ParseUint(t.Line[priorPos+i+1 : pos-1])
 						if err != nil {
 							t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break tick
 						}
-						l.Total = int32(n)
+						inf.Total = int32(n)
 						continue
 					}
 					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])
@@ -250,11 +250,11 @@ func (t *Ticker) Run() {
 						t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 						break tick
 					}
-					l.PID = int32(n)
+					inf.PID = int32(n)
 					break
 				}
 			}
-			t.Data <- l
+			t.Data <- inf
 		}
 	}
 }

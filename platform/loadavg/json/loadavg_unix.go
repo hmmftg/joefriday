@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of loadavg information.  Instead
-// of returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into an loadavg.LoadAvg struct is
-// provided.
-package json
+// Package loadavg handles JSON based processing of loadavg information.
+// Instead of returning a Go struct, it returns JSON serialized bytes. A
+// function to deserialize the JSON serialized bytes into an loadavg.LoadAvg
+// struct is provided.
+//
+// Note: the package name is loadavg and not the final element of the import
+// path (json). 
+package loadavg
 
 import (
 	"encoding/json"
@@ -23,18 +26,18 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/platform/loadavg"
+	l "github.com/mohae/joefriday/platform/loadavg"
 )
 
 // Profiler is used to process the loadavg information, /proc/loadavg, using
 // JSON.
 type Profiler struct {
-	*loadavg.Profiler
+	*l.Profiler
 }
 
 // Initializes and returns a json.Profiler for loadavg information.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := loadavg.NewProfiler()
+	p, err := l.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +70,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize loadavg.LoadAvg using JSON
-func (prof *Profiler) Serialize(u loadavg.LoadAvg) ([]byte, error) {
-	return json.Marshal(u)
+// Serialize loadavg.Info using JSON.
+func (prof *Profiler) Serialize(inf l.Info) ([]byte, error) {
+	return json.Marshal(inf)
 }
 
-// Serialize loadavg.LoadAvg using JSON with the package global Profiler.
-func Serialize(u loadavg.LoadAvg) (p []byte, err error) {
+// Serialize loadavg.Info using JSON with the package global Profiler.
+func Serialize(inf l.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -82,31 +85,31 @@ func Serialize(u loadavg.LoadAvg) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(u)
+	return std.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(l loadavg.LoadAvg) ([]byte, error) {
-	return prof.Serialize(l)
+func (prof *Profiler) Marshal(inf l.Info) ([]byte, error) {
+	return prof.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize that uses the package's global profiler.
-func Marshal(u loadavg.LoadAvg) ([]byte, error) {
-	return Serialize(u)
+func Marshal(inf l.Info) ([]byte, error) {
+	return Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // loadavg.LoadAvg.
-func Deserialize(p []byte) (l loadavg.LoadAvg, err error) {
-	err = json.Unmarshal(p, &l)
+func Deserialize(p []byte) (inf l.Info, err error) {
+	err = json.Unmarshal(p, &inf)
 	if err != nil {
-		return l, err
+		return inf, err
 	}
-	return l, nil
+	return inf, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (loadavg.LoadAvg, error) {
+func Unmarshal(p []byte) (l.Info, error) {
 	return Deserialize(p)
 }
 

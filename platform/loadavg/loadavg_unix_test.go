@@ -19,13 +19,13 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	l, err := Get()
+	inf, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	checkLoad("ticker", l, t)
-	t.Logf("%#v\n", l)
+	checkLoad("ticker", inf, t)
+	t.Logf("%#v\n", inf)
 }
 
 func TestTicker(t *testing.T) {
@@ -52,32 +52,32 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkLoad(n string, l LoadAvg, t *testing.T) {
-	if l.Timestamp == 0 {
+func checkLoad(n string, inf Info, t *testing.T) {
+	if inf.Timestamp == 0 {
 		t.Errorf("%s: expected Timestamp to be a non-zero value; got 0", n)
 	}
-	if l.Minute == 0 {
+	if inf.Minute == 0 {
 		t.Errorf("%s: expected Minute to be a non-zero value; got 0", n)
 	}
-	if l.Five == 0 {
+	if inf.Five == 0 {
 		t.Errorf("%s: expected Five to be a non-zero value; got 0", n)
 	}
-	if l.Fifteen == 0 {
+	if inf.Fifteen == 0 {
 		t.Errorf("%s: expected Fifteen to be a non-zero value; got 0", n)
 	}
-	if l.Running == 0 {
+	if inf.Running == 0 {
 		t.Errorf("%s: expected Running to be a non-zero value; got 0", n)
 	}
-	if l.Total == 0 {
+	if inf.Total == 0 {
 		t.Errorf("%s: expected Total to be a non-zero value; got 0", n)
 	}
-	if l.PID == 0 {
+	if inf.PID == 0 {
 		t.Errorf("%s: expected PID to be a non-zero value; got 0", n)
 	}
 }
 
 func BenchmarkGet(b *testing.B) {
-	var l LoadAvg
+	var inf Info
 	b.StopTimer()
 	p, err := NewProfiler()
 	if err != nil {
@@ -85,7 +85,7 @@ func BenchmarkGet(b *testing.B) {
 	}
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		l, _ = p.Get()
+		inf, _ = p.Get()
 	}
-	_ = l
+	_ = inf
 }
