@@ -26,7 +26,7 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	v "github.com/mohae/joefriday/platform/version"
-	"github.com/mohae/joefriday/platform/version/flat/flat"
+	"github.com/mohae/joefriday/platform/version/flat/structs"
 )
 
 // Profiler is used to process the version information, /proc/version, using
@@ -84,16 +84,16 @@ func (prof *Profiler) Serialize(inf *v.Info) []byte {
 	typ := prof.Builder.CreateString(inf.Type)
 	compileDate := prof.Builder.CreateString(inf.CompileDate)
 	arch := prof.Builder.CreateString(inf.Arch)
-	flat.InfoStart(prof.Builder)
-	flat.InfoAddOS(prof.Builder, os)
-	flat.InfoAddVersion(prof.Builder, version)
-	flat.InfoAddCompileUser(prof.Builder, compileUser)
-	flat.InfoAddGCC(prof.Builder, gcc)
-	flat.InfoAddOSGCC(prof.Builder, osgcc)
-	flat.InfoAddType(prof.Builder, typ)
-	flat.InfoAddCompileDate(prof.Builder, compileDate)
-	flat.InfoAddArch(prof.Builder, arch)
-	prof.Builder.Finish(flat.InfoEnd(prof.Builder))
+	structs.InfoStart(prof.Builder)
+	structs.InfoAddOS(prof.Builder, os)
+	structs.InfoAddVersion(prof.Builder, version)
+	structs.InfoAddCompileUser(prof.Builder, compileUser)
+	structs.InfoAddGCC(prof.Builder, gcc)
+	structs.InfoAddOSGCC(prof.Builder, osgcc)
+	structs.InfoAddType(prof.Builder, typ)
+	structs.InfoAddCompileDate(prof.Builder, compileDate)
+	structs.InfoAddArch(prof.Builder, arch)
+	prof.Builder.Finish(structs.InfoEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -118,7 +118,7 @@ func Serialize(inf *v.Info) (p []byte, err error) {
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as kernel.Kernel.
 func Deserialize(p []byte) *v.Info {
-	flatInf := flat.GetRootAsInfo(p, 0)
+	flatInf := structs.GetRootAsInfo(p, 0)
 	var inf v.Info
 	inf.OS = string(flatInf.OS())
 	inf.Version = string(flatInf.Version())
