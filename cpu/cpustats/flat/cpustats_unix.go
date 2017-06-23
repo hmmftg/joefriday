@@ -28,7 +28,7 @@ import (
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
 	stats "github.com/mohae/joefriday/cpu/cpustats"
-	"github.com/mohae/joefriday/cpu/cpustats/flat/flat"
+	"github.com/mohae/joefriday/cpu/cpustats/flat/structs"
 )
 
 // Profiler is used to process the stats, /proc/stat, as Flatbuffers
@@ -86,33 +86,33 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 		ids[i] = prof.Builder.CreateString(stts.CPU[i].ID)
 	}
 	for i := 0; i < len(statsF); i++ {
-		flat.StatStart(prof.Builder)
-		flat.StatAddID(prof.Builder, ids[i])
-		flat.StatAddUser(prof.Builder, stts.CPU[i].User)
-		flat.StatAddNice(prof.Builder, stts.CPU[i].Nice)
-		flat.StatAddSystem(prof.Builder, stts.CPU[i].System)
-		flat.StatAddIdle(prof.Builder, stts.CPU[i].Idle)
-		flat.StatAddIOWait(prof.Builder, stts.CPU[i].IOWait)
-		flat.StatAddIRQ(prof.Builder, stts.CPU[i].IRQ)
-		flat.StatAddSoftIRQ(prof.Builder, stts.CPU[i].SoftIRQ)
-		flat.StatAddSteal(prof.Builder, stts.CPU[i].Steal)
-		flat.StatAddQuest(prof.Builder, stts.CPU[i].Quest)
-		flat.StatAddQuestNice(prof.Builder, stts.CPU[i].QuestNice)
-		statsF[i] = flat.StatEnd(prof.Builder)
+		structs.StatStart(prof.Builder)
+		structs.StatAddID(prof.Builder, ids[i])
+		structs.StatAddUser(prof.Builder, stts.CPU[i].User)
+		structs.StatAddNice(prof.Builder, stts.CPU[i].Nice)
+		structs.StatAddSystem(prof.Builder, stts.CPU[i].System)
+		structs.StatAddIdle(prof.Builder, stts.CPU[i].Idle)
+		structs.StatAddIOWait(prof.Builder, stts.CPU[i].IOWait)
+		structs.StatAddIRQ(prof.Builder, stts.CPU[i].IRQ)
+		structs.StatAddSoftIRQ(prof.Builder, stts.CPU[i].SoftIRQ)
+		structs.StatAddSteal(prof.Builder, stts.CPU[i].Steal)
+		structs.StatAddQuest(prof.Builder, stts.CPU[i].Quest)
+		structs.StatAddQuestNice(prof.Builder, stts.CPU[i].QuestNice)
+		statsF[i] = structs.StatEnd(prof.Builder)
 	}
-	flat.StatsStartCPUVector(prof.Builder, len(statsF))
+	structs.StatsStartCPUVector(prof.Builder, len(statsF))
 	for i := len(statsF) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(statsF[i])
 	}
 	statsV := prof.Builder.EndVector(len(statsF))
-	flat.StatsStart(prof.Builder)
-	flat.StatsAddClkTck(prof.Builder, stts.ClkTck)
-	flat.StatsAddTimestamp(prof.Builder, stts.Timestamp)
-	flat.StatsAddCtxt(prof.Builder, stts.Ctxt)
-	flat.StatsAddBTime(prof.Builder, stts.BTime)
-	flat.StatsAddProcesses(prof.Builder, stts.Processes)
-	flat.StatsAddCPU(prof.Builder, statsV)
-	prof.Builder.Finish(flat.StatsEnd(prof.Builder))
+	structs.StatsStart(prof.Builder)
+	structs.StatsAddClkTck(prof.Builder, stts.ClkTck)
+	structs.StatsAddTimestamp(prof.Builder, stts.Timestamp)
+	structs.StatsAddCtxt(prof.Builder, stts.Ctxt)
+	structs.StatsAddBTime(prof.Builder, stts.BTime)
+	structs.StatsAddProcesses(prof.Builder, stts.Processes)
+	structs.StatsAddCPU(prof.Builder, statsV)
+	prof.Builder.Finish(structs.StatsEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -137,18 +137,18 @@ func Serialize(stts *stats.Stats) (p []byte, err error) {
 // as a stats.Stats.
 func Deserialize(p []byte) *stats.Stats {
 	stts := &stats.Stats{}
-	statF := &flat.Stat{}
-	statsFlat := flat.GetRootAsStats(p, 0)
-	stts.ClkTck = statsFlat.ClkTck()
-	stts.Timestamp = statsFlat.Timestamp()
-	stts.Ctxt = statsFlat.Ctxt()
-	stts.BTime = statsFlat.BTime()
-	stts.Processes = statsFlat.Processes()
-	len := statsFlat.CPULength()
+	statF := &structs.Stat{}
+	statsFlat := structs.GetRootAsStats(p, 0)
+	stts.ClkTck = statsstructs.ClkTck()
+	stts.Timestamp = statsstructs.Timestamp()
+	stts.Ctxt = statsstructs.Ctxt()
+	stts.BTime = statsstructs.BTime()
+	stts.Processes = statsstructs.Processes()
+	len := statsstructs.CPULength()
 	stts.CPU = make([]stats.Stat, len)
 	for i := 0; i < len; i++ {
 		var stat stats.Stat
-		if statsFlat.CPU(statF, i) {
+		if statsstructs.CPU(statF, i) {
 			stat.ID = string(statF.ID())
 			stat.User = statF.User()
 			stat.Nice = statF.Nice()

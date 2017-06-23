@@ -1,5 +1,5 @@
 // stats.fbs
-namespace flat;
+namespace structs;
 
 table Stats {
     ClkTck:short;
