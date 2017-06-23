@@ -62,7 +62,7 @@ type Ticker struct {
 	Data chan Info
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
+// NewTicker returns a new Ticker containing a Data channel that delivers
 // the data at intervals and an error channel that delivers any errors
 // encountered.  Stop the ticker to signal the ticker to stop running; it
 // does not close the Data channel.  Close the ticker to close all ticker

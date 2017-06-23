@@ -11,12 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of memmory information
+// Package mem handles Flatbuffer based processing of memmory information
 // using syscall.  Instead of returning a Go struct, it returns Flatbuffer
 // serialized bytes.  A function to deserialize the Flatbuffer serialized
 // bytes into a mem.Info struct is provided.  After the first use, the
 // flatbuffer builder is reused.
-package flat
+//
+// Note: the mem name is processors and not the final element of the import
+// path (flat). 
+package mem
 
 import (
 	"sync"
@@ -24,7 +27,8 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/sysinfo/mem"
+	m "github.com/mohae/joefriday/sysinfo/mem"
+	"github.com/mohae/joefriday/sysinfo/mem/flat/structs"
 )
 
 var builder = fb.NewBuilder(0)
@@ -32,7 +36,7 @@ var mu sync.Mutex
 
 // Get returns the current loadavg as Flatbuffer serialized bytes.
 func Get() (p []byte, err error) {
-	var inf mem.Info
+	var inf m.Info
 	err = inf.Get()
 	if err != nil {
 		return nil, err
@@ -41,20 +45,20 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize mem.Info using Flatbuffers.
-func Serialize(inf *mem.Info) []byte {
+func Serialize(inf *m.Info) []byte {
 	mu.Lock()
 	defer mu.Unlock()
 	// ensure the Builder is in a usable state.
 	builder.Reset()
-	InfoStart(builder)
-	InfoAddTimestamp(builder, inf.Timestamp)
-	InfoAddTotalRAM(builder, inf.TotalRAM)
-	InfoAddFreeRAM(builder, inf.FreeRAM)
-	InfoAddSharedRAM(builder, inf.SharedRAM)
-	InfoAddBufferRAM(builder, inf.BufferRAM)
-	InfoAddTotalSwap(builder, inf.TotalSwap)
-	InfoAddFreeSwap(builder, inf.FreeSwap)
-	builder.Finish(InfoEnd(builder))
+	structs.InfoStart(builder)
+	structs.InfoAddTimestamp(builder, inf.Timestamp)
+	structs.InfoAddTotalRAM(builder, inf.TotalRAM)
+	structs.InfoAddFreeRAM(builder, inf.FreeRAM)
+	structs.InfoAddSharedRAM(builder, inf.SharedRAM)
+	structs.InfoAddBufferRAM(builder, inf.BufferRAM)
+	structs.InfoAddTotalSwap(builder, inf.TotalSwap)
+	structs.InfoAddFreeSwap(builder, inf.FreeSwap)
+	builder.Finish(structs.InfoEnd(builder))
 	p := builder.Bytes[builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -64,9 +68,9 @@ func Serialize(inf *mem.Info) []byte {
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as mem.Info.
-func Deserialize(p []byte) *mem.Info {
-	infoFlat := GetRootAsInfo(p, 0)
-	info := &mem.Info{}
+func Deserialize(p []byte) *m.Info {
+	infoFlat := structs.GetRootAsInfo(p, 0)
+	info := &m.Info{}
 	info.Timestamp = infoFlat.Timestamp()
 	info.TotalRAM = infoFlat.TotalRAM()
 	info.FreeRAM = infoFlat.FreeRAM()

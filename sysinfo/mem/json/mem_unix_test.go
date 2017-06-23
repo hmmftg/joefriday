@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package mem
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/sysinfo/mem"
+	m "github.com/mohae/joefriday/sysinfo/mem"
 )
 
 func TestSerializeDeserialize(t *testing.T) {
@@ -26,12 +26,12 @@ func TestSerializeDeserialize(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	m, err := Deserialize(p)
+	inf, err := Deserialize(p)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	checkMemInfo("get", m, t)
+	checkMemInfo("get", inf, t)
 }
 
 func TestTicker(t *testing.T) {
@@ -49,12 +49,12 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			m, err := Deserialize(p)
+			inf, err := Deserialize(p)
 			if err != nil {
 				t.Errorf("unexpected error: %s", err)
 				continue
 			}
-			checkMemInfo("ticker", m, t)
+			checkMemInfo("ticker", inf, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -63,17 +63,17 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkMemInfo(n string, m *mem.Info, t *testing.T) {
-	if m.Timestamp == 0 {
+func checkMemInfo(n string, inf *m.Info, t *testing.T) {
+	if inf.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
-	if m.TotalRAM == 0 {
+	if inf.TotalRAM == 0 {
 		t.Errorf("%s: expected the TotalRAM to be non-zero, was 0", n)
 	}
-	if m.FreeRAM == 0 {
+	if inf.FreeRAM == 0 {
 		t.Errorf("%s: expected the FreeRAM to be non-zero, was 0", n)
 	}
-	t.Logf("%#v\n", m)
+	t.Logf("%#v\n", inf)
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -84,7 +84,7 @@ func BenchmarkGet(b *testing.B) {
 	_ = tmp
 }
 
-var inf *mem.Info
+var inf *m.Info
 
 func BenchmarkDeserialize(b *testing.B) {
 	b.StopTimer()

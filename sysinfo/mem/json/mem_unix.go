@@ -11,23 +11,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of memory information using
-// syscall.  Instead of returning a Go struct, it returns JSON serialized
-// bytes.  A function to deserialize the JSON serialized bytes into a
+// Package mem handles JSON based processing of memory information using
+// syscall. Instead of returning a Go struct, it returns JSON serialized
+// bytes. A function to deserialize the JSON serialized bytes into a
 // mem.Info struct is provided.
-package json
+//
+// Note: the mem name is processors and not the final element of the import
+// path (flat). 
+package mem
 
 import (
 	"encoding/json"
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/sysinfo/mem"
+	m "github.com/mohae/joefriday/sysinfo/mem"
 )
 
 // Get returns the current meminfo as JSON serialized bytes.
 func Get() (p []byte, err error) {
-	var inf mem.Info
+	var inf m.Info
 	err = inf.Get()
 	if err != nil {
 		return nil, err
@@ -37,17 +40,17 @@ func Get() (p []byte, err error) {
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // mem.Info.
-func Deserialize(p []byte) (*mem.Info, error) {
-	var info mem.Info
-	err := json.Unmarshal(p, &info)
+func Deserialize(p []byte) (*m.Info, error) {
+	var inf m.Info
+	err := json.Unmarshal(p, &inf)
 	if err != nil {
 		return nil, err
 	}
-	return &info, nil
+	return &inf, nil
 }
 
-// Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*mem.Info, error) {
+// Unmarshal is an alias for Deserialize.
+func Unmarshal(p []byte) (*m.Info, error) {
 	return Deserialize(p)
 }
 
