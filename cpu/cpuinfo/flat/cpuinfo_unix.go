@@ -26,7 +26,7 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	inf "github.com/mohae/joefriday/cpu/cpuinfo"
-	"github.com/mohae/joefriday/cpu/cpuinfo/flat/flat"
+	"github.com/mohae/joefriday/cpu/cpuinfo/flat/structs"
 )
 
 // Profiler is used to process the cpuinfo as Flatbuffers serialized bytes.
@@ -78,15 +78,15 @@ func (p *Profiler) Serialize(cpus *inf.CPUs) []byte {
 	for i, cpu := range cpus.CPU {
 		uoffs[i] = p.SerializeCPU(&cpu)
 	}
-	flat.CPUsStartCPUVector(p.Builder, len(uoffs))
+	structs.CPUsStartCPUVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	cpusV := p.Builder.EndVector(len(uoffs))
-	flat.CPUsStart(p.Builder)
-	flat.CPUsAddTimestamp(p.Builder, cpus.Timestamp)
-	flat.CPUsAddCPU(p.Builder, cpusV)
-	p.Builder.Finish(flat.CPUsEnd(p.Builder))
+	structs.CPUsStart(p.Builder)
+	structs.CPUsAddTimestamp(p.Builder, cpus.Timestamp)
+	structs.CPUsAddCPU(p.Builder, cpusV)
+	p.Builder.Finish(structs.CPUsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(b))
@@ -116,38 +116,38 @@ func (p *Profiler) SerializeCPU(cpu *inf.CPU) fb.UOffsetT {
 	for i, flag := range cpu.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
-	flat.CPUsStartCPUVector(p.Builder, len(uoffs))
+	structs.CPUsStartCPUVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	flags := p.Builder.EndVector(len(uoffs))
-	flat.CPUStart(p.Builder)
-	flat.CPUAddProcessor(p.Builder, cpu.Processor)
-	flat.CPUAddVendorID(p.Builder, vendorID)
-	flat.CPUAddCPUFamily(p.Builder, cpuFamily)
-	flat.CPUAddModel(p.Builder, model)
-	flat.CPUAddModelName(p.Builder, modelName)
-	flat.CPUAddStepping(p.Builder, stepping)
-	flat.CPUAddMicrocode(p.Builder, microcode)
-	flat.CPUAddCPUMHz(p.Builder, cpu.CPUMHz)
-	flat.CPUAddCacheSize(p.Builder, cacheSize)
-	flat.CPUAddPhysicalID(p.Builder, cpu.PhysicalID)
-	flat.CPUAddSiblings(p.Builder, cpu.Siblings)
-	flat.CPUAddCoreID(p.Builder, cpu.CoreID)
-	flat.CPUAddCPUCores(p.Builder, cpu.CPUCores)
-	flat.CPUAddApicID(p.Builder, cpu.ApicID)
-	flat.CPUAddInitialApicID(p.Builder, cpu.InitialApicID)
-	flat.CPUAddFPU(p.Builder, fpu)
-	flat.CPUAddFPUException(p.Builder, fpuException)
-	flat.CPUAddCPUIDLevel(p.Builder, cpuIDLevel)
-	flat.CPUAddWP(p.Builder, wp)
-	flat.CPUAddBogoMIPS(p.Builder, cpu.BogoMIPS)
-	flat.CPUAddCLFlushSize(p.Builder, clFlushSize)
-	flat.CPUAddCacheAlignment(p.Builder, cacheAlignment)
-	flat.CPUAddAddressSizes(p.Builder, addressSize)
-	flat.CPUAddPowerManagement(p.Builder, powerManagement)
-	flat.CPUAddFlags(p.Builder, flags)
-	return flat.CPUEnd(p.Builder)
+	structs.CPUStart(p.Builder)
+	structs.CPUAddProcessor(p.Builder, cpu.Processor)
+	structs.CPUAddVendorID(p.Builder, vendorID)
+	structs.CPUAddCPUFamily(p.Builder, cpuFamily)
+	structs.CPUAddModel(p.Builder, model)
+	structs.CPUAddModelName(p.Builder, modelName)
+	structs.CPUAddStepping(p.Builder, stepping)
+	structs.CPUAddMicrocode(p.Builder, microcode)
+	structs.CPUAddCPUMHz(p.Builder, cpu.CPUMHz)
+	structs.CPUAddCacheSize(p.Builder, cacheSize)
+	structs.CPUAddPhysicalID(p.Builder, cpu.PhysicalID)
+	structs.CPUAddSiblings(p.Builder, cpu.Siblings)
+	structs.CPUAddCoreID(p.Builder, cpu.CoreID)
+	structs.CPUAddCPUCores(p.Builder, cpu.CPUCores)
+	structs.CPUAddApicID(p.Builder, cpu.ApicID)
+	structs.CPUAddInitialApicID(p.Builder, cpu.InitialApicID)
+	structs.CPUAddFPU(p.Builder, fpu)
+	structs.CPUAddFPUException(p.Builder, fpuException)
+	structs.CPUAddCPUIDLevel(p.Builder, cpuIDLevel)
+	structs.CPUAddWP(p.Builder, wp)
+	structs.CPUAddBogoMIPS(p.Builder, cpu.BogoMIPS)
+	structs.CPUAddCLFlushSize(p.Builder, clFlushSize)
+	structs.CPUAddCacheAlignment(p.Builder, cacheAlignment)
+	structs.CPUAddAddressSizes(p.Builder, addressSize)
+	structs.CPUAddPowerManagement(p.Builder, powerManagement)
+	structs.CPUAddFlags(p.Builder, flags)
+	return structs.CPUEnd(p.Builder)
 }
 
 // Serialize Facts using the package global profiler.
@@ -166,10 +166,10 @@ func Serialize(cpus *inf.CPUs) (p []byte, err error) {
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as cpuinfo.CPUs.
 func Deserialize(p []byte) *inf.CPUs {
-	flatCPUs := flat.GetRootAsCPUs(p, 0)
+	flatCPUs := structs.GetRootAsCPUs(p, 0)
 	l := flatCPUs.CPULength()
 	cpus := &inf.CPUs{}
-	flatCPU := &flat.CPU{}
+	flatCPU := &structs.CPU{}
 	cpu := inf.CPU{}
 	cpus.Timestamp = flatCPUs.Timestamp()
 	for i := 0; i < l; i++ {

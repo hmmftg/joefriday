@@ -1,5 +1,5 @@
 // cpus.fbs
-namespace flat;
+namespace structs;
 
 table CPUs {
 	Timestamp:long;
