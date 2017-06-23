@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package uptime
 
 import (
 	"testing"
 	"time"
 
-	uptime "github.com/mohae/joefriday/sysinfo/uptime"
+	up "github.com/mohae/joefriday/sysinfo/uptime"
 )
 
 func TestSerializeDeserialize(t *testing.T) {
@@ -63,7 +63,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUptime(n string, u *uptime.Uptime, t *testing.T) {
+func checkUptime(n string, u *up.Info, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
@@ -82,7 +82,7 @@ func BenchmarkGet(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var u *uptime.Uptime
+	var u *up.Info
 	b.StopTimer()
 	p, _ := Get()
 	b.StartTimer()

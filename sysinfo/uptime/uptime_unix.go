@@ -21,34 +21,34 @@ import (
 	joe "github.com/mohae/joefriday"
 )
 
-// Uptime holds the current uptime and timestamp.
-type Uptime struct {
+// Info holds the current uptime and timestamp.
+type Info struct {
 	Timestamp int64
 	Uptime    int64 // sorry for the stutter
 }
 
-// Get gets the current uptime.
-func (u *Uptime) Get() error {
+// Get gets the current uptime Info.
+func (i *Info) Get() error {
 	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
 	if err != nil {
 		return err
 	}
-	u.Timestamp = time.Now().UTC().UnixNano()
-	u.Uptime = sysinfo.Uptime
+	i.Timestamp = time.Now().UTC().UnixNano()
+	i.Uptime = sysinfo.Uptime
 	return nil
 }
 
-// Get gets the current uptime.
-func Get() (u Uptime, err error) {
-	err = u.Get()
-	return u, err
+// Get gets the current uptime Info.
+func Get() (i Info, err error) {
+	err = i.Get()
+	return i, err
 }
 
-// Ticker deliivers the uptime at intervals.
+// Ticker deliivers the uptime Info at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan Uptime
+	Data chan Info
 }
 
 // NewTicker returns a new Ticker continaing a Data channel that delivers
@@ -57,7 +57,7 @@ type Ticker struct {
 // does not close the Data channel.  Close the ticker to close all ticker
 // channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Uptime)}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info)}
 	go t.Run()
 	return &t, nil
 }

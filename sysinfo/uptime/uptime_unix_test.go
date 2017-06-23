@@ -49,7 +49,7 @@ func TestTicker(t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	var u Uptime
+	var u Info
 	for i := 0; i < b.N; i++ {
 		u, _ = Get()
 	}

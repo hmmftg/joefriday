@@ -1,0 +1,9 @@
+// info.fbs
+namespace structs;
+
+table Info {
+	Timestamp:long;
+    Uptime:long;
+}
+
+root_type Info;
