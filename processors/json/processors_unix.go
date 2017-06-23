@@ -11,27 +11,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of Processor info.  Instead of
-// returning a Go struct, it returns JSON serialized bytes.  A function to
+// Package processors handles JSON based processing of Processor info. Instead
+// of returning a Go struct, it returns JSON serialized bytes. A function to
 // deserialize the JSON serialized bytes into a processors.Processors struct
 // is provided.
-package json
+//
+// Note: the package name is processors and not the final element of the import
+// path (json). 
+package processors
 
 import (
 	"encoding/json"
 	"sync"
 
-	"github.com/mohae/joefriday/processors"
+	procs "github.com/mohae/joefriday/processors"
 )
 
 // Profiler is used to process the processor info as JSON serialized bytes.
 type Profiler struct {
-	*processors.Profiler
+	*procs.Profiler
 }
 
-// Initializes and returns a cpu Facts piler.
+// Initializes and returns a processor profiler.
 func NewProfiler() (p *Profiler, err error) {
-	prof, err := processors.NewProfiler()
+	prof, err := procs.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +43,11 @@ func NewProfiler() (p *Profiler, err error) {
 
 // Get returns the current processor info as JSON serialized bytes.
 func (p *Profiler) Get() (b []byte, err error) {
-	procs, err := p.Profiler.Get()
+	proc, err := p.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return p.Serialize(procs)
+	return p.Serialize(proc)
 }
 
 var std *Profiler
@@ -64,13 +67,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize processors info as JSON
-func (p *Profiler) Serialize(proc *processors.Processors) ([]byte, error) {
+// Serialize processor info as JSON.
+func (p *Profiler) Serialize(proc *procs.Processors) ([]byte, error) {
 	return json.Marshal(proc)
 }
 
-// Serialize processors info as JSON using package globals.
-func Serialize(proc *processors.Processors) (p []byte, err error) {
+// Serialize processor info as JSON using package globals.
+func Serialize(proc *procs.Processors) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -83,19 +86,19 @@ func Serialize(proc *processors.Processors) (p []byte, err error) {
 }
 
 // Marshal is an alias for serialize.
-func (p *Profiler) Marshal(proc *processors.Processors) ([]byte, error) {
+func (p *Profiler) Marshal(proc *procs.Processors) ([]byte, error) {
 	return p.Serialize(proc)
 }
 
 // Marshal is an alias for Serialize using package globals.
-func Marshal(proc *processors.Processors) ([]byte, error) {
+func Marshal(proc *procs.Processors) ([]byte, error) {
 	return std.Serialize(proc)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // Processors
-func Deserialize(p []byte) (*processors.Processors, error) {
-	proc := &processors.Processors{}
+func Deserialize(p []byte) (*procs.Processors, error) {
+	proc := &procs.Processors{}
 	err := json.Unmarshal(p, proc)
 	if err != nil {
 		return nil, err
@@ -104,6 +107,6 @@ func Deserialize(p []byte) (*processors.Processors, error) {
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*processors.Processors, error) {
+func Unmarshal(p []byte) (*procs.Processors, error) {
 	return Deserialize(p)
 }

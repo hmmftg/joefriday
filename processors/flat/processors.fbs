@@ -1,13 +1,13 @@
 // processors.fbs
-namespace flat;
+namespace structs;
 
 table Processors {
 	Timestamp:long;
 	Count:short;
-	Chips:[Chip];
+	CPUs:[CPU];
 }
 
-table Chip {
+table CPU {
 	PhysicalID:short;
 	VendorID:string;
 	CPUFamily:string;

@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package processors
 
 import (
 	"testing"
 
-	"github.com/mohae/joefriday/processors"
+	procs "github.com/mohae/joefriday/processors"
 )
 
 func TestGet(t *testing.T) {
@@ -25,18 +25,18 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	procs, err := Unmarshal(proc)
+	p, err := Unmarshal(proc)
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	if procs.Timestamp == 0 {
+	if p.Timestamp == 0 {
 		t.Error("expected timestamp to be a non-zero value; got 0")
 	}
-	if len(procs.Chips) == 0 {
+	if len(p.CPUs) == 0 {
 		t.Error("expected CPUs to be a non-zero value; got 0")
 	}
-	for i, v := range procs.Chips {
+	for i, v := range p.CPUs {
 		if v.VendorID == "" {
 			t.Errorf("%d: expected vendor_id to have a value; it was empty", i)
 		}
@@ -44,7 +44,7 @@ func TestGet(t *testing.T) {
 			t.Errorf("%d: expected flags to have values; it was empty", i)
 		}
 	}
-	t.Logf("%#v\n", procs)
+	t.Logf("%#v\n", p)
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -83,7 +83,7 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var proc *processors.Processors
+	var proc *procs.Processors
 	b.StopTimer()
 	p, _ := NewProfiler()
 	pB, _ := p.Get()
@@ -95,7 +95,7 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var proc *processors.Processors
+	var proc *procs.Processors
 	b.StartTimer()
 	p, _ := NewProfiler()
 	procB, _ := p.Get()

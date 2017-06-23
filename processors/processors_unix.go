@@ -11,8 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package physcpu gathers information about the physical processors on a
-// system by parsing the information from /procs/cpuinfo.
+// Package processors gathers information about the physical processors on a
+// system by parsing the information from /procs/cpuinfo. This package gathers
+// basic information about each physical processor, cpu, on the system, with
+// one entry per processor. For more detailed information about each cpu core,
+// use joefriday/cpuinfo, which returns an entry per core.
 package processors
 
 import (
@@ -32,11 +35,11 @@ const procFile = "/proc/cpuinfo"
 type Processors struct {
 	Timestamp int64  `json:"timestamp"`
 	Count     int16  `json:"count"`
-	Chips     []Chip `json:"chips"`
+	CPUs     []CPU `json:"cpus"`
 }
 
-// Chip holds the /proc/cpuinfo for a single processor.
-type Chip struct {
+// CPU holds the /proc/cpuinfo for a single physical cpu.
+type CPU struct {
 	PhysicalID int16    `json:"physical_id"`
 	VendorID   string   `json:"vendor_id"`
 	CPUFamily  string   `json:"cpu_family"`
@@ -71,7 +74,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 		priorID                 int16
 		n                       uint64
 		v                       byte
-		chip                    Chip
+		cpu                     CPU
 		first                   = true // set to false after first proc
 		add                     bool
 	)
@@ -119,11 +122,11 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					chip.CPUCores = int16(n)
+					cpu.CPUCores = int16(n)
 					continue
 				}
 				if v == 'f' { // cpu family
-					chip.CPUFamily = string(prof.Val[nameLen:])
+					cpu.CPUFamily = string(prof.Val[nameLen:])
 					continue
 				}
 				if v == 'M' { // cpu MHz
@@ -131,32 +134,32 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					chip.CPUMHz = float32(f)
+					cpu.CPUMHz = float32(f)
 				}
 				continue
 			}
 			if prof.Val[5] == ' ' { // cache size
-				chip.CacheSize = string(prof.Val[nameLen:])
+				cpu.CacheSize = string(prof.Val[nameLen:])
 			}
 			continue
 		}
 		if v == 'f' {
 			if prof.Val[1] == 'l' { // flags
-				chip.Flags = strings.Split(string(prof.Val[nameLen:]), " ")
+				cpu.Flags = strings.Split(string(prof.Val[nameLen:]), " ")
 			}
 			continue
 		}
 		if v == 'm' {
 			if prof.Val[1] == 'o' {
 				if nameLen == 5 { // model
-					chip.Model = string(prof.Val[nameLen:])
+					cpu.Model = string(prof.Val[nameLen:])
 					continue
 				}
-				chip.ModelName = string(prof.Val[nameLen:])
+				cpu.ModelName = string(prof.Val[nameLen:])
 				continue
 			}
 			if prof.Val[1] == 'i' {
-				chip.Microcode = string(prof.Val[nameLen:])
+				cpu.Microcode = string(prof.Val[nameLen:])
 			}
 			continue
 		}
@@ -167,18 +170,18 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				chip.PhysicalID = int16(n)
-				if first || chip.PhysicalID != priorID {
+				cpu.PhysicalID = int16(n)
+				if first || cpu.PhysicalID != priorID {
 					add = true
 				}
-				priorID = chip.PhysicalID
+				priorID = cpu.PhysicalID
 				continue
 			}
 			// processor starts information about a logical processor; if there was a previously
 			// processed processor, only add it if it is a different physical processor.
 			if v == 'r' { // processor
 				if add {
-					procs.Chips = append(procs.Chips, chip)
+					procs.CPUs = append(procs.CPUs, cpu)
 					add = false
 				}
 				cpuCnt++
@@ -190,18 +193,18 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 			continue
 		}
 		if v == 's' && prof.Val[1] == 't' { // stepping
-			chip.Stepping = string(prof.Val[nameLen:])
+			cpu.Stepping = string(prof.Val[nameLen:])
 			continue
 		}
 		if v == 'v' { // vendor_id
-			chip.VendorID = string(prof.Val[nameLen:])
+			cpu.VendorID = string(prof.Val[nameLen:])
 		}
 	}
 	// append the current processor informatin
 	if add {
-		procs.Chips = append(procs.Chips, chip)
+		procs.CPUs = append(procs.CPUs, cpu)
 	}
-	procs.Count = int16(len(procs.Chips))
+	procs.Count = int16(len(procs.CPUs))
 	return procs, nil
 }
 
