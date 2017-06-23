@@ -11,51 +11,53 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package load returns the system's loadavg information using syscall.
-package load
+// Package loadavg handles JSON based processing of loadavg using syscall.
+// Instead of returning a Go struct, it returns JSON serialized bytes. A
+// function to deserialize the JSON serialized bytes into a load.LoadAvg
+// struct is provided.
+//
+// Note: the loadavg name is processors and not the final element of the import
+// path (json). 
+package loadavg
 
 import (
-	"syscall"
+	"encoding/json"
 	"time"
 
 	joe "github.com/mohae/joefriday"
+	load "github.com/mohae/joefriday/sysinfo/loadavg"
 )
 
-const LoadsScale = 65536
-
-// LoadAvg holds loadavg information and the timestamp of the data.
-type LoadAvg struct {
-	Timestamp int64
-	One       float64
-	Five      float64
-	Fifteen   float64
-}
-
-// Get the load average for the last 1, 5, and 15 minutes.
-func (l *LoadAvg) Get() error {
-	var sysinfo syscall.Sysinfo_t
-	err := syscall.Sysinfo(&sysinfo)
+// Get returns the current loadavg Info as JSON serialized bytes.
+func Get() (p []byte, err error) {
+	var i load.Info
+	err = i.Get()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	l.Timestamp = time.Now().UTC().UnixNano()
-	l.One = float64(sysinfo.Loads[0]) / LoadsScale
-	l.Five = float64(sysinfo.Loads[1]) / LoadsScale
-	l.Fifteen = float64(sysinfo.Loads[2]) / LoadsScale
-	return nil
+	return json.Marshal(&i)
 }
 
-// Get returns a LoadAvg populated with the 1, 5, and 15 minute values.
-func Get() (LoadAvg, error) {
-	var l LoadAvg
-	err := l.Get()
-	return l, err
+// Deserialize takes some JSON serialized bytes and unmarshals them as
+// loadavg.Info.
+func Deserialize(p []byte) (*load.Info, error) {
+	var i load.Info
+	err := json.Unmarshal(p, &i)
+	if err != nil {
+		return nil, err
+	}
+	return &i, nil
 }
 
-// Ticker delivers the loadavg at intervals.
+// Unmarshal is an alias for Deserialize
+func Unmarshal(p []byte) (*load.Info, error) {
+	return Deserialize(p)
+}
+
+// Ticker delivers loadavg.Info as JSON serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan LoadAvg
+	Data chan []byte
 }
 
 // NewTicker returns a new Ticker continaing a Data channel that delivers
@@ -64,7 +66,7 @@ type Ticker struct {
 // does not close the Data channel.  Close the ticker to close all ticker
 // channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan LoadAvg)}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()
 	return &t, nil
 }
@@ -77,12 +79,12 @@ func (t *Ticker) Run() {
 		case <-t.Done:
 			return
 		case <-t.Ticker.C:
-			s, err := Get()
+			p, err := Get()
 			if err != nil {
 				t.Errs <- err
 				continue
 			}
-			t.Data <- s
+			t.Data <- p
 		}
 	}
 }

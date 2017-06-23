@@ -1,11 +1,11 @@
 // loadavg.fbs
-namespace flat;
+namespace structs;
 
-table LoadAvg {
+table Info {
 	Timestamp:long;
     One:double;
     Five:double;
 	Fifteen:double;
 }
 
-root_type LoadAvg;
+root_type Info;

@@ -11,12 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of load using syscall.
+// Package loadavg handles Flatbuffer based processing of load using syscall.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
 // A function to deserialize the Flatbuffer serialized bytes into a
-// load.LoadAvg struct is provided.  After the first use, the flatbuffer
+// loadavg.Info struct is provided. After the first use, the flatbuffer
 // builder is reused.
-package flat
+//
+// Note: the loadavg name is processors and not the final element of the import
+// path (flat). 
+package loadavg
 
 import (
 	"sync"
@@ -24,7 +27,8 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/sysinfo/load"
+	load "github.com/mohae/joefriday/sysinfo/loadavg"
+	"github.com/mohae/joefriday/sysinfo/loadavg/flat/structs"
 )
 
 var builder = fb.NewBuilder(0)
@@ -32,7 +36,7 @@ var mu sync.Mutex
 
 // Get returns the current load as Flatbuffer serialized bytes.
 func Get() (p []byte, err error) {
-	var l load.LoadAvg
+	var l load.Info
 	err = l.Get()
 	if err != nil {
 		return nil, err
@@ -40,18 +44,18 @@ func Get() (p []byte, err error) {
 	return Serialize(&l), nil
 }
 
-// Serialize load.LoadAvg using Flatbuffers.
-func Serialize(l *load.LoadAvg) []byte {
+// Serialize loadAvg.Info using Flatbuffers.
+func Serialize(l *load.Info) []byte {
 	mu.Lock()
 	defer mu.Unlock()
 	// ensure the Builder is in a usable state.
 	builder.Reset()
-	LoadAvgStart(builder)
-	LoadAvgAddTimestamp(builder, l.Timestamp)
-	LoadAvgAddOne(builder, l.One)
-	LoadAvgAddFive(builder, l.Five)
-	LoadAvgAddFifteen(builder, l.Fifteen)
-	builder.Finish(LoadAvgEnd(builder))
+	structs.InfoStart(builder)
+	structs.InfoAddTimestamp(builder, l.Timestamp)
+	structs.InfoAddOne(builder, l.One)
+	structs.InfoAddFive(builder, l.Five)
+	structs.InfoAddFifteen(builder, l.Fifteen)
+	builder.Finish(structs.InfoEnd(builder))
 	p := builder.Bytes[builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -60,10 +64,10 @@ func Serialize(l *load.LoadAvg) []byte {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as load.LoadAvg.
-func Deserialize(p []byte) *load.LoadAvg {
-	lF := GetRootAsLoadAvg(p, 0)
-	l := &load.LoadAvg{}
+// as loadavg.Info.
+func Deserialize(p []byte) *load.Info {
+	lF := structs.GetRootAsInfo(p, 0)
+	l := &load.Info{}
 	l.Timestamp = lF.Timestamp()
 	l.One = lF.One()
 	l.Five = lF.Five()
@@ -71,7 +75,7 @@ func Deserialize(p []byte) *load.LoadAvg {
 	return l
 }
 
-// Ticker delivers load.LoadAvg as Flatbuffers serialized bytes at
+// Ticker delivers loadavg.Info as Flatbuffers serialized bytes at
 // intervals.
 type Ticker struct {
 	*joe.Ticker

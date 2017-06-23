@@ -1,4 +1,4 @@
-package load
+package loadavg
 
 import (
 	"testing"
@@ -37,21 +37,21 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkLoadAvg(n string, l LoadAvg, t *testing.T) {
-	if l.One == 0 {
+func checkLoadAvg(n string, i Info, t *testing.T) {
+	if i.One == 0 {
 		t.Errorf("%s: expected the 1 minute load avg to be non-zero, was 0", n)
 	}
-	if l.Five == 0 {
+	if i.Five == 0 {
 		t.Errorf("%s: expected the 5 minute load avg to be non-zero, was 0", n)
 	}
-	if l.Fifteen == 0 {
+	if i.Fifteen == 0 {
 		t.Errorf("%s: expected the 15 minute load avg to be non-zero, was 0", n)
 	}
-	t.Logf("%#v\n", l)
+	t.Logf("%#v\n", i)
 }
 
 func BenchmarkLoadAvg(b *testing.B) {
-	var tmp LoadAvg
+	var tmp Info
 	for i := 0; i < b.N; i++ {
 		_ = tmp.Get()
 	}

@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package loadavg
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/sysinfo/load"
+	load "github.com/mohae/joefriday/sysinfo/loadavg"
 )
 
 func TestSerializeDeserialize(t *testing.T) {
@@ -26,8 +26,12 @@ func TestSerializeDeserialize(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	l := Deserialize(p)
-	checkLoadAvg("get", l, t)
+	l, err := Deserialize(p)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+		return
+	}
+	checkMemInfo("get", l, t)
 }
 
 func TestTicker(t *testing.T) {
@@ -45,8 +49,12 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			l := Deserialize(p)
-			checkLoadAvg("ticker", l, t)
+			l, err := Deserialize(p)
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+				continue
+			}
+			checkMemInfo("ticker", l, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -55,20 +63,20 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkLoadAvg(n string, l *load.LoadAvg, t *testing.T) {
-	if l.Timestamp == 0 {
+func checkMemInfo(n string, i *load.Info, t *testing.T) {
+	if i.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
-	if l.One == 0 {
+	if i.One == 0 {
 		t.Errorf("%s: expected the One to be non-zero, was 0", n)
 	}
-	if l.Five == 0 {
+	if i.Five == 0 {
 		t.Errorf("%s: expected the Five to be non-zero, was 0", n)
 	}
-	if l.Fifteen == 0 {
+	if i.Fifteen == 0 {
 		t.Errorf("%s: expected the Fifteen to be non-zero, was 0", n)
 	}
-	t.Logf("%#v\n", l)
+	t.Logf("%#v\n", i)
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -79,25 +87,13 @@ func BenchmarkGet(b *testing.B) {
 	_ = tmp
 }
 
-func BenchmarkSerialize(b *testing.B) {
-	var tmp []byte
-	var l load.LoadAvg
-	b.StopTimer()
-	l.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		tmp = Serialize(&l)
-	}
-	_ = tmp
-}
-
 func BenchmarkDeserialize(b *testing.B) {
-	var l *load.LoadAvg
+	var l *load.Info
 	b.StopTimer()
 	p, _ := Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		l = Deserialize(p)
+		l, _ = Deserialize(p)
 	}
 	_ = l
 }

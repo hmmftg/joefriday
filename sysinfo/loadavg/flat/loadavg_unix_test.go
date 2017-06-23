@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package loadavg
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/sysinfo/load"
+	load "github.com/mohae/joefriday/sysinfo/loadavg"
 )
 
 func TestSerializeDeserialize(t *testing.T) {
@@ -26,12 +26,8 @@ func TestSerializeDeserialize(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	l, err := Deserialize(p)
-	if err != nil {
-		t.Errorf("unexpected error: %s", err)
-		return
-	}
-	checkMemInfo("get", l, t)
+	l := Deserialize(p)
+	checkLoadAvg("get", l, t)
 }
 
 func TestTicker(t *testing.T) {
@@ -49,12 +45,8 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			l, err := Deserialize(p)
-			if err != nil {
-				t.Errorf("unexpected error: %s", err)
-				continue
-			}
-			checkMemInfo("ticker", l, t)
+			l := Deserialize(p)
+			checkLoadAvg("ticker", l, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -63,7 +55,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkMemInfo(n string, l *load.LoadAvg, t *testing.T) {
+func checkLoadAvg(n string, l *load.Info, t *testing.T) {
 	if l.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
@@ -87,13 +79,25 @@ func BenchmarkGet(b *testing.B) {
 	_ = tmp
 }
 
+func BenchmarkSerialize(b *testing.B) {
+	var tmp []byte
+	var l load.Info
+	b.StopTimer()
+	l.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp = Serialize(&l)
+	}
+	_ = tmp
+}
+
 func BenchmarkDeserialize(b *testing.B) {
-	var l *load.LoadAvg
+	var l *load.Info
 	b.StopTimer()
 	p, _ := Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		l, _ = Deserialize(p)
+		l = Deserialize(p)
 	}
 	_ = l
 }
