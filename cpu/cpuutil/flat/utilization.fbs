@@ -1,5 +1,5 @@
 // utilization.fbs
-namespace flat;
+namespace structs;
 
 table Utilization {
     Timestamp:long;

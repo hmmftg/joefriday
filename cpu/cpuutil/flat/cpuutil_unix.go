@@ -28,7 +28,7 @@ import (
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
 	util "github.com/mohae/joefriday/cpu/cpuutil"
-	"github.com/mohae/joefriday/cpu/cpuutil/flat/flat"
+	"github.com/mohae/joefriday/cpu/cpuutil/flat/structs"
 )
 
 // Profiler is used to process the cpu utilization information using
@@ -85,29 +85,29 @@ func (prof *Profiler) Serialize(u *util.Utilization) []byte {
 		ids[i] = prof.Builder.CreateString(u.CPU[i].ID)
 	}
 	for i := 0; i < len(utils); i++ {
-		flat.UtilStart(prof.Builder)
-		flat.UtilAddID(prof.Builder, ids[i])
-		flat.UtilAddUsage(prof.Builder, u.CPU[i].Usage)
-		flat.UtilAddUser(prof.Builder, u.CPU[i].User)
-		flat.UtilAddNice(prof.Builder, u.CPU[i].Nice)
-		flat.UtilAddSystem(prof.Builder, u.CPU[i].System)
-		flat.UtilAddIdle(prof.Builder, u.CPU[i].Idle)
-		flat.UtilAddIOWait(prof.Builder, u.CPU[i].IOWait)
-		utils[i] = flat.UtilEnd(prof.Builder)
+		structs.UtilStart(prof.Builder)
+		structs.UtilAddID(prof.Builder, ids[i])
+		structs.UtilAddUsage(prof.Builder, u.CPU[i].Usage)
+		structs.UtilAddUser(prof.Builder, u.CPU[i].User)
+		structs.UtilAddNice(prof.Builder, u.CPU[i].Nice)
+		structs.UtilAddSystem(prof.Builder, u.CPU[i].System)
+		structs.UtilAddIdle(prof.Builder, u.CPU[i].Idle)
+		structs.UtilAddIOWait(prof.Builder, u.CPU[i].IOWait)
+		utils[i] = structs.UtilEnd(prof.Builder)
 	}
-	flat.UtilizationStartCPUVector(prof.Builder, len(utils))
+	structs.UtilizationStartCPUVector(prof.Builder, len(utils))
 	for i := len(utils) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(utils[i])
 	}
 	utilsV := prof.Builder.EndVector(len(utils))
-	flat.UtilizationStart(prof.Builder)
-	flat.UtilizationAddTimestamp(prof.Builder, u.Timestamp)
-	flat.UtilizationAddTimeDelta(prof.Builder, u.TimeDelta)
-	flat.UtilizationAddBTimeDelta(prof.Builder, u.BTimeDelta)
-	flat.UtilizationAddCtxtDelta(prof.Builder, u.CtxtDelta)
-	flat.UtilizationAddProcesses(prof.Builder, u.Processes)
-	flat.UtilizationAddCPU(prof.Builder, utilsV)
-	prof.Builder.Finish(flat.UtilizationEnd(prof.Builder))
+	structs.UtilizationStart(prof.Builder)
+	structs.UtilizationAddTimestamp(prof.Builder, u.Timestamp)
+	structs.UtilizationAddTimeDelta(prof.Builder, u.TimeDelta)
+	structs.UtilizationAddBTimeDelta(prof.Builder, u.BTimeDelta)
+	structs.UtilizationAddCtxtDelta(prof.Builder, u.CtxtDelta)
+	structs.UtilizationAddProcesses(prof.Builder, u.Processes)
+	structs.UtilizationAddCPU(prof.Builder, utilsV)
+	prof.Builder.Finish(structs.UtilizationEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -132,8 +132,8 @@ func Serialize(u *util.Utilization) (p []byte, err error) {
 // as a util.Utilization.
 func Deserialize(p []byte) *util.Utilization {
 	u := &util.Utilization{}
-	uF := &flat.Util{}
-	flatUtil := flat.GetRootAsUtilization(p, 0)
+	uF := &structs.Util{}
+	flatUtil := structs.GetRootAsUtilization(p, 0)
 	u.Timestamp = flatUtil.Timestamp()
 	u.TimeDelta = flatUtil.TimeDelta()
 	u.CtxtDelta = flatUtil.CtxtDelta()
