@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package meminfo
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/mem"
+	mem "github.com/mohae/joefriday/mem/meminfo"
 )
 
 func TestSerializeDeserialize(t *testing.T) {

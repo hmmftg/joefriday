@@ -11,12 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of /proc/meminfo.
+// Package meminfo handles Flatbuffer based processing of /proc/meminfo.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
-// A function to deserialize the Flatbuffer serialized bytes into a
-// mem.Info struct is provided.  After the first use, the flatbuffer
-// builder is reused.
-package flat
+// A function to deserialize the Flatbuffer serialized bytes into a mem.Info
+// struct is provided. After the first use, the flatbuffer builder is reused.
+//
+// Note: the package name is meminfo and not the final element of the import
+// path (flat). 
+package meminfo
 
 import (
 	"io"
@@ -26,7 +28,8 @@ import (
 	"github.com/SermoDigital/helpers"
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/mem"
+	mem "github.com/mohae/joefriday/mem/meminfo"
+	"github.com/mohae/joefriday/mem/meminfo/flat/structs"
 )
 
 // Profiler is used to process the /proc/meminfo file using Flatbuffers.
@@ -35,7 +38,7 @@ type Profiler struct {
 	*fb.Builder
 }
 
-// Initializes and returns a mem info profiler that utilizes FlatBuffers.
+// Initializes and returns a meminfo.Info profiler that utilizes FlatBuffers.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := mem.NewProfiler()
 	if err != nil {
@@ -44,7 +47,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current meminfo as Flatbuffer serialized bytes.
+// Get returns the current meminfo.Info as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -56,7 +59,7 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current meminfo as Flatbuffer serialized bytes using the
+// Get returns the current meminfo.Info as Flatbuffer serialized bytes using the
 // package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -70,56 +73,56 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize mem.Info using Flatbuffers.
+// Serialize meminfo.Info using Flatbuffers.
 func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	InfoStart(prof.Builder)
-	InfoAddTimestamp(prof.Builder, inf.Timestamp)
-	InfoAddActive(prof.Builder, inf.Active)
-	InfoAddActiveAnon(prof.Builder, inf.ActiveAnon)
-	InfoAddActiveFile(prof.Builder, inf.ActiveFile)
-	InfoAddAnonHugePages(prof.Builder, inf.AnonHugePages)
-	InfoAddAnonPages(prof.Builder, inf.AnonPages)
-	InfoAddBounce(prof.Builder, inf.Bounce)
-	InfoAddBuffers(prof.Builder, inf.Buffers)
-	InfoAddCached(prof.Builder, inf.Cached)
-	InfoAddCommitLimit(prof.Builder, inf.CommitLimit)
-	InfoAddCommittedAS(prof.Builder, inf.CommittedAS)
-	InfoAddDirectMap4K(prof.Builder, inf.DirectMap4K)
-	InfoAddDirectMap2M(prof.Builder, inf.DirectMap2M)
-	InfoAddDirty(prof.Builder, inf.Dirty)
-	InfoAddHardwareCorrupted(prof.Builder, inf.HardwareCorrupted)
-	InfoAddHugePagesFree(prof.Builder, inf.HugePagesFree)
-	InfoAddHugePagesRsvd(prof.Builder, inf.HugePagesRsvd)
-	InfoAddHugePagesSize(prof.Builder, inf.HugePagesSize)
-	InfoAddHugePagesSurp(prof.Builder, inf.HugePagesSurp)
-	InfoAddHugePagesTotal(prof.Builder, inf.HugePagesTotal)
-	InfoAddInactive(prof.Builder, inf.Inactive)
-	InfoAddInactiveAnon(prof.Builder, inf.InactiveAnon)
-	InfoAddInactiveFile(prof.Builder, inf.InactiveFile)
-	InfoAddKernelStack(prof.Builder, inf.KernelStack)
-	InfoAddMapped(prof.Builder, inf.Mapped)
-	InfoAddMemAvailable(prof.Builder, inf.MemAvailable)
-	InfoAddMemFree(prof.Builder, inf.MemFree)
-	InfoAddMemTotal(prof.Builder, inf.MemTotal)
-	InfoAddMlocked(prof.Builder, inf.Mlocked)
-	InfoAddNFSUnstable(prof.Builder, inf.NFSUnstable)
-	InfoAddPageTables(prof.Builder, inf.PageTables)
-	InfoAddShmem(prof.Builder, inf.Shmem)
-	InfoAddSlab(prof.Builder, inf.Slab)
-	InfoAddSReclaimable(prof.Builder, inf.SReclaimable)
-	InfoAddSUnreclaim(prof.Builder, inf.SUnreclaim)
-	InfoAddSwapCached(prof.Builder, inf.SwapCached)
-	InfoAddSwapFree(prof.Builder, inf.SwapFree)
-	InfoAddSwapTotal(prof.Builder, inf.SwapTotal)
-	InfoAddUnevictable(prof.Builder, inf.Unevictable)
-	InfoAddVmallocChunk(prof.Builder, inf.VmallocChunk)
-	InfoAddVmallocTotal(prof.Builder, inf.VmallocTotal)
-	InfoAddVmallocUsed(prof.Builder, inf.VmallocUsed)
-	InfoAddWriteback(prof.Builder, inf.Writeback)
-	InfoAddWritebackTmp(prof.Builder, inf.WritebackTmp)
-	prof.Builder.Finish(InfoEnd(prof.Builder))
+	structs.InfoStart(prof.Builder)
+	structs.InfoAddTimestamp(prof.Builder, inf.Timestamp)
+	structs.InfoAddActive(prof.Builder, inf.Active)
+	structs.InfoAddActiveAnon(prof.Builder, inf.ActiveAnon)
+	structs.InfoAddActiveFile(prof.Builder, inf.ActiveFile)
+	structs.InfoAddAnonHugePages(prof.Builder, inf.AnonHugePages)
+	structs.InfoAddAnonPages(prof.Builder, inf.AnonPages)
+	structs.InfoAddBounce(prof.Builder, inf.Bounce)
+	structs.InfoAddBuffers(prof.Builder, inf.Buffers)
+	structs.InfoAddCached(prof.Builder, inf.Cached)
+	structs.InfoAddCommitLimit(prof.Builder, inf.CommitLimit)
+	structs.InfoAddCommittedAS(prof.Builder, inf.CommittedAS)
+	structs.InfoAddDirectMap4K(prof.Builder, inf.DirectMap4K)
+	structs.InfoAddDirectMap2M(prof.Builder, inf.DirectMap2M)
+	structs.InfoAddDirty(prof.Builder, inf.Dirty)
+	structs.InfoAddHardwareCorrupted(prof.Builder, inf.HardwareCorrupted)
+	structs.InfoAddHugePagesFree(prof.Builder, inf.HugePagesFree)
+	structs.InfoAddHugePagesRsvd(prof.Builder, inf.HugePagesRsvd)
+	structs.InfoAddHugePagesSize(prof.Builder, inf.HugePagesSize)
+	structs.InfoAddHugePagesSurp(prof.Builder, inf.HugePagesSurp)
+	structs.InfoAddHugePagesTotal(prof.Builder, inf.HugePagesTotal)
+	structs.InfoAddInactive(prof.Builder, inf.Inactive)
+	structs.InfoAddInactiveAnon(prof.Builder, inf.InactiveAnon)
+	structs.InfoAddInactiveFile(prof.Builder, inf.InactiveFile)
+	structs.InfoAddKernelStack(prof.Builder, inf.KernelStack)
+	structs.InfoAddMapped(prof.Builder, inf.Mapped)
+	structs.InfoAddMemAvailable(prof.Builder, inf.MemAvailable)
+	structs.InfoAddMemFree(prof.Builder, inf.MemFree)
+	structs.InfoAddMemTotal(prof.Builder, inf.MemTotal)
+	structs.InfoAddMlocked(prof.Builder, inf.Mlocked)
+	structs.InfoAddNFSUnstable(prof.Builder, inf.NFSUnstable)
+	structs.InfoAddPageTables(prof.Builder, inf.PageTables)
+	structs.InfoAddShmem(prof.Builder, inf.Shmem)
+	structs.InfoAddSlab(prof.Builder, inf.Slab)
+	structs.InfoAddSReclaimable(prof.Builder, inf.SReclaimable)
+	structs.InfoAddSUnreclaim(prof.Builder, inf.SUnreclaim)
+	structs.InfoAddSwapCached(prof.Builder, inf.SwapCached)
+	structs.InfoAddSwapFree(prof.Builder, inf.SwapFree)
+	structs.InfoAddSwapTotal(prof.Builder, inf.SwapTotal)
+	structs.InfoAddUnevictable(prof.Builder, inf.Unevictable)
+	structs.InfoAddVmallocChunk(prof.Builder, inf.VmallocChunk)
+	structs.InfoAddVmallocTotal(prof.Builder, inf.VmallocTotal)
+	structs.InfoAddVmallocUsed(prof.Builder, inf.VmallocUsed)
+	structs.InfoAddWriteback(prof.Builder, inf.Writeback)
+	structs.InfoAddWritebackTmp(prof.Builder, inf.WritebackTmp)
+	prof.Builder.Finish(structs.InfoEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -143,7 +146,7 @@ func Serialize(inf *mem.Info) (p []byte, err error) {
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as mem.Info.
 func Deserialize(p []byte) *mem.Info {
-	infoFlat := GetRootAsInfo(p, 0)
+	infoFlat := structs.GetRootAsInfo(p, 0)
 	info := &mem.Info{}
 	info.Timestamp = infoFlat.Timestamp()
 	info.Active = infoFlat.Active()
@@ -236,8 +239,8 @@ Tick:
 				t.Errs <- err
 				continue
 			}
-			InfoStart(t.Builder)
-			InfoAddTimestamp(t.Builder, time.Now().UTC().UnixNano())
+			structs.InfoStart(t.Builder)
+			structs.InfoAddTimestamp(t.Builder, time.Now().UTC().UnixNano())
 			for {
 				t.Val = t.Val[:0]
 				t.Line, err = t.Buf.ReadSlice('\n')
@@ -283,173 +286,173 @@ Tick:
 				if v == 'A' {
 					if t.Val[5] == 'e' {
 						if nameLen == 6 {
-							InfoAddActive(t.Builder, n)
+							structs.InfoAddActive(t.Builder, n)
 							continue
 						}
 						if t.Val[7] == 'a' {
-							InfoAddActiveAnon(t.Builder, n)
+							structs.InfoAddActiveAnon(t.Builder, n)
 							continue
 						}
-						InfoAddActiveFile(t.Builder, n)
+						structs.InfoAddActiveFile(t.Builder, n)
 						continue
 					}
 					if nameLen == 9 {
-						InfoAddAnonPages(t.Builder, n)
+						structs.InfoAddAnonPages(t.Builder, n)
 						continue
 					}
-					InfoAddAnonHugePages(t.Builder, n)
+					structs.InfoAddAnonHugePages(t.Builder, n)
 					continue
 				}
 				if v == 'C' {
 					if nameLen == 6 {
-						InfoAddCached(t.Builder, n)
+						structs.InfoAddCached(t.Builder, n)
 						continue
 					}
 					if nameLen == 11 {
-						InfoAddCommitLimit(t.Builder, n)
+						structs.InfoAddCommitLimit(t.Builder, n)
 						continue
 					}
-					InfoAddCommittedAS(t.Builder, n)
+					structs.InfoAddCommittedAS(t.Builder, n)
 					continue
 				}
 				if v == 'D' {
 					if nameLen == 5 {
-						InfoAddDirty(t.Builder, n)
+						structs.InfoAddDirty(t.Builder, n)
 						continue
 					}
 					if t.Val[10] == 'k' {
-						InfoAddDirectMap4K(t.Builder, n)
+						structs.InfoAddDirectMap4K(t.Builder, n)
 						continue
 					}
-					InfoAddDirectMap2M(t.Builder, n)
+					structs.InfoAddDirectMap2M(t.Builder, n)
 					continue
 				}
 				if v == 'H' {
 					if nameLen == 14 {
 						if t.Val[10] == 'F' {
-							InfoAddHugePagesFree(t.Builder, n)
+							structs.InfoAddHugePagesFree(t.Builder, n)
 							continue
 						}
 						if t.Val[10] == 'R' {
-							InfoAddHugePagesRsvd(t.Builder, n)
+							structs.InfoAddHugePagesRsvd(t.Builder, n)
 							continue
 						}
-						InfoAddHugePagesSurp(t.Builder, n)
+						structs.InfoAddHugePagesSurp(t.Builder, n)
 					}
 					if t.Val[1] == 'a' {
-						InfoAddHardwareCorrupted(t.Builder, n)
+						structs.InfoAddHardwareCorrupted(t.Builder, n)
 						continue
 					}
 					if t.Val[9] == 'i' {
-						InfoAddHugePagesSize(t.Builder, n)
+						structs.InfoAddHugePagesSize(t.Builder, n)
 						continue
 					}
-					InfoAddHugePagesTotal(t.Builder, n)
+					structs.InfoAddHugePagesTotal(t.Builder, n)
 					continue
 				}
 				if v == 'I' {
 					if nameLen == 8 {
-						InfoAddInactive(t.Builder, n)
+						structs.InfoAddInactive(t.Builder, n)
 						continue
 					}
 					if t.Val[9] == 'a' {
-						InfoAddInactiveAnon(t.Builder, n)
+						structs.InfoAddInactiveAnon(t.Builder, n)
 						continue
 					}
-					InfoAddInactiveFile(t.Builder, n)
+					structs.InfoAddInactiveFile(t.Builder, n)
 				}
 				if v == 'M' {
 					v = t.Val[3]
 					if nameLen < 8 {
 						if v == 'p' {
-							InfoAddMapped(t.Builder, n)
+							structs.InfoAddMapped(t.Builder, n)
 							continue
 						}
 						if v == 'F' {
-							InfoAddMemFree(t.Builder, n)
+							structs.InfoAddMemFree(t.Builder, n)
 							continue
 						}
-						InfoAddMlocked(t.Builder, n)
+						structs.InfoAddMlocked(t.Builder, n)
 						continue
 					}
 					if v == 'A' {
-						InfoAddMemAvailable(t.Builder, n)
+						structs.InfoAddMemAvailable(t.Builder, n)
 						continue
 					}
-					InfoAddMemTotal(t.Builder, n)
+					structs.InfoAddMemTotal(t.Builder, n)
 					continue
 				}
 				if v == 'S' {
 					v = t.Val[1]
 					if v == 'w' {
 						if t.Val[4] == 'C' {
-							InfoAddSwapCached(t.Builder, n)
+							structs.InfoAddSwapCached(t.Builder, n)
 							continue
 						}
 						if t.Val[4] == 'F' {
-							InfoAddSwapFree(t.Builder, n)
+							structs.InfoAddSwapFree(t.Builder, n)
 							continue
 						}
-						InfoAddSwapTotal(t.Builder, n)
+						structs.InfoAddSwapTotal(t.Builder, n)
 						continue
 					}
 					if v == 'h' {
-						InfoAddShmem(t.Builder, n)
+						structs.InfoAddShmem(t.Builder, n)
 						continue
 					}
 					if v == 'l' {
-						InfoAddSlab(t.Builder, n)
+						structs.InfoAddSlab(t.Builder, n)
 						continue
 					}
 					if v == 'R' {
-						InfoAddSReclaimable(t.Builder, n)
+						structs.InfoAddSReclaimable(t.Builder, n)
 						continue
 					}
-					InfoAddSUnreclaim(t.Builder, n)
+					structs.InfoAddSUnreclaim(t.Builder, n)
 					continue
 				}
 				if v == 'V' {
 					if t.Val[8] == 'C' {
-						InfoAddVmallocChunk(t.Builder, n)
+						structs.InfoAddVmallocChunk(t.Builder, n)
 						continue
 					}
 					if t.Val[8] == 'T' {
-						InfoAddVmallocTotal(t.Builder, n)
+						structs.InfoAddVmallocTotal(t.Builder, n)
 						continue
 					}
-					InfoAddVmallocUsed(t.Builder, n)
+					structs.InfoAddVmallocUsed(t.Builder, n)
 					continue
 				}
 				if v == 'W' {
 					if nameLen == 9 {
-						InfoAddWriteback(t.Builder, n)
+						structs.InfoAddWriteback(t.Builder, n)
 						continue
 					}
-					InfoAddWritebackTmp(t.Builder, n)
+					structs.InfoAddWritebackTmp(t.Builder, n)
 					continue
 				}
 				if v == 'B' {
 					if nameLen == 6 {
-						InfoAddBounce(t.Builder, n)
+						structs.InfoAddBounce(t.Builder, n)
 						continue
 					}
-					InfoAddBuffers(t.Builder, n)
+					structs.InfoAddBuffers(t.Builder, n)
 					continue
 				}
 				if v == 'K' {
-					InfoAddKernelStack(t.Builder, n)
+					structs.InfoAddKernelStack(t.Builder, n)
 					continue
 				}
 				if v == 'N' {
-					InfoAddNFSUnstable(t.Builder, n)
+					structs.InfoAddNFSUnstable(t.Builder, n)
 					continue
 				}
 				if v == 'P' {
-					InfoAddPageTables(t.Builder, n)
+					structs.InfoAddPageTables(t.Builder, n)
 				}
-				InfoAddUnevictable(t.Builder, n)
+				structs.InfoAddUnevictable(t.Builder, n)
 			}
-			t.Builder.Finish(InfoEnd(t.Builder))
+			t.Builder.Finish(structs.InfoEnd(t.Builder))
 			t.Data <- t.Profiler.Builder.Bytes[t.Builder.Head():]
 		}
 	}

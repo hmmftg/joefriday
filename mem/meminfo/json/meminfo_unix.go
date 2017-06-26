@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of /proc/meminfo.  Instead of
+// Package meminfo handles JSON based processing of /proc/meminfo.  Instead of
 // returning a Go struct, it returns JSON serialized bytes.  A function to
 // deserialize the JSON serialized bytes into a mem.Info struct is
 // provided.
-package json
+//
+// Note: the package name is meminfo and not the final element of the import
+// path (flat). 
+package meminfo
 
 import (
 	"encoding/json"
@@ -23,7 +26,7 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/mem"
+	mem "github.com/mohae/joefriday/mem/meminfo"
 )
 
 // Profiler is used to process the /proc/meminfo file using JSON.

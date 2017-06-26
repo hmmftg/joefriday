@@ -11,9 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem gets and processes mem info: information for the /proc/meminfo
-// file.
-package mem
+// Package meminfo gets and processes the /proc/meminfo file.
+package meminfo
 
 import (
 	"io"

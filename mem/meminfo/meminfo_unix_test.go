@@ -11,22 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package meminfo
 
 import (
 	"testing"
 	"time"
-
-	"github.com/mohae/joefriday/mem"
 )
 
 func TestGet(t *testing.T) {
-	nf, err := Get()
-	if err != nil {
-		t.Errorf("got %s, want nil", err)
-		return
-	}
-	inf, err := Unmarshal(nf)
+	inf, err := Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
@@ -49,12 +42,7 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			inf, err := Unmarshal(v)
-			if err != nil {
-				t.Errorf("got %s, want nil", err)
-				return
-			}
-			checkInfo("ticker", *inf, t)
+			checkInfo("ticker", v, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -63,7 +51,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkInfo(n string, i mem.Info, t *testing.T) {
+func checkInfo(n string, i Info, t *testing.T) {
 	if i.Timestamp == 0 {
 		t.Errorf("%s: expected timestamp to be a non-zero value, got 0", n)
 	}
@@ -149,60 +137,12 @@ func checkInfo(n string, i mem.Info, t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	var jsn []byte
+	var inf *Info
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Get()
-	}
-	_ = jsn
-}
-
-func BenchmarkSerialize(b *testing.B) {
-	var jsn []byte
-	b.StopTimer()
-	p, _ := NewProfiler()
-	v, _ := p.Profiler.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Serialize(v)
-	}
-	_ = jsn
-}
-
-func BenchmarkMarshal(b *testing.B) {
-	var jsn []byte
-	b.StopTimer()
-	p, _ := NewProfiler()
-	v, _ := p.Profiler.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Marshal(v)
-	}
-	_ = jsn
-}
-
-var inf *mem.Info
-
-func BenchmarkDeserialize(b *testing.B) {
-	b.StopTimer()
-	p, _ := NewProfiler()
-	tmp, _ := p.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		inf, _ = Deserialize(tmp)
-	}
-	_ = inf
-}
-
-func BenchmarkUnmarshal(b *testing.B) {
-	b.StartTimer()
-	p, _ := NewProfiler()
-	tmp, _ := p.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		inf, _ = Unmarshal(tmp)
+		inf, _ = p.Get()
 	}
 	_ = inf
 }
