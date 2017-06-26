@@ -11,9 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package basic gets and processes basic mem info: information from the
-// /proc/meminfo file.
-package basic
+// Package membasic gets and processes a subseg of the /proc/meminfo file.
+// For more detailed information about a system's meminfo, use the meminfo
+// package.
+package membasic
 
 import (
 	"io"
@@ -26,8 +27,8 @@ import (
 
 const procFile = "/proc/meminfo"
 
-// MemInfo holds the basic mem info information.
-type MemInfo struct {
+// Info holds the basic meminfo information.
+type Info struct {
 	Timestamp    int64  `json:"timestamp"`
 	Active       uint64 `json:"active"`
 	Inactive     uint64 `json:"inactive"`
@@ -54,8 +55,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns the current meminfo.
-func (prof *Profiler) Get() (inf *MemInfo, err error) {
+// Get returns the current membasic.Info.
+func (prof *Profiler) Get() (inf *Info, err error) {
 	var (
 		i, pos, nameLen int
 		v               byte
@@ -65,7 +66,7 @@ func (prof *Profiler) Get() (inf *MemInfo, err error) {
 	if err != nil {
 		return nil, err
 	}
-	inf = &MemInfo{}
+	inf = &Info{}
 	inf.Timestamp = time.Now().UTC().UnixNano()
 	for {
 		prof.Val = prof.Val[:0]
@@ -164,8 +165,8 @@ func (prof *Profiler) Get() (inf *MemInfo, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current meminfo using the package's global Profiler.
-func Get() (inf *MemInfo, err error) {
+// Get returns the current membasic.Info using the package's global Profiler.
+func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -177,10 +178,10 @@ func Get() (inf *MemInfo, err error) {
 	return std.Get()
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's membasic.Info information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan MemInfo
+	Data chan Info
 	*Profiler
 }
 
@@ -194,7 +195,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan MemInfo), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info), Profiler: p}
 	go t.Run()
 	return &t, nil
 }
@@ -207,7 +208,7 @@ func (t *Ticker) Run() {
 		v               byte
 		n               uint64
 		err             error
-		inf             MemInfo
+		inf             Info
 	)
 	// ticker
 	for {

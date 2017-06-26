@@ -1,7 +1,7 @@
-//meminfo.fbs
-namespace flat;
+//info.fbs
+namespace structs;
 
-table MemInfo {
+table Info {
 	Timestamp:long;
 	Active:ulong;
 	Inactive:ulong;
@@ -14,4 +14,4 @@ table MemInfo {
 	SwapTotal:ulong;
 }
 
-root_type MemInfo;
+root_type Info;

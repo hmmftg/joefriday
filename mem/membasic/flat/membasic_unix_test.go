@@ -11,19 +11,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package basic
+package membasic
 
 import (
 	"testing"
 	"time"
+
+	basic "github.com/mohae/joefriday/mem/membasic"
 )
 
-func TestGet(t *testing.T) {
-	inf, err := Get()
+func TestSerializeDeserialize(t *testing.T) {
+	p, err := Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
+	inf := Deserialize(p)
 	checkInfo("get", *inf, t)
 }
 
@@ -42,7 +45,8 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			checkInfo("ticker", v, t)
+			inf := Deserialize(v)
+			checkInfo("ticker", *inf, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -51,7 +55,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkInfo(n string, i MemInfo, t *testing.T) {
+func checkInfo(n string, i basic.Info, t *testing.T) {
 	if i.Timestamp == 0 {
 		t.Errorf("%s: expected timestamp to be a non-zero value, got 0", n)
 	}
@@ -60,6 +64,9 @@ func checkInfo(n string, i MemInfo, t *testing.T) {
 	}
 	if i.Inactive == 0 {
 		t.Errorf("%s: expected Inactive to be a non-zero value, got 0", n)
+	}
+	if i.Mapped == 0 {
+		t.Errorf("%s: expected Mapped to be a non-zero value, got 0", n)
 	}
 	if i.MemAvailable == 0 {
 		t.Errorf("%s: expected MemAvailable to be a non-zero value, got 0", n)
@@ -80,12 +87,37 @@ func checkInfo(n string, i MemInfo, t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	var inf *MemInfo
+	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = p.Get()
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var tmp []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	inf, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = Serialize(inf)
+	}
+	_ = tmp
+}
+
+var inf *basic.Info
+
+func BenchmarkDeserialize(b *testing.B) {
+	b.StopTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf = Deserialize(tmp)
 	}
 	_ = inf
 }

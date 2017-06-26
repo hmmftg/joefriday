@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of /proc/meminfo.  Instead of
-// returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a mem.Info struct is
-// provided.
-package json
+// Package membasic handles JSON based processing of basic information from the
+// /proc/meminfo file. Instead of returning a Go struct, it returns JSON
+// serialized bytes. A function to deserialize the JSON serialized bytes into a
+// membasic.Info struct is provided.
+//
+// Note: the package name is membasic and not the final element of the import
+// path (json). 
+package membasic
 
 import (
 	"encoding/json"
@@ -23,16 +26,16 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/mem/basic"
+	basic "github.com/mohae/joefriday/mem/membasic"
 )
 
-// Profiler is used to process basic MemInfo from the /proc/meminfo file using
-// JSON.
+// Profiler is used to process basic membasic.Info from the /proc/meminfo file
+// using JSON.
 type Profiler struct {
 	*basic.Profiler
 }
 
-// Initializes and returns a profiler for basic meminfo that uses JSON.
+// Initializes and returns a profiler for membasic.Info that uses JSON.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := basic.NewProfiler()
 	if err != nil {
@@ -41,7 +44,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current basic meminfo as JSON serialized bytes.
+// Get returns the current membasic.Info as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -53,7 +56,7 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current basic meminfo as JSON serialized bytes using the
+// Get returns the current membasic.Info as JSON serialized bytes using the
 // package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -67,13 +70,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize basic MemInfo using JSON
-func (prof *Profiler) Serialize(inf *basic.MemInfo) ([]byte, error) {
+// Serialize membasic.Info using JSON
+func (prof *Profiler) Serialize(inf *basic.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
-// Serialize basic MemInfo using JSON with the package global Profiler.
-func Serialize(inf *basic.MemInfo) (p []byte, err error) {
+// Serialize membasic.Info using JSON with the package global Profiler.
+func Serialize(inf *basic.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -85,20 +88,20 @@ func Serialize(inf *basic.MemInfo) (p []byte, err error) {
 	return std.Serialize(inf)
 }
 
-// Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(inf *basic.MemInfo) ([]byte, error) {
+// Marshal is an alias for Serialize.
+func (prof *Profiler) Marshal(inf *basic.Info) ([]byte, error) {
 	return prof.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize that uses the package's global profiler.
-func Marshal(inf *basic.MemInfo) ([]byte, error) {
+func Marshal(inf *basic.Info) ([]byte, error) {
 	return Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// basic MemInfo.
-func Deserialize(p []byte) (*basic.MemInfo, error) {
-	info := &basic.MemInfo{}
+// membasic.Info.
+func Deserialize(p []byte) (*basic.Info, error) {
+	info := &basic.Info{}
 	err := json.Unmarshal(p, info)
 	if err != nil {
 		return nil, err
@@ -106,8 +109,8 @@ func Deserialize(p []byte) (*basic.MemInfo, error) {
 	return info, nil
 }
 
-// Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*basic.MemInfo, error) {
+// Unmarshal is an alias for Deserialize.
+func Unmarshal(p []byte) (*basic.Info, error) {
 	return Deserialize(p)
 }
 

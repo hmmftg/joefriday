@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package json
+package membasic
 
 import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/mem/basic"
+	basic "github.com/mohae/joefriday/mem/membasic"
 )
 
 func TestGet(t *testing.T) {
@@ -63,7 +63,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkInfo(n string, i basic.MemInfo, t *testing.T) {
+func checkInfo(n string, i basic.Info, t *testing.T) {
 	if i.Timestamp == 0 {
 		t.Errorf("%s: expected timestamp to be a non-zero value, got 0", n)
 	}
@@ -129,7 +129,7 @@ func BenchmarkMarshal(b *testing.B) {
 	_ = jsn
 }
 
-var inf *basic.MemInfo
+var inf *basic.Info
 
 func BenchmarkDeserialize(b *testing.B) {
 	b.StopTimer()
