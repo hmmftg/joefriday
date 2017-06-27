@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package netdev
 
 import (
 	"testing"
@@ -21,14 +21,18 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	b, err := Get()
+	nf, err := Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	inf := Deserialize(b)
-	checkInfo("get", inf, t)
-	t.Logf("%#v\n", inf)
+	info, err := Deserialize(nf)
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	checkInfo("get", info, t)
+	t.Logf("%#v\n", info)
 }
 
 func TestTicker(t *testing.T) {
@@ -46,7 +50,7 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			inf := Deserialize(v)
+			inf, err := Deserialize(v)
 			if err != nil {
 				t.Error(err)
 				continue
@@ -60,54 +64,77 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkInfo(n string, inf *structs.Info, t *testing.T) {
+func checkInfo(n string, inf *structs.DevInfo, t *testing.T) {
 	if inf.Timestamp == 0 {
 		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
-	if len(inf.Interfaces) == 0 {
-		t.Errorf("%s: expected interfaces; got none", n)
+	if len(inf.Devices) == 0 {
+		t.Errorf("%s: expected devices; got none", n)
 		return
 	}
 	// check name
-	for i, v := range inf.Interfaces {
+	for i, v := range inf.Devices {
 		if v.Name == "" {
-			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
+			t.Errorf("%s: %d: expected device to have a name; was empty", n, i)
 		}
 	}
 }
 
 func BenchmarkGet(b *testing.B) {
-	var tmp []byte
+	var jsn []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = p.Get()
+		jsn, _ = p.Get()
 	}
-	_ = tmp
+	_ = jsn
 }
 
-var inf *structs.Info
-
 func BenchmarkSerialize(b *testing.B) {
-	var tmp []byte
+	var jsn []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
-	inf, _ := p.Profiler.Get()
+	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = Serialize(inf)
+		jsn, _ = p.Serialize(v)
 	}
-	_ = tmp
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
 }
 
 func BenchmarkDeserialize(b *testing.B) {
+	var inf *structs.DevInfo
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf = Deserialize(tmp)
+		inf, _ = Deserialize(tmp)
+	}
+	_ = inf
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	var inf *structs.DevInfo
+	b.StartTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf, _ = Unmarshal(tmp)
 	}
 	_ = inf
 }

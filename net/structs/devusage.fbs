@@ -1,0 +1,11 @@
+// devusage.fbs
+include "device.fbs";
+namespace flat;
+
+table DevUsage {
+	Timestamp:long;
+	TimeDelta:long;
+	Devices:[Device];
+}
+
+root_type DevUsage;

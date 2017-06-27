@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of network interface usage.
-// Instead of returning a Go struct, it returns JSON serialized bytes.  A
-// function to deserialize the JSON serialized bytes into a structs.Usage
+// Package netdev handles JSON based processing of network device information.
+// Instead of returning a Go struct, it returns JSON serialized bytes. A
+// function to deserialize the JSON serialized bytes into a structs.DevInfo
 // struct is provided.
-package json
+//
+// Note: the package name is netdev and not the final element of the import
+// path (flat). 
+package netdev
 
 import (
 	"encoding/json"
@@ -23,25 +26,25 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
+	dev "github.com/mohae/joefriday/net/netdev"
 	"github.com/mohae/joefriday/net/structs"
-	"github.com/mohae/joefriday/net/usage"
 )
 
-// Profiler is used to process the network interface usage JSON.
+// Profiler is used to process the /proc/net/dev file using JSON.
 type Profiler struct {
-	*usage.Profiler
+	*dev.Profiler
 }
 
-// Initializes and returns a network interface usage profiler.
+// Initializes and returns a network devices profiler.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := usage.NewProfiler()
+	p, err := dev.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current network interface usage as JSON serialized bytes.
+// Get returns the current network devices as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -53,7 +56,7 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current network interface usage as JSON serialized bytes
+// Get returns the current network devices information as JSON serialized bytes
 // using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -67,19 +70,14 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize network information usage using JSON
-func (prof *Profiler) Serialize(u *structs.Usage) ([]byte, error) {
-	return json.Marshal(u)
+// Serialize network devicese information using JSON.
+func (prof *Profiler) Serialize(inf *structs.DevInfo) ([]byte, error) {
+	return json.Marshal(inf)
 }
 
-// Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(u *structs.Usage) ([]byte, error) {
-	return prof.Serialize(u)
-}
-
-// Serialize network interface information using JSON with the package global
+// Serialize network devices information using JSON with the package global
 // Profiler.
-func Serialize(inf *structs.Usage) (p []byte, err error) {
+func Serialize(inf *structs.DevInfo) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -91,29 +89,40 @@ func Serialize(inf *structs.Usage) (p []byte, err error) {
 	return std.Serialize(inf)
 }
 
-// Deserialize deserializes JSON serialized bytes.
-func Deserialize(p []byte) (*structs.Usage, error) {
-	u := &structs.Usage{}
-	err := json.Unmarshal(p, u)
+// Marshal is an alias for Serialize.
+func (prof *Profiler) Marshal(inf *structs.DevInfo) ([]byte, error) {
+	return prof.Serialize(inf)
+}
+
+// Marshal is an alias for Serialize; uses the package global Profiler.
+func Marshal(inf *structs.DevInfo) ([]byte, error) {
+	return Serialize(inf)
+}
+
+// Deserialize takes some JSON serialized bytes and unmarshals them as
+// structs.Info
+func Deserialize(p []byte) (*structs.DevInfo, error) {
+	info := &structs.DevInfo{}
+	err := json.Unmarshal(p, info)
 	if err != nil {
 		return nil, err
 	}
-	return u, nil
+	return info, nil
 }
 
-// Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*structs.Usage, error) {
+// Unmarshal is an alias for Deserialize.
+func Unmarshal(p []byte) (*structs.DevInfo, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's net devices information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
+// NewTicker returns a new Ticker contianing a Data channel that delivers
 // the data at intervals and an error channel that delivers any errors
 // encountered.  Stop the ticker to signal the ticker to stop running; it
 // does not close the Data channel.  Close the ticker to close all ticker

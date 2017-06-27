@@ -1,0 +1,10 @@
+// devinfo.fbs
+include "device.fbs";
+namespace flat;
+
+table DevInfo {
+	Timestamp:long;
+	Devices:[Device];
+}
+
+root_type DevInfo;

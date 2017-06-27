@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flat
+package netusage
 
 import (
 	"testing"
@@ -61,21 +61,21 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUsage(n string, u *structs.Usage, t *testing.T) {
+func checkUsage(n string, u *structs.DevUsage, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
 	if u.TimeDelta == 0 {
 		t.Errorf("%s: expected TimeDelta to be a non-zero value; was 0", n)
 	}
-	if len(u.Interfaces) == 0 {
-		t.Error("%s: expected interfaces; got none", n)
+	if len(u.Devices) == 0 {
+		t.Error("%s: expected devices; got none", n)
 		return
 	}
 	// check name
-	for i, v := range u.Interfaces {
+	for i, v := range u.Devices {
 		if v.Name == "" {
-			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
+			t.Errorf("%s: %d: expected device to have a name; was empty", n, i)
 		}
 	}
 }

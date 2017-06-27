@@ -11,17 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package structs defines the datastructures for net/info.
+// Package structs defines the data structures for net.
 package structs
 
-// Info holds the information for all of the network interfaces.
-type Info struct {
-	Timestamp  int64       `json:"timestamp"`
-	Interfaces []Interface `json:"interfaces"`
-}
-
-// Interface contains information for a given network interface.
-type Interface struct {
+// Device contains information for a given network device.
+type Device struct {
 	Name        string `json:"name"`
 	RBytes      int64  `json:"receive_bytes"`
 	RPackets    int64  `json:"receive_packets"`
@@ -41,9 +35,18 @@ type Interface struct {
 	TCompressed int64  `json:"transmit_compressed"`
 }
 
-// Usage holds the usage information for all of the network interfaces.
-type Usage struct {
-	Timestamp  int64       `json:"timestamp"`
-	TimeDelta  int64       `json:"time_delta"`
-	Interfaces []Interface `json:"interfaces"`
+// DevInfo contains information about all current network devices.
+type DevInfo struct {
+	Timestamp  int64 `json:"timestamp"`
+	Devices []Device `json:"devices"`
+}
+
+// DevUsage contains information about the usage of all current network
+// devices. Usage is calculated as the delta between two /proc/net/dev
+// snapshots; the TimeDelta field holds the time elapsed between the
+// two snapshots used to calculate the usage.
+type DevUsage struct {
+	Timestamp  int64 `json:"timestamp"`
+	TimeDelta  int64 `json:"time_delta"`
+	Devices []Device `json:"devices"`
 }

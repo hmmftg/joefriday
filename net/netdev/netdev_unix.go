@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package info handles processing of network interface information,
+// Package netdev handles processing of network device information,
 // /proc/net/dev, using JSON.
-package info
+package netdev
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ import (
 // The proc file used by the Profiler.
 const ProcFile = "/proc/net/dev"
 
-// Profiler is used to process the network interface information using the
+// Profiler is used to process the network device information using the
 // /proc/net/dev file.
 type Profiler struct {
 	*joe.Proc
@@ -44,20 +44,20 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns the current network interface information.
-func (prof *Profiler) Get() (*structs.Info, error) {
+// Get returns the current network device information.
+func (prof *Profiler) Get() (*structs.DevInfo, error) {
 	var (
 		i, pos, line, fieldNum int
 		n                      uint64
 		v                      byte
-		iInfo                  structs.Interface
+		dev                  structs.Device
 	)
 	err := prof.Reset()
 	if err != nil {
 		return nil, err
 	}
-	// there's always at least 2 interfaces (I think)
-	inf := &structs.Info{Timestamp: time.Now().UTC().UnixNano(), Interfaces: make([]structs.Interface, 0, 2)}
+	// there's, usually, at least 2 devices
+	nDev := &structs.DevInfo{Timestamp: time.Now().UTC().UnixNano(), Devices: make([]structs.Device, 0, 2)}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -83,7 +83,7 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 			}
 			prof.Val = append(prof.Val, v)
 		}
-		iInfo.Name = string(prof.Val[:])
+		dev.Name = string(prof.Val[:])
 		fieldNum = 0
 		// process the rest of the line
 		for {
@@ -112,76 +112,76 @@ func (prof *Profiler) Get() (*structs.Info, error) {
 				if fieldNum < 5 {
 					if fieldNum < 3 {
 						if fieldNum == 1 {
-							iInfo.RBytes = int64(n)
+							dev.RBytes = int64(n)
 							continue
 						}
-						iInfo.RPackets = int64(n) // must be 2
+						dev.RPackets = int64(n) // must be 2
 						continue
 					}
 					if fieldNum == 3 {
-						iInfo.RErrs = int64(n)
+						dev.RErrs = int64(n)
 						continue
 					}
-					iInfo.RDrop = int64(n) // must be 4
+					dev.RDrop = int64(n) // must be 4
 					continue
 				}
 				if fieldNum < 7 {
 					if fieldNum == 5 {
-						iInfo.RFIFO = int64(n)
+						dev.RFIFO = int64(n)
 						continue
 					}
-					iInfo.RFrame = int64(n) // must be 6
+					dev.RFrame = int64(n) // must be 6
 					continue
 				}
 				if fieldNum == 7 {
-					iInfo.RCompressed = int64(n)
+					dev.RCompressed = int64(n)
 					continue
 				}
-				iInfo.RMulticast = int64(n) // must be 8
+				dev.RMulticast = int64(n) // must be 8
 				continue
 			}
 			if fieldNum < 13 {
 				if fieldNum < 11 {
 					if fieldNum == 9 {
-						iInfo.TBytes = int64(n)
+						dev.TBytes = int64(n)
 						continue
 					}
-					iInfo.TPackets = int64(n) // must be 10
+					dev.TPackets = int64(n) // must be 10
 					continue
 				}
 				if fieldNum == 11 {
-					iInfo.TErrs = int64(n)
+					dev.TErrs = int64(n)
 					continue
 				}
-				iInfo.TDrop = int64(n) // must be 12
+				dev.TDrop = int64(n) // must be 12
 				continue
 			}
 			if fieldNum < 15 {
 				if fieldNum == 13 {
-					iInfo.TFIFO = int64(n)
+					dev.TFIFO = int64(n)
 					continue
 				}
-				iInfo.TColls = int64(n) // must be 14
+				dev.TColls = int64(n) // must be 14
 				continue
 			}
 			if fieldNum == 15 {
-				iInfo.TCarrier = int64(n)
+				dev.TCarrier = int64(n)
 				continue
 			}
-			iInfo.TCompressed = int64(n)
+			dev.TCompressed = int64(n)
 			break
 		}
-		inf.Interfaces = append(inf.Interfaces, iInfo)
+		nDev.Devices = append(nDev.Devices, dev)
 	}
-	return inf, nil
+	return nDev, nil
 }
 
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current network interface information using the package's
+// Get returns the current network device information using the package's
 // global Profiler.
-func Get() (inf *structs.Info, err error) {
+func Get() (inf *structs.DevInfo, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -193,24 +193,23 @@ func Get() (inf *structs.Info, err error) {
 	return std.Get()
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's network device information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan *structs.Info
+	Data chan *structs.DevInfo
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running; it does not close the
+// Data channel. Close the ticker to close all ticker channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.Info), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.DevInfo), Profiler: p}
 	go t.Run()
 	return &t, nil
 }

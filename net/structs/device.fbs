@@ -1,7 +1,7 @@
-// interface.fbs
+// device.fbs
 namespace flat;
 
-table Interface {
+table Device {
 	Name:string;
 	RBytes:long;
 	RPackets:long;
@@ -22,4 +22,4 @@ table Interface {
 }
 
 
-root_type Interface;
+root_type Device;

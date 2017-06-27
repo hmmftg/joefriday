@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package usage
+package netusage
 
 import (
 	"testing"
@@ -26,7 +26,12 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	u, err := p.Get()
+	b, err := p.Get()
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	u, err := Deserialize(b)
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
@@ -50,7 +55,12 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			checkUsage("ticker", v, t)
+			u, err := Deserialize(v)
+			if err != nil {
+				t.Error(err)
+				continue
+			}
+			checkUsage("ticker", u, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -59,21 +69,80 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUsage(n string, u *structs.Usage, t *testing.T) {
+func checkUsage(n string, u *structs.DevUsage, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
 	if u.TimeDelta == 0 {
 		t.Errorf("%s: expected TimeDelta to be a non-zero value; was 0", n)
 	}
-	if len(u.Interfaces) == 0 {
-		t.Errorf("%s: expected interfaces; got none", n)
+	if len(u.Devices) == 0 {
+		t.Errorf("%s: expected devices; got none", n)
 		return
 	}
 	// check name
-	for i, v := range u.Interfaces {
+	for i, v := range u.Devices {
 		if v.Name == "" {
-			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
+			t.Errorf("%s: %d: expected device to have a name; was empty", n, i)
 		}
 	}
+}
+
+func BenchmarkGet(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Get()
+	}
+	_ = jsn
+}
+
+func BenchmarkSerialize(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Serialize(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
+}
+
+func BenchmarkDeserialize(b *testing.B) {
+	var u *structs.DevUsage
+	b.StopTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		u, _ = Deserialize(tmp)
+	}
+	_ = u
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	var u *structs.DevUsage
+	b.StartTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		u, _ = Unmarshal(tmp)
+	}
+	_ = u
 }

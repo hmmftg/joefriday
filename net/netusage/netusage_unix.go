@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package usage calculates network interface usage.  Usage is calculated by
-// taking the difference of two /proc/net/dev snapshots and reflect bytes
-// received and transmitted since the prior snapshot.
-package usage
+// Package netusage calculates network devices usage. Usage is calculated by
+// taking the difference of two /proc/net/dev snapshots; the elapsed time
+// between the two snapshots is stored in the TimeDelta field.
+package netusage
 
 import (
 	"fmt"
@@ -24,19 +24,19 @@ import (
 
 	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/net/info"
+	"github.com/mohae/joefriday/net/netdev"
 	"github.com/mohae/joefriday/net/structs"
 )
 
-// Profiler is used to process the network interface usage..
+// Profiler is used to process the network devices usage.
 type Profiler struct {
-	*info.Profiler
-	prior structs.Info
+	*netdev.Profiler
+	prior structs.DevInfo
 }
 
 // Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := info.NewProfiler()
+	p, err := netdev.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +47,9 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, prior: *prior}, nil
 }
 
-// Get returns the current network interface usage.
-// TODO: should this be changed so that this calculates usage since the last
-// time the network info was obtained.  If there aren't pre-existing info
-// it would get current usage (which may be a separate method (or should be?))
-func (prof *Profiler) Get() (u *structs.Usage, err error) {
+// Get returns the current network devices usage: the delta between the current
+// snapshot and the prior one.
+func (prof *Profiler) Get() (u *structs.DevUsage, err error) {
 	infCur, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
@@ -64,9 +62,9 @@ func (prof *Profiler) Get() (u *structs.Usage, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current network interface usage using the package's global
+// Get returns the current network devices usage using the package's global
 // Profiler.
-func Get() (u *structs.Usage, err error) {
+func Get() (u *structs.DevUsage, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -78,44 +76,44 @@ func Get() (u *structs.Usage, err error) {
 	return std.Get()
 }
 
-// CalculateUsage calculates the network interface usage: the ference between
-// the current /proc/net/dev data and the prior one.
-func (prof *Profiler) CalculateUsage(cur *structs.Info) *structs.Usage {
-	u := &structs.Usage{
+// CalculateUsage calculates the network devices usage: the difference between
+// the current /proc/net/dev snapshot and the prior one.
+func (prof *Profiler) CalculateUsage(cur *structs.DevInfo) *structs.DevUsage {
+	u := &structs.DevUsage{
 		Timestamp:  cur.Timestamp,
 		TimeDelta:  cur.Timestamp - prof.prior.Timestamp,
-		Interfaces: make([]structs.Interface, len(cur.Interfaces)),
+		Devices: make([]structs.Device, len(cur.Devices)),
 	}
-	for i := 0; i < len(cur.Interfaces); i++ {
-		u.Interfaces[i].Name = cur.Interfaces[i].Name
-		u.Interfaces[i].RBytes = cur.Interfaces[i].RBytes - prof.prior.Interfaces[i].RBytes
-		u.Interfaces[i].RPackets = cur.Interfaces[i].RPackets - prof.prior.Interfaces[i].RPackets
-		u.Interfaces[i].RErrs = cur.Interfaces[i].RErrs - prof.prior.Interfaces[i].RErrs
-		u.Interfaces[i].RDrop = cur.Interfaces[i].RDrop - prof.prior.Interfaces[i].RDrop
-		u.Interfaces[i].RFIFO = cur.Interfaces[i].RFIFO - prof.prior.Interfaces[i].RFIFO
-		u.Interfaces[i].RFrame = cur.Interfaces[i].RFrame - prof.prior.Interfaces[i].RFrame
-		u.Interfaces[i].RCompressed = cur.Interfaces[i].RCompressed - prof.prior.Interfaces[i].RCompressed
-		u.Interfaces[i].RMulticast = cur.Interfaces[i].RMulticast - prof.prior.Interfaces[i].RMulticast
-		u.Interfaces[i].TBytes = cur.Interfaces[i].TBytes - prof.prior.Interfaces[i].TBytes
-		u.Interfaces[i].TPackets = cur.Interfaces[i].TPackets - prof.prior.Interfaces[i].TPackets
-		u.Interfaces[i].TErrs = cur.Interfaces[i].TErrs - prof.prior.Interfaces[i].TErrs
-		u.Interfaces[i].TDrop = cur.Interfaces[i].TDrop - prof.prior.Interfaces[i].TDrop
-		u.Interfaces[i].TFIFO = cur.Interfaces[i].TFIFO - prof.prior.Interfaces[i].TFIFO
-		u.Interfaces[i].TColls = cur.Interfaces[i].TColls - prof.prior.Interfaces[i].TColls
-		u.Interfaces[i].TCarrier = cur.Interfaces[i].TCarrier - prof.prior.Interfaces[i].TCarrier
-		u.Interfaces[i].TCompressed = cur.Interfaces[i].TCompressed - prof.prior.Interfaces[i].TCompressed
+	for i := 0; i < len(cur.Devices); i++ {
+		u.Devices[i].Name = cur.Devices[i].Name
+		u.Devices[i].RBytes = cur.Devices[i].RBytes - prof.prior.Devices[i].RBytes
+		u.Devices[i].RPackets = cur.Devices[i].RPackets - prof.prior.Devices[i].RPackets
+		u.Devices[i].RErrs = cur.Devices[i].RErrs - prof.prior.Devices[i].RErrs
+		u.Devices[i].RDrop = cur.Devices[i].RDrop - prof.prior.Devices[i].RDrop
+		u.Devices[i].RFIFO = cur.Devices[i].RFIFO - prof.prior.Devices[i].RFIFO
+		u.Devices[i].RFrame = cur.Devices[i].RFrame - prof.prior.Devices[i].RFrame
+		u.Devices[i].RCompressed = cur.Devices[i].RCompressed - prof.prior.Devices[i].RCompressed
+		u.Devices[i].RMulticast = cur.Devices[i].RMulticast - prof.prior.Devices[i].RMulticast
+		u.Devices[i].TBytes = cur.Devices[i].TBytes - prof.prior.Devices[i].TBytes
+		u.Devices[i].TPackets = cur.Devices[i].TPackets - prof.prior.Devices[i].TPackets
+		u.Devices[i].TErrs = cur.Devices[i].TErrs - prof.prior.Devices[i].TErrs
+		u.Devices[i].TDrop = cur.Devices[i].TDrop - prof.prior.Devices[i].TDrop
+		u.Devices[i].TFIFO = cur.Devices[i].TFIFO - prof.prior.Devices[i].TFIFO
+		u.Devices[i].TColls = cur.Devices[i].TColls - prof.prior.Devices[i].TColls
+		u.Devices[i].TCarrier = cur.Devices[i].TCarrier - prof.prior.Devices[i].TCarrier
+		u.Devices[i].TCompressed = cur.Devices[i].TCompressed - prof.prior.Devices[i].TCompressed
 	}
 	return u
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's network devices usage at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan *structs.Usage
+	Data chan *structs.DevUsage
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
+// NewTicker returns a new Ticker containing a Data channel that delivers
 // the data at intervals and an error channel that delivers any errors
 // encountered.  Stop the ticker to signal the ticker to stop running; it
 // does not close the Data channel.  Close the ticker to close all ticker
@@ -125,7 +123,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.Usage), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *structs.DevUsage), Profiler: p}
 	go t.Run()
 	return &t, nil
 }
@@ -137,8 +135,8 @@ func (t *Ticker) Run() {
 		n                      uint64
 		v                      byte
 		err                    error
-		cur                    structs.Info
-		iUsage                 structs.Interface
+		cur                    structs.DevInfo
+		dev                 structs.Device
 	)
 	// ticker
 	for {
@@ -153,7 +151,7 @@ func (t *Ticker) Run() {
 				break
 			}
 			line = 0
-			cur.Interfaces = cur.Interfaces[:0]
+			cur.Devices = cur.Devices[:0]
 			// read each line until eof
 			for {
 				t.Val = t.Val[:0]
@@ -181,7 +179,7 @@ func (t *Ticker) Run() {
 					}
 					t.Val = append(t.Val, v)
 				}
-				iUsage.Name = string(t.Val[:])
+				dev.Name = string(t.Val[:])
 				fieldNum = 0
 				// process the rest of the line
 				for {
@@ -210,75 +208,75 @@ func (t *Ticker) Run() {
 						if fieldNum < 5 {
 							if fieldNum < 3 {
 								if fieldNum == 1 {
-									iUsage.RBytes = int64(n)
+									dev.RBytes = int64(n)
 									continue
 								}
-								iUsage.RPackets = int64(n) // must be 2
+								dev.RPackets = int64(n) // must be 2
 								continue
 							}
 							if fieldNum == 3 {
-								iUsage.RErrs = int64(n)
+								dev.RErrs = int64(n)
 								continue
 							}
-							iUsage.RDrop = int64(n) // must be 4
+							dev.RDrop = int64(n) // must be 4
 							continue
 						}
 						if fieldNum < 7 {
 							if fieldNum == 5 {
-								iUsage.RFIFO = int64(n)
+								dev.RFIFO = int64(n)
 								continue
 							}
-							iUsage.RFrame = int64(n) // must be 6
+							dev.RFrame = int64(n) // must be 6
 							continue
 						}
 						if fieldNum == 7 {
-							iUsage.RCompressed = int64(n)
+							dev.RCompressed = int64(n)
 							continue
 						}
-						iUsage.RMulticast = int64(n) // must be 8
+						dev.RMulticast = int64(n) // must be 8
 						continue
 					}
 					if fieldNum < 13 {
 						if fieldNum < 11 {
 							if fieldNum == 9 {
-								iUsage.TBytes = int64(n)
+								dev.TBytes = int64(n)
 								continue
 							}
-							iUsage.TPackets = int64(n) // must be 10
+							dev.TPackets = int64(n) // must be 10
 							continue
 						}
 						if fieldNum == 11 {
-							iUsage.TErrs = int64(n)
+							dev.TErrs = int64(n)
 							continue
 						}
-						iUsage.TDrop = int64(n) // must be 12
+						dev.TDrop = int64(n) // must be 12
 						continue
 					}
 					if fieldNum < 15 {
 						if fieldNum == 13 {
-							iUsage.TFIFO = int64(n)
+							dev.TFIFO = int64(n)
 							continue
 						}
-						iUsage.TColls = int64(n) // must be 14
+						dev.TColls = int64(n) // must be 14
 						continue
 					}
 					if fieldNum == 15 {
-						iUsage.TCarrier = int64(n)
+						dev.TCarrier = int64(n)
 						continue
 					}
 					if fieldNum == 16 {
-						iUsage.TCompressed = int64(n)
+						dev.TCompressed = int64(n)
 						break
 					}
 				}
-				cur.Interfaces = append(cur.Interfaces, iUsage)
+				cur.Devices = append(cur.Devices, dev)
 			}
 			t.Data <- t.CalculateUsage(&cur)
 			t.prior.Timestamp = cur.Timestamp
-			if len(t.prior.Interfaces) != len(cur.Interfaces) {
-				t.prior.Interfaces = make([]structs.Interface, len(cur.Interfaces))
+			if len(t.prior.Devices) != len(cur.Devices) {
+				t.prior.Devices = make([]structs.Device, len(cur.Devices))
 			}
-			copy(t.prior.Interfaces, cur.Interfaces)
+			copy(t.prior.Devices, cur.Devices)
 		}
 	}
 }

@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package info
+package netusage
 
 import (
 	"testing"
@@ -21,13 +21,18 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	inf, err := Get()
+	p, err := NewProfiler()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	checkInfo("get", inf, t)
-	t.Logf("%#v\n", inf)
+	u, err := p.Get()
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+	checkUsage("get", u, t)
+	t.Logf("%#v\n", u)
 }
 
 func TestTicker(t *testing.T) {
@@ -45,7 +50,7 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			checkInfo("ticker", v, t)
+			checkUsage("ticker", v, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -54,29 +59,21 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkInfo(n string, inf *structs.Info, t *testing.T) {
-	if inf.Timestamp == 0 {
+func checkUsage(n string, u *structs.DevUsage, t *testing.T) {
+	if u.Timestamp == 0 {
 		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
-	if len(inf.Interfaces) == 0 {
-		t.Errorf("%s: expected interfaces; got none", n)
+	if u.TimeDelta == 0 {
+		t.Errorf("%s: expected TimeDelta to be a non-zero value; was 0", n)
+	}
+	if len(u.Devices) == 0 {
+		t.Errorf("%s: expected devices; got none", n)
 		return
 	}
 	// check name
-	for i, v := range inf.Interfaces {
+	for i, v := range u.Devices {
 		if v.Name == "" {
-			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
+			t.Errorf("%s: %d: expected devices to have a name; was empty", n, i)
 		}
 	}
-}
-
-func BenchmarkGet(b *testing.B) {
-	var inf *structs.Info
-	b.StopTimer()
-	p, _ := NewProfiler()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		inf, _ = p.Get()
-	}
-	_ = inf
 }
