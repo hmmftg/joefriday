@@ -16,27 +16,27 @@ package cpuinfo
 import (
 	"testing"
 
-	inf "github.com/mohae/joefriday/cpu/cpuinfo"
+	info "github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
 func TestGet(t *testing.T) {
-	cpus, err := Get()
+	inf, err := Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	cpuS, err := Unmarshal(cpus)
+	infS, err := Unmarshal(inf)
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	if cpuS.Timestamp == 0 {
+	if infS.Timestamp == 0 {
 		t.Error("expected timestamp to be a non-zero value; got 0")
 	}
-	if len(cpuS.CPU) == 0 {
+	if len(infS.CPUs) == 0 {
 		t.Error("expected CPUs to be a non-zero value; got 0")
 	}
-	for i, v := range cpuS.CPU {
+	for i, v := range infS.CPUs {
 		if v.VendorID == "" {
 			t.Errorf("%d: expected vendor_id to have a value; it was empty", i)
 		}
@@ -44,7 +44,7 @@ func TestGet(t *testing.T) {
 			t.Errorf("%d: expected flags to have values; it was empty", i)
 		}
 	}
-	t.Logf("%#v\n", cpuS)
+	t.Logf("%#v\n", infS)
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -83,25 +83,25 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var cpus *inf.CPUs
+	var inf *info.Info
 	b.StopTimer()
 	p, _ := NewProfiler()
-	cpusB, _ := p.Get()
+	infB, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		cpus, _ = Deserialize(cpusB)
+		inf, _ = Deserialize(infB)
 	}
-	_ = cpus
+	_ = inf
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var cpus *inf.CPUs
+	var inf *info.Info
 	b.StartTimer()
 	p, _ := NewProfiler()
-	cpusB, _ := p.Get()
+	infB, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		cpus, _ = Unmarshal(cpusB)
+		inf, _ = Unmarshal(infB)
 	}
-	_ = cpus
+	_ = inf
 }

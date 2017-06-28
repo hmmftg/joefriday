@@ -16,36 +16,36 @@ package cpuinfo
 import (
 	"testing"
 
-	inf "github.com/mohae/joefriday/cpu/cpuinfo"
+	info "github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
 func TestSerialize(t *testing.T) {
-	cpus, err := Get()
+	inf, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	cpusD := Deserialize(cpus)
-	if cpusD.Timestamp == 0 {
+	infD := Deserialize(inf)
+	if infD.Timestamp == 0 {
 		t.Error("timestamp: expected non-zero timestamp")
 	}
-	if len(cpusD.CPU) == 0 {
+	if len(infD.CPUs) == 0 {
 		t.Error("expected at least 1 cpu entries; got none")
 	}
-	for i := 0; i < len(cpusD.CPU); i++ {
-		if cpusD.CPU[i].VendorID == "" {
+	for i := 0; i < len(infD.CPUs); i++ {
+		if infD.CPUs[i].VendorID == "" {
 			t.Errorf("%d: VendorID: expected Vendor ID to not be empty, it was", i)
 		}
-		if cpusD.CPU[i].Model == "" {
+		if infD.CPUs[i].Model == "" {
 			t.Errorf("%d: Model: expected model to not be empty; it was", i)
 		}
-		if cpusD.CPU[i].CPUCores == 0 {
+		if infD.CPUs[i].CPUCores == 0 {
 			t.Errorf("%d: CPUCores: expected non-zero value; was 0", i)
 		}
-		if len(cpusD.CPU[i].Flags) == 0 {
+		if len(infD.CPUs[i].Flags) == 0 {
 			t.Errorf("%d: Flags: expected some flags, none were found", i)
 		}
 	}
-	_, err = Serialize(cpusD)
+	_, err = Serialize(infD)
 	if err != nil {
 		t.Errorf("unexpected serialization error: %s", err)
 		return
@@ -67,22 +67,22 @@ func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
-	cpus, _ := p.Profiler.Get()
+	inf, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = Serialize(cpus)
+		tmp, _ = Serialize(inf)
 	}
 	_ = tmp
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var cpus *inf.CPUs
+	var inf *info.Info
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		cpus = Deserialize(tmp)
+		inf = Deserialize(tmp)
 	}
-	_ = cpus
+	_ = inf
 }

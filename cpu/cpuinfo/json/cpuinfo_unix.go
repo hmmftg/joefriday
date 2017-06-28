@@ -24,37 +24,37 @@ import (
 	"encoding/json"
 	"sync"
 
-	inf "github.com/mohae/joefriday/cpu/cpuinfo"
+	info "github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
 // Profiler is used to process the cpuinfo (cpus) as JSON serialized bytes.
 type Profiler struct {
-	*inf.Profiler
+	*info.Profiler
 }
 
 // Initializes and returns a cpuinfo profiler.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := inf.NewProfiler()
+	p, err := info.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current cpuinfo (CPUs) as JSON serialized bytes.
+// Get returns the current cpuinfo, cpuinfo.Info, as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
-	cpus, err := prof.Profiler.Get()
+	inf, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return prof.Serialize(cpus)
+	return prof.Serialize(inf)
 }
 
 var std *Profiler
 var stdMu sync.Mutex //protects standard to prevent data race on checking/instantiation
 
-// Get returns the current cpuinfo (CPUs) as JSON serialized bytes using the
-// package's global Profiler.
+// Get returns the current cpuinfo, cpuinfo.Info as JSON serialized bytes using
+// the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -67,13 +67,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize cpuinfo (CPUs) as JSON.
-func (prof *Profiler) Serialize(cpus *inf.CPUs) ([]byte, error) {
-	return json.Marshal(cpus)
+// Serialize cpuinfo, cpuinfo.Info, as JSON.
+func (prof *Profiler) Serialize(inf *info.Info) ([]byte, error) {
+	return json.Marshal(inf)
 }
 
-// Serialize cpuinfo (CPUs) as JSON using package globals.
-func Serialize(cpus *inf.CPUs) (p []byte, err error) {
+// Serialize cpuinfo, cpuinfo.Info, as JSON using package globals.
+func Serialize(inf *info.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -82,31 +82,31 @@ func Serialize(cpus *inf.CPUs) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(cpus)
+	return std.Serialize(inf)
 }
 
 // Marshal is an alias for serialize.
-func (prof *Profiler) Marshal(cpus *inf.CPUs) ([]byte, error) {
-	return prof.Serialize(cpus)
+func (prof *Profiler) Marshal(inf *info.Info) ([]byte, error) {
+	return prof.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize using package globals.
-func Marshal(cpus *inf.CPUs) ([]byte, error) {
-	return std.Serialize(cpus)
+func Marshal(inf *info.Info) ([]byte, error) {
+	return std.Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // inf.CPUs
-func Deserialize(p []byte) (*inf.CPUs, error) {
-	cpus := &inf.CPUs{}
-	err := json.Unmarshal(p, cpus)
+func Deserialize(p []byte) (*info.Info, error) {
+	inf := &info.Info{}
+	err := json.Unmarshal(p, inf)
 	if err != nil {
 		return nil, err
 	}
-	return cpus, nil
+	return inf, nil
 }
 
 // Unmarshal is an alias for Deserialize using package globals.
-func Unmarshal(p []byte) (*inf.CPUs, error) {
+func Unmarshal(p []byte) (*info.Info, error) {
 	return Deserialize(p)
 }

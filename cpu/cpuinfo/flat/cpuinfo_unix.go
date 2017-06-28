@@ -25,19 +25,19 @@ import (
 	"sync"
 
 	fb "github.com/google/flatbuffers/go"
-	inf "github.com/mohae/joefriday/cpu/cpuinfo"
+	info "github.com/mohae/joefriday/cpu/cpuinfo"
 	"github.com/mohae/joefriday/cpu/cpuinfo/flat/structs"
 )
 
 // Profiler is used to process the cpuinfo as Flatbuffers serialized bytes.
 type Profiler struct {
-	*inf.Profiler
+	*info.Profiler
 	*fb.Builder
 }
 
 // Initializes and returns a cpuinfo profiler that utilizes FlatBuffers.
 func NewProfiler() (p *Profiler, err error) {
-	prof, err := inf.NewProfiler()
+	prof, err := info.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -46,11 +46,11 @@ func NewProfiler() (p *Profiler, err error) {
 
 // Get returns the current cpuinfo as Flatbuffer serialized bytes.
 func (p *Profiler) Get() ([]byte, error) {
-	cpus, err := p.Profiler.Get()
+	inf, err := p.Profiler.Get()
 	if err != nil {
 		return nil, err
 	}
-	return p.Serialize(cpus), nil
+	return p.Serialize(inf), nil
 }
 
 var std *Profiler    // global for convenience; lazily instantiated.
@@ -71,22 +71,22 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes cpuinfo using Flatbuffers.
-func (p *Profiler) Serialize(cpus *inf.CPUs) []byte {
+func (p *Profiler) Serialize(inf *info.Info) []byte {
 	// ensure the Builder is in a usable state.
 	p.Builder.Reset()
-	uoffs := make([]fb.UOffsetT, len(cpus.CPU))
-	for i, cpu := range cpus.CPU {
+	uoffs := make([]fb.UOffsetT, len(inf.CPUs))
+	for i, cpu := range inf.CPUs {
 		uoffs[i] = p.SerializeCPU(&cpu)
 	}
-	structs.CPUsStartCPUVector(p.Builder, len(uoffs))
+	structs.InfoStartCPUsVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	cpusV := p.Builder.EndVector(len(uoffs))
-	structs.CPUsStart(p.Builder)
-	structs.CPUsAddTimestamp(p.Builder, cpus.Timestamp)
-	structs.CPUsAddCPU(p.Builder, cpusV)
-	p.Builder.Finish(structs.CPUsEnd(p.Builder))
+	structs.InfoStart(p.Builder)
+	structs.InfoAddTimestamp(p.Builder, inf.Timestamp)
+	structs.InfoAddCPUs(p.Builder, cpusV)
+	p.Builder.Finish(structs.InfoEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(b))
@@ -94,9 +94,9 @@ func (p *Profiler) Serialize(cpus *inf.CPUs) []byte {
 	return tmp
 }
 
-// Serialize serializes a CPU's info using flatbuffers and returns the
-// resulting UOffsetT.
-func (p *Profiler) SerializeCPU(cpu *inf.CPU) fb.UOffsetT {
+// Serialize serializes a CPU using flatbuffers and returns the resulting
+// UOffsetT.
+func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	vendorID := p.Builder.CreateString(cpu.VendorID)
 	cpuFamily := p.Builder.CreateString(cpu.CPUFamily)
 	model := p.Builder.CreateString(cpu.Model)
@@ -116,7 +116,7 @@ func (p *Profiler) SerializeCPU(cpu *inf.CPU) fb.UOffsetT {
 	for i, flag := range cpu.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
-	structs.CPUsStartCPUVector(p.Builder, len(uoffs))
+	structs.InfoStartCPUsVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
@@ -150,8 +150,8 @@ func (p *Profiler) SerializeCPU(cpu *inf.CPU) fb.UOffsetT {
 	return structs.CPUEnd(p.Builder)
 }
 
-// Serialize Facts using the package global profiler.
-func Serialize(cpus *inf.CPUs) (p []byte, err error) {
+// Serialize cpuinfo.Info using the package global profiler.
+func Serialize(inf *info.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -160,51 +160,51 @@ func Serialize(cpus *inf.CPUs) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(cpus), nil
+	return std.Serialize(inf), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as cpuinfo.CPUs.
-func Deserialize(p []byte) *inf.CPUs {
-	flatCPUs := structs.GetRootAsCPUs(p, 0)
-	l := flatCPUs.CPULength()
-	cpus := &inf.CPUs{}
-	flatCPU := &structs.CPU{}
-	cpu := inf.CPU{}
-	cpus.Timestamp = flatCPUs.Timestamp()
+// as cpuinfo.Info.
+func Deserialize(p []byte) *info.Info {
+	fInf := structs.GetRootAsInfo(p, 0)
+	l := fInf.CPUsLength()
+	inf := &info.Info{}
+	fCPU := &structs.CPU{}
+	cpu := info.CPU{}
+	inf.Timestamp = fInf.Timestamp()
 	for i := 0; i < l; i++ {
-		if !flatCPUs.CPU(flatCPU, i) {
+		if !fInf.CPUs(fCPU, i) {
 			continue
 		}
-		cpu.Processor = flatCPU.Processor()
-		cpu.VendorID = string(flatCPU.VendorID())
-		cpu.CPUFamily = string(flatCPU.CPUFamily())
-		cpu.Model = string(flatCPU.Model())
-		cpu.ModelName = string(flatCPU.ModelName())
-		cpu.Stepping = string(flatCPU.Stepping())
-		cpu.Microcode = string(flatCPU.Microcode())
-		cpu.CPUMHz = flatCPU.CPUMHz()
-		cpu.CacheSize = string(flatCPU.CacheSize())
-		cpu.PhysicalID = flatCPU.PhysicalID()
-		cpu.Siblings = flatCPU.Siblings()
-		cpu.CoreID = flatCPU.CoreID()
-		cpu.CPUCores = flatCPU.CPUCores()
-		cpu.ApicID = flatCPU.ApicID()
-		cpu.InitialApicID = flatCPU.InitialApicID()
-		cpu.FPU = string(flatCPU.FPU())
-		cpu.FPUException = string(flatCPU.FPUException())
-		cpu.CPUIDLevel = string(flatCPU.CPUIDLevel())
-		cpu.WP = string(flatCPU.WP())
-		cpu.Flags = make([]string, flatCPU.FlagsLength())
+		cpu.Processor = fCPU.Processor()
+		cpu.VendorID = string(fCPU.VendorID())
+		cpu.CPUFamily = string(fCPU.CPUFamily())
+		cpu.Model = string(fCPU.Model())
+		cpu.ModelName = string(fCPU.ModelName())
+		cpu.Stepping = string(fCPU.Stepping())
+		cpu.Microcode = string(fCPU.Microcode())
+		cpu.CPUMHz = fCPU.CPUMHz()
+		cpu.CacheSize = string(fCPU.CacheSize())
+		cpu.PhysicalID = fCPU.PhysicalID()
+		cpu.Siblings = fCPU.Siblings()
+		cpu.CoreID = fCPU.CoreID()
+		cpu.CPUCores = fCPU.CPUCores()
+		cpu.ApicID = fCPU.ApicID()
+		cpu.InitialApicID = fCPU.InitialApicID()
+		cpu.FPU = string(fCPU.FPU())
+		cpu.FPUException = string(fCPU.FPUException())
+		cpu.CPUIDLevel = string(fCPU.CPUIDLevel())
+		cpu.WP = string(fCPU.WP())
+		cpu.Flags = make([]string, fCPU.FlagsLength())
 		for i := 0; i < len(cpu.Flags); i++ {
-			cpu.Flags[i] = string(flatCPU.Flags(i))
+			cpu.Flags[i] = string(fCPU.Flags(i))
 		}
-		cpu.BogoMIPS = flatCPU.BogoMIPS()
-		cpu.CLFlushSize = string(flatCPU.CLFlushSize())
-		cpu.CacheAlignment = string(flatCPU.CacheAlignment())
-		cpu.AddressSizes = string(flatCPU.AddressSizes())
-		cpu.PowerManagement = string(flatCPU.PowerManagement())
-		cpus.CPU = append(cpus.CPU, cpu)
+		cpu.BogoMIPS = fCPU.BogoMIPS()
+		cpu.CLFlushSize = string(fCPU.CLFlushSize())
+		cpu.CacheAlignment = string(fCPU.CacheAlignment())
+		cpu.AddressSizes = string(fCPU.AddressSizes())
+		cpu.PowerManagement = string(fCPU.PowerManagement())
+		inf.CPUs = append(inf.CPUs, cpu)
 	}
-	return cpus
+	return inf
 }

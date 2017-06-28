@@ -16,18 +16,18 @@ package cpuinfo
 import "testing"
 
 func TestFacts(t *testing.T) {
-	cpus, err := Get()
+	inf, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	if cpus.Timestamp == 0 {
+	if inf.Timestamp == 0 {
 		t.Error("expected timestamp to have a nonzero value, it didn't")
 	}
-	if len(cpus.CPU) == 0 {
+	if len(inf.CPUs) == 0 {
 		t.Error("Expected at least 1 CPU entry, got none")
 	}
 	// spot check some vars
-	for i, cpu := range cpus.CPU {
+	for i, cpu := range inf.CPUs {
 		if cpu.VendorID == "" {
 			t.Errorf("%d: expected a vendor id value; it was empty", i)
 		}
@@ -38,16 +38,16 @@ func TestFacts(t *testing.T) {
 			t.Errorf("%d: expected flags to be not be empty; it was", i)
 		}
 	}
-	t.Logf("%#v", cpus)
+	t.Logf("%#v", inf)
 }
 
 func BenchmarkGet(b *testing.B) {
-	var cpus *CPUs
+	var inf *Info
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		cpus, _ = p.Get()
+		inf, _ = p.Get()
 	}
-	_ = cpus
+	_ = inf
 }

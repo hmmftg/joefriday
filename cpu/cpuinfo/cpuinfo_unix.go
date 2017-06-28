@@ -27,10 +27,10 @@ import (
 
 const procFile = "/proc/cpuinfo"
 
-// CPUs are a collection of information about the system's cpus.
-type CPUs struct {
+// Info holds information about the system's cpus.
+type Info struct {
 	Timestamp int64
-	CPU       []CPU `json:"cpu"`
+	CPUs       []CPU `json:"cpus"`
 }
 
 // CPU holds the /proc/cpuinfo for a single processor.
@@ -77,7 +77,7 @@ func NewProfiler() (prof *Profiler, err error) {
 }
 
 // Get returns the current cpuinfo.
-func (prof *Profiler) Get() (cpus *CPUs, err error) {
+func (prof *Profiler) Get() (inf *Info, err error) {
 	var (
 		cpuCnt, i, pos, nameLen int
 		n                       uint64
@@ -88,7 +88,7 @@ func (prof *Profiler) Get() (cpus *CPUs, err error) {
 	if err != nil {
 		return nil, err
 	}
-	cpus = &CPUs{Timestamp: time.Now().UTC().UnixNano()}
+	inf = &Info{Timestamp: time.Now().UTC().UnixNano()}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -232,7 +232,7 @@ func (prof *Profiler) Get() (cpus *CPUs, err error) {
 			// processor starts information about a processor.
 			if v == 'r' { // processor
 				if cpuCnt > 0 {
-					cpus.CPU = append(cpus.CPU, cpu)
+					inf.CPUs = append(inf.CPUs, cpu)
 				}
 				cpuCnt++
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
@@ -284,8 +284,8 @@ func (prof *Profiler) Get() (cpus *CPUs, err error) {
 		}
 	}
 	// append the current processor informatin
-	cpus.CPU = append(cpus.CPU, cpu)
-	return cpus, nil
+	inf.CPUs = append(inf.CPUs, cpu)
+	return inf, nil
 }
 
 var std *Profiler
@@ -293,7 +293,7 @@ var stdMu sync.Mutex
 
 // Get returns the current cpuinfo (Facts) using the package's global
 // Profiler.
-func Get() (cpus *CPUs, err error) {
+func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
