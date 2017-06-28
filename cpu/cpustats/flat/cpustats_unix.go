@@ -80,38 +80,38 @@ func Get() (p []byte, err error) {
 func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	statsF := make([]fb.UOffsetT, len(stts.CPU))
-	ids := make([]fb.UOffsetT, len(stts.CPU))
+	cpusF := make([]fb.UOffsetT, len(stts.CPUs))
+	ids := make([]fb.UOffsetT, len(stts.CPUs))
 	for i := 0; i < len(ids); i++ {
-		ids[i] = prof.Builder.CreateString(stts.CPU[i].ID)
+		ids[i] = prof.Builder.CreateString(stts.CPUs[i].ID)
 	}
-	for i := 0; i < len(statsF); i++ {
-		structs.StatStart(prof.Builder)
-		structs.StatAddID(prof.Builder, ids[i])
-		structs.StatAddUser(prof.Builder, stts.CPU[i].User)
-		structs.StatAddNice(prof.Builder, stts.CPU[i].Nice)
-		structs.StatAddSystem(prof.Builder, stts.CPU[i].System)
-		structs.StatAddIdle(prof.Builder, stts.CPU[i].Idle)
-		structs.StatAddIOWait(prof.Builder, stts.CPU[i].IOWait)
-		structs.StatAddIRQ(prof.Builder, stts.CPU[i].IRQ)
-		structs.StatAddSoftIRQ(prof.Builder, stts.CPU[i].SoftIRQ)
-		structs.StatAddSteal(prof.Builder, stts.CPU[i].Steal)
-		structs.StatAddQuest(prof.Builder, stts.CPU[i].Quest)
-		structs.StatAddQuestNice(prof.Builder, stts.CPU[i].QuestNice)
-		statsF[i] = structs.StatEnd(prof.Builder)
+	for i := 0; i < len(cpusF); i++ {
+		structs.CPUStart(prof.Builder)
+		structs.CPUAddID(prof.Builder, ids[i])
+		structs.CPUAddUser(prof.Builder, stts.CPUs[i].User)
+		structs.CPUAddNice(prof.Builder, stts.CPUs[i].Nice)
+		structs.CPUAddSystem(prof.Builder, stts.CPUs[i].System)
+		structs.CPUAddIdle(prof.Builder, stts.CPUs[i].Idle)
+		structs.CPUAddIOWait(prof.Builder, stts.CPUs[i].IOWait)
+		structs.CPUAddIRQ(prof.Builder, stts.CPUs[i].IRQ)
+		structs.CPUAddSoftIRQ(prof.Builder, stts.CPUs[i].SoftIRQ)
+		structs.CPUAddSteal(prof.Builder, stts.CPUs[i].Steal)
+		structs.CPUAddQuest(prof.Builder, stts.CPUs[i].Quest)
+		structs.CPUAddQuestNice(prof.Builder, stts.CPUs[i].QuestNice)
+		cpusF[i] = structs.CPUEnd(prof.Builder)
 	}
-	structs.StatsStartCPUVector(prof.Builder, len(statsF))
-	for i := len(statsF) - 1; i >= 0; i-- {
-		prof.Builder.PrependUOffsetT(statsF[i])
+	structs.StatsStartCPUsVector(prof.Builder, len(cpusF))
+	for i := len(cpusF) - 1; i >= 0; i-- {
+		prof.Builder.PrependUOffsetT(cpusF[i])
 	}
-	statsV := prof.Builder.EndVector(len(statsF))
+	cpusV := prof.Builder.EndVector(len(cpusF))
 	structs.StatsStart(prof.Builder)
 	structs.StatsAddClkTck(prof.Builder, stts.ClkTck)
 	structs.StatsAddTimestamp(prof.Builder, stts.Timestamp)
 	structs.StatsAddCtxt(prof.Builder, stts.Ctxt)
 	structs.StatsAddBTime(prof.Builder, stts.BTime)
 	structs.StatsAddProcesses(prof.Builder, stts.Processes)
-	structs.StatsAddCPU(prof.Builder, statsV)
+	structs.StatsAddCPUs(prof.Builder, cpusV)
 	prof.Builder.Finish(structs.StatsEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -136,34 +136,34 @@ func Serialize(stts *stats.Stats) (p []byte, err error) {
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as a stats.Stats.
 func Deserialize(p []byte) *stats.Stats {
-	stts := &stats.Stats{}
-	statF := &structs.Stat{}
-	statsFlat := structs.GetRootAsStats(p, 0)
-	stts.ClkTck = statsstructs.ClkTck()
-	stts.Timestamp = statsstructs.Timestamp()
-	stts.Ctxt = statsstructs.Ctxt()
-	stts.BTime = statsstructs.BTime()
-	stts.Processes = statsstructs.Processes()
-	len := statsstructs.CPULength()
-	stts.CPU = make([]stats.Stat, len)
+	statsS := &stats.Stats{}
+	cpuF := &structs.CPU{}
+	statsF := structs.GetRootAsStats(p, 0)
+	statsS.ClkTck = statsF.ClkTck()
+	statsS.Timestamp = statsF.Timestamp()
+	statsS.Ctxt = statsF.Ctxt()
+	statsS.BTime = statsF.BTime()
+	statsS.Processes = statsF.Processes()
+	len := statsF.CPUsLength()
+	statsS.CPUs = make([]stats.CPU, len)
 	for i := 0; i < len; i++ {
-		var stat stats.Stat
-		if statsstructs.CPU(statF, i) {
-			stat.ID = string(statF.ID())
-			stat.User = statF.User()
-			stat.Nice = statF.Nice()
-			stat.System = statF.System()
-			stat.Idle = statF.Idle()
-			stat.IOWait = statF.IOWait()
-			stat.IRQ = statF.IRQ()
-			stat.SoftIRQ = statF.SoftIRQ()
-			stat.Steal = statF.Steal()
-			stat.Quest = statF.Quest()
-			stat.QuestNice = statF.QuestNice()
+		var cpu stats.CPU
+		if statsF.CPUs(cpuF, i) {
+			cpu.ID = string(cpuF.ID())
+			cpu.User = cpuF.User()
+			cpu.Nice = cpuF.Nice()
+			cpu.System = cpuF.System()
+			cpu.Idle = cpuF.Idle()
+			cpu.IOWait = cpuF.IOWait()
+			cpu.IRQ = cpuF.IRQ()
+			cpu.SoftIRQ = cpuF.SoftIRQ()
+			cpu.Steal = cpuF.Steal()
+			cpu.Quest = cpuF.Quest()
+			cpu.QuestNice = cpuF.QuestNice()
 		}
-		stts.CPU[i] = stat
+		statsS.CPUs[i] = cpu
 	}
-	return stts
+	return statsS
 }
 
 // Ticker delivers the system's memory information at intervals.

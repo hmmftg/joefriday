@@ -57,18 +57,18 @@ func ClkTck() error {
 	return nil
 }
 
-// Stats holds the /proc/stat information
+// Stats holds the kernel activity information; /proc/stat.
 type Stats struct {
 	ClkTck    int16  `json:"clk_tck"`
 	Timestamp int64  `json:"timestamp"`
 	Ctxt      int64  `json:"ctxt"`
 	BTime     int64  `json:"btime"`
 	Processes int64  `json:"processes"`
-	CPU       []Stat `json:"cpu"`
+	CPUs       []CPU `json:"cpu"`
 }
 
-// Stat is for capturing the CPU information of /proc/stat.
-type Stat struct {
+// CPU is for capturing the CPU information of /proc/stat.
+type CPU struct {
 	ID        string `json:"ID"`
 	User      int64  `json:"user"`
 	Nice      int64  `json:"nice"`
@@ -117,7 +117,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 		stop                bool
 	)
 
-	stats = &Stats{Timestamp: time.Now().UTC().UnixNano(), ClkTck: prof.ClkTck, CPU: make([]Stat, 0, 2)}
+	stats = &Stats{Timestamp: time.Now().UTC().UnixNano(), ClkTck: prof.ClkTck, CPUs: make([]CPU, 0, 2)}
 
 	// read each line until eof
 	for {
@@ -143,7 +143,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 		}
 		if prof.Val[0] == 'c' {
 			if prof.Val[1] == 'p' { // process CPU
-				stat := Stat{ID: string(prof.Val[:])}
+				cpu := CPU{ID: string(prof.Val[:])}
 				j = 0
 				// skip over any remaining spaces
 				for i, v = range prof.Line[pos:] {
@@ -169,43 +169,43 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 						if fieldNum < 6 {
 							if fieldNum < 4 {
 								if fieldNum == 1 {
-									stat.User = int64(n)
+									cpu.User = int64(n)
 									continue
 								}
 								if fieldNum == 2 {
-									stat.Nice = int64(n)
+									cpu.Nice = int64(n)
 									continue
 								}
-								stat.System = int64(n) // 3
+								cpu.System = int64(n) // 3
 								continue
 							}
 							if fieldNum == 4 {
-								stat.Idle = int64(n)
+								cpu.Idle = int64(n)
 								continue
 							}
-							stat.IOWait = int64(n) // 5
+							cpu.IOWait = int64(n) // 5
 							continue
 						}
 						if fieldNum < 8 {
 							if fieldNum == 6 {
-								stat.IRQ = int64(n)
+								cpu.IRQ = int64(n)
 								continue
 							}
-							stat.SoftIRQ = int64(n) // 7
+							cpu.SoftIRQ = int64(n) // 7
 							continue
 						}
 						if fieldNum == 8 {
-							stat.Steal = int64(n)
+							cpu.Steal = int64(n)
 							continue
 						}
 						if fieldNum == 9 {
-							stat.Quest = int64(n)
+							cpu.Quest = int64(n)
 							continue
 						}
-						stat.QuestNice = int64(n) // 10
+						cpu.QuestNice = int64(n) // 10
 					}
 				}
-				stats.CPU = append(stats.CPU, stat)
+				stats.CPUs = append(stats.CPUs, cpu)
 				stop = false
 				continue
 			}

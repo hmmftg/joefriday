@@ -7,10 +7,10 @@ table Stats {
     Ctxt:long;
     BTime:long;
     Processes:long;
-    CPU:[Stat];
+    CPUs:[CPU];
 }
 
-table Stat {
+table CPU {
     ID:string;
     User:long;
     Nice:long;

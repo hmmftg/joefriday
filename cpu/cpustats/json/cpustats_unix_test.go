@@ -80,17 +80,17 @@ func checkStats(n string, s *stats.Stats, t *testing.T) {
 	if s.Processes == 0 {
 		t.Errorf("%s: Processes: wanted non-zero value; got 0", n)
 	}
-	if len(s.CPU) < 2 {
-		t.Errorf("%s: expected stats for at least 2 CPU entries, got %d", n, len(s.CPU))
+	if len(s.CPUs) < 2 {
+		t.Errorf("%s: expected stats for at least 2 CPU entries, got %d", n, len(s.CPUs))
 	}
-	for i := 0; i < len(s.CPU); i++ {
-		if s.CPU[i].ID == "" {
+	for i := 0; i < len(s.CPUs); i++ {
+		if s.CPUs[i].ID == "" {
 			t.Errorf("%s: CPU %d: ID: wanted a non-empty value; was empty", n, i)
 		}
-		if s.CPU[i].User == 0 {
+		if s.CPUs[i].User == 0 {
 			t.Errorf("%s: CPU %d: User: wanted a non-zero value, was 0", n, i)
 		}
-		if s.CPU[i].System == 0 {
+		if s.CPUs[i].System == 0 {
 			t.Errorf("%s: CPU %d: System: wanted a non-xero value, was 0", n, i)
 		}
 	}
