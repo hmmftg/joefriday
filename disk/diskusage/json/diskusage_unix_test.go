@@ -76,14 +76,14 @@ func checkUsage(n string, u *structs.DiskUsage, t *testing.T) {
 	if u.TimeDelta == 0 {
 		t.Errorf("%s: TimeDelta: wanted non-zero value; got 0", n)
 	}
-	if len(u.Devices) == 0 {
+	if len(u.Device) == 0 {
 		t.Errorf("%s: expected there to be devices; didn't get any", n)
 	}
-	for i := 0; i < len(u.Devices); i++ {
-		if u.Devices[i].Major == 0 {
+	for i := 0; i < len(u.Device); i++ {
+		if u.Device[i].Major == 0 {
 			t.Errorf("%s: Device %d: Major: wanted a non-zero value, was 0", n, i)
 		}
-		if u.Devices[i].Name == "" {
+		if u.Device[i].Name == "" {
 			t.Errorf("%s: Device %d: Name: wanted a non-empty value; was empty", n, i)
 		}
 	}

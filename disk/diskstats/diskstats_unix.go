@@ -55,7 +55,7 @@ func (prof *Profiler) Get() (stats *structs.DiskStats, err error) {
 		dev                              structs.Device
 	)
 
-	stats = &structs.DiskStats{Timestamp: time.Now().UTC().UnixNano(), Devices: make([]structs.Device, 0, 2)}
+	stats = &structs.DiskStats{Timestamp: time.Now().UTC().UnixNano(), Device: make([]structs.Device, 0, 2)}
 
 	// read each line until eof
 	for {
@@ -148,7 +148,7 @@ func (prof *Profiler) Get() (stats *structs.DiskStats, err error) {
 			dev.WeightedIOTime = n
 			break
 		}
-		stats.Devices = append(stats.Devices, dev)
+		stats.Device = append(stats.Device, dev)
 	}
 	return stats, nil
 }

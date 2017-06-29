@@ -37,7 +37,7 @@ func (rcv *DiskUsage) TimeDelta() int64 {
 	return 0
 }
 
-func (rcv *DiskUsage) Devices(obj *Device, j int) bool {
+func (rcv *DiskUsage) Device(obj *Device, j int) bool {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
 		x := rcv._tab.Vector(o)
@@ -52,7 +52,7 @@ func (rcv *DiskUsage) Devices(obj *Device, j int) bool {
 	return false
 }
 
-func (rcv *DiskUsage) DevicesLength() int {
+func (rcv *DiskUsage) DeviceLength() int {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
 		return rcv._tab.VectorLen(o)
@@ -63,7 +63,7 @@ func (rcv *DiskUsage) DevicesLength() int {
 func DiskUsageStart(builder *flatbuffers.Builder) { builder.StartObject(3) }
 func DiskUsageAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
 func DiskUsageAddTimeDelta(builder *flatbuffers.Builder, TimeDelta int64) { builder.PrependInt64Slot(1, TimeDelta, 0) }
-func DiskUsageAddDevices(builder *flatbuffers.Builder, Devices flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(Devices), 0) }
-func DiskUsageStartDevicesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
+func DiskUsageAddDevice(builder *flatbuffers.Builder, Device flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(Device), 0) }
+func DiskUsageStartDeviceVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func DiskUsageEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

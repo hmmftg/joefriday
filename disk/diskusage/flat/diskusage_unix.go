@@ -81,30 +81,30 @@ func Get() (p []byte, err error) {
 func (prof *Profiler) Serialize(u *structs.DiskUsage) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	devF := make([]fb.UOffsetT, len(u.Devices))
-	names := make([]fb.UOffsetT, len(u.Devices))
+	devF := make([]fb.UOffsetT, len(u.Device))
+	names := make([]fb.UOffsetT, len(u.Device))
 	for i := 0; i < len(names); i++ {
-		names[i] = prof.Builder.CreateString(u.Devices[i].Name)
+		names[i] = prof.Builder.CreateString(u.Device[i].Name)
 	}
 	for i := 0; i < len(devF); i++ {
 		flat.DeviceStart(prof.Builder)
-		flat.DeviceAddMajor(prof.Builder, u.Devices[i].Major)
-		flat.DeviceAddMinor(prof.Builder, u.Devices[i].Minor)
+		flat.DeviceAddMajor(prof.Builder, u.Device[i].Major)
+		flat.DeviceAddMinor(prof.Builder, u.Device[i].Minor)
 		flat.DeviceAddName(prof.Builder, names[i])
-		flat.DeviceAddReadsCompleted(prof.Builder, u.Devices[i].ReadsCompleted)
-		flat.DeviceAddReadsMerged(prof.Builder, u.Devices[i].ReadsMerged)
-		flat.DeviceAddReadSectors(prof.Builder, u.Devices[i].ReadSectors)
-		flat.DeviceAddReadingTime(prof.Builder, u.Devices[i].ReadingTime)
-		flat.DeviceAddWritesCompleted(prof.Builder, u.Devices[i].WritesCompleted)
-		flat.DeviceAddWritesMerged(prof.Builder, u.Devices[i].WritesMerged)
-		flat.DeviceAddWrittenSectors(prof.Builder, u.Devices[i].WrittenSectors)
-		flat.DeviceAddWritingTime(prof.Builder, u.Devices[i].WritingTime)
-		flat.DeviceAddIOInProgress(prof.Builder, u.Devices[i].IOInProgress)
-		flat.DeviceAddIOTime(prof.Builder, u.Devices[i].IOTime)
-		flat.DeviceAddWeightedIOTime(prof.Builder, u.Devices[i].WeightedIOTime)
+		flat.DeviceAddReadsCompleted(prof.Builder, u.Device[i].ReadsCompleted)
+		flat.DeviceAddReadsMerged(prof.Builder, u.Device[i].ReadsMerged)
+		flat.DeviceAddReadSectors(prof.Builder, u.Device[i].ReadSectors)
+		flat.DeviceAddReadingTime(prof.Builder, u.Device[i].ReadingTime)
+		flat.DeviceAddWritesCompleted(prof.Builder, u.Device[i].WritesCompleted)
+		flat.DeviceAddWritesMerged(prof.Builder, u.Device[i].WritesMerged)
+		flat.DeviceAddWrittenSectors(prof.Builder, u.Device[i].WrittenSectors)
+		flat.DeviceAddWritingTime(prof.Builder, u.Device[i].WritingTime)
+		flat.DeviceAddIOInProgress(prof.Builder, u.Device[i].IOInProgress)
+		flat.DeviceAddIOTime(prof.Builder, u.Device[i].IOTime)
+		flat.DeviceAddWeightedIOTime(prof.Builder, u.Device[i].WeightedIOTime)
 		devF[i] = flat.DeviceEnd(prof.Builder)
 	}
-	flat.DiskUsageStartDevicesVector(prof.Builder, len(devF))
+	flat.DiskUsageStartDeviceVector(prof.Builder, len(devF))
 	for i := len(devF) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(devF[i])
 	}
@@ -112,7 +112,7 @@ func (prof *Profiler) Serialize(u *structs.DiskUsage) []byte {
 	flat.DiskUsageStart(prof.Builder)
 	flat.DiskUsageAddTimestamp(prof.Builder, u.Timestamp)
 	flat.DiskUsageAddTimeDelta(prof.Builder, u.TimeDelta)
-	flat.DiskUsageAddDevices(prof.Builder, devV)
+	flat.DiskUsageAddDevice(prof.Builder, devV)
 	prof.Builder.Finish(flat.DiskUsageEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -142,11 +142,11 @@ func Deserialize(p []byte) *structs.DiskUsage {
 	uF := flat.GetRootAsDiskUsage(p, 0)
 	u.Timestamp = uF.Timestamp()
 	u.TimeDelta = uF.TimeDelta()
-	len := uF.DevicesLength()
-	u.Devices = make([]structs.Device, len)
+	len := uF.DeviceLength()
+	u.Device = make([]structs.Device, len)
 	for i := 0; i < len; i++ {
 		var dev structs.Device
-		if uF.Devices(devF, i) {
+		if uF.Device(devF, i) {
 			dev.Major = devF.Major()
 			dev.Minor = devF.Minor()
 			dev.Name = string(devF.Name())
@@ -162,7 +162,7 @@ func Deserialize(p []byte) *structs.DiskUsage {
 			dev.IOTime = devF.IOTime()
 			dev.WeightedIOTime = devF.WeightedIOTime()
 		}
-		u.Devices[i] = dev
+		u.Device[i] = dev
 	}
 	return u
 }

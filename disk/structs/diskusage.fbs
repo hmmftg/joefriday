@@ -5,7 +5,7 @@ namespace flat;
 table DiskUsage {
 	Timestamp:long;
 	TimeDelta:long;
-	Devices:[Device];
+	Device:[Device];
 }
 
 root_type DiskUsage;

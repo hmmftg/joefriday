@@ -17,7 +17,7 @@ package structs
 // DiskStats holds the information for all of the block devices.
 type DiskStats struct {
 	Timestamp int64    `json:"timestamp"`
-	Devices   []Device `json:"devices"`
+	Device   []Device `json:"device"`
 }
 
 // Device contains information for a given block device.
@@ -42,5 +42,5 @@ type Device struct {
 type DiskUsage struct {
 	Timestamp int64    `json:"timestamp"`
 	TimeDelta int64    `json:"time_delta"`
-	Devices   []Device `json:"devices"`
+	Device   []Device `json:"device"`
 }

@@ -29,7 +29,7 @@ func (rcv *DiskStats) Timestamp() int64 {
 	return 0
 }
 
-func (rcv *DiskStats) Devices(obj *Device, j int) bool {
+func (rcv *DiskStats) Device(obj *Device, j int) bool {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
 		x := rcv._tab.Vector(o)
@@ -44,7 +44,7 @@ func (rcv *DiskStats) Devices(obj *Device, j int) bool {
 	return false
 }
 
-func (rcv *DiskStats) DevicesLength() int {
+func (rcv *DiskStats) DeviceLength() int {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
 		return rcv._tab.VectorLen(o)
@@ -54,7 +54,7 @@ func (rcv *DiskStats) DevicesLength() int {
 
 func DiskStatsStart(builder *flatbuffers.Builder) { builder.StartObject(2) }
 func DiskStatsAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
-func DiskStatsAddDevices(builder *flatbuffers.Builder, Devices flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(Devices), 0) }
-func DiskStatsStartDevicesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
+func DiskStatsAddDevice(builder *flatbuffers.Builder, Device flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(Device), 0) }
+func DiskStatsStartDeviceVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func DiskStatsEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

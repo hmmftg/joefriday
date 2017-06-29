@@ -82,23 +82,23 @@ func Get() (u *structs.DiskUsage, err error) {
 // CalculateUsage returns the difference between the current /proc/net/dev
 // data and the prior one.
 func (prof *Profiler) CalculateUsage(cur *structs.DiskStats) *structs.DiskUsage {
-	u := &structs.DiskUsage{Timestamp: cur.Timestamp, Devices: make([]structs.Device, len(cur.Devices))}
+	u := &structs.DiskUsage{Timestamp: cur.Timestamp, Device: make([]structs.Device, len(cur.Device))}
 	u.TimeDelta = cur.Timestamp - prof.prior.Timestamp
-	for i := 0; i < len(cur.Devices); i++ {
-		u.Devices[i].Major = cur.Devices[i].Major
-		u.Devices[i].Minor = cur.Devices[i].Minor
-		u.Devices[i].Name = cur.Devices[i].Name
-		u.Devices[i].ReadsCompleted = cur.Devices[i].ReadsCompleted - prof.prior.Devices[i].ReadsCompleted
-		u.Devices[i].ReadsMerged = cur.Devices[i].ReadsMerged - prof.prior.Devices[i].ReadsMerged
-		u.Devices[i].ReadSectors = cur.Devices[i].ReadSectors - prof.prior.Devices[i].ReadSectors
-		u.Devices[i].ReadingTime = cur.Devices[i].ReadingTime - prof.prior.Devices[i].ReadingTime
-		u.Devices[i].WritesCompleted = cur.Devices[i].WritesCompleted - prof.prior.Devices[i].WritesCompleted
-		u.Devices[i].WritesMerged = cur.Devices[i].WritesMerged - prof.prior.Devices[i].WritesMerged
-		u.Devices[i].WrittenSectors = cur.Devices[i].WrittenSectors - prof.prior.Devices[i].WrittenSectors
-		u.Devices[i].WritingTime = cur.Devices[i].WritingTime - prof.prior.Devices[i].WritingTime
-		u.Devices[i].IOInProgress = cur.Devices[i].IOInProgress - prof.prior.Devices[i].IOInProgress
-		u.Devices[i].IOTime = cur.Devices[i].IOTime - prof.prior.Devices[i].IOTime
-		u.Devices[i].WeightedIOTime = cur.Devices[i].WeightedIOTime - prof.prior.Devices[i].WeightedIOTime
+	for i := 0; i < len(cur.Device); i++ {
+		u.Device[i].Major = cur.Device[i].Major
+		u.Device[i].Minor = cur.Device[i].Minor
+		u.Device[i].Name = cur.Device[i].Name
+		u.Device[i].ReadsCompleted = cur.Device[i].ReadsCompleted - prof.prior.Device[i].ReadsCompleted
+		u.Device[i].ReadsMerged = cur.Device[i].ReadsMerged - prof.prior.Device[i].ReadsMerged
+		u.Device[i].ReadSectors = cur.Device[i].ReadSectors - prof.prior.Device[i].ReadSectors
+		u.Device[i].ReadingTime = cur.Device[i].ReadingTime - prof.prior.Device[i].ReadingTime
+		u.Device[i].WritesCompleted = cur.Device[i].WritesCompleted - prof.prior.Device[i].WritesCompleted
+		u.Device[i].WritesMerged = cur.Device[i].WritesMerged - prof.prior.Device[i].WritesMerged
+		u.Device[i].WrittenSectors = cur.Device[i].WrittenSectors - prof.prior.Device[i].WrittenSectors
+		u.Device[i].WritingTime = cur.Device[i].WritingTime - prof.prior.Device[i].WritingTime
+		u.Device[i].IOInProgress = cur.Device[i].IOInProgress - prof.prior.Device[i].IOInProgress
+		u.Device[i].IOTime = cur.Device[i].IOTime - prof.prior.Device[i].IOTime
+		u.Device[i].WeightedIOTime = cur.Device[i].WeightedIOTime - prof.prior.Device[i].WeightedIOTime
 	}
 	return u
 }
@@ -147,7 +147,7 @@ func (t *Ticker) Run() {
 				t.Errs <- err
 				break
 			}
-			cur.Devices = cur.Devices[:0]
+			cur.Device = cur.Device[:0]
 			// read each line until eof
 			for {
 				t.Val = t.Val[:0]
@@ -242,15 +242,15 @@ func (t *Ticker) Run() {
 					dev.WeightedIOTime = n
 					break
 				}
-				cur.Devices = append(cur.Devices, dev)
+				cur.Device = append(cur.Device, dev)
 			}
 			t.Data <- t.CalculateUsage(&cur)
 			// set prior info
 			t.prior.Timestamp = cur.Timestamp
-			if len(t.prior.Devices) != len(cur.Devices) {
-				t.prior.Devices = make([]structs.Device, len(cur.Devices))
+			if len(t.prior.Device) != len(cur.Device) {
+				t.prior.Device = make([]structs.Device, len(cur.Device))
 			}
-			copy(t.prior.Devices, cur.Devices)
+			copy(t.prior.Device, cur.Device)
 		}
 	}
 }

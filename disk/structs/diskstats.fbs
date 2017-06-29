@@ -4,7 +4,7 @@ namespace flat;
 
 table DiskStats {
 	Timestamp:long;
-	Devices:[Device];
+	Device:[Device];
 }
 
 root_type DiskStats;
