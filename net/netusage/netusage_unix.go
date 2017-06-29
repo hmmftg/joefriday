@@ -82,26 +82,26 @@ func (prof *Profiler) CalculateUsage(cur *structs.DevInfo) *structs.DevUsage {
 	u := &structs.DevUsage{
 		Timestamp:  cur.Timestamp,
 		TimeDelta:  cur.Timestamp - prof.prior.Timestamp,
-		Devices: make([]structs.Device, len(cur.Devices)),
+		Device: make([]structs.Device, len(cur.Device)),
 	}
-	for i := 0; i < len(cur.Devices); i++ {
-		u.Devices[i].Name = cur.Devices[i].Name
-		u.Devices[i].RBytes = cur.Devices[i].RBytes - prof.prior.Devices[i].RBytes
-		u.Devices[i].RPackets = cur.Devices[i].RPackets - prof.prior.Devices[i].RPackets
-		u.Devices[i].RErrs = cur.Devices[i].RErrs - prof.prior.Devices[i].RErrs
-		u.Devices[i].RDrop = cur.Devices[i].RDrop - prof.prior.Devices[i].RDrop
-		u.Devices[i].RFIFO = cur.Devices[i].RFIFO - prof.prior.Devices[i].RFIFO
-		u.Devices[i].RFrame = cur.Devices[i].RFrame - prof.prior.Devices[i].RFrame
-		u.Devices[i].RCompressed = cur.Devices[i].RCompressed - prof.prior.Devices[i].RCompressed
-		u.Devices[i].RMulticast = cur.Devices[i].RMulticast - prof.prior.Devices[i].RMulticast
-		u.Devices[i].TBytes = cur.Devices[i].TBytes - prof.prior.Devices[i].TBytes
-		u.Devices[i].TPackets = cur.Devices[i].TPackets - prof.prior.Devices[i].TPackets
-		u.Devices[i].TErrs = cur.Devices[i].TErrs - prof.prior.Devices[i].TErrs
-		u.Devices[i].TDrop = cur.Devices[i].TDrop - prof.prior.Devices[i].TDrop
-		u.Devices[i].TFIFO = cur.Devices[i].TFIFO - prof.prior.Devices[i].TFIFO
-		u.Devices[i].TColls = cur.Devices[i].TColls - prof.prior.Devices[i].TColls
-		u.Devices[i].TCarrier = cur.Devices[i].TCarrier - prof.prior.Devices[i].TCarrier
-		u.Devices[i].TCompressed = cur.Devices[i].TCompressed - prof.prior.Devices[i].TCompressed
+	for i := 0; i < len(cur.Device); i++ {
+		u.Device[i].Name = cur.Device[i].Name
+		u.Device[i].RBytes = cur.Device[i].RBytes - prof.prior.Device[i].RBytes
+		u.Device[i].RPackets = cur.Device[i].RPackets - prof.prior.Device[i].RPackets
+		u.Device[i].RErrs = cur.Device[i].RErrs - prof.prior.Device[i].RErrs
+		u.Device[i].RDrop = cur.Device[i].RDrop - prof.prior.Device[i].RDrop
+		u.Device[i].RFIFO = cur.Device[i].RFIFO - prof.prior.Device[i].RFIFO
+		u.Device[i].RFrame = cur.Device[i].RFrame - prof.prior.Device[i].RFrame
+		u.Device[i].RCompressed = cur.Device[i].RCompressed - prof.prior.Device[i].RCompressed
+		u.Device[i].RMulticast = cur.Device[i].RMulticast - prof.prior.Device[i].RMulticast
+		u.Device[i].TBytes = cur.Device[i].TBytes - prof.prior.Device[i].TBytes
+		u.Device[i].TPackets = cur.Device[i].TPackets - prof.prior.Device[i].TPackets
+		u.Device[i].TErrs = cur.Device[i].TErrs - prof.prior.Device[i].TErrs
+		u.Device[i].TDrop = cur.Device[i].TDrop - prof.prior.Device[i].TDrop
+		u.Device[i].TFIFO = cur.Device[i].TFIFO - prof.prior.Device[i].TFIFO
+		u.Device[i].TColls = cur.Device[i].TColls - prof.prior.Device[i].TColls
+		u.Device[i].TCarrier = cur.Device[i].TCarrier - prof.prior.Device[i].TCarrier
+		u.Device[i].TCompressed = cur.Device[i].TCompressed - prof.prior.Device[i].TCompressed
 	}
 	return u
 }
@@ -151,7 +151,7 @@ func (t *Ticker) Run() {
 				break
 			}
 			line = 0
-			cur.Devices = cur.Devices[:0]
+			cur.Device = cur.Device[:0]
 			// read each line until eof
 			for {
 				t.Val = t.Val[:0]
@@ -269,14 +269,14 @@ func (t *Ticker) Run() {
 						break
 					}
 				}
-				cur.Devices = append(cur.Devices, dev)
+				cur.Device = append(cur.Device, dev)
 			}
 			t.Data <- t.CalculateUsage(&cur)
 			t.prior.Timestamp = cur.Timestamp
-			if len(t.prior.Devices) != len(cur.Devices) {
-				t.prior.Devices = make([]structs.Device, len(cur.Devices))
+			if len(t.prior.Device) != len(cur.Device) {
+				t.prior.Device = make([]structs.Device, len(cur.Device))
 			}
-			copy(t.prior.Devices, cur.Devices)
+			copy(t.prior.Device, cur.Device)
 		}
 	}
 }

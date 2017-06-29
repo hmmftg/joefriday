@@ -58,12 +58,12 @@ func checkInfo(n string, dev *structs.DevInfo, t *testing.T) {
 	if dev.Timestamp == 0 {
 		t.Errorf("%s: expected timestamp to be a non-zero value; was 0", n)
 	}
-	if len(dev.Devices) == 0 {
+	if len(dev.Device) == 0 {
 		t.Errorf("%s: expected interfaces; got none", n)
 		return
 	}
 	// check name
-	for i, v := range dev.Devices {
+	for i, v := range dev.Device {
 		if v.Name == "" {
 			t.Errorf("%s: %d: expected inteface to have a name; was empty", n, i)
 		}

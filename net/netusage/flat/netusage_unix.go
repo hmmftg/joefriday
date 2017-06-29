@@ -80,41 +80,41 @@ func Get() (p []byte, err error) {
 func (prof *Profiler) Serialize(u *structs.DevUsage) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	devs := make([]fb.UOffsetT, len(u.Devices))
-	names := make([]fb.UOffsetT, len(u.Devices))
-	for i := 0; i < len(u.Devices); i++ {
-		names[i] = prof.Builder.CreateString(u.Devices[i].Name)
+	devs := make([]fb.UOffsetT, len(u.Device))
+	names := make([]fb.UOffsetT, len(u.Device))
+	for i := 0; i < len(u.Device); i++ {
+		names[i] = prof.Builder.CreateString(u.Device[i].Name)
 	}
-	for i := 0; i < len(u.Devices); i++ {
+	for i := 0; i < len(u.Device); i++ {
 		flat.DeviceStart(prof.Builder)
 		flat.DeviceAddName(prof.Builder, names[i])
-		flat.DeviceAddRBytes(prof.Builder, u.Devices[i].RBytes)
-		flat.DeviceAddRPackets(prof.Builder, u.Devices[i].RPackets)
-		flat.DeviceAddRErrs(prof.Builder, u.Devices[i].RErrs)
-		flat.DeviceAddRDrop(prof.Builder, u.Devices[i].RDrop)
-		flat.DeviceAddRFIFO(prof.Builder, u.Devices[i].RFIFO)
-		flat.DeviceAddRFrame(prof.Builder, u.Devices[i].RFrame)
-		flat.DeviceAddRCompressed(prof.Builder, u.Devices[i].RCompressed)
-		flat.DeviceAddRMulticast(prof.Builder, u.Devices[i].RMulticast)
-		flat.DeviceAddTBytes(prof.Builder, u.Devices[i].TBytes)
-		flat.DeviceAddTPackets(prof.Builder, u.Devices[i].TPackets)
-		flat.DeviceAddTErrs(prof.Builder, u.Devices[i].TErrs)
-		flat.DeviceAddTDrop(prof.Builder, u.Devices[i].TDrop)
-		flat.DeviceAddTFIFO(prof.Builder, u.Devices[i].TFIFO)
-		flat.DeviceAddTColls(prof.Builder, u.Devices[i].TColls)
-		flat.DeviceAddTCarrier(prof.Builder, u.Devices[i].TCarrier)
-		flat.DeviceAddTCompressed(prof.Builder, u.Devices[i].TCompressed)
+		flat.DeviceAddRBytes(prof.Builder, u.Device[i].RBytes)
+		flat.DeviceAddRPackets(prof.Builder, u.Device[i].RPackets)
+		flat.DeviceAddRErrs(prof.Builder, u.Device[i].RErrs)
+		flat.DeviceAddRDrop(prof.Builder, u.Device[i].RDrop)
+		flat.DeviceAddRFIFO(prof.Builder, u.Device[i].RFIFO)
+		flat.DeviceAddRFrame(prof.Builder, u.Device[i].RFrame)
+		flat.DeviceAddRCompressed(prof.Builder, u.Device[i].RCompressed)
+		flat.DeviceAddRMulticast(prof.Builder, u.Device[i].RMulticast)
+		flat.DeviceAddTBytes(prof.Builder, u.Device[i].TBytes)
+		flat.DeviceAddTPackets(prof.Builder, u.Device[i].TPackets)
+		flat.DeviceAddTErrs(prof.Builder, u.Device[i].TErrs)
+		flat.DeviceAddTDrop(prof.Builder, u.Device[i].TDrop)
+		flat.DeviceAddTFIFO(prof.Builder, u.Device[i].TFIFO)
+		flat.DeviceAddTColls(prof.Builder, u.Device[i].TColls)
+		flat.DeviceAddTCarrier(prof.Builder, u.Device[i].TCarrier)
+		flat.DeviceAddTCompressed(prof.Builder, u.Device[i].TCompressed)
 		devs[i] = flat.DeviceEnd(prof.Builder)
 	}
-	flat.DevUsageStartDevicesVector(prof.Builder, len(devs))
-	for i := len(u.Devices) - 1; i >= 0; i-- {
+	flat.DevUsageStartDeviceVector(prof.Builder, len(devs))
+	for i := len(u.Device) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(devs[i])
 	}
 	devsV := prof.Builder.EndVector(len(devs))
 	flat.DevUsageStart(prof.Builder)
 	flat.DevUsageAddTimestamp(prof.Builder, u.Timestamp)
 	flat.DevUsageAddTimeDelta(prof.Builder, u.TimeDelta)
-	flat.DevUsageAddDevices(prof.Builder, devsV)
+	flat.DevUsageAddDevice(prof.Builder, devsV)
 	prof.Builder.Finish(flat.DevUsageEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -142,16 +142,16 @@ func Serialize(u *structs.DevUsage) (p []byte, err error) {
 func Deserialize(p []byte) *structs.DevUsage {
 	uFlat := flat.GetRootAsDevUsage(p, 0)
 	// get the # of interfaces
-	iLen := uFlat.DevicesLength()
+	iLen := uFlat.DeviceLength()
 	u := &structs.DevUsage{
 		Timestamp:  uFlat.Timestamp(),
 		TimeDelta:  uFlat.TimeDelta(),
-		Devices: make([]structs.Device, iLen),
+		Device: make([]structs.Device, iLen),
 	}
 	fDev := &flat.Device{}
 	sDev := structs.Device{}
 	for i := 0; i < iLen; i++ {
-		if uFlat.Devices(fDev, i) {
+		if uFlat.Device(fDev, i) {
 			sDev.Name = string(fDev.Name())
 			sDev.RBytes = fDev.RBytes()
 			sDev.RPackets = fDev.RPackets()
@@ -170,7 +170,7 @@ func Deserialize(p []byte) *structs.DevUsage {
 			sDev.TCarrier = fDev.TCarrier()
 			sDev.TCompressed = fDev.TCompressed()
 		}
-		u.Devices[i] = sDev
+		u.Device[i] = sDev
 	}
 	return u
 }

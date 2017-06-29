@@ -38,7 +38,7 @@ type Device struct {
 // DevInfo contains information about all current network devices.
 type DevInfo struct {
 	Timestamp  int64 `json:"timestamp"`
-	Devices []Device `json:"devices"`
+	Device []Device `json:"devices"`
 }
 
 // DevUsage contains information about the usage of all current network
@@ -48,5 +48,5 @@ type DevInfo struct {
 type DevUsage struct {
 	Timestamp  int64 `json:"timestamp"`
 	TimeDelta  int64 `json:"time_delta"`
-	Devices []Device `json:"devices"`
+	Device []Device `json:"devices"`
 }

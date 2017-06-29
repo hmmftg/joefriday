@@ -4,7 +4,7 @@ namespace flat;
 
 table DevInfo {
 	Timestamp:long;
-	Devices:[Device];
+	Device:[Device];
 }
 
 root_type DevInfo;

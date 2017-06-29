@@ -68,12 +68,12 @@ func checkUsage(n string, u *structs.DevUsage, t *testing.T) {
 	if u.TimeDelta == 0 {
 		t.Errorf("%s: expected TimeDelta to be a non-zero value; was 0", n)
 	}
-	if len(u.Devices) == 0 {
+	if len(u.Device) == 0 {
 		t.Error("%s: expected devices; got none", n)
 		return
 	}
 	// check name
-	for i, v := range u.Devices {
+	for i, v := range u.Device {
 		if v.Name == "" {
 			t.Errorf("%s: %d: expected device to have a name; was empty", n, i)
 		}

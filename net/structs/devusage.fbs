@@ -5,7 +5,7 @@ namespace flat;
 table DevUsage {
 	Timestamp:long;
 	TimeDelta:long;
-	Devices:[Device];
+	Device:[Device];
 }
 
 root_type DevUsage;

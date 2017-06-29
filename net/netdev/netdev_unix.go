@@ -57,7 +57,7 @@ func (prof *Profiler) Get() (*structs.DevInfo, error) {
 		return nil, err
 	}
 	// there's, usually, at least 2 devices
-	nDev := &structs.DevInfo{Timestamp: time.Now().UTC().UnixNano(), Devices: make([]structs.Device, 0, 2)}
+	nDev := &structs.DevInfo{Timestamp: time.Now().UTC().UnixNano(), Device: make([]structs.Device, 0, 2)}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -171,7 +171,7 @@ func (prof *Profiler) Get() (*structs.DevInfo, error) {
 			dev.TCompressed = int64(n)
 			break
 		}
-		nDev.Devices = append(nDev.Devices, dev)
+		nDev.Device = append(nDev.Device, dev)
 	}
 	return nDev, nil
 }
