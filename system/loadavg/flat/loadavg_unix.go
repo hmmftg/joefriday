@@ -27,8 +27,8 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	joe "github.com/mohae/joefriday"
-	l "github.com/mohae/joefriday/platform/loadavg"
-	"github.com/mohae/joefriday/platform/loadavg/flat/structs"
+	l "github.com/mohae/joefriday/system/loadavg"
+	"github.com/mohae/joefriday/system/loadavg/flat/structs"
 )
 
 // Profiler is used to process the LoadAvg information, /proc/loadavg, using

@@ -16,13 +16,13 @@ package version
 import (
 	"testing"
 
-	v "github.com/mohae/joefriday/platform/version"
+	v "github.com/mohae/joefriday/system/version"
 )
 
-func TestGet(t *testing.T) {
+func TestSerializeDeserialize(t *testing.T) {
 	p, err := Get()
 	if err != nil {
-		t.Errorf("got %s, want nil", err)
+		t.Errorf("Get(): got %s, want nil", err)
 		return
 	}
 	inf, err := v.Get()
@@ -30,11 +30,7 @@ func TestGet(t *testing.T) {
 		t.Errorf("version.Get(): got %s, want nil", err)
 		return
 	}
-	infD, err := Deserialize(p)
-	if err != nil {
-		t.Errorf("deserialize: unexpected error: %s", err)
-		return
-	}
+	infD := Deserialize(p)
 	if inf.OS != infD.OS {
 		t.Errorf("OS: got %s; want %s", infD.OS, inf.OS)
 	}
@@ -62,38 +58,26 @@ func TestGet(t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	var jsn []byte
+	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Get()
+		tmp, _ = p.Get()
 	}
-	_ = jsn
+	_ = tmp
 }
 
 func BenchmarkSerialize(b *testing.B) {
-	var jsn []byte
+	var tmp []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
-	v, _ := p.Profiler.Get()
+	inf, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Serialize(v)
+		tmp, _ = Serialize(inf)
 	}
-	_ = jsn
-}
-
-func BenchmarkMarshal(b *testing.B) {
-	var jsn []byte
-	b.StopTimer()
-	p, _ := NewProfiler()
-	v, _ := p.Profiler.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		jsn, _ = p.Marshal(v)
-	}
-	_ = jsn
+	_ = tmp
 }
 
 func BenchmarkDeserialize(b *testing.B) {
@@ -103,19 +87,7 @@ func BenchmarkDeserialize(b *testing.B) {
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = Deserialize(tmp)
-	}
-	_ = inf
-}
-
-func BenchmarkUnmarshal(b *testing.B) {
-	var inf *v.Info
-	b.StartTimer()
-	p, _ := NewProfiler()
-	tmp, _ := p.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		inf, _ = Unmarshal(tmp)
+		inf = Deserialize(tmp)
 	}
 	_ = inf
 }

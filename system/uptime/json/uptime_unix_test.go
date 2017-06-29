@@ -17,17 +17,21 @@ import (
 	"testing"
 	"time"
 
-	u "github.com/mohae/joefriday/platform/uptime"
+	u "github.com/mohae/joefriday/system/uptime"
 )
 
-func TestSerializeDeserialize(t *testing.T) {
+func TestGet(t *testing.T) {
 	p, err := Get()
 	if err != nil {
 		t.Errorf("Get(): got %s, want nil", err)
 		return
 	}
-	u := Deserialize(p)
-	checkUptime("ticker", u, t)
+	u, err := Deserialize(p)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+		return
+	}
+	checkUptime("get", u, t)
 }
 
 func TestTicker(t *testing.T) {
@@ -45,7 +49,11 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			u := Deserialize(v)
+			u, err := Deserialize(v)
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+				continue
+			}
 			checkUptime("ticker", u, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
@@ -68,26 +76,38 @@ func checkUptime(n string, inf u.Info, t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	var tmp []byte
+	var jsn []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = p.Get()
+		jsn, _ = p.Get()
 	}
-	_ = tmp
+	_ = jsn
 }
 
 func BenchmarkSerialize(b *testing.B) {
-	var tmp []byte
+	var jsn []byte
 	b.StopTimer()
 	p, _ := NewProfiler()
-	k, _ := p.Profiler.Get()
+	v, _ := p.Profiler.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = Serialize(k)
+		jsn, _ = p.Serialize(v)
 	}
-	_ = tmp
+	_ = jsn
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	var jsn []byte
+	b.StopTimer()
+	p, _ := NewProfiler()
+	v, _ := p.Profiler.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		jsn, _ = p.Marshal(v)
+	}
+	_ = jsn
 }
 
 func BenchmarkDeserialize(b *testing.B) {
@@ -97,7 +117,19 @@ func BenchmarkDeserialize(b *testing.B) {
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf = Deserialize(tmp)
+		inf, _ = Deserialize(tmp)
+	}
+	_ = inf
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	var inf u.Info
+	b.StartTimer()
+	p, _ := NewProfiler()
+	tmp, _ := p.Get()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		inf, _ = Unmarshal(tmp)
 	}
 	_ = inf
 }

@@ -24,7 +24,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	v "github.com/mohae/joefriday/platform/version"
+	v "github.com/mohae/joefriday/system/version"
 )
 
 // Profiler is used to process the version information, /proc/version, using

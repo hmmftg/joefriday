@@ -11,12 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package release
+package uptime
 
 import (
 	"testing"
+	"time"
 
-	r "github.com/mohae/joefriday/platform/release"
+	u "github.com/mohae/joefriday/system/uptime"
 )
 
 func TestSerializeDeserialize(t *testing.T) {
@@ -25,35 +26,44 @@ func TestSerializeDeserialize(t *testing.T) {
 		t.Errorf("Get(): got %s, want nil", err)
 		return
 	}
-	inf, err := r.Get()
+	u := Deserialize(p)
+	checkUptime("ticker", u, t)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
 	if err != nil {
-		t.Errorf("release.Get(): got %s, want nil", err)
+		t.Error(err)
 		return
 	}
-	infD := Deserialize(p)
-	if inf.Name != infD.Name {
-		t.Errorf("Name: got %s; want %s", infD.Name, inf.Name)
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			u := Deserialize(v)
+			checkUptime("ticker", u, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
 	}
-	if inf.ID != infD.ID {
-		t.Errorf("ID: got %s; want %s", infD.ID, inf.ID)
+	tk.Stop()
+	tk.Close()
+}
+
+func checkUptime(n string, inf u.Info, t *testing.T) {
+	if inf.Timestamp == 0 {
+		t.Errorf("expected Timestamp to be a non-zero value; got 0")
 	}
-	if inf.IDLike != infD.IDLike {
-		t.Errorf("IDLike: got %s; want %s", infD.IDLike, inf.IDLike)
+	if inf.Total == 0 {
+		t.Errorf("expected total to be a non-zero value; got 0")
 	}
-	if inf.PrettyName != infD.PrettyName {
-		t.Errorf("PrettyName: got %s; want %s", infD.PrettyName, inf.PrettyName)
-	}
-	if inf.Version != infD.Version {
-		t.Errorf("Version: got %s; want %s", infD.Version, inf.Version)
-	}
-	if inf.VersionID != infD.VersionID {
-		t.Errorf("VersionID: got %s; want %s", infD.VersionID, inf.VersionID)
-	}
-	if inf.HomeURL != infD.HomeURL {
-		t.Errorf("HomeURL: got %s; want %s", infD.HomeURL, inf.HomeURL)
-	}
-	if inf.BugReportURL != infD.BugReportURL {
-		t.Errorf("BugReportURL: got %s; want %s", infD.BugReportURL, inf.BugReportURL)
+	if inf.Idle == 0 {
+		t.Errorf("expected idle to be a non-zero value; got 0")
 	}
 }
 
@@ -81,7 +91,7 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf *r.Info
+	var inf u.Info
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()

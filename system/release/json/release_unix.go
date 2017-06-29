@@ -24,7 +24,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	r "github.com/mohae/joefriday/platform/release"
+	r "github.com/mohae/joefriday/system/release"
 )
 
 // Profiler is used to process the OS release information file using JSON.

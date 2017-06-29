@@ -11,14 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of uptime information. Instead
-// of returning a Go struct, it returns JSON serialized bytes. A function to
-// deserialize the JSON serialized bytes into an uptime.Info struct is
-// provided.
+// Package loadavg handles JSON based processing of loadavg information.
+// Instead of returning a Go struct, it returns JSON serialized bytes. A
+// function to deserialize the JSON serialized bytes into an loadavg.LoadAvg
+// struct is provided.
 //
-// Note: the package name is uptime and not the final element of the import
+// Note: the package name is loadavg and not the final element of the import
 // path (json). 
-package uptime
+package loadavg
 
 import (
 	"encoding/json"
@@ -26,25 +26,25 @@ import (
 	"time"
 
 	joe "github.com/mohae/joefriday"
-	u "github.com/mohae/joefriday/platform/uptime"
+	l "github.com/mohae/joefriday/system/loadavg"
 )
 
-// Profiler is used to process the uptime information, /proc/version, using
+// Profiler is used to process the loadavg information, /proc/loadavg, using
 // JSON.
 type Profiler struct {
-	*u.Profiler
+	*l.Profiler
 }
 
-// Initializes and returns a json.Profiler for uptime information.
+// Initializes and returns a json.Profiler for loadavg information.
 func NewProfiler() (prof *Profiler, err error) {
-	p, err := u.NewProfiler()
+	p, err := l.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current uptime information as JSON serialized bytes.
+// Get returns the current loadavg information as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	k, err := prof.Profiler.Get()
 	if err != nil {
@@ -56,7 +56,7 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current uptime information as JSON serialized bytes using
+// Get returns the current LoadAvg information as JSON serialized bytes using
 // the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -70,13 +70,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize uptime.Info using JSON.
-func (prof *Profiler) Serialize(inf u.Info) ([]byte, error) {
-	return json.Marshal(inf)
+// Serialize loadavg.LoadAvg using JSON.
+func (prof *Profiler) Serialize(la l.LoadAvg) ([]byte, error) {
+	return json.Marshal(la)
 }
 
-// Serialize uptime.Info using JSON with the package global Profiler.
-func Serialize(inf u.Info) (p []byte, err error) {
+// Serialize loadavg.LoadAvg using JSON with the package global Profiler.
+func Serialize(la l.LoadAvg) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -85,31 +85,31 @@ func Serialize(inf u.Info) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(inf)
+	return std.Serialize(la)
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(inf u.Info) ([]byte, error) {
-	return prof.Serialize(inf)
+func (prof *Profiler) Marshal(la l.LoadAvg) ([]byte, error) {
+	return prof.Serialize(la)
 }
 
 // Marshal is an alias for Serialize that uses the package's global profiler.
-func Marshal(inf u.Info) ([]byte, error) {
-	return Serialize(inf)
+func Marshal(la l.LoadAvg) ([]byte, error) {
+	return Serialize(la)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// uptime.Uptime.
-func Deserialize(p []byte) (inf u.Info, err error) {
-	err = json.Unmarshal(p, &inf)
+// loadavg.LoadAvg.
+func Deserialize(p []byte) (la l.LoadAvg, err error) {
+	err = json.Unmarshal(p, &la)
 	if err != nil {
-		return inf, err
+		return la, err
 	}
-	return inf, nil
+	return la, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (inf u.Info, err error) {
+func Unmarshal(p []byte) (l.LoadAvg, error) {
 	return Deserialize(p)
 }
 

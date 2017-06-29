@@ -11,53 +11,80 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package release
+package loadavg
 
 import (
 	"testing"
+	"time"
 
-	r "github.com/mohae/joefriday/platform/release"
+	l "github.com/mohae/joefriday/system/loadavg"
 )
 
 func TestGet(t *testing.T) {
 	p, err := Get()
 	if err != nil {
-		t.Errorf("got %s, want nil", err)
+		t.Errorf("Get(): got %s, want nil", err)
 		return
 	}
-	inf, err := r.Get()
+	inf, err := Deserialize(p)
 	if err != nil {
-		t.Errorf("release.Get(): got %s, want nil", err)
+		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	infD, err := Deserialize(p)
+	checkLoad("get", inf, t)
+	t.Logf("%#v\n", inf)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
 	if err != nil {
-		t.Errorf("deserialize: unexpected error: %s", err)
+		t.Error(err)
 		return
 	}
-	if inf.Name != infD.Name {
-		t.Errorf("Name: got %s; want %s", infD.Name, inf.Name)
+	tk := tkr.(*Ticker)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			inf, err := Deserialize(v)
+			if err != nil {
+				t.Error(err)
+				continue
+			}
+			checkLoad("ticker", inf, t)
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
 	}
-	if inf.ID != infD.ID {
-		t.Errorf("ID: got %s; want %s", infD.ID, inf.ID)
+	tk.Stop()
+	tk.Close()
+}
+
+func checkLoad(n string, la l.LoadAvg, t *testing.T) {
+	if la.Timestamp == 0 {
+		t.Errorf("%s: expected Timestamp to be a non-zero value; got 0", n)
 	}
-	if inf.IDLike != infD.IDLike {
-		t.Errorf("IDLike: got %s; want %s", infD.IDLike, inf.IDLike)
+	if la.Minute == 0 {
+		t.Errorf("%s: expected Minute to be a non-zero value; got 0", n)
 	}
-	if inf.PrettyName != infD.PrettyName {
-		t.Errorf("PrettyName: got %s; want %s", infD.PrettyName, inf.PrettyName)
+	if la.Five == 0 {
+		t.Errorf("%s: expected Five to be a non-zero value; got 0", n)
 	}
-	if inf.Version != infD.Version {
-		t.Errorf("Version: got %s; want %s", infD.Version, inf.Version)
+	if la.Fifteen == 0 {
+		t.Errorf("%s: expected Fifteen to be a non-zero value; got 0", n)
 	}
-	if inf.VersionID != infD.VersionID {
-		t.Errorf("VersionID: got %s; want %s", infD.VersionID, inf.VersionID)
+	if la.Running == 0 {
+		t.Errorf("%s: expected Running to be a non-zero value; got 0", n)
 	}
-	if inf.HomeURL != infD.HomeURL {
-		t.Errorf("HomeURL: got %s; want %s", infD.HomeURL, inf.HomeURL)
+	if la.Total == 0 {
+		t.Errorf("%s: expected Total to be a non-zero value; got 0", n)
 	}
-	if inf.BugReportURL != infD.BugReportURL {
-		t.Errorf("BugReportURL: got %s; want %s", infD.BugReportURL, inf.BugReportURL)
+	if la.PID == 0 {
+		t.Errorf("%s: expected PID to be a non-zero value; got 0", n)
 	}
 }
 
@@ -97,25 +124,25 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf *r.Info
+	var la l.LoadAvg
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = Deserialize(tmp)
+		la, _ = Deserialize(tmp)
 	}
-	_ = inf
+	_ = la
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var inf *r.Info
+	var la l.LoadAvg
 	b.StartTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = Unmarshal(tmp)
+		la, _ = Unmarshal(tmp)
 	}
-	_ = inf
+	_ = la
 }

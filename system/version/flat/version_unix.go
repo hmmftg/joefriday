@@ -25,8 +25,8 @@ import (
 	"sync"
 
 	fb "github.com/google/flatbuffers/go"
-	v "github.com/mohae/joefriday/platform/version"
-	"github.com/mohae/joefriday/platform/version/flat/structs"
+	v "github.com/mohae/joefriday/system/version"
+	"github.com/mohae/joefriday/system/version/flat/structs"
 )
 
 // Profiler is used to process the version information, /proc/version, using
