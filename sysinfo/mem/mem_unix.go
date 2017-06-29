@@ -22,8 +22,8 @@ import (
 	joe "github.com/mohae/joefriday"
 )
 
-// Info holds information about system memory.
-type Info struct {
+// MemInfo holds information about system memory.
+type MemInfo struct {
 	Timestamp int64
 	TotalRAM  uint64
 	FreeRAM   uint64
@@ -34,7 +34,7 @@ type Info struct {
 }
 
 // Get gets the system's memory information.
-func (m *Info) Get() error {
+func (m *MemInfo) Get() error {
 	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
 	if err != nil {
@@ -51,7 +51,7 @@ func (m *Info) Get() error {
 }
 
 // Get gets the system's memory information.
-func Get() (m Info, err error) {
+func Get() (m MemInfo, err error) {
 	err = m.Get()
 	return m, err
 }
@@ -59,7 +59,7 @@ func Get() (m Info, err error) {
 // Ticker delivers the system's memory information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan Info
+	Data chan MemInfo
 }
 
 // NewTicker returns a new Ticker containing a Data channel that delivers
@@ -68,7 +68,7 @@ type Ticker struct {
 // does not close the Data channel.  Close the ticker to close all ticker
 // channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info)}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan MemInfo)}
 	go t.Run()
 	return &t, nil
 }

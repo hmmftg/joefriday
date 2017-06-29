@@ -1,7 +1,7 @@
 //info.fbs
 namespace structs;
 
-table Info {
+table MemInfo {
 	Timestamp:long;
 	TotalRAM:ulong;
 	FreeRAM:ulong;
@@ -11,4 +11,4 @@ table Info {
 	FreeSwap:ulong;
 }
 
-root_type Info;
+root_type MemInfo;

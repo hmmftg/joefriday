@@ -55,7 +55,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkMemInfo(n string, inf *m.Info, t *testing.T) {
+func checkMemInfo(n string, inf *m.MemInfo, t *testing.T) {
 	if inf.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
@@ -78,7 +78,7 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
-	var inf m.Info
+	var inf m.MemInfo
 	b.StopTimer()
 	inf.Get()
 	b.StartTimer()
@@ -88,7 +88,7 @@ func BenchmarkSerialize(b *testing.B) {
 	_ = tmp
 }
 
-var inf *m.Info
+var inf *m.MemInfo
 
 func BenchmarkDeserialize(b *testing.B) {
 	b.StopTimer()

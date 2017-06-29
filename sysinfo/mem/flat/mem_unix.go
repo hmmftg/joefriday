@@ -36,7 +36,7 @@ var mu sync.Mutex
 
 // Get returns the current loadavg as Flatbuffer serialized bytes.
 func Get() (p []byte, err error) {
-	var inf m.Info
+	var inf m.MemInfo
 	err = inf.Get()
 	if err != nil {
 		return nil, err
@@ -44,21 +44,21 @@ func Get() (p []byte, err error) {
 	return Serialize(&inf), nil
 }
 
-// Serialize mem.Info using Flatbuffers.
-func Serialize(inf *m.Info) []byte {
+// Serialize mem.MemInfo using Flatbuffers.
+func Serialize(inf *m.MemInfo) []byte {
 	mu.Lock()
 	defer mu.Unlock()
 	// ensure the Builder is in a usable state.
 	builder.Reset()
-	structs.InfoStart(builder)
-	structs.InfoAddTimestamp(builder, inf.Timestamp)
-	structs.InfoAddTotalRAM(builder, inf.TotalRAM)
-	structs.InfoAddFreeRAM(builder, inf.FreeRAM)
-	structs.InfoAddSharedRAM(builder, inf.SharedRAM)
-	structs.InfoAddBufferRAM(builder, inf.BufferRAM)
-	structs.InfoAddTotalSwap(builder, inf.TotalSwap)
-	structs.InfoAddFreeSwap(builder, inf.FreeSwap)
-	builder.Finish(structs.InfoEnd(builder))
+	structs.MemInfoStart(builder)
+	structs.MemInfoAddTimestamp(builder, inf.Timestamp)
+	structs.MemInfoAddTotalRAM(builder, inf.TotalRAM)
+	structs.MemInfoAddFreeRAM(builder, inf.FreeRAM)
+	structs.MemInfoAddSharedRAM(builder, inf.SharedRAM)
+	structs.MemInfoAddBufferRAM(builder, inf.BufferRAM)
+	structs.MemInfoAddTotalSwap(builder, inf.TotalSwap)
+	structs.MemInfoAddFreeSwap(builder, inf.FreeSwap)
+	builder.Finish(structs.MemInfoEnd(builder))
 	p := builder.Bytes[builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -67,10 +67,10 @@ func Serialize(inf *m.Info) []byte {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as mem.Info.
-func Deserialize(p []byte) *m.Info {
-	infoFlat := structs.GetRootAsInfo(p, 0)
-	info := &m.Info{}
+// as mem.MemInfo.
+func Deserialize(p []byte) *m.MemInfo {
+	infoFlat := structs.GetRootAsMemInfo(p, 0)
+	info := &m.MemInfo{}
 	info.Timestamp = infoFlat.Timestamp()
 	info.TotalRAM = infoFlat.TotalRAM()
 	info.FreeRAM = infoFlat.FreeRAM()

@@ -37,7 +37,7 @@ func TestGetMemInfo(t *testing.T) {
 	checkMemInfo("get", m, t)
 }
 
-func checkMemInfo(n string, m Info, t *testing.T) {
+func checkMemInfo(n string, m MemInfo, t *testing.T) {
 	if m.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
@@ -51,7 +51,7 @@ func checkMemInfo(n string, m Info, t *testing.T) {
 }
 
 func BenchmarkMemInfo(b *testing.B) {
-	var tmp Info
+	var tmp MemInfo
 	for i := 0; i < b.N; i++ {
 		_ = tmp.Get()
 	}

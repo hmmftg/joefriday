@@ -30,7 +30,7 @@ import (
 
 // Get returns the current meminfo as JSON serialized bytes.
 func Get() (p []byte, err error) {
-	var inf m.Info
+	var inf m.MemInfo
 	err = inf.Get()
 	if err != nil {
 		return nil, err
@@ -39,9 +39,9 @@ func Get() (p []byte, err error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// mem.Info.
-func Deserialize(p []byte) (*m.Info, error) {
-	var inf m.Info
+// mem.MemInfo.
+func Deserialize(p []byte) (*m.MemInfo, error) {
+	var inf m.MemInfo
 	err := json.Unmarshal(p, &inf)
 	if err != nil {
 		return nil, err
@@ -50,11 +50,11 @@ func Deserialize(p []byte) (*m.Info, error) {
 }
 
 // Unmarshal is an alias for Deserialize.
-func Unmarshal(p []byte) (*m.Info, error) {
+func Unmarshal(p []byte) (*m.MemInfo, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers mem.Info as JSON serialized bytes at intervals.
+// Ticker delivers mem.MemInfo as JSON serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
