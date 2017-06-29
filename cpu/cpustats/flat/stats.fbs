@@ -7,7 +7,7 @@ table Stats {
     Ctxt:long;
     BTime:long;
     Processes:long;
-    CPUs:[CPU];
+    CPU:[CPU];
 }
 
 table CPU {

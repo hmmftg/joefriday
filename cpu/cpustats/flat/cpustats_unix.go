@@ -80,27 +80,27 @@ func Get() (p []byte, err error) {
 func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	cpusF := make([]fb.UOffsetT, len(stts.CPUs))
-	ids := make([]fb.UOffsetT, len(stts.CPUs))
+	cpusF := make([]fb.UOffsetT, len(stts.CPU))
+	ids := make([]fb.UOffsetT, len(stts.CPU))
 	for i := 0; i < len(ids); i++ {
-		ids[i] = prof.Builder.CreateString(stts.CPUs[i].ID)
+		ids[i] = prof.Builder.CreateString(stts.CPU[i].ID)
 	}
 	for i := 0; i < len(cpusF); i++ {
 		structs.CPUStart(prof.Builder)
 		structs.CPUAddID(prof.Builder, ids[i])
-		structs.CPUAddUser(prof.Builder, stts.CPUs[i].User)
-		structs.CPUAddNice(prof.Builder, stts.CPUs[i].Nice)
-		structs.CPUAddSystem(prof.Builder, stts.CPUs[i].System)
-		structs.CPUAddIdle(prof.Builder, stts.CPUs[i].Idle)
-		structs.CPUAddIOWait(prof.Builder, stts.CPUs[i].IOWait)
-		structs.CPUAddIRQ(prof.Builder, stts.CPUs[i].IRQ)
-		structs.CPUAddSoftIRQ(prof.Builder, stts.CPUs[i].SoftIRQ)
-		structs.CPUAddSteal(prof.Builder, stts.CPUs[i].Steal)
-		structs.CPUAddQuest(prof.Builder, stts.CPUs[i].Quest)
-		structs.CPUAddQuestNice(prof.Builder, stts.CPUs[i].QuestNice)
+		structs.CPUAddUser(prof.Builder, stts.CPU[i].User)
+		structs.CPUAddNice(prof.Builder, stts.CPU[i].Nice)
+		structs.CPUAddSystem(prof.Builder, stts.CPU[i].System)
+		structs.CPUAddIdle(prof.Builder, stts.CPU[i].Idle)
+		structs.CPUAddIOWait(prof.Builder, stts.CPU[i].IOWait)
+		structs.CPUAddIRQ(prof.Builder, stts.CPU[i].IRQ)
+		structs.CPUAddSoftIRQ(prof.Builder, stts.CPU[i].SoftIRQ)
+		structs.CPUAddSteal(prof.Builder, stts.CPU[i].Steal)
+		structs.CPUAddQuest(prof.Builder, stts.CPU[i].Quest)
+		structs.CPUAddQuestNice(prof.Builder, stts.CPU[i].QuestNice)
 		cpusF[i] = structs.CPUEnd(prof.Builder)
 	}
-	structs.StatsStartCPUsVector(prof.Builder, len(cpusF))
+	structs.StatsStartCPUVector(prof.Builder, len(cpusF))
 	for i := len(cpusF) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(cpusF[i])
 	}
@@ -111,7 +111,7 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	structs.StatsAddCtxt(prof.Builder, stts.Ctxt)
 	structs.StatsAddBTime(prof.Builder, stts.BTime)
 	structs.StatsAddProcesses(prof.Builder, stts.Processes)
-	structs.StatsAddCPUs(prof.Builder, cpusV)
+	structs.StatsAddCPU(prof.Builder, cpusV)
 	prof.Builder.Finish(structs.StatsEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -144,11 +144,11 @@ func Deserialize(p []byte) *stats.Stats {
 	statsS.Ctxt = statsF.Ctxt()
 	statsS.BTime = statsF.BTime()
 	statsS.Processes = statsF.Processes()
-	len := statsF.CPUsLength()
-	statsS.CPUs = make([]stats.CPU, len)
+	len := statsF.CPULength()
+	statsS.CPU = make([]stats.CPU, len)
 	for i := 0; i < len; i++ {
 		var cpu stats.CPU
-		if statsF.CPUs(cpuF, i) {
+		if statsF.CPU(cpuF, i) {
 			cpu.ID = string(cpuF.ID())
 			cpu.User = cpuF.User()
 			cpu.Nice = cpuF.Nice()
@@ -161,7 +161,7 @@ func Deserialize(p []byte) *stats.Stats {
 			cpu.Quest = cpuF.Quest()
 			cpu.QuestNice = cpuF.QuestNice()
 		}
-		statsS.CPUs[i] = cpu
+		statsS.CPU[i] = cpu
 	}
 	return statsS
 }

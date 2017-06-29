@@ -64,7 +64,7 @@ type Stats struct {
 	Ctxt      int64  `json:"ctxt"`
 	BTime     int64  `json:"btime"`
 	Processes int64  `json:"processes"`
-	CPUs       []CPU `json:"cpu"`
+	CPU       []CPU `json:"cpu"`
 }
 
 // CPU is for capturing the CPU information of /proc/stat.
@@ -117,7 +117,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 		stop                bool
 	)
 
-	stats = &Stats{Timestamp: time.Now().UTC().UnixNano(), ClkTck: prof.ClkTck, CPUs: make([]CPU, 0, 2)}
+	stats = &Stats{Timestamp: time.Now().UTC().UnixNano(), ClkTck: prof.ClkTck, CPU: make([]CPU, 0, 2)}
 
 	// read each line until eof
 	for {
@@ -205,7 +205,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 						cpu.QuestNice = int64(n) // 10
 					}
 				}
-				stats.CPUs = append(stats.CPUs, cpu)
+				stats.CPU = append(stats.CPU, cpu)
 				stop = false
 				continue
 			}
