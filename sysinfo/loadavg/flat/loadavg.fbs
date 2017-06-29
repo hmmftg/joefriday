@@ -1,11 +1,11 @@
 // loadavg.fbs
 namespace structs;
 
-table Info {
+table LoadAvg {
 	Timestamp:long;
     One:double;
     Five:double;
 	Fifteen:double;
 }
 
-root_type Info;
+root_type LoadAvg;

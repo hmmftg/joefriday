@@ -34,9 +34,9 @@ import (
 var builder = fb.NewBuilder(0)
 var mu sync.Mutex
 
-// Get returns the current load as Flatbuffer serialized bytes.
+// Get returns the current LoadAvg as Flatbuffer serialized bytes.
 func Get() (p []byte, err error) {
-	var l load.Info
+	var l load.LoadAvg
 	err = l.Get()
 	if err != nil {
 		return nil, err
@@ -44,18 +44,18 @@ func Get() (p []byte, err error) {
 	return Serialize(&l), nil
 }
 
-// Serialize loadAvg.Info using Flatbuffers.
-func Serialize(l *load.Info) []byte {
+// Serialize loadAvg.LoadAvgInfo using Flatbuffers.
+func Serialize(l *load.LoadAvg) []byte {
 	mu.Lock()
 	defer mu.Unlock()
 	// ensure the Builder is in a usable state.
 	builder.Reset()
-	structs.InfoStart(builder)
-	structs.InfoAddTimestamp(builder, l.Timestamp)
-	structs.InfoAddOne(builder, l.One)
-	structs.InfoAddFive(builder, l.Five)
-	structs.InfoAddFifteen(builder, l.Fifteen)
-	builder.Finish(structs.InfoEnd(builder))
+	structs.LoadAvgStart(builder)
+	structs.LoadAvgAddTimestamp(builder, l.Timestamp)
+	structs.LoadAvgAddOne(builder, l.One)
+	structs.LoadAvgAddFive(builder, l.Five)
+	structs.LoadAvgAddFifteen(builder, l.Fifteen)
+	builder.Finish(structs.LoadAvgEnd(builder))
 	p := builder.Bytes[builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -64,10 +64,10 @@ func Serialize(l *load.Info) []byte {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as loadavg.Info.
-func Deserialize(p []byte) *load.Info {
-	lF := structs.GetRootAsInfo(p, 0)
-	l := &load.Info{}
+// as loadavg.LoadAvg.
+func Deserialize(p []byte) *load.LoadAvg {
+	lF := structs.GetRootAsLoadAvg(p, 0)
+	l := &load.LoadAvg{}
 	l.Timestamp = lF.Timestamp()
 	l.One = lF.One()
 	l.Five = lF.Five()
@@ -75,7 +75,7 @@ func Deserialize(p []byte) *load.Info {
 	return l
 }
 
-// Ticker delivers loadavg.Info as Flatbuffers serialized bytes at
+// Ticker delivers loadavg.LoadAvg as Flatbuffers serialized bytes at
 // intervals.
 type Ticker struct {
 	*joe.Ticker

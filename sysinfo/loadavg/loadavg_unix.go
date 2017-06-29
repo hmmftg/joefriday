@@ -23,8 +23,8 @@ import (
 
 const LoadsScale = 65536
 
-// Info holds loadavg information and the timestamp of the data.
-type Info struct {
+// LoadAvg holds loadavg information and the timestamp of the data.
+type LoadAvg struct {
 	Timestamp int64
 	One       float64
 	Five      float64
@@ -32,30 +32,30 @@ type Info struct {
 }
 
 // Get the load average for the last 1, 5, and 15 minutes.
-func (i *Info) Get() error {
+func (l *LoadAvg) Get() error {
 	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
 	if err != nil {
 		return err
 	}
-	i.Timestamp = time.Now().UTC().UnixNano()
-	i.One = float64(sysinfo.Loads[0]) / LoadsScale
-	i.Five = float64(sysinfo.Loads[1]) / LoadsScale
-	i.Fifteen = float64(sysinfo.Loads[2]) / LoadsScale
+	l.Timestamp = time.Now().UTC().UnixNano()
+	l.One = float64(sysinfo.Loads[0]) / LoadsScale
+	l.Five = float64(sysinfo.Loads[1]) / LoadsScale
+	l.Fifteen = float64(sysinfo.Loads[2]) / LoadsScale
 	return nil
 }
 
-// Get returns the loadavg Info populated with the 1, 5, and 15 minute values.
-func Get() (Info, error) {
-	var i Info
-	err := i.Get()
-	return i, err
+// Get returns LoadAvg populated with the 1, 5, and 15 minute values.
+func Get() (LoadAvg, error) {
+	var l LoadAvg
+	err := l.Get()
+	return l, err
 }
 
-// Ticker delivers the loadavg Info at intervals.
+// Ticker delivers the LoadAvg at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan Info
+	Data chan LoadAvg
 }
 
 // NewTicker returns a new Ticker continaing a Data channel that delivers
@@ -64,7 +64,7 @@ type Ticker struct {
 // does not close the Data channel.  Close the ticker to close all ticker
 // channels.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info)}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan LoadAvg)}
 	go t.Run()
 	return &t, nil
 }

@@ -63,20 +63,20 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkMemInfo(n string, i *load.Info, t *testing.T) {
-	if i.Timestamp == 0 {
+func checkMemInfo(n string, l *load.LoadAvg, t *testing.T) {
+	if l.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
-	if i.One == 0 {
+	if l.One == 0 {
 		t.Errorf("%s: expected the One to be non-zero, was 0", n)
 	}
-	if i.Five == 0 {
+	if l.Five == 0 {
 		t.Errorf("%s: expected the Five to be non-zero, was 0", n)
 	}
-	if i.Fifteen == 0 {
+	if l.Fifteen == 0 {
 		t.Errorf("%s: expected the Fifteen to be non-zero, was 0", n)
 	}
-	t.Logf("%#v\n", i)
+	t.Logf("%#v\n", l)
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -88,7 +88,7 @@ func BenchmarkGet(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var l *load.Info
+	var l *load.LoadAvg
 	b.StopTimer()
 	p, _ := Get()
 	b.StartTimer()

@@ -28,33 +28,33 @@ import (
 	load "github.com/mohae/joefriday/sysinfo/loadavg"
 )
 
-// Get returns the current loadavg Info as JSON serialized bytes.
+// Get returns the current LoadAvg as JSON serialized bytes.
 func Get() (p []byte, err error) {
-	var i load.Info
-	err = i.Get()
+	var l load.LoadAvg
+	err = l.Get()
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(&i)
+	return json.Marshal(&l)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // loadavg.Info.
-func Deserialize(p []byte) (*load.Info, error) {
-	var i load.Info
-	err := json.Unmarshal(p, &i)
+func Deserialize(p []byte) (*load.LoadAvg, error) {
+	var l load.LoadAvg
+	err := json.Unmarshal(p, &l)
 	if err != nil {
 		return nil, err
 	}
-	return &i, nil
+	return &l, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*load.Info, error) {
+func Unmarshal(p []byte) (*load.LoadAvg, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers loadavg.Info as JSON serialized bytes at intervals.
+// Ticker delivers loadavg.LoadAvg as JSON serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte

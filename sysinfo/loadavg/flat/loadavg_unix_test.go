@@ -55,7 +55,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkLoadAvg(n string, l *load.Info, t *testing.T) {
+func checkLoadAvg(n string, l *load.LoadAvg, t *testing.T) {
 	if l.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
@@ -81,7 +81,7 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
-	var l load.Info
+	var l load.LoadAvg
 	b.StopTimer()
 	l.Get()
 	b.StartTimer()
@@ -92,7 +92,7 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var l *load.Info
+	var l *load.LoadAvg
 	b.StopTimer()
 	p, _ := Get()
 	b.StartTimer()
