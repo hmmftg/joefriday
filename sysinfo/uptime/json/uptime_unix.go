@@ -30,7 +30,7 @@ import (
 
 // Get returns the current uptime as JSON serialized bytes.
 func Get() (p []byte, err error) {
-	var u up.Info
+	var u up.Uptime
 	err = u.Get()
 	if err != nil {
 		return nil, err
@@ -39,9 +39,9 @@ func Get() (p []byte, err error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// uptime.Info.
-func Deserialize(p []byte) (*up.Info, error) {
-	var u up.Info
+// uptime.Uptime.
+func Deserialize(p []byte) (*up.Uptime, error) {
+	var u up.Uptime
 	err := json.Unmarshal(p, &u)
 	if err != nil {
 		return nil, err
@@ -50,11 +50,11 @@ func Deserialize(p []byte) (*up.Info, error) {
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*up.Info, error) {
+func Unmarshal(p []byte) (*up.Uptime, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers uptime.Info as JSON serialized bytes at intervals.
+// Ticker delivers uptime.Uptime as JSON serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte

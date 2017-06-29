@@ -1,9 +1,9 @@
-// info.fbs
+// uptime.fbs
 namespace structs;
 
-table Info {
+table Uptime {
 	Timestamp:long;
     Uptime:long;
 }
 
-root_type Info;
+root_type Uptime;

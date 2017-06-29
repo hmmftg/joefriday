@@ -36,7 +36,7 @@ var mu sync.Mutex
 
 // Get returns the current uptime as Flatbuffer serialized bytes.
 func Get() (p []byte, err error) {
-	var u up.Info
+	var u up.Uptime
 	err = u.Get()
 	if err != nil {
 		return nil, err
@@ -44,16 +44,16 @@ func Get() (p []byte, err error) {
 	return Serialize(&u), nil
 }
 
-// Serialize uptime.Info using Flatbuffers.
-func Serialize(u *up.Info) []byte {
+// Serialize uptime.Uptime using Flatbuffers.
+func Serialize(u *up.Uptime) []byte {
 	mu.Lock()
 	defer mu.Unlock()
 	// ensure the Builder is in a usable state.
 	builder.Reset()
-	structs.InfoStart(builder)
-	structs.InfoAddTimestamp(builder, u.Timestamp)
-	structs.InfoAddUptime(builder, u.Uptime)
-	builder.Finish(structs.InfoEnd(builder))
+	structs.UptimeStart(builder)
+	structs.UptimeAddTimestamp(builder, u.Timestamp)
+	structs.UptimeAddUptime(builder, u.Uptime)
+	builder.Finish(structs.UptimeEnd(builder))
 	p := builder.Bytes[builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -62,10 +62,10 @@ func Serialize(u *up.Info) []byte {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as uptime.Info.
-func Deserialize(p []byte) *up.Info {
-	uF := structs.GetRootAsInfo(p, 0)
-	var u up.Info
+// as uptime.Uptime.
+func Deserialize(p []byte) *up.Uptime {
+	uF := structs.GetRootAsUptime(p, 0)
+	var u up.Uptime
 	u.Timestamp = uF.Timestamp()
 	u.Uptime = uF.Uptime()
 	return &u

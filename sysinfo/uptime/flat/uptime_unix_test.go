@@ -55,7 +55,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUptime(n string, u *up.Info, t *testing.T) {
+func checkUptime(n string, u *up.Uptime, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: expected the Timestamp to be non-zero, was 0", n)
 	}
@@ -75,7 +75,7 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
-	var u up.Info
+	var u up.Uptime
 	b.StopTimer()
 	u.Get()
 	b.StartTimer()
@@ -86,7 +86,7 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var u *up.Info
+	var u *up.Uptime
 	b.StopTimer()
 	p, _ := Get()
 	b.StartTimer()
