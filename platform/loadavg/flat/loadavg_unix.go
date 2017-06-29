@@ -31,14 +31,14 @@ import (
 	"github.com/mohae/joefriday/platform/loadavg/flat/structs"
 )
 
-// Profiler is used to process the loadavg information, /proc/loadavg, using
+// Profiler is used to process the LoadAvg information, /proc/loadavg, using
 // Flatbuffers.
 type Profiler struct {
 	*l.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns an loadavg information profiler that utilizes
+// Initializes and returns an LoadAvg information profiler that utilizes
 // FlatBuffers.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := l.NewProfiler()
@@ -48,7 +48,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current loadavg information as Flatbuffer serialized
+// Get returns the current LoadAvg information as Flatbuffer serialized
 // bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	inf, err := prof.Profiler.Get()
@@ -61,7 +61,7 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current loadavg information as Flatbuffer serialized bytes
+// Get returns the current LoadAvg information as Flatbuffer serialized bytes
 // using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -76,18 +76,18 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes loadavg information using Flatbuffers.
-func (prof *Profiler) Serialize(inf l.Info) []byte {
+func (prof *Profiler) Serialize(la l.LoadAvg) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	structs.InfoStart(prof.Builder)
-	structs.InfoAddTimestamp(prof.Builder, inf.Timestamp)
-	structs.InfoAddMinute(prof.Builder, inf.Minute)
-	structs.InfoAddFive(prof.Builder, inf.Five)
-	structs.InfoAddFifteen(prof.Builder, inf.Fifteen)
-	structs.InfoAddRunning(prof.Builder, inf.Running)
-	structs.InfoAddTotal(prof.Builder, inf.Total)
-	structs.InfoAddPID(prof.Builder, inf.PID)
-	prof.Builder.Finish(structs.InfoEnd(prof.Builder))
+	structs.LoadAvgStart(prof.Builder)
+	structs.LoadAvgAddTimestamp(prof.Builder, la.Timestamp)
+	structs.LoadAvgAddMinute(prof.Builder, la.Minute)
+	structs.LoadAvgAddFive(prof.Builder, la.Five)
+	structs.LoadAvgAddFifteen(prof.Builder, la.Fifteen)
+	structs.LoadAvgAddRunning(prof.Builder, la.Running)
+	structs.LoadAvgAddTotal(prof.Builder, la.Total)
+	structs.LoadAvgAddPID(prof.Builder, la.PID)
+	prof.Builder.Finish(structs.LoadAvgEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -95,9 +95,9 @@ func (prof *Profiler) Serialize(inf l.Info) []byte {
 	return tmp
 }
 
-// Serialize serializes loadavg information using Flatbuffers with the
+// Serialize serializes LoadAvg information using Flatbuffers with the
 // package's global Profiler.
-func Serialize(inf l.Info) (p []byte, err error) {
+func Serialize(la l.LoadAvg) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -106,25 +106,25 @@ func Serialize(inf l.Info) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(inf), nil
+	return std.Serialize(la), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as loadavg.Info.
-func Deserialize(p []byte) l.Info {
-	flatInf := structs.GetRootAsInfo(p, 0)
-	var inf l.Info
-	inf.Timestamp = flatInf.Timestamp()
-	inf.Minute = flatInf.Minute()
-	inf.Five = flatInf.Five()
-	inf.Fifteen = flatInf.Fifteen()
-	inf.Running = flatInf.Running()
-	inf.Total = flatInf.Total()
-	inf.PID = flatInf.PID()
-	return inf
+// as loadavg.LoadAvg.
+func Deserialize(p []byte) l.LoadAvg {
+	flatLA := structs.GetRootAsLoadAvg(p, 0)
+	var la l.LoadAvg
+	la.Timestamp = flatLA.Timestamp()
+	la.Minute = flatLA.Minute()
+	la.Five = flatLA.Five()
+	la.Fifteen = flatLA.Fifteen()
+	la.Running = flatLA.Running()
+	la.Total = flatLA.Total()
+	la.PID = flatLA.PID()
+	return la
 }
 
-// Ticker delivers the system's loadavg information at intervals.
+// Ticker delivers the system's LoadAvg information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte

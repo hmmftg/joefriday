@@ -59,26 +59,26 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkLoad(n string, inf l.Info, t *testing.T) {
-	if inf.Timestamp == 0 {
+func checkLoad(n string, la l.LoadAvg, t *testing.T) {
+	if la.Timestamp == 0 {
 		t.Errorf("%s: expected Timestamp to be a non-zero value; got 0", n)
 	}
-	if inf.Minute == 0 {
+	if la.Minute == 0 {
 		t.Errorf("%s: expected Minute to be a non-zero value; got 0", n)
 	}
-	if inf.Five == 0 {
+	if la.Five == 0 {
 		t.Errorf("%s: expected Five to be a non-zero value; got 0", n)
 	}
-	if inf.Fifteen == 0 {
+	if la.Fifteen == 0 {
 		t.Errorf("%s: expected Fifteen to be a non-zero value; got 0", n)
 	}
-	if inf.Running == 0 {
+	if la.Running == 0 {
 		t.Errorf("%s: expected Running to be a non-zero value; got 0", n)
 	}
-	if inf.Total == 0 {
+	if la.Total == 0 {
 		t.Errorf("%s: expected Total to be a non-zero value; got 0", n)
 	}
-	if inf.PID == 0 {
+	if la.PID == 0 {
 		t.Errorf("%s: expected PID to be a non-zero value; got 0", n)
 	}
 }
@@ -107,13 +107,13 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf l.Info
+	var la l.LoadAvg
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf = Deserialize(tmp)
+		la = Deserialize(tmp)
 	}
-	_ = inf
+	_ = la
 }

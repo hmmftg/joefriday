@@ -56,7 +56,7 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current loadavg information as JSON serialized bytes using
+// Get returns the current LoadAvg information as JSON serialized bytes using
 // the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -70,13 +70,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize loadavg.Info using JSON.
-func (prof *Profiler) Serialize(inf l.Info) ([]byte, error) {
-	return json.Marshal(inf)
+// Serialize loadavg.LoadAvg using JSON.
+func (prof *Profiler) Serialize(la l.LoadAvg) ([]byte, error) {
+	return json.Marshal(la)
 }
 
-// Serialize loadavg.Info using JSON with the package global Profiler.
-func Serialize(inf l.Info) (p []byte, err error) {
+// Serialize loadavg.LoadAvg using JSON with the package global Profiler.
+func Serialize(la l.LoadAvg) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -85,31 +85,31 @@ func Serialize(inf l.Info) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(inf)
+	return std.Serialize(la)
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(inf l.Info) ([]byte, error) {
-	return prof.Serialize(inf)
+func (prof *Profiler) Marshal(la l.LoadAvg) ([]byte, error) {
+	return prof.Serialize(la)
 }
 
 // Marshal is an alias for Serialize that uses the package's global profiler.
-func Marshal(inf l.Info) ([]byte, error) {
-	return Serialize(inf)
+func Marshal(la l.LoadAvg) ([]byte, error) {
+	return Serialize(la)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // loadavg.LoadAvg.
-func Deserialize(p []byte) (inf l.Info, err error) {
-	err = json.Unmarshal(p, &inf)
+func Deserialize(p []byte) (la l.LoadAvg, err error) {
+	err = json.Unmarshal(p, &la)
 	if err != nil {
-		return inf, err
+		return la, err
 	}
-	return inf, nil
+	return la, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (l.Info, error) {
+func Unmarshal(p []byte) (l.LoadAvg, error) {
 	return Deserialize(p)
 }
 
