@@ -74,11 +74,11 @@ func Get() (p []byte, err error) {
 func (p *Profiler) Serialize(proc *procs.Processors) []byte {
 	// ensure the Builder is in a usable state.
 	p.Builder.Reset()
-	uoffs := make([]fb.UOffsetT, len(proc.CPUs))
-	for i, cpu := range proc.CPUs {
+	uoffs := make([]fb.UOffsetT, len(proc.CPU))
+	for i, cpu := range proc.CPU {
 		uoffs[i] = p.SerializeCPU(&cpu)
 	}
-	structs.ProcessorsStartCPUsVector(p.Builder, len(uoffs))
+	structs.ProcessorsStartCPUVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
@@ -86,7 +86,7 @@ func (p *Profiler) Serialize(proc *procs.Processors) []byte {
 	structs.ProcessorsStart(p.Builder)
 	structs.ProcessorsAddTimestamp(p.Builder, proc.Timestamp)
 	structs.ProcessorsAddCount(p.Builder, proc.Count)
-	structs.ProcessorsAddCPUs(p.Builder, cpus)
+	structs.ProcessorsAddCPU(p.Builder, cpus)
 	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -148,9 +148,9 @@ func Deserialize(p []byte) *procs.Processors {
 	flatC := &structs.CPU{}
 	cpu := procs.CPU{}
 	proc.Timestamp = flatP.Timestamp()
-	proc.CPUs = make([]procs.CPU, flatP.CPUsLength())
-	for i := 0; i < len(proc.CPUs); i++ {
-		if !flatP.CPUs(flatC, i) {
+	proc.CPU = make([]procs.CPU, flatP.CPULength())
+	for i := 0; i < len(proc.CPU); i++ {
+		if !flatP.CPU(flatC, i) {
 			continue
 		}
 		cpu.PhysicalID = flatC.PhysicalID()
@@ -167,7 +167,7 @@ func Deserialize(p []byte) *procs.Processors {
 		for i := 0; i < len(cpu.Flags); i++ {
 			cpu.Flags[i] = string(flatC.Flags(i))
 		}
-		proc.CPUs[i] = cpu
+		proc.CPU[i] = cpu
 	}
 	return proc
 }

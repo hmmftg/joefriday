@@ -4,7 +4,7 @@ namespace structs;
 table Processors {
 	Timestamp:long;
 	Count:short;
-	CPUs:[CPU];
+	CPU:[CPU];
 }
 
 table CPU {

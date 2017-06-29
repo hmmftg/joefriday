@@ -35,7 +35,7 @@ const procFile = "/proc/cpuinfo"
 type Processors struct {
 	Timestamp int64  `json:"timestamp"`
 	Count     int16  `json:"count"`
-	CPUs     []CPU `json:"cpus"`
+	CPU     []CPU `json:"cpu"`
 }
 
 // CPU holds the /proc/cpuinfo for a single physical cpu.
@@ -181,7 +181,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 			// processed processor, only add it if it is a different physical processor.
 			if v == 'r' { // processor
 				if add {
-					procs.CPUs = append(procs.CPUs, cpu)
+					procs.CPU = append(procs.CPU, cpu)
 					add = false
 				}
 				cpuCnt++
@@ -202,9 +202,9 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 	}
 	// append the current processor informatin
 	if add {
-		procs.CPUs = append(procs.CPUs, cpu)
+		procs.CPU = append(procs.CPU, cpu)
 	}
-	procs.Count = int16(len(procs.CPUs))
+	procs.Count = int16(len(procs.CPU))
 	return procs, nil
 }
 
