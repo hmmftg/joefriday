@@ -3,7 +3,7 @@ namespace structs;
 
 table Info {
 	Timestamp:long;
-	CPUs:[CPU];
+	CPU:[CPU];
 }
 
 table CPU {

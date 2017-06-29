@@ -28,20 +28,20 @@ func TestSerialize(t *testing.T) {
 	if infD.Timestamp == 0 {
 		t.Error("timestamp: expected non-zero timestamp")
 	}
-	if len(infD.CPUs) == 0 {
+	if len(infD.CPU) == 0 {
 		t.Error("expected at least 1 cpu entries; got none")
 	}
-	for i := 0; i < len(infD.CPUs); i++ {
-		if infD.CPUs[i].VendorID == "" {
+	for i := 0; i < len(infD.CPU); i++ {
+		if infD.CPU[i].VendorID == "" {
 			t.Errorf("%d: VendorID: expected Vendor ID to not be empty, it was", i)
 		}
-		if infD.CPUs[i].Model == "" {
+		if infD.CPU[i].Model == "" {
 			t.Errorf("%d: Model: expected model to not be empty; it was", i)
 		}
-		if infD.CPUs[i].CPUCores == 0 {
+		if infD.CPU[i].CPUCores == 0 {
 			t.Errorf("%d: CPUCores: expected non-zero value; was 0", i)
 		}
-		if len(infD.CPUs[i].Flags) == 0 {
+		if len(infD.CPU[i].Flags) == 0 {
 			t.Errorf("%d: Flags: expected some flags, none were found", i)
 		}
 	}

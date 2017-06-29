@@ -33,10 +33,10 @@ func TestGet(t *testing.T) {
 	if infS.Timestamp == 0 {
 		t.Error("expected timestamp to be a non-zero value; got 0")
 	}
-	if len(infS.CPUs) == 0 {
+	if len(infS.CPU) == 0 {
 		t.Error("expected CPUs to be a non-zero value; got 0")
 	}
-	for i, v := range infS.CPUs {
+	for i, v := range infS.CPU {
 		if v.VendorID == "" {
 			t.Errorf("%d: expected vendor_id to have a value; it was empty", i)
 		}

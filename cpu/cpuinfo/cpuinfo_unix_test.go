@@ -23,11 +23,11 @@ func TestFacts(t *testing.T) {
 	if inf.Timestamp == 0 {
 		t.Error("expected timestamp to have a nonzero value, it didn't")
 	}
-	if len(inf.CPUs) == 0 {
+	if len(inf.CPU) == 0 {
 		t.Error("Expected at least 1 CPU entry, got none")
 	}
 	// spot check some vars
-	for i, cpu := range inf.CPUs {
+	for i, cpu := range inf.CPU {
 		if cpu.VendorID == "" {
 			t.Errorf("%d: expected a vendor id value; it was empty", i)
 		}

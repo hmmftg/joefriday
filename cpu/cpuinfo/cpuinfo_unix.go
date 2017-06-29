@@ -30,7 +30,7 @@ const procFile = "/proc/cpuinfo"
 // Info holds information about the system's cpus.
 type Info struct {
 	Timestamp int64
-	CPUs       []CPU `json:"cpus"`
+	CPU       []CPU `json:"cpus"`
 }
 
 // CPU holds the /proc/cpuinfo for a single processor.
@@ -232,7 +232,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 			// processor starts information about a processor.
 			if v == 'r' { // processor
 				if cpuCnt > 0 {
-					inf.CPUs = append(inf.CPUs, cpu)
+					inf.CPU = append(inf.CPU, cpu)
 				}
 				cpuCnt++
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
@@ -284,7 +284,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		}
 	}
 	// append the current processor informatin
-	inf.CPUs = append(inf.CPUs, cpu)
+	inf.CPU = append(inf.CPU, cpu)
 	return inf, nil
 }
 

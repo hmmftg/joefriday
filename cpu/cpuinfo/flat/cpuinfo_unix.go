@@ -74,18 +74,18 @@ func Get() (p []byte, err error) {
 func (p *Profiler) Serialize(inf *info.Info) []byte {
 	// ensure the Builder is in a usable state.
 	p.Builder.Reset()
-	uoffs := make([]fb.UOffsetT, len(inf.CPUs))
-	for i, cpu := range inf.CPUs {
+	uoffs := make([]fb.UOffsetT, len(inf.CPU))
+	for i, cpu := range inf.CPU {
 		uoffs[i] = p.SerializeCPU(&cpu)
 	}
-	structs.InfoStartCPUsVector(p.Builder, len(uoffs))
+	structs.InfoStartCPUVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	cpusV := p.Builder.EndVector(len(uoffs))
 	structs.InfoStart(p.Builder)
 	structs.InfoAddTimestamp(p.Builder, inf.Timestamp)
-	structs.InfoAddCPUs(p.Builder, cpusV)
+	structs.InfoAddCPU(p.Builder, cpusV)
 	p.Builder.Finish(structs.InfoEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -116,7 +116,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	for i, flag := range cpu.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
-	structs.InfoStartCPUsVector(p.Builder, len(uoffs))
+	structs.InfoStartCPUVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
@@ -167,13 +167,13 @@ func Serialize(inf *info.Info) (p []byte, err error) {
 // as cpuinfo.Info.
 func Deserialize(p []byte) *info.Info {
 	fInf := structs.GetRootAsInfo(p, 0)
-	l := fInf.CPUsLength()
+	l := fInf.CPULength()
 	inf := &info.Info{}
 	fCPU := &structs.CPU{}
 	cpu := info.CPU{}
 	inf.Timestamp = fInf.Timestamp()
 	for i := 0; i < l; i++ {
-		if !fInf.CPUs(fCPU, i) {
+		if !fInf.CPU(fCPU, i) {
 			continue
 		}
 		cpu.Processor = fCPU.Processor()
@@ -204,7 +204,7 @@ func Deserialize(p []byte) *info.Info {
 		cpu.CacheAlignment = string(fCPU.CacheAlignment())
 		cpu.AddressSizes = string(fCPU.AddressSizes())
 		cpu.PowerManagement = string(fCPU.PowerManagement())
-		inf.CPUs = append(inf.CPUs, cpu)
+		inf.CPU = append(inf.CPU, cpu)
 	}
 	return inf
 }
