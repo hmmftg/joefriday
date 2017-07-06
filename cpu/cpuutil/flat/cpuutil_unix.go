@@ -11,12 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpuutil handles Flatbuffer based processing of CPU utilization
-// information. Instead of returning a Go struct, it returns Flatbuffer
-// serialized bytes. A function to deserialize the Flatbuffer serialized bytes
-// into a cpuutil.Utilization struct is provided. After the first use, the
-// flatbuffer builder is reused.
-//
+// Package cpuutil handles Flatbuffer based processing of CPU (kernel)
+// utilization information. This information is calculated using the
+// difference between two CPU (kernel) stats snapshots, /proc/stat, and
+// represented as a percentage. Instead of returning a Go struct, it returns
+// the data as Flatbuffer serialized bytes. For convenience, a function to
+// deserialize the Flatbuffer serialized bytes into a cpuutil.Utilization
+// struct is provided. After the first use, the flatbuffer builder is reused.
+// 
 // Note: the package name is cpuutil and not the final element of the import
 // path (flat). 
 package cpuutil
@@ -31,8 +33,8 @@ import (
 	"github.com/mohae/joefriday/cpu/cpuutil/flat/structs"
 )
 
-// Profiler is used to process the cpu utilization information using
-// Flatbuffers.
+// Profiler is used to process the /proc/stats file and calculate utilization
+// information, returning the data as Flatbuffer serialized bytes.
 type Profiler struct {
 	*util.Profiler
 	*fb.Builder
@@ -47,10 +49,11 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current cpu utilization as Flatbuffer serialized bytes.
-// Utilization calculations requires two pieces of data.  This func gets a
-// snapshot of /proc/stat, sleeps for a second, takes another snapshot and
-// calcualtes the utilization from the two snapshots.  If ongoing utilitzation
+// Get returns the cpu utilization as Flatbuffer serialized bytes. Utilization
+// calculations requires two snapshots. This func gets the current snapshot of
+// /proc/stat and calculates the utilization using the difference between the
+// current snapshot and the prior one. The current snapshot is stored and for
+// use as the prior snapshot on the next Get call. If ongoing utilitzation
 // information is desired, the Ticker should be used; it's better suited for
 // ongoing utilization information.
 func (prof *Profiler) Get() (p []byte, err error) {
@@ -61,8 +64,9 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current cpu utilization as Flatbuffer serialized bytes
-// using the package's global Profiler.
+// Get returns the current cpu utilization as Flatbuffer serialized bytes using
+// the package's global Profiler. The Profiler is instantiated lazily; if it
+// doesn't already exist, the first Utilization received may be inaccurate.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -115,7 +119,7 @@ func (prof *Profiler) Serialize(u *util.Utilization) []byte {
 	return tmp
 }
 
-// Serialize the Utilization using the package global Profiler.
+// Serialize the CPU Utilization using the package global Profiler.
 func Serialize(u *util.Utilization) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -128,8 +132,8 @@ func Serialize(u *util.Utilization) (p []byte, err error) {
 	return std.Serialize(u), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as a util.Utilization.
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them as
+// cpuutil.Utilization.
 func Deserialize(p []byte) *util.Utilization {
 	u := &util.Utilization{}
 	uF := &structs.Util{}
@@ -157,18 +161,18 @@ func Deserialize(p []byte) *util.Utilization {
 	return u
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's CPU utilization information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
+// NewTicker returns a new Ticker containing a Data channel that delivers
 // the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// encountered. Stop the ticker to signal the ticker to stop running. Stopping
+// the ticker does not close the Data channel; call Close to close both the
+// ticker and the data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

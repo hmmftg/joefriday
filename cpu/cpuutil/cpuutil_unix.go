@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpuutil handles processing of CPU utilization information. This
-// information is calculated using the differences of two CPU stats snapshots,
-// /proc/stat and represented as a percentage.
+// Package cpuutil handles processing of CPU (kernel) utilization information.
+// This information is calculated using the difference between two CPU (kernel)
+// stats snapshots, /proc/stat, and represented as a percentage.
 package cpuutil
 
 import (
@@ -26,7 +26,10 @@ import (
 	stats "github.com/mohae/joefriday/cpu/cpustats"
 )
 
-// Utilization holds information about cpu utilization.
+// Utilization holds information about cpu, kernel, utilization. The first CPU
+// entry aggregates the numbers found in all of the other CPU[n] entries.
+// Utilization is calculated using the difference between the current and prior
+// /proc/stat snapshot.
 type Utilization struct {
 	Timestamp int64 `json:"timestamp"`
 	// the time since the prior snapshot; the window that the utilization covers.
@@ -41,7 +44,7 @@ type Utilization struct {
 	CPU []Util `json:"cpu"`
 }
 
-// Util holds utilization information, as percentages, for a CPU.
+// Util holds kernel utilization information, as percentages, for a CPU.
 type Util struct {
 	ID     string  `json:"id"`
 	Usage  float32 `json:"usage"`
@@ -59,7 +62,8 @@ type Profiler struct {
 	prior stats.Stats
 }
 
-// Returns an initialized Profiler; ready to use.
+// Returns an initialized Profiler; ready to use. Upon creation, a /proc/stat
+// snapshot is taken so that any Get() will return valid information.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := stats.NewProfiler()
 	if err != nil {
@@ -72,10 +76,11 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, prior: *s}, nil
 }
 
-// Get returns the cpu utilization.  Utilization calculations requires two
-// pieces of data.  This func gets a snapshot of /proc/stat, sleeps for a
-// second, takes another snapshot and calcualtes the utilization from the
-// two snapshots.  If ongoing utilitzation information is desired, the
+// Get returns the cpu utilization. Utilization calculations requires two
+// snapshots. This func gets the current snapshot of /proc/stat and calculates
+// the utilization using the difference between the current snapshot and the
+// prior one. The current snapshot is stored and for use as the prior snapshot
+// on the next Get call. If ongoing utilitzation information is desired, the
 // Ticker should be used; it's better suited for ongoing utilization
 // information.
 func (prof *Profiler) Get() (u *Utilization, err error) {
@@ -91,9 +96,9 @@ func (prof *Profiler) Get() (u *Utilization, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current cpu utilization using the package's global
-// Profiler.  The Profiler instantiated lazily; if it doesn't already exist,
-// the first Utilization received may be inaccurate.
+// Get returns the current cpu utilization using the package's global Profiler.
+// The Profiler instantiated lazily; if it doesn't already exist, the first
+// Utilization received may be inaccurate.
 func Get() (*Utilization, error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -108,7 +113,7 @@ func Get() (*Utilization, error) {
 }
 
 // utilizaton =
-//   ()(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
+//   (Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
 func (prof *Profiler) calculateUtilization(cur *stats.Stats) *Utilization {
 	u := &Utilization{
 		Timestamp:  cur.Timestamp,
@@ -138,18 +143,18 @@ func (prof *Profiler) calculateUtilization(cur *stats.Stats) *Utilization {
 	return u
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's CPU utilization information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan *Utilization
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

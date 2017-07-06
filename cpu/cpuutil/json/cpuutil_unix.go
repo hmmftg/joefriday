@@ -11,10 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpuutil handles JSON based processing of CPU utilization. Instead of
-// returning a Go struct, it returns JSON serialized bytes. A function to
-// deserialize the JSON serialized bytes into a utlization.Utilization struct
-// is provided.
+// Package cpuutil handles JSON based processing of CPU (kernel) utilization
+// information. This information is calculated using the difference between
+// two CPU (kernel) stats snapshots, /proc/stat, and represented as a
+// percentage. Instead of returning a Go struct, it returns JSON serialized
+// bytes. For convenience, a function to deserialize the JSON serialized bytes
+// into a cpuutil.Utilization struct is provided.
 //
 // Note: the package name is cpuutil and not the final element of the import
 // path (json). 
@@ -29,7 +31,8 @@ import (
 	util "github.com/mohae/joefriday/cpu/cpuutil"
 )
 
-// Profiler is used to process the cpu utilization information using JSON.
+// Profiler is used to process the /proc/stats file and calculate utilization
+// information, returning the data as JSON serialized bytes.
 type Profiler struct {
 	*util.Profiler
 }
@@ -43,8 +46,13 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current cpu utilization information as JSON serialized
-// bytes.
+// Get returns the cpu utilization as JSON serialized bytes. Utilization
+// calculations requires two snapshots. This func gets the current snapshot of
+// /proc/stat and calculates the utilization using the difference between the
+// current snapshot and the prior one. The current snapshot is stored and for
+// use as the prior snapshot on the next Get call. If ongoing utilitzation
+// information is desired, the Ticker should be used; it's better suited for
+// ongoing utilization information.
 func (prof *Profiler) Get() (p []byte, err error) {
 	st, err := prof.Profiler.Get()
 	if err != nil {
@@ -56,8 +64,9 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current cpu utilization information as JSON serialized
-// bytes using the package's global Profiler.
+// Get returns the current cpu utilization as JSON serialized bytes using the
+// package's global Profiler. The Profiler is instantiated lazily; if it
+// doesn't already exist, the first Utilization received may be inaccurate.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -70,12 +79,12 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize cpu Utilization using JSON
+// Serialize cpu Utilization using JSON.
 func (prof *Profiler) Serialize(ut *util.Utilization) ([]byte, error) {
 	return json.Marshal(ut)
 }
 
-// Serialize cpu Utilization as JSON using the package global Profiler.
+// Serialize the CPU Utilization as JSON using the package global Profiler.
 func Serialize(ut *util.Utilization) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -109,23 +118,23 @@ func Deserialize(p []byte) (*util.Utilization, error) {
 	return ut, nil
 }
 
-// Unmarshal is an alias for Deserialize
+// Unmarshal is an alias for Deserialize.
 func Unmarshal(p []byte) (*util.Utilization, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's CPU utilization information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
+// NewTicker returns a new Ticker containing a Data channel that delivers
 // the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// encountered. Stop the ticker to signal the ticker to stop running. Stopping
+// the ticker does not close the Data channel; call Close to close both the
+// ticker and the data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpuinfo (json) handles JSON based processing of CPU info. Instead
-// of returning a Go struct, it returns JSON serialized bytes. A function to
-// deserialize the JSON serialized bytes into a cpuinfo.CPUs struct is
-// provided.
+// Package cpuinfo (json) handles JSON based processing of /proc/cpuinfo.
+// Instead of returning a Go struct, it returns JSON serialized bytes. A
+// function to deserialize the JSON serialized bytes into a cpuinfo.Info struct
+// is provided.
 //
 // Note: the package name is cpuinfo and not the final element of the import
 // path (json). 
@@ -27,7 +27,7 @@ import (
 	info "github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
-// Profiler is used to process the cpuinfo (cpus) as JSON serialized bytes.
+// Profiler is used to process the /proc/cpuinfo file as JSON serialized bytes.
 type Profiler struct {
 	*info.Profiler
 }
@@ -41,7 +41,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current cpuinfo, cpuinfo.Info, as JSON serialized bytes.
+// Get returns the current cpuinfo as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -53,8 +53,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to prevent data race on checking/instantiation
 
-// Get returns the current cpuinfo, cpuinfo.Info as JSON serialized bytes using
-// the package's global Profiler.
+// Get returns the current cpuinfo as JSON serialized bytes using the package's
+// global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -67,12 +67,12 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize cpuinfo, cpuinfo.Info, as JSON.
+// Serialize cpuinfo as JSON.
 func (prof *Profiler) Serialize(inf *info.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
-// Serialize cpuinfo, cpuinfo.Info, as JSON using package globals.
+// Serialize cpuinfo as JSON using package globals.
 func Serialize(inf *info.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -96,7 +96,7 @@ func Marshal(inf *info.Info) ([]byte, error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// inf.CPUs
+// cpuinfo.Info.
 func Deserialize(p []byte) (*info.Info, error) {
 	inf := &info.Info{}
 	err := json.Unmarshal(p, inf)

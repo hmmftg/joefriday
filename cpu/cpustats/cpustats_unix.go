@@ -12,7 +12,8 @@
 // limitations under the License.
 
 // Package cpustats handles the processing of information about kernel activity,
-// /proc/stat, as Stats.
+// /proc/stat. The first Stats.CPU element aggregates the values for all other
+// CPU elements. The values are aggregated since system boot.
 package cpustats
 
 import (
@@ -57,7 +58,9 @@ func ClkTck() error {
 	return nil
 }
 
-// Stats holds the kernel activity information; /proc/stat.
+// Stats holds the kernel activity information; /proc/stat. The first CPU
+// element's values are the aggregates of all other CPU elements. The stats are
+// aggregated from sytem boot.
 type Stats struct {
 	ClkTck    int16  `json:"clk_tck"`
 	Timestamp int64  `json:"timestamp"`
@@ -67,7 +70,7 @@ type Stats struct {
 	CPU       []CPU `json:"cpu"`
 }
 
-// CPU is for capturing the CPU information of /proc/stat.
+// CPU holds the stats for a single CPU entry in the /proc/stat file.
 type CPU struct {
 	ID        string `json:"ID"`
 	User      int64  `json:"user"`
@@ -242,7 +245,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current kernal activity information using the package's
+// Get returns the current kernel activity information using the package's
 // global Profiler.
 func Get() (stat *Stats, err error) {
 	stdMu.Lock()
@@ -256,18 +259,18 @@ func Get() (stat *Stats, err error) {
 	return std.Get()
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's kernel activity information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan *Stats
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

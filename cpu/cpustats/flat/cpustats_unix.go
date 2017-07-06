@@ -12,10 +12,11 @@
 // limitations under the License.
 
 // Package cpustats handles Flatbuffer based processing of kernel activity,
-// /proc/stat. Instead of returning a Go struct, it returns Flatbuffer
-// serialized bytes. A function to deserialize the Flatbuffer serialized bytes
-// into a cpustats.Stats struct is provided.  After the first use, the
-// flatbuffer builder is re-used.
+// /proc/stat. The first Stats.CPU element aggregates the values for all other
+// CPU elements. The values are aggregated since system boot. Instead of
+// returning a Go struct, it returns Flatbuffer serialized bytes. A function to
+// deserialize the Flatbuffer serialized bytes into a cpustats.Stats struct is
+// provided. After the first use, the flatbuffer builder is re-used.
 //
 // Note: the package name is cpustats and not the final element of the import
 // path (flat). 
@@ -31,14 +32,14 @@ import (
 	"github.com/mohae/joefriday/cpu/cpustats/flat/structs"
 )
 
-// Profiler is used to process the stats, /proc/stat, as Flatbuffers
-// serialized bytes.
+// Profiler is used to process the /proc/stats file as Flatbuffer serialized
+// bytes.
 type Profiler struct {
 	*stats.Profiler
 	*fb.Builder
 }
 
-// Initialized and returns a new stats Profiler that uses Flatbuffers.
+// Returns an initialized profiler that uses Flatbuffers.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := stats.NewProfiler()
 	if err != nil {
@@ -47,7 +48,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current Stats as Flatbuffer serialized bytes.
+// Get returns information about current kernel activity as Flatbuffer
+// serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	stts, err := prof.Profiler.Get()
 	if err != nil {
@@ -59,8 +61,8 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current Stats as Flatbuffer serialized bytes using the
-// package's global Profiler.
+// Get returns information about current kernel activity as Flatbuffer
+// serialized bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -76,7 +78,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes the Stats using Flatbuffers.
+// Serialize cpustats.Stats using Flatbuffers.
 func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
@@ -120,7 +122,7 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	return tmp
 }
 
-// Serialize the Stats using the package global Profiler.
+// Serialize cpustats.Stats with Flatbuffers using the package global Profiler.
 func Serialize(stts *stats.Stats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -133,8 +135,8 @@ func Serialize(stts *stats.Stats) (p []byte, err error) {
 	return std.Serialize(stts), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as a stats.Stats.
+// Deserialize takes some Flatbuffer serialized bytes and deserialize's them as
+// cpustats.Stats.
 func Deserialize(p []byte) *stats.Stats {
 	statsS := &stats.Stats{}
 	cpuF := &structs.CPU{}
@@ -166,18 +168,18 @@ func Deserialize(p []byte) *stats.Stats {
 	return statsS
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's kernel activity at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

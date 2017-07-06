@@ -11,10 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpustats handles JSON based processing of kernel activity.
-// /proc/stat. Instead of returning a Go struct, it returns JSON serialized
-// bytes. A function to deserialize the JSON serialized bytes into a 
-// cpustats.Stats struct is provided.
+// Package cpustats handles JSON based processing of kernel activity,
+// /proc/stat. The first Stats.CPU element aggregates the values for all other
+// CPU elements. The values are aggregated since system boot. Instead of
+// returning a Go struct, it returns JSON serialized bytes. A function to
+// deserialize the JSON serialized bytes into a cpustats.Stats struct is provided.
 //
 // Note: the package name is cpustats and not the final element of the import
 // path (json). 
@@ -29,12 +30,12 @@ import (
 	stats "github.com/mohae/joefriday/cpu/cpustats"
 )
 
-// Profiler is used to process Stats, /proc/stats, as JSON serialized bytes.
+// Profiler is used to process the /proc/stats file as JSON serialized bytes.
 type Profiler struct {
 	*stats.Profiler
 }
 
-// Initializes and returns a cpu Stats profiler that uses JSON.
+// Returns an initialized profiler that uses JSON.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := stats.NewProfiler()
 	if err != nil {
@@ -43,7 +44,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current Stats as JSON serialized bytes.
+// Get returns information about current kernel activity as JSON serialized
+// bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	st, err := prof.Profiler.Get()
 	if err != nil {
@@ -55,8 +57,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current Stats as JSON serialized bytes using the package's
-// global Profiler.
+// Get returns information about current kernel activity as JSON serialized
+// bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -69,12 +71,12 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize cpu Stats as JSON
+// Serialize cpustats.Stats as JSON.
 func (prof *Profiler) Serialize(st *stats.Stats) ([]byte, error) {
 	return json.Marshal(st)
 }
 
-// Serialize cpu Stats as JSON using package globals.
+// Serialize cpustats.Stats as JSON using package globals.
 func Serialize(st *stats.Stats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -87,7 +89,7 @@ func Serialize(st *stats.Stats) (p []byte, err error) {
 	return std.Serialize(st)
 }
 
-// Marshal is an alias for Serialize
+// Marshal is an alias for Serialize.
 func (prof *Profiler) Marshal(st *stats.Stats) ([]byte, error) {
 	return prof.Serialize(st)
 }
@@ -113,18 +115,18 @@ func Unmarshal(p []byte) (*stats.Stats, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's kernel activity at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

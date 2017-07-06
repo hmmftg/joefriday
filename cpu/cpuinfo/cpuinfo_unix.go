@@ -11,7 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpuinfo handles processong of the /procs/cpuinfo as CPUs.
+// Package cpuinfo handles processing of /proc/cpuinfo. The Info struct will
+// have one entry per processor.
 package cpuinfo
 
 import (
@@ -27,7 +28,8 @@ import (
 
 const procFile = "/proc/cpuinfo"
 
-// Info holds information about the system's cpus.
+// Info holds information about the system's cpus; CPU will have one entry per
+// processor.
 type Info struct {
 	Timestamp int64
 	CPU       []CPU `json:"cpus"`
@@ -62,7 +64,7 @@ type CPU struct {
 	PowerManagement string   `json:"power_management"`
 }
 
-// Profiler is used to process the /proc/cpuinfo file as facts.
+// Profiler is used to process the /proc/cpuinfo file.
 type Profiler struct {
 	*joe.Proc
 }
@@ -291,8 +293,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current cpuinfo (Facts) using the package's global
-// Profiler.
+// Get returns the current cpuinfo using the package's global Profiler.
 func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

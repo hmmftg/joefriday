@@ -11,11 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpuinfo (flat) handles Flatbuffer based processing of CPU info.
-// Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
-// A function to deserialize the Flatbuffer serialized bytes into a 
-// cpuinfo.CPUs struct is provided. After the first use, the flatbuffer builder
-// is reused.
+// Package cpuinfo (flat) handles Flatbuffer based processing of /proc/cpuinfo.
+// Instead of returning a Go struct, it returns Flatbuffer serialized bytes. A
+// function to deserialize the Flatbuffer serialized bytes into a cpuinfo.Info
+// struct is provided. After the first use, the flatbuffer builder is reused.
 //
 // Note: the package name is cpuinfo and not the final element of the import
 // path (flat). 
@@ -29,13 +28,14 @@ import (
 	"github.com/mohae/joefriday/cpu/cpuinfo/flat/structs"
 )
 
-// Profiler is used to process the cpuinfo as Flatbuffers serialized bytes.
+// Profiler is used to process the /proc/cpuinfo file as Flatbuffers serialized
+// bytes.
 type Profiler struct {
 	*info.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns a cpuinfo profiler that utilizes FlatBuffers.
+// Initializes and returns a cpuinfo profiler.
 func NewProfiler() (p *Profiler, err error) {
 	prof, err := info.NewProfiler()
 	if err != nil {
@@ -57,7 +57,7 @@ var std *Profiler    // global for convenience; lazily instantiated.
 var stdMu sync.Mutex // protects access
 
 // Get returns the current cpuinfo as Flatbuffer serialized bytes using the
-// package global profiler.
+// package's global profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -163,7 +163,7 @@ func Serialize(inf *info.Info) (p []byte, err error) {
 	return std.Serialize(inf), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them
 // as cpuinfo.Info.
 func Deserialize(p []byte) *info.Info {
 	fInf := structs.GetRootAsInfo(p, 0)
