@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package meminfo handles Flatbuffer based processing of /proc/meminfo.
-// Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
-// A function to deserialize the Flatbuffer serialized bytes into a mem.Info
-// struct is provided. After the first use, the flatbuffer builder is reused.
+// Package meminfo processes a subset of the /proc/meminfo file. Instead of
+// returning a Go struct, it returns Flatbuffer serialized bytes. A function to
+// deserialize the Flatbuffer serialized bytes into a meminfo.Info struct is
+// provided. After the first use, the flatbuffer builder is reused.
 //
 // Note: the package name is meminfo and not the final element of the import
 // path (flat). 
@@ -32,13 +32,14 @@ import (
 	"github.com/mohae/joefriday/mem/meminfo/flat/structs"
 )
 
-// Profiler is used to process the /proc/meminfo file using Flatbuffers.
+// Profiler is used to get the memory information as Flatbuffer serialized
+// bytes by processing the /proc/meminfo file.
 type Profiler struct {
 	*mem.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns a meminfo.Info profiler that utilizes FlatBuffers.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := mem.NewProfiler()
 	if err != nil {
@@ -47,7 +48,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current meminfo.Info as Flatbuffer serialized bytes.
+// Get returns the current memory information as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -57,10 +58,10 @@ func (prof *Profiler) Get() ([]byte, error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current meminfo.Info as Flatbuffer serialized bytes using the
-// package's global Profiler.
+// Get returns the current memory information as Flatbuffer serialized bytes
+// using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -73,7 +74,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize meminfo.Info using Flatbuffers.
+// Serialize the memory information using Flatbuffers.
 func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
@@ -130,7 +131,8 @@ func (prof *Profiler) Serialize(inf *mem.Info) []byte {
 	return tmp
 }
 
-// Serialize mem.Info using Flatbuffers with the package global Profiler.
+// Serialize the memory information using Flatbuffers with the package's global
+// Profiler.
 func Serialize(inf *mem.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -144,7 +146,7 @@ func Serialize(inf *mem.Info) (p []byte, err error) {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as mem.Info.
+// as meminfo.Info.
 func Deserialize(p []byte) *mem.Info {
 	infoFlat := structs.GetRootAsInfo(p, 0)
 	info := &mem.Info{}
@@ -202,11 +204,11 @@ type Ticker struct {
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

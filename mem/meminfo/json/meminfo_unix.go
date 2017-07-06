@@ -11,10 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package meminfo handles JSON based processing of /proc/meminfo.  Instead of
-// returning a Go struct, it returns JSON serialized bytes.  A function to
-// deserialize the JSON serialized bytes into a mem.Info struct is
-// provided.
+// Package meminfo processes the memory information, /proc/meminfo. Instead of
+// returning a Go struct, it returns JSON serialized bytes. A function to
+// deserialize the JSON serialized bytes into a mem.Info struct is provided.
 //
 // Note: the package name is meminfo and not the final element of the import
 // path (flat). 
@@ -29,12 +28,13 @@ import (
 	mem "github.com/mohae/joefriday/mem/meminfo"
 )
 
-// Profiler is used to process the /proc/meminfo file using JSON.
+// Profiler is used to get the memory information, as JSON, by processing the
+// /proc/meminfo file.
 type Profiler struct {
 	*mem.Profiler
 }
 
-// Initializes and returns a profiler for meminfo that uses JSON.
+// Returns an Initialized profiler that uses JSON; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := mem.NewProfiler()
 	if err != nil {
@@ -43,7 +43,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current meminfo as JSON serialized bytes.
+// Get returns the current memory information as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -53,10 +53,10 @@ func (prof *Profiler) Get() (p []byte, err error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current meminfo as JSON serialized bytes using the
-// package's global Profiler.
+// Get returns the current memory information as JSON serialized bytes using
+// the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -69,12 +69,12 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize mem.Info using JSON
+// Serialize memory information using JSON
 func (prof *Profiler) Serialize(inf *mem.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
-// Serialize mem.Info using JSON with the package global Profiler.
+// Serialize memory information using JSON with the package's global Profiler.
 func Serialize(inf *mem.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -87,7 +87,7 @@ func Serialize(inf *mem.Info) (p []byte, err error) {
 	return std.Serialize(inf)
 }
 
-// Marshal is an alias for Serialize
+// Marshal is an alias for Serialize.
 func (prof *Profiler) Marshal(inf *mem.Info) ([]byte, error) {
 	return prof.Serialize(inf)
 }
@@ -98,7 +98,7 @@ func Marshal(inf *mem.Info) ([]byte, error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// mem.Info.
+// meminfo.Info.
 func Deserialize(p []byte) (*mem.Info, error) {
 	info := &mem.Info{}
 	err := json.Unmarshal(p, info)
@@ -108,7 +108,7 @@ func Deserialize(p []byte) (*mem.Info, error) {
 	return info, nil
 }
 
-// Unmarshal is an alias for Deserialize
+// Unmarshal is an alias for Deserialize.
 func Unmarshal(p []byte) (*mem.Info, error) {
 	return Deserialize(p)
 }
@@ -120,11 +120,11 @@ type Ticker struct {
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package membasic handles Flatbuffer based processing of basic information
-// from the /proc/meminfo file.  Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
-// serialized bytes into a membasic.Info struct is provided. After the first
-// use, the flatbuffer builder is reused.
+// Package membasic processes a subset of the /proc/meminfo file. Instead of
+// returning a Go struct, it returns Flatbuffer serialized bytes. A function to
+// deserialize the Flatbuffer serialized bytes into a membasic.Info struct is
+// provided. For more detailed information about a system's memory, use the
+// meminfo package. After the first use, the flatbuffer builder is reused.
 //
 // Note: the package name is membasic and not the final element of the import
 // path (flat). 
@@ -33,14 +33,14 @@ import (
 	"github.com/mohae/joefriday/mem/membasic/flat/structs"
 )
 
-// Profiler is used to process the /proc/meminfo file, extracting basic info,
-// using Flatbuffers.
+// Profiler is used to get the basic memory information as Flatbuffer
+// serialized by processing the /proc/meminfo file.
 type Profiler struct {
 	*basic.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns a basic meminfo profiler that utilizes FlatBuffers.
+// Returns an initialized Profiler that utilizes FlatBuffers; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := basic.NewProfiler()
 	if err != nil {
@@ -49,7 +49,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current basic meminfo as Flatbuffer serialized bytes.
+// Get returns the current basic memory information as Flatbuffer serialized
+// bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -59,10 +60,10 @@ func (prof *Profiler) Get() ([]byte, error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current membasic.Info as Flatbuffer serialized bytes using
-// the package's global Profiler.
+// Get returns the current basic memory information as Flatbuffer serialized
+// bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -75,7 +76,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize membasic.Info using Flatbuffers.
+// Serialize the basic memory information using Flatbuffers.
 func (prof *Profiler) Serialize(inf *basic.Info) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
@@ -98,7 +99,8 @@ func (prof *Profiler) Serialize(inf *basic.Info) []byte {
 	return tmp
 }
 
-// Serialize membasic.Info using Flatbuffers with the package global Profiler.
+// Serialize the basic memory information using Flatbuffers with the package's
+// global Profiler.
 func Serialize(inf *basic.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -111,7 +113,7 @@ func Serialize(inf *basic.Info) (p []byte, err error) {
 	return std.Serialize(inf), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them
 // as membasic.Info.
 func Deserialize(p []byte) *basic.Info {
 	infoFlat := structs.GetRootAsInfo(p, 0)
@@ -129,18 +131,18 @@ func Deserialize(p []byte) *basic.Info {
 	return info
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's basic memory information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

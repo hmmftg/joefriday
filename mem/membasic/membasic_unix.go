@@ -11,9 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package membasic gets and processes a subseg of the /proc/meminfo file.
-// For more detailed information about a system's meminfo, use the meminfo
-// package.
+// Package membasic processes a subset of the /proc/meminfo file. For more
+// detailed information about a system's memory, use the meminfo package.
 package membasic
 
 import (
@@ -41,7 +40,8 @@ type Info struct {
 	SwapTotal    uint64 `json:"swap_total"`
 }
 
-// Profiler is used to process the /proc/meminfo file.
+// Profiler is used to get the basic memory information by processing the
+// /proc/meminfo file.
 type Profiler struct {
 	*joe.Proc
 }
@@ -55,7 +55,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns the current membasic.Info.
+// Get returns the current basic memory information.
 func (prof *Profiler) Get() (inf *Info, err error) {
 	var (
 		i, pos, nameLen int
@@ -160,12 +160,11 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 	return inf, nil
 }
 
-// TODO: is it even worth it to have this as a global?  Should GetInfo()
-// just instantiate a local version and use that?  InfoTicker does...
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current membasic.Info using the package's global Profiler.
+// Get returns the current basic memory information using the package's global
+// Profiler.
 func Get() (inf *Info, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -178,18 +177,18 @@ func Get() (inf *Info, err error) {
 	return std.Get()
 }
 
-// Ticker delivers the system's membasic.Info information at intervals.
+// Ticker delivers the system's basic memory information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan Info
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

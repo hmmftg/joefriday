@@ -11,10 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package membasic handles JSON based processing of basic information from the
-// /proc/meminfo file. Instead of returning a Go struct, it returns JSON
-// serialized bytes. A function to deserialize the JSON serialized bytes into a
-// membasic.Info struct is provided.
+// Package membasic processes a subset of the /proc/meminfo file. Instead of
+// returning a Go struct, it returns JSON serialized bytes. A function to
+// deserialize the JSON serialized bytes into a membasic.Info struct is
+// provided. For more detailed information about a system's memory, use the
+// meminfo package.
 //
 // Note: the package name is membasic and not the final element of the import
 // path (json). 
@@ -29,13 +30,13 @@ import (
 	basic "github.com/mohae/joefriday/mem/membasic"
 )
 
-// Profiler is used to process basic membasic.Info from the /proc/meminfo file
-// using JSON.
+// Profiler is used to get the basic memory information, as JSON, by processing
+// the /proc/meminfo file.
 type Profiler struct {
 	*basic.Profiler
 }
 
-// Initializes and returns a profiler for membasic.Info that uses JSON.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := basic.NewProfiler()
 	if err != nil {
@@ -44,7 +45,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current membasic.Info as JSON serialized bytes.
+// Get returns the current basic memory information as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -54,10 +55,10 @@ func (prof *Profiler) Get() (p []byte, err error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current membasic.Info as JSON serialized bytes using the
-// package's global Profiler.
+// Get returns the current basic memory information as JSON serialized bytes
+// using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -70,12 +71,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize membasic.Info using JSON
+// Serialize the basic memory information using JSON.
 func (prof *Profiler) Serialize(inf *basic.Info) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
-// Serialize membasic.Info using JSON with the package global Profiler.
+// Serialize the basic memory information using JSON with the package's global
+// Profiler.
 func Serialize(inf *basic.Info) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -114,18 +116,18 @@ func Unmarshal(p []byte) (*basic.Info, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's basic memory information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {
