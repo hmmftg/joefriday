@@ -11,10 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package diskusage handles JSON based processing of block device usage.
-// Instead of returning a Go struct, it returns JSON serialized bytes. A
-// function to deserialize the JSON serialized bytes into a struct.DiskUsage
-// struct is provided.
+// Package diskusage calculates IO usage the of block devices. Usage is
+// calculated by taking the difference between tow snapshots of IO statistics
+// of block devices, /proc/diskstats. Instead of returning a Go struct, it
+// returns JSON serialized bytes. A function to deserialize the JSON serialized
+// bytes into a struct.DiskUsage struct is provided.
 //
 // Note: the package name is diskusage and not the final element of the import
 // path (json). 
@@ -30,12 +31,14 @@ import (
 	usage "github.com/mohae/joefriday/disk/diskusage"
 )
 
-// Profiler is used to process the disk usage information using JSON.
+// Profiler is used to process IO usage of the block devices using JSON.
 type Profiler struct {
 	*usage.Profiler
 }
 
-// Initializes and returns a disk usage profiler.
+// Returns an initialized Profiler; ready to use. Upon creation, a
+// /proc/diskstats snapshot is taken so that any Get() will return valid
+// information.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := usage.NewProfiler()
 	if err != nil {
@@ -44,8 +47,12 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current disk usage information as JSON serialized
-// bytes.
+// Get returns the current IO usage of the block devices as JSON serialized
+// bytes. Calculating usage requires two snapshots. This func gets the current
+// snapshot of /proc/diskstats and calculating the difference between that and
+// the prior snapshot. The current snapshot is stored for use as the prior
+// snapshot on the next Get call. If ongoing usage information is desired, the
+// Ticker should be used; it's better suited for ongoing usage information.
 func (prof *Profiler) Get() (p []byte, err error) {
 	u, err := prof.Profiler.Get()
 	if err != nil {
@@ -57,8 +64,12 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current disk usage information as JSON serialized bytes
-// using the package's global Profiler.
+// Get returns the current IO usage of the block devices as JSON serialized
+// bytes using the package's global Profiler. The profiler is lazily
+// instantiated. This means that the first usage information will be of minimal
+// usefulness due to the lack of time elapsing between the initial and current
+// snapshot for usage calculations; the results of the first call should be
+// discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -71,12 +82,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize block device usage using JSON.
+// Serialize IO usage of the block devices using JSON.
 func (prof *Profiler) Serialize(u *structs.DiskUsage) ([]byte, error) {
 	return json.Marshal(u)
 }
 
-// Serialize disk usage as JSON using the package global Profiler.
+// Serialize IO usage of the block devices as JSON using the package's global
+// Profiler.
 func Serialize(u *structs.DiskUsage) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -89,12 +101,12 @@ func Serialize(u *structs.DiskUsage) (p []byte, err error) {
 	return std.Serialize(u)
 }
 
-// Marshal is an alias for Serialize
+// Marshal is an alias for Serialize.
 func (prof *Profiler) Marshal(u *structs.DiskUsage) ([]byte, error) {
 	return prof.Serialize(u)
 }
 
-// Marsha is an alias for Serialize using the package global Profiler.
+// Marshal is an alias for Serialize using the package global Profiler.
 func Marshal(u *structs.DiskUsage) ([]byte, error) {
 	return Serialize(u)
 }
@@ -110,23 +122,23 @@ func Deserialize(p []byte) (*structs.DiskUsage, error) {
 	return u, nil
 }
 
-// Unmarshal is an alias for Deserialize
+// Unmarshal is an alias for Deserialize.
 func Unmarshal(p []byte) (*structs.DiskUsage, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's IO usage of the block devices at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

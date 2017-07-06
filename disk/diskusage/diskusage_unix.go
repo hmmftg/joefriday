@@ -11,8 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package diskusage calculates block device usage. Usage is calculated by
-// taking the difference of two /proc/diskstats snapshots.
+// Package diskusage calculates IO usage of the block devices. Usage is
+// calculated by taking the difference between two snapshots of IO statistics
+// for block devices, /procd/iskstats.
 package diskusage
 
 import (
@@ -27,14 +28,15 @@ import (
 	"github.com/mohae/joefriday/disk/structs"
 )
 
-// Profiler is used to process the disk usage..
+// Profiler is used to process the IO usage of the block devices.
 type Profiler struct {
 	*stats.Profiler
 	prior *structs.DiskStats
 }
 
-// Returns an initialized Profiler; ready to use.  The prior stats is set to
-// the current stats snapshot.
+// Returns an initialized Profiler; ready to use. Upon creation, a
+// /proc/diskstats snapshot is taken so that any Get() will return valid
+// information.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := stats.NewProfiler()
 	if err != nil {
@@ -47,8 +49,12 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, prior: s}, nil
 }
 
-// Get returns the current disk usage.  Usage is calculated as the difference
-// between the prior stats snapshot and the current one.
+// Get returns the current IO usage of the block devices. Calculating usage
+// requires two snapshots. This func gets the current snapshot of
+// /proc/diskstats and calculating the difference between that and the prior
+// snapshot. The current snapshot is stored for use as the prior snapshot on
+// the next Get call. If ongoing usage information is desired, the Ticker
+// should be used; it's better suited for ongoing usage information.
 func (prof *Profiler) Get() (u *structs.DiskUsage, err error) {
 	st, err := prof.Profiler.Get()
 	if err != nil {
@@ -62,11 +68,11 @@ func (prof *Profiler) Get() (u *structs.DiskUsage, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current disk usage using the package's global Profiler.
-// The profiler is lazily instantiated.  This means that probability of
-// the first utilization snapshot returning inaccurate information is high
-// due to the lack of time elapsing between the initial and current
-// snapshot for utilization calculation.
+// Get returns the current IO usage of the block devices using the package's
+// global Profiler. The profiler is lazily instantiated. This means that the
+// first usage information will be of minimal usefulness due to the lack of
+// time elapsing between the initial and current snapshot for usage
+// calculations; the results of the first call should be discarded.
 func Get() (u *structs.DiskUsage, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -79,8 +85,8 @@ func Get() (u *structs.DiskUsage, err error) {
 	return std.Get()
 }
 
-// CalculateUsage returns the difference between the current /proc/net/dev
-// data and the prior one.
+// CalculateUsage returns the difference between the current /proc/diskstats
+// snapshot and the prior one.
 func (prof *Profiler) CalculateUsage(cur *structs.DiskStats) *structs.DiskUsage {
 	u := &structs.DiskUsage{Timestamp: cur.Timestamp, Device: make([]structs.Device, len(cur.Device))}
 	u.TimeDelta = cur.Timestamp - prof.prior.Timestamp
@@ -103,18 +109,18 @@ func (prof *Profiler) CalculateUsage(cur *structs.DiskStats) *structs.DiskUsage 
 	return u
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's IO usage of the block devices at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan *structs.DiskUsage
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

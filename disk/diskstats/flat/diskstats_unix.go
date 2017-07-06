@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package diskstats handles Flatbuffer based processing of information about
-// block devices: /proc/diskstats. Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
-// serialized bytes into a structs.DiskStats struct is provided. After the
-// first use, the flatbuffer builder is reused.
+// Package diskstats handles processing of IO statistics of each block device,
+// /proc/diskstats. Instead of returning a Go struct, it returns Flatbuffer
+// serialized bytes. A function to deserialize the Flatbuffer serialized bytes
+// into a structs.DiskStats struct is provided. After the first use, the
+// flatbuffer builder is reused.
 //
 // Note: the package name is diskstats and not the final element of the import
 // path (flat). 
@@ -32,14 +32,13 @@ import (
 	"github.com/mohae/joefriday/disk/structs/flat"
 )
 
-// Profiler is used to process the /proc/stat file, as stats, using
-// Flatbuffers.
+// Profiler is used to process the /proc/diskstast file.
 type Profiler struct {
 	*stats.Profiler
 	*fb.Builder
 }
 
-// Initialized a new stats Profiler that utilizes Flatbuffers.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := stats.NewProfiler()
 	if err != nil {
@@ -48,7 +47,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current Stats as Flatbuffer serialized bytes.
+// Get returns information about current IO statistics of the block devices as
+// Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	stts, err := prof.Profiler.Get()
 	if err != nil {
@@ -60,8 +60,8 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current Stats as Flatbuffer serialized bytes using the
-// package's global Profiler.
+// Get returns information about current IO statistics of the block devices as
+// Flatbuffer serialized bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -77,7 +77,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes the Stats using Flatbuffers.
+// Serialize serializes structs.DiskStats as Flatbuffer serialized bytes.
 func (prof *Profiler) Serialize(stts *structs.DiskStats) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
@@ -120,7 +120,8 @@ func (prof *Profiler) Serialize(stts *structs.DiskStats) []byte {
 	return tmp
 }
 
-// Serialize the Stats using the package global Profiler.
+// Serialize serializes structs.DiskStats as Flatbuffer serialized bytes using
+// the package's global Profiler.
 func Serialize(stts *structs.DiskStats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -134,7 +135,7 @@ func Serialize(stts *structs.DiskStats) (p []byte, err error) {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as a structs.Stats.
+// as a structs.DiskStats.
 func Deserialize(p []byte) *structs.DiskStats {
 	stts := &structs.DiskStats{}
 	devF := &flat.Device{}
@@ -165,18 +166,19 @@ func Deserialize(p []byte) *structs.DiskStats {
 	return stts
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's IO statistics of the block devices at
+// intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

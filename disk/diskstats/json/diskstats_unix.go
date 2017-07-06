@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package diskstats handles JSON based processing of information about block
-// devices: /proc/diskstats. Instead of returning a Go struct, it returns JSON
+// Package diskstats handles processing of IO statistics of each block device,
+// /proc/diskstats. Instead of returning a Go struct, it returns JSON
 // serialized bytes. A function to deserialize the JSON serialized bytes into a
-// structs.Stats struct is provided.
+// structs.DiskStats struct is provided.
 //
 // Note: the package name is diskstats and not the final element of the import
 // path (json). 
@@ -30,12 +30,12 @@ import (
 	"github.com/mohae/joefriday/disk/structs"
 )
 
-// Profiler is used to process the /proc/diskstats file, as stats, using JSON.
+// Profiler is used to process the /proc/diskstats file.
 type Profiler struct {
 	*stats.Profiler
 }
 
-// Initializes and returns a disk stats profiler.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := stats.NewProfiler()
 	if err != nil {
@@ -44,7 +44,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current disk stats as JSON serialized bytes.
+// Get returns information about current IO statistics of the block devices as
+// JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	st, err := prof.Profiler.Get()
 	if err != nil {
@@ -56,8 +57,8 @@ func (prof *Profiler) Get() (p []byte, err error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current block device information as JSON serialized bytes
-// using the package's global Profiler.
+// Get returns information about current IO statistics of the block devices as
+// JSON serialized bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -75,7 +76,7 @@ func (prof *Profiler) Serialize(st *structs.DiskStats) ([]byte, error) {
 	return json.Marshal(st)
 }
 
-// Serialize structs.DiskStats using JSON with the package global Profiler.
+// Serialize structs.DiskStats using JSON with the package's global Profiler.
 func Serialize(st *structs.DiskStats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -88,18 +89,18 @@ func Serialize(st *structs.DiskStats) (p []byte, err error) {
 	return std.Serialize(st)
 }
 
-// Marshal is an alias for Serialize
+// Marshal is an alias for Serialize.
 func (prof *Profiler) Marshal(st *structs.DiskStats) ([]byte, error) {
 	return prof.Serialize(st)
 }
 
-// Marshal is an alias for Serialize; uses the package global Profiler.
+// Marshal is an alias for Serialize; uses the package's global Profiler.
 func Marshal(st *structs.DiskStats) ([]byte, error) {
 	return Serialize(st)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// info.Info
+// structs.DiskStats.
 func Deserialize(p []byte) (*structs.DiskStats, error) {
 	st := &structs.DiskStats{}
 	err := json.Unmarshal(p, st)
@@ -109,23 +110,24 @@ func Deserialize(p []byte) (*structs.DiskStats, error) {
 	return st, nil
 }
 
-// Unmarshal is an alias for Deserialize
+// Unmarshal is an alias for Deserialize.
 func Unmarshal(p []byte) (*structs.DiskStats, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's IO statistics of the block devices at 
+// intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

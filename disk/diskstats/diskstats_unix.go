@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package diskstats handles processing of information about block devices:
+// Package diskstats handles processing of IO statistics of each block device:
 // /proc/diskstats.
 package diskstats
 
@@ -42,7 +42,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns information about current disk activity.
+// Get returns information about current IO statistics of the block devices.
 func (prof *Profiler) Get() (stats *structs.DiskStats, err error) {
 	err = prof.Reset()
 	if err != nil {
@@ -156,8 +156,8 @@ func (prof *Profiler) Get() (stats *structs.DiskStats, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current block device stats using the package's global
-// Profiler.
+// Get returns the current IO statistics of the block devices using the
+// package's global Profiler.
 func Get() (stat *structs.DiskStats, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -170,18 +170,19 @@ func Get() (stat *structs.DiskStats, err error) {
 	return std.Get()
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's IO statistics of the block devices at
+// intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan *structs.DiskStats
 	*Profiler
 }
 
-// NewTicker returns a new Ticker contianing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {
