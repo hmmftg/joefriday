@@ -170,7 +170,7 @@ func (t *Ticker) Run() {
 		stop                bool
 		err                 error
 		cur                 stats.Stats
-		stat                stats.Stat
+		cpu                stats.CPU
 	)
 	for {
 		select {
@@ -208,7 +208,7 @@ func (t *Ticker) Run() {
 				}
 				if t.Val[0] == 'c' {
 					if t.Val[1] == 'p' { // process CPU
-						stat.ID = string(t.Val[:])
+						cpu.ID = string(t.Val[:])
 						j = 0
 						// skip over any remaining spaces
 						for i, v = range t.Line[pos:] {
@@ -235,43 +235,43 @@ func (t *Ticker) Run() {
 								if fieldNum < 6 {
 									if fieldNum < 4 {
 										if fieldNum == 1 {
-											stat.User = int64(n)
+											cpu.User = int64(n)
 											continue
 										}
 										if fieldNum == 2 {
-											stat.Nice = int64(n)
+											cpu.Nice = int64(n)
 											continue
 										}
-										stat.System = int64(n) // 3
+										cpu.System = int64(n) // 3
 										continue
 									}
 									if fieldNum == 4 {
-										stat.Idle = int64(n)
+										cpu.Idle = int64(n)
 										continue
 									}
-									stat.IOWait = int64(n) // 5
+									cpu.IOWait = int64(n) // 5
 									continue
 								}
 								if fieldNum < 8 {
 									if fieldNum == 6 {
-										stat.IRQ = int64(n)
+										cpu.IRQ = int64(n)
 										continue
 									}
-									stat.SoftIRQ = int64(n) // 7
+									cpu.SoftIRQ = int64(n) // 7
 									continue
 								}
 								if fieldNum == 8 {
-									stat.Steal = int64(n)
+									cpu.Steal = int64(n)
 									continue
 								}
 								if fieldNum == 9 {
-									stat.Quest = int64(n)
+									cpu.Quest = int64(n)
 									continue
 								}
-								stat.QuestNice = int64(n) // 10
+								cpu.QuestNice = int64(n) // 10
 							}
 						}
-						cur.CPU = append(cur.CPU, stat)
+						cur.CPU = append(cur.CPU, cpu)
 						stop = false
 						continue
 					}
@@ -310,7 +310,7 @@ func (t *Ticker) Run() {
 			t.Profiler.prior.BTime = cur.BTime
 			t.Profiler.prior.Processes = cur.Processes
 			if len(t.Profiler.prior.CPU) != len(cur.CPU) {
-				t.Profiler.prior.CPU = make([]stats.Stat, len(cur.CPU))
+				t.Profiler.prior.CPU = make([]stats.CPU, len(cur.CPU))
 			}
 			copy(t.Profiler.prior.CPU, cur.CPU)
 		}
