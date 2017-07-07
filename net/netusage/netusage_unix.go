@@ -70,10 +70,10 @@ var std *Profiler
 var stdMu sync.Mutex
 
 // Get returns the current network device usage using the package's global
-// Profiler. The profiler is lazily instantiated. The first usage information
-// will not be useful due to minimal time elapsing between the initial and
-// second snapshots used for usage calculations; the results of the first call
-// should be discarded.
+// Profiler. The profiler is lazily instantiated. If the profiler doesn't
+// already exist, the first usage information will not be useful due to minimal
+// time elapsing between the initial and second snapshots used for usage
+// calculations; the results of the first call should be discarded.
 func Get() (u *structs.DevUsage, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

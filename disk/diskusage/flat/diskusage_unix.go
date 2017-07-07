@@ -71,10 +71,10 @@ var stdMu sync.Mutex
 
 // Get returns the current IO usage of the block devices as Flatbuffer
 // serialized bytes using the package's global Profiler. The Profiler is
-// instantiated lazily. If it doesn't already exist, the first utilization
-// information will not be useful due to minimal time elapsing between the
-// initial and second snapshots used for utilization calculations; the results
-// of the first call should be discarded.
+// instantiated lazily. If the profiler doesn't already exist, the first
+// utilization information will not be useful due to minimal time elapsing
+// between the initial and second snapshots used for utilization calculations;
+// the results of the first call should be discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

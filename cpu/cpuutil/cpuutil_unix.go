@@ -98,10 +98,10 @@ var std *Profiler
 var stdMu sync.Mutex
 
 // Get returns the current cpu utilization using the package's global Profiler.
-// The Profiler is instantiated lazily; if it doesn't already exist, the first
-// usage information will not be useful due to minimal time elapsing between
-// the initial and second snapshots used for usage calculations; the results of
-// the first call should be discarded.
+// The Profiler is instantiated lazily. If the profiler doesn't already exist,
+// the first usage information will not be useful due to minimal time elapsing
+// between the initial and second snapshots used for usage calculations; the
+// results of the first call should be discarded.
 func Get() (*Utilization, error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

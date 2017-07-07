@@ -66,10 +66,11 @@ var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
 // Get returns the current cpu utilization as JSON serialized bytes using the
-// package's global Profiler. The Profiler is instantiated lazily; if it
-// doesn't already exist, the first usage information will not be useful due to
-// minimal time elapsing between the initial and second snapshots used for
-// usage calculations; the results of the first call should be discarded.
+// package's global Profiler. The Profiler is instantiated lazily. If the
+// profiler doesn't already exist, the first usage information will not be
+// useful due to minimal time elapsing between the initial and second snapshots
+// used for usage calculations; the results of the first call should be
+// discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

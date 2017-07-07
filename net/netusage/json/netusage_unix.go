@@ -66,10 +66,11 @@ var std *Profiler
 var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
 // Get returns the current network device usage as JSON serialized bytes using
-// the package's global Profiler. The profiler is lazily instantiated. The
-// first usage information will not be useful due to the minimal time elapsing
-// between the initial and second snapshots used for usage calculations; the
-// results of the first call should be discarded.
+// the package's global Profiler. The profiler is lazily instantiated. If the
+// profiler doesn't already exist, the first usage information will not be
+// useful due to the minimal time elapsing between the initial and second
+// snapshots used for usage calculations; the results of the first call should
+// be discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
