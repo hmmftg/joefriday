@@ -14,7 +14,8 @@
 // Package cpuutil handles Flatbuffer based processing of CPU (kernel)
 // utilization information. This information is calculated using the
 // difference between two CPU (kernel) stats snapshots, /proc/stat, and
-// represented as a percentage. Instead of returning a Go struct, it returns
+// represented as a percentage. The time elapsed between the two snapshots is
+// stored in the TimeDelta field. Instead of returning a Go struct, it returns
 // the data as Flatbuffer serialized bytes. For convenience, a function to
 // deserialize the Flatbuffer serialized bytes into a cpuutil.Utilization
 // struct is provided. After the first use, the flatbuffer builder is reused.
@@ -66,7 +67,9 @@ var stdMu sync.Mutex
 
 // Get returns the current cpu utilization as Flatbuffer serialized bytes using
 // the package's global Profiler. The Profiler is instantiated lazily; if it
-// doesn't already exist, the first Utilization received may be inaccurate.
+// doesn't already exist, the first usage information will not be useful due to
+// minimal time elapsing between the initial and second snapshots used for
+// usage calculations; the results of the first call should be discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

@@ -13,7 +13,8 @@
 
 // Package cpuutil handles processing of CPU (kernel) utilization information.
 // This information is calculated using the difference between two CPU (kernel)
-// stats snapshots, /proc/stat, and represented as a percentage.
+// stats snapshots, /proc/stat, and represented as a percentage. The time
+// elapsed between the two snapshots is stored in the TimeDelta field.
 package cpuutil
 
 import (
@@ -97,8 +98,10 @@ var std *Profiler
 var stdMu sync.Mutex
 
 // Get returns the current cpu utilization using the package's global Profiler.
-// The Profiler instantiated lazily; if it doesn't already exist, the first
-// Utilization received may be inaccurate.
+// The Profiler is instantiated lazily; if it doesn't already exist, the first
+// usage information will not be useful due to minimal time elapsing between
+// the initial and second snapshots used for usage calculations; the results of
+// the first call should be discarded.
 func Get() (*Utilization, error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

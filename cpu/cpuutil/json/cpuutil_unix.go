@@ -14,9 +14,10 @@
 // Package cpuutil handles JSON based processing of CPU (kernel) utilization
 // information. This information is calculated using the difference between
 // two CPU (kernel) stats snapshots, /proc/stat, and represented as a
-// percentage. Instead of returning a Go struct, it returns JSON serialized
-// bytes. For convenience, a function to deserialize the JSON serialized bytes
-// into a cpuutil.Utilization struct is provided.
+// percentage. The time elapsed between the two snapshots is stored in the
+// TimeDelta field. Instead of returning a Go struct, it returns JSON
+// serialized bytes. For convenience, a function to deserialize the JSON
+// serialized bytes into a cpuutil.Utilization struct is provided.
 //
 // Note: the package name is cpuutil and not the final element of the import
 // path (json). 
@@ -66,7 +67,9 @@ var stdMu sync.Mutex //protects standard to preven data race on checking/instant
 
 // Get returns the current cpu utilization as JSON serialized bytes using the
 // package's global Profiler. The Profiler is instantiated lazily; if it
-// doesn't already exist, the first Utilization received may be inaccurate.
+// doesn't already exist, the first usage information will not be useful due to
+// minimal time elapsing between the initial and second snapshots used for
+// usage calculations; the results of the first call should be discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
