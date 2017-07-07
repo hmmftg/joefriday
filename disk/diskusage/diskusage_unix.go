@@ -13,7 +13,8 @@
 
 // Package diskusage calculates IO usage of the block devices. Usage is
 // calculated by taking the difference between two snapshots of IO statistics
-// for block devices, /procd/iskstats.
+// for block devices, /procd/diskstats. The time elapsed between the two
+// snapshots is stored in the TimeDelta field.
 package diskusage
 
 import (
@@ -69,9 +70,9 @@ var std *Profiler
 var stdMu sync.Mutex
 
 // Get returns the current IO usage of the block devices using the package's
-// global Profiler. The profiler is lazily instantiated. This means that the
-// first usage information will be of minimal usefulness due to the lack of
-// time elapsing between the initial and current snapshot for usage
+// global Profiler. The Profiler is instantiated lazily. If it doesn't already
+// exist, the first usage information will not be useful due to minimal time
+// elapsing between the initial and second snapshots used for usage
 // calculations; the results of the first call should be discarded.
 func Get() (u *structs.DiskUsage, err error) {
 	stdMu.Lock()

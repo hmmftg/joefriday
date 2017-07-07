@@ -13,9 +13,10 @@
 
 // Package diskusage calculates IO usage of the block devices. Usage is
 // calculated by taking the difference between two snapshots of IO statistics
-// of the block devices, /proc/diskstats. Instead of returning a Go struct, it
-// returns Flatbuffer serialized bytes. A function to deserialize the
-// Flatbuffer serialized bytes into a struct.DiskUsage struct is provided.
+// of the block devices, /proc/diskstats. The time elapsed between the two
+// snapshots is stored in the TimeDelta field. Instead of returning a Go
+// struct, it returns Flatbuffer serialized bytes. A function to deserialize
+// the Flatbuffer serialized bytes into a struct.DiskUsage struct is provided.
 // After the first use, the flatbuffer builder is reused.
 //
 // Note: the package name is diskusage and not the final element of the import
@@ -69,11 +70,11 @@ var std *Profiler
 var stdMu sync.Mutex
 
 // Get returns the current IO usage of the block devices as Flatbuffer
-// serialized bytes using the package's global Profiler. The profiler is lazily
-// instantiated. This means that the first usage information will be of minimal
-// usefulness due to the lack of time elapsing between the initial and current
-// snapshot for usage calculations; the results of the first call should be
-// discarded.
+// serialized bytes using the package's global Profiler. The Profiler is
+// instantiated lazily. If it doesn't already exist, the first utilization
+// information will not be useful due to minimal time elapsing between the
+// initial and second snapshots used for utilization calculations; the results
+// of the first call should be discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

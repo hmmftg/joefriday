@@ -13,9 +13,10 @@
 
 // Package diskusage calculates IO usage the of block devices. Usage is
 // calculated by taking the difference between tow snapshots of IO statistics
-// of block devices, /proc/diskstats. Instead of returning a Go struct, it
-// returns JSON serialized bytes. A function to deserialize the JSON serialized
-// bytes into a struct.DiskUsage struct is provided.
+// of block devices, /proc/diskstats. The time elapsed between the two
+// snapshots is stored in the TimeDelta field. Instead of returning a Go
+// struct, it returns JSON serialized bytes. A function to deserialize the
+// JSON serialized bytes into a struct.DiskUsage struct is provided.
 //
 // Note: the package name is diskusage and not the final element of the import
 // path (json). 
@@ -65,11 +66,11 @@ var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
 // Get returns the current IO usage of the block devices as JSON serialized
-// bytes using the package's global Profiler. The profiler is lazily
-// instantiated. This means that the first usage information will be of minimal
-// usefulness due to the lack of time elapsing between the initial and current
-// snapshot for usage calculations; the results of the first call should be
-// discarded.
+// bytes using the package's global Profiler.  The Profiler is instantiated
+// lazily. If it doesn't already exist, the first utilization information will
+// not be useful due to minimal time elapsing between the initial and second
+// snapshots used for utilization calculations; the results of the first call
+// should be discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
