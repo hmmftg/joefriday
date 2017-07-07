@@ -52,7 +52,7 @@ func NewProfiler() (prof *Profiler, err error) {
 
 // Get returns the current IO usage of the block devices as Flatbuffer
 // serialized bytes. Calculating usage requires two snapshots. This func gets
-// the current snapshot of /proc/diskstats and calculating the difference
+// the current snapshot of /proc/diskstats and calculates the difference
 // between that and the prior snapshot. The current snapshot is stored for use
 // as the prior snapshot on the next Get call. If ongoing usage information is
 // desired, the Ticker should be used; it's better suited for ongoing usage
