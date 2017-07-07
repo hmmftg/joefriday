@@ -11,10 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package netusage handles JSON based processing of network devices usage.
-// Instead of returning a Go struct, it returns JSON serialized bytes.  A
-// function to deserialize the JSON serialized bytes into a structs.DevUsage
-// struct is provided.
+// Package netusage gets the usage of the network devices. Usage is calculated
+// by taking the difference between two network device snapshots,
+// /proc/net/dev. The time elapsed between the two snapshots is stored in the
+// TimeDelta field. Instead of returning a Go struct, it returns JSON
+// serialized bytes. A function to deserialize the JSON serialized bytes into
+// a structs.DevUsage struct is provided.
+//
+// Note: the package name is netusage and not the final element of the import
+// path (json)
 package netusage
 
 import (
@@ -27,12 +32,14 @@ import (
 	usage "github.com/mohae/joefriday/net/netusage"
 )
 
-// Profiler is used to process the network devices usage JSON.
+// Profiler is used to process the network device usage.
 type Profiler struct {
 	*usage.Profiler
 }
 
-// Initializes and returns a network devices usage profiler.
+// Returns an initialized Profiler; ready to use. Upon creation, a
+// /proc/net/dev snapshot is taken so that any Get() will return valid
+// information.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := usage.NewProfiler()
 	if err != nil {
@@ -41,7 +48,12 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current network devices usage as JSON serialized bytes.
+// Get returns the current network device usage as JSON serialized bytes.
+// Calculating usage requires two snapshots. This func gets the current
+// snapshot of /proc/net/dev and calculates the difference between that and the
+// prior snapshot. The current snapshot is stored for use as the prior snapshot
+// on the next Get call. If ongoing usage information is desired, the Ticker
+// should be used; it's better suited for ongoing usage information..
 func (prof *Profiler) Get() (p []byte, err error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -51,10 +63,13 @@ func (prof *Profiler) Get() (p []byte, err error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to prevent data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current network devices usage as JSON serialized bytes
-// using the package's global Profiler.
+// Get returns the current network device usage as JSON serialized bytes using
+// the package's global Profiler. The profiler is lazily instantiated. The
+// first usage information will not be useful due to the minimal time elapsing
+// between the initial and second snapshots used for usage calculations; the
+// results of the first call should be discarded.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -67,7 +82,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize network devices usage using JSON.
+// Serialize network device usage using JSON.
 func (prof *Profiler) Serialize(u *structs.DevUsage) ([]byte, error) {
 	return json.Marshal(u)
 }
@@ -77,7 +92,7 @@ func (prof *Profiler) Marshal(u *structs.DevUsage) ([]byte, error) {
 	return prof.Serialize(u)
 }
 
-// Serialize network devices information using JSON with the package global
+// Serialize network device usage using JSON with the package's global
 // Profiler.
 func Serialize(inf *structs.DevUsage) (p []byte, err error) {
 	stdMu.Lock()
@@ -91,7 +106,7 @@ func Serialize(inf *structs.DevUsage) (p []byte, err error) {
 	return std.Serialize(inf)
 }
 
-// Deserialize deserializes JSON serialized bytes.
+// Deserialize deserializes JSON serialized bytes as structs.DevUsage.
 func Deserialize(p []byte) (*structs.DevUsage, error) {
 	u := &structs.DevUsage{}
 	err := json.Unmarshal(p, u)
@@ -106,18 +121,18 @@ func Unmarshal(p []byte) (*structs.DevUsage, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the network device information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker containing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered. Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel. Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

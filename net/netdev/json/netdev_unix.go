@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package netdev handles JSON based processing of network device information.
+// Package netdev gets the system's network device information: /proc/net/dev.
 // Instead of returning a Go struct, it returns JSON serialized bytes. A
 // function to deserialize the JSON serialized bytes into a structs.DevInfo
 // struct is provided.
 //
 // Note: the package name is netdev and not the final element of the import
-// path (flat). 
+// path (json). 
 package netdev
 
 import (
@@ -30,12 +30,13 @@ import (
 	"github.com/mohae/joefriday/net/structs"
 )
 
-// Profiler is used to process the /proc/net/dev file using JSON.
+// Profiler is used to process the network device information as JSON using the
+// /proc/net/dev file.
 type Profiler struct {
 	*dev.Profiler
 }
 
-// Initializes and returns a network devices profiler.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := dev.NewProfiler()
 	if err != nil {
@@ -44,7 +45,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current network devices as JSON serialized bytes.
+// Get returns the current network device information as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -54,9 +55,9 @@ func (prof *Profiler) Get() (p []byte, err error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current network devices information as JSON serialized bytes
+// Get returns the current network device information as JSON serialized bytes
 // using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -70,12 +71,12 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize network devicese information using JSON.
+// Serialize network device information as JSON.
 func (prof *Profiler) Serialize(inf *structs.DevInfo) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
-// Serialize network devices information using JSON with the package global
+// Serialize network device information as JSON using the package's global
 // Profiler.
 func Serialize(inf *structs.DevInfo) (p []byte, err error) {
 	stdMu.Lock()
@@ -94,13 +95,13 @@ func (prof *Profiler) Marshal(inf *structs.DevInfo) ([]byte, error) {
 	return prof.Serialize(inf)
 }
 
-// Marshal is an alias for Serialize; uses the package global Profiler.
+// Marshal is an alias for Serialize; uses the package's global Profiler.
 func Marshal(inf *structs.DevInfo) ([]byte, error) {
 	return Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// structs.Info
+// structs.DevInfo
 func Deserialize(p []byte) (*structs.DevInfo, error) {
 	info := &structs.DevInfo{}
 	err := json.Unmarshal(p, info)
@@ -115,18 +116,18 @@ func Unmarshal(p []byte) (*structs.DevInfo, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's net devices information at intervals.
+// Ticker delivers the system's network device information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker contianing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

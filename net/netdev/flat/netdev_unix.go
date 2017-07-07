@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package netdev handles Flatbuffer based processing of network device
-// information; /proc/net/dev. Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
-// serialized bytes into a structs.Info struct is provided. After the first
-// use, the flatbuffer builder is reused.
+// Package netdev gets the system's network device information: /proc/net/dev.
+// Instead of returning a Go struct, it returns Flatbuffer serialized bytes. A
+// function to deserialize the Flatbuffer serialized bytes into a
+// structs.DevInfo struct is provided. After the first use, the flatbuffer
+// builder is reused.
 //
 // Note: the package name is netdev and not the final element of the import
 // path (flat). 
@@ -32,13 +32,14 @@ import (
 	"github.com/mohae/joefriday/net/structs/flat"
 )
 
-// Profiler is used to process the /proc/net/dev file using Flatbuffers.
+// Profiler is used to process the network device information as Flatbuffer
+// serialized bytes using the /proc/net/dev file.
 type Profiler struct {
 	*dev.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns a net info profiler that utilizes FlatBuffers.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := dev.NewProfiler()
 	if err != nil {
@@ -47,7 +48,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current network information as Flatbuffer serialized bytes.
+// Get returns the current network device information as Flatbuffer serialized
+// bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -59,8 +61,8 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current network information as Flatbuffer serialized bytes
-// using the package's global Profiler.
+// Get returns the current network device information as Flatbuffer serialized
+// bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -73,7 +75,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes Info using Flatbuffers.
+// Serialize network device information as Flatbuffer serialized bytes.
 func (prof *Profiler) Serialize(inf *structs.DevInfo) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
@@ -119,8 +121,8 @@ func (prof *Profiler) Serialize(inf *structs.DevInfo) []byte {
 	return tmp
 }
 
-// Serialize serializes strcts.DevInfo using Flatbuffers with the package global
-// Profiler.
+// Serialize network device information as Flatbuffer serialized bytes using the
+// package's global Profiler.
 func Serialize(inf *structs.DevInfo) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -133,8 +135,8 @@ func Serialize(inf *structs.DevInfo) (p []byte, err error) {
 	return std.Serialize(inf), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as structs.DevInfo.
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them as
+// structs.DevInfo.
 func Deserialize(p []byte) *structs.DevInfo {
 	devInfo := flat.GetRootAsDevInfo(p, 0)
 	// get the # of interfaces
@@ -167,18 +169,18 @@ func Deserialize(p []byte) *structs.DevInfo {
 	return info
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's network device information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

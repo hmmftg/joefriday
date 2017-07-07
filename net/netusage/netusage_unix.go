@@ -11,9 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package netusage calculates network devices usage. Usage is calculated by
-// taking the difference of two /proc/net/dev snapshots; the elapsed time
-// between the two snapshots is stored in the TimeDelta field.
+// Package netusage gets the usage of the network devices. Usage is calculated
+// by taking the difference between two network device snapshots,
+// /proc/net/dev. The time elapsed between the two snapshots is stored in the
+// TimeDelta field.
 package netusage
 
 import (
@@ -28,13 +29,15 @@ import (
 	"github.com/mohae/joefriday/net/structs"
 )
 
-// Profiler is used to process the network devices usage.
+// Profiler is used to process the network device usage.
 type Profiler struct {
 	*netdev.Profiler
 	prior structs.DevInfo
 }
 
-// Returns an initialized Profiler; ready to use.
+// Returns an initialized Profiler; ready to use. Upon creation, a
+// /proc/net/dev snapshot is taken so that any Get() will return valid
+// information.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := netdev.NewProfiler()
 	if err != nil {
@@ -47,8 +50,12 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, prior: *prior}, nil
 }
 
-// Get returns the current network devices usage: the delta between the current
-// snapshot and the prior one.
+// Get returns the current network device usage. Calculating usage requires two
+// snapshots. This func gets the current snapshot of /proc/net/dev and
+// calculates the difference between that and the prior snapshot. The current
+// snapshot is stored for use as the prior snapshot on the next Get call. If
+// ongoing usage information is desired, the Ticker should be used; it's better
+// suited for ongoing usage information.
 func (prof *Profiler) Get() (u *structs.DevUsage, err error) {
 	infCur, err := prof.Profiler.Get()
 	if err != nil {
@@ -62,8 +69,11 @@ func (prof *Profiler) Get() (u *structs.DevUsage, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get returns the current network devices usage using the package's global
-// Profiler.
+// Get returns the current network device usage using the package's global
+// Profiler. The profiler is lazily instantiated. The first usage information
+// will not be useful due to minimal time elapsing between the initial and
+// second snapshots used for usage calculations; the results of the first call
+// should be discarded.
 func Get() (u *structs.DevUsage, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -76,8 +86,8 @@ func Get() (u *structs.DevUsage, err error) {
 	return std.Get()
 }
 
-// CalculateUsage calculates the network devices usage: the difference between
-// the current /proc/net/dev snapshot and the prior one.
+// CalculateUsage returns the difference between the current /proc/net/dev
+// snapshot and the prior one.
 func (prof *Profiler) CalculateUsage(cur *structs.DevInfo) *structs.DevUsage {
 	u := &structs.DevUsage{
 		Timestamp:  cur.Timestamp,
@@ -106,18 +116,18 @@ func (prof *Profiler) CalculateUsage(cur *structs.DevInfo) *structs.DevUsage {
 	return u
 }
 
-// Ticker delivers the system's network devices usage at intervals.
+// Ticker delivers the system's network device usage at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan *structs.DevUsage
 	*Profiler
 }
 
-// NewTicker returns a new Ticker containing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

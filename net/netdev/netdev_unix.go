@@ -11,8 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package netdev handles processing of network device information,
-// /proc/net/dev, using JSON.
+// Package netdev gets the system's network device information: /proc/net/dev.
 package netdev
 
 import (
@@ -26,7 +25,7 @@ import (
 	"github.com/mohae/joefriday/net/structs"
 )
 
-// The proc file used by the Profiler.
+// ProcFile is the file used by the netdev Profiler.
 const ProcFile = "/proc/net/dev"
 
 // Profiler is used to process the network device information using the
@@ -202,8 +201,9 @@ type Ticker struct {
 
 // NewTicker returns a new Ticker containing a Data channel that delivers the
 // data at intervals and an error channel that delivers any errors encountered.
-// Stop the ticker to signal the ticker to stop running; it does not close the
-// Data channel. Close the ticker to close all ticker channels.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {
