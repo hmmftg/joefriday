@@ -11,11 +11,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package processors handles Flatbuffer based processing of Processor info.
-// Instead of returning a Go struct, it returns Flatbuffer serialized bytes. A
-// function to deserialize the Flatbuffer serialized bytes into a 
-// processors.Processors struct is provided. After the first use, the
-// flatbuffer builder is reused.
+// Package processors gathers information about the physical processors on a
+// system by parsing the information from /procs/cpuinfo. This package gathers
+// basic information about each physical processor, cpu, on the system, with
+// one entry per processor. Instead of returning a Go struct, it returns
+// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
+// serialized bytes into a processors.Processors struct is provided. After the
+// first use, the flatbuffer builder is reused.
+//
+// The CPUMHz field shouldn't be relied on; the CPU data of the first CPU
+// processed for each processor is used. This value may be different than that
+// of other cores on the processor and may also be higher or lower than the
+// processor's base frequency because of dynamic frequency scaling and
+// frequency boosts, like turbo. For more detailed information about each cpu
+// core, use joefriday/cpuinfo, which returns an entry per core.
 //
 // Note: the package name is processors and not the final element of the import
 // path (flat). 
@@ -29,13 +38,14 @@ import (
 	"github.com/mohae/joefriday/processors/flat/structs"
 )
 
-// Profiler is used to process the processors as Flatbuffers serialized bytes.
+// Profiler is used to get the processor information, as Flatbuffers serialized
+// bytes, by processing the /proc/cpuinfo file.
 type Profiler struct {
 	*procs.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns a processors piler that utilizes FlatBuffers.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (p *Profiler, err error) {
 	prof, err := procs.NewProfiler()
 	if err != nil {
@@ -44,7 +54,7 @@ func NewProfiler() (p *Profiler, err error) {
 	return &Profiler{Profiler: prof, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current processor info as Flatbuffer serialized bytes.
+// Get returns the processor information as Flatbuffer serialized bytes.
 func (p *Profiler) Get() ([]byte, error) {
 	proc, err := p.Profiler.Get()
 	if err != nil {
@@ -57,7 +67,7 @@ var std *Profiler    // global for convenience; lazily instantiated.
 var stdMu sync.Mutex // protects access
 
 // Get returns the current processor info as Flatbuffer serialized bytes using
-// the package global Profiler.
+// the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -127,7 +137,7 @@ func (p *Profiler) SerializeCPU(c *procs.CPU) fb.UOffsetT {
 	return structs.CPUEnd(p.Builder)
 }
 
-// Serialize processors using the package global Profiler.
+// Serialize processors information.
 func Serialize(proc *procs.Processors) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -140,8 +150,8 @@ func Serialize(proc *procs.Processors) (p []byte, err error) {
 	return std.Serialize(proc), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as fact.Facts.
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them
+// as processors.Processors.
 func Deserialize(p []byte) *procs.Processors {
 	flatP := structs.GetRootAsProcessors(p, 0)
 	proc := &procs.Processors{}

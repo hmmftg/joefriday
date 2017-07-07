@@ -14,8 +14,14 @@
 // Package processors gathers information about the physical processors on a
 // system by parsing the information from /procs/cpuinfo. This package gathers
 // basic information about each physical processor, cpu, on the system, with
-// one entry per processor. For more detailed information about each cpu core,
-// use joefriday/cpuinfo, which returns an entry per core.
+// one entry per processor. 
+//
+// The CPUMHz field shouldn't be relied on; the CPU data of the first CPU
+// processed for each processor is used. This value may be different than that
+// of other cores on the processor and may also be higher or lower than the
+// processor's base frequency because of dynamic frequency scaling and
+// frequency boosts, like turbo. For more detailed information about each cpu
+// core, use joefriday/cpuinfo, which returns an entry per core.
 package processors
 
 import (
@@ -34,6 +40,7 @@ const procFile = "/proc/cpuinfo"
 // Processors holds information about a system's processors
 type Processors struct {
 	Timestamp int64  `json:"timestamp"`
+	// The number of physical processors.
 	Count     int16  `json:"count"`
 	CPU     []CPU `json:"cpu"`
 }
@@ -53,7 +60,8 @@ type CPU struct {
 	Flags      []string `json:"flags"`
 }
 
-// Profiler is used to process the /proc/cpuinfo file as facts.
+// Profiler is used to get the processor information by processing the
+// /proc/cpuinfo file.
 type Profiler struct {
 	*joe.Proc
 }
@@ -67,7 +75,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get returns the current cpuinfo (Facts).
+// Get returns the processor information.
 func (prof *Profiler) Get() (procs *Processors, err error) {
 	var (
 		cpuCnt, i, pos, nameLen int
