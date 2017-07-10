@@ -11,13 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem handles JSON based processing of memory information using
-// syscall. Instead of returning a Go struct, it returns JSON serialized
-// bytes. A function to deserialize the JSON serialized bytes into a
-// mem.Info struct is provided.
+// Package mem returns memory information using syscalls. Instead of returning
+// a Go struct, it returns JSON serialized bytes. A function to deserialize the
+// JSON serialized bytes into a mem.MemInfo struct is provided.
 //
-// Note: the mem name is processors and not the final element of the import
-// path (flat). 
+// Note: the package name is mem and not the final element of the import path
+// (json). 
 package mem
 
 import (
@@ -28,7 +27,7 @@ import (
 	m "github.com/mohae/joefriday/sysinfo/mem"
 )
 
-// Get returns the current meminfo as JSON serialized bytes.
+// Get returns the system's memory information as JSON serialized bytes.
 func Get() (p []byte, err error) {
 	var inf m.MemInfo
 	err = inf.Get()
@@ -60,11 +59,11 @@ type Ticker struct {
 	Data chan []byte
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()

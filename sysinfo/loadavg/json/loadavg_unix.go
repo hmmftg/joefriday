@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package loadavg handles JSON based processing of loadavg using syscall.
+// Package loadavg provides the system's loadavg information using a syscall.
 // Instead of returning a Go struct, it returns JSON serialized bytes. A
-// function to deserialize the JSON serialized bytes into a load.LoadAvg
+// function to deserialize the JSON serialized bytes into a loadavg.LoadAvg
 // struct is provided.
 //
-// Note: the loadavg name is processors and not the final element of the import
+// Note: the package name is loadavg and not the final element of the import
 // path (json). 
 package loadavg
 
@@ -39,7 +39,7 @@ func Get() (p []byte, err error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// loadavg.Info.
+// loadavg.Loadavg.
 func Deserialize(p []byte) (*load.LoadAvg, error) {
 	var l load.LoadAvg
 	err := json.Unmarshal(p, &l)
@@ -49,7 +49,7 @@ func Deserialize(p []byte) (*load.LoadAvg, error) {
 	return &l, nil
 }
 
-// Unmarshal is an alias for Deserialize
+// Unmarshal is an alias for Deserialize.
 func Unmarshal(p []byte) (*load.LoadAvg, error) {
 	return Deserialize(p)
 }
@@ -60,11 +60,11 @@ type Ticker struct {
 	Data chan []byte
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()

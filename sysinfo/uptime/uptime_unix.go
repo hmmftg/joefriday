@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package uptime returns the system's uptime using syscall.
+// Package uptime gets the system's uptime using syscall.
 package uptime
 
 import (
@@ -27,7 +27,7 @@ type Uptime struct {
 	Uptime    int64 // sorry for the stutter
 }
 
-// Get gets the current uptime Info.
+// Get gets the current uptime information.
 func (u *Uptime) Get() error {
 	var sysinfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysinfo)
@@ -39,7 +39,7 @@ func (u *Uptime) Get() error {
 	return nil
 }
 
-// Get gets the current uptime.
+// Get gets the current uptime information.
 func Get() (u Uptime, err error) {
 	err = u.Get()
 	return u, err
@@ -51,11 +51,11 @@ type Ticker struct {
 	Data chan Uptime
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Uptime)}
 	go t.Run()

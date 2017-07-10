@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package loadavg returns the system's loadavg information using syscall.
+// Package loadavg provides the system's loadavg information using a syscall.
 package loadavg
 
 import (
@@ -58,11 +58,11 @@ type Ticker struct {
 	Data chan LoadAvg
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan LoadAvg)}
 	go t.Run()

@@ -11,13 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package uptime handles Flatbuffer based processing of the system's uptime
-// using syscall. Instead of returning a Go struct, it returns Flatbuffer
-// serialized bytes. A function to deserialize the Flatbuffer serialized
-// bytes into an uptime.Info struct is provided.  After the first use, the
-// flatbuffer builder is reused.
+// Package uptime gets the system's uptime using syscall. Instead of returning
+// a Go struct, it returns Flatbuffer serialized bytes. A function to
+// deserialize the Flatbuffer serialized bytes into an uptime.Info struct is
+// provided. After the first use, the flatbuffer builder is reused.
 //
-// Note: the uptime name is processors and not the final element of the import
+// Note: the package name is uptime and not the final element of the import
 // path (flat). 
 package uptime
 
@@ -61,7 +60,7 @@ func Serialize(u *up.Uptime) []byte {
 	return tmp
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them
 // as uptime.Uptime.
 func Deserialize(p []byte) *up.Uptime {
 	uF := structs.GetRootAsUptime(p, 0)
@@ -71,18 +70,17 @@ func Deserialize(p []byte) *up.Uptime {
 	return &u
 }
 
-// Ticker delivers loadavg.LoadAvg as Flatbuffers serialized bytes at
-// intervals.
+// Ticker delivers the uptime as Flatbuffers serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()

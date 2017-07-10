@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package sysinfo returns system information using.  Instead of using proc
-// files, syscalls are made.  There is some overlap between the data that
-// this package provides and some of the other JoeFriday packages.
+// Package sysinfo returns system information. Instead of using proc files,
+// syscalls are made. There is some overlap between the data that this package
+// provides and some of the other JoeFriday packages.
 package sysinfo

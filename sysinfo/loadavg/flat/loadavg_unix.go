@@ -11,13 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package loadavg handles Flatbuffer based processing of load using syscall.
+// Package loadavg provides the system's loadavg information using a syscall.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
 // A function to deserialize the Flatbuffer serialized bytes into a
 // loadavg.Info struct is provided. After the first use, the flatbuffer
 // builder is reused.
 //
-// Note: the loadavg name is processors and not the final element of the import
+// Note: the package name is loadavg and not the final element of the import
 // path (flat). 
 package loadavg
 
@@ -44,7 +44,7 @@ func Get() (p []byte, err error) {
 	return Serialize(&l), nil
 }
 
-// Serialize loadAvg.LoadAvgInfo using Flatbuffers.
+// Serialize loadAvg.LoadAvg using Flatbuffers.
 func Serialize(l *load.LoadAvg) []byte {
 	mu.Lock()
 	defer mu.Unlock()
@@ -82,11 +82,11 @@ type Ticker struct {
 	Data chan []byte
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()

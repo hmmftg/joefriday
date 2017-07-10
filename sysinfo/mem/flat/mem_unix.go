@@ -11,14 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mem handles Flatbuffer based processing of memmory information
-// using syscall.  Instead of returning a Go struct, it returns Flatbuffer
-// serialized bytes.  A function to deserialize the Flatbuffer serialized
-// bytes into a mem.Info struct is provided.  After the first use, the
-// flatbuffer builder is reused.
+// Package mem returns memory information using syscalls. Instead of returning
+// a Go struct, it returns Flatbuffer serialized bytes. A function to
+// deserialize the Flatbuffer serialized bytes into a mem.MemInfo struct is
+// provided. After the first use, the flatbuffer builder is reused.
 //
-// Note: the mem name is processors and not the final element of the import
-// path (flat). 
+// Note: the package name is mem and not the final element of the import path
+// (flat). 
 package mem
 
 import (
@@ -34,7 +33,7 @@ import (
 var builder = fb.NewBuilder(0)
 var mu sync.Mutex
 
-// Get returns the current loadavg as Flatbuffer serialized bytes.
+// Get gets the system's memory informatin as Flatbuffer serialized bytes.
 func Get() (p []byte, err error) {
 	var inf m.MemInfo
 	err = inf.Get()
@@ -66,8 +65,8 @@ func Serialize(inf *m.MemInfo) []byte {
 	return tmp
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as mem.MemInfo.
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them as
+// mem.MemInfo.
 func Deserialize(p []byte) *m.MemInfo {
 	infoFlat := structs.GetRootAsMemInfo(p, 0)
 	info := &m.MemInfo{}
@@ -81,17 +80,17 @@ func Deserialize(p []byte) *m.MemInfo {
 	return info
 }
 
-// Ticker delivers mem.Info as Flatbuffers serialized bytes at intervals.
+// Ticker gets mem.MemInfo as Flatbuffers serialized bytes at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel..
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte)}
 	go t.Run()
