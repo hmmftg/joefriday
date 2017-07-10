@@ -75,14 +75,14 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes uptime information using Flatbuffers.
-func (prof *Profiler) Serialize(inf u.Info) []byte {
+func (prof *Profiler) Serialize(up u.Uptime) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	structs.InfoStart(prof.Builder)
-	structs.InfoAddTimestamp(prof.Builder, inf.Timestamp)
-	structs.InfoAddTotal(prof.Builder, inf.Total)
-	structs.InfoAddIdle(prof.Builder, inf.Idle)
-	prof.Builder.Finish(structs.InfoEnd(prof.Builder))
+	structs.UptimeStart(prof.Builder)
+	structs.UptimeAddTimestamp(prof.Builder, up.Timestamp)
+	structs.UptimeAddTotal(prof.Builder, up.Total)
+	structs.UptimeAddIdle(prof.Builder, up.Idle)
+	prof.Builder.Finish(structs.UptimeEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -92,7 +92,7 @@ func (prof *Profiler) Serialize(inf u.Info) []byte {
 
 // Serialize serializes uptime information using Flatbuffers with the
 // package's global Profiler.
-func Serialize(inf u.Info) (p []byte, err error) {
+func Serialize(up u.Uptime) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -101,18 +101,18 @@ func Serialize(inf u.Info) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(inf), nil
+	return std.Serialize(up), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as uptime.Uptime.
-func Deserialize(p []byte) u.Info {
-	flatInf := structs.GetRootAsInfo(p, 0)
-	var inf u.Info
-	inf.Timestamp = flatInf.Timestamp()
-	inf.Total = flatInf.Total()
-	inf.Idle = flatInf.Idle()
-	return inf
+func Deserialize(p []byte) u.Uptime {
+	flatUp := structs.GetRootAsUptime(p, 0)
+	var up u.Uptime
+	up.Timestamp = flatUp.Timestamp()
+	up.Total = flatUp.Total()
+	up.Idle = flatUp.Idle()
+	return up
 }
 
 // Ticker delivers the system's memory information at intervals.

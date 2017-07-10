@@ -55,14 +55,14 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUptime(n string, inf u.Info, t *testing.T) {
-	if inf.Timestamp == 0 {
+func checkUptime(n string, up u.Uptime, t *testing.T) {
+	if up.Timestamp == 0 {
 		t.Errorf("expected Timestamp to be a non-zero value; got 0")
 	}
-	if inf.Total == 0 {
+	if up.Total == 0 {
 		t.Errorf("expected total to be a non-zero value; got 0")
 	}
-	if inf.Idle == 0 {
+	if up.Idle == 0 {
 		t.Errorf("expected idle to be a non-zero value; got 0")
 	}
 }
@@ -91,13 +91,13 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf u.Info
+	var up u.Uptime
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf = Deserialize(tmp)
+		up = Deserialize(tmp)
 	}
-	_ = inf
+	_ = up
 }

@@ -25,8 +25,8 @@ import (
 
 const procFile = "/proc/uptime"
 
-// Info holds uptime information
-type Info struct {
+// Uptime holds uptime information
+type Uptime struct {
 	Timestamp int64
 	Total     float64
 	Idle      float64
@@ -47,21 +47,21 @@ func NewProfiler() (prof *Profiler, err error) {
 }
 
 // Get populates Uptime with /proc/uptime information.
-func (prof *Profiler) Get() (inf Info, err error) {
+func (prof *Profiler) Get() (u Uptime, err error) {
 	err = prof.Reset()
 	if err != nil {
-		return inf, err
+		return u, err
 	}
 	var i int
 	var v byte
-	inf.Timestamp = time.Now().UTC().UnixNano()
+	u.Timestamp = time.Now().UTC().UnixNano()
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return inf, &joe.ReadError{Err: err}
+			return u, &joe.ReadError{Err: err}
 		}
 		// space delimits the two values
 		for i, v = range prof.Line {
@@ -69,17 +69,17 @@ func (prof *Profiler) Get() (inf Info, err error) {
 				break
 			}
 		}
-		inf.Total, err = strconv.ParseFloat(string(prof.Line[:i]), 64)
+		u.Total, err = strconv.ParseFloat(string(prof.Line[:i]), 64)
 		if err != nil {
-			return inf, &joe.ParseError{Info: "total", Err: err}
+			return u, &joe.ParseError{Info: "total", Err: err}
 		}
-		inf.Idle, err = strconv.ParseFloat(string(prof.Line[i+1:len(prof.Line)-1]), 64)
+		u.Idle, err = strconv.ParseFloat(string(prof.Line[i+1:len(prof.Line)-1]), 64)
 		if err != nil {
-			return inf, &joe.ParseError{Info: "idle", Err: err}
+			return u, &joe.ParseError{Info: "idle", Err: err}
 		}
 
 	}
-	return inf, nil
+	return u, nil
 }
 
 var std *Profiler
@@ -87,13 +87,13 @@ var stdMu sync.Mutex
 
 // Get gets the uptime information using the package's global Profiler, which
 // is lazily instantiated.
-func Get() (inf Info, err error) {
+func Get() (u Uptime, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
 		std, err = NewProfiler()
 		if err != nil {
-			return inf, err
+			return u, err
 		}
 	}
 	return std.Get()
@@ -102,7 +102,7 @@ func Get() (inf Info, err error) {
 // Ticker delivers the system's memory information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan Info
+	Data chan Uptime
 	*Profiler
 }
 
@@ -116,7 +116,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Info), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan Uptime), Profiler: p}
 	go t.Run()
 	return &t, nil
 }

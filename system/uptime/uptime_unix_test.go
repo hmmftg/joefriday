@@ -51,20 +51,20 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUptime(n string, inf Info, t *testing.T) {
-	if inf.Timestamp == 0 {
+func checkUptime(n string, u Uptime, t *testing.T) {
+	if u.Timestamp == 0 {
 		t.Errorf("expected Timestamp to be a non-zero value; got 0")
 	}
-	if inf.Total == 0 {
+	if u.Total == 0 {
 		t.Errorf("expected total to be a non-zero value; got 0")
 	}
-	if inf.Idle == 0 {
+	if u.Idle == 0 {
 		t.Errorf("expected idle to be a non-zero value; got 0")
 	}
 }
 
 func BenchmarkGet(b *testing.B) {
-	var inf Info
+	var u Uptime
 	b.StopTimer()
 	p, err := NewProfiler()
 	if err != nil {
@@ -72,7 +72,7 @@ func BenchmarkGet(b *testing.B) {
 	}
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = p.Get()
+		u, _ = p.Get()
 	}
-	_ = inf
+	_ = u
 }
