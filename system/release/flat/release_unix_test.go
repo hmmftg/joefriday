@@ -25,35 +25,35 @@ func TestSerializeDeserialize(t *testing.T) {
 		t.Errorf("Get(): got %s, want nil", err)
 		return
 	}
-	inf, err := r.Get()
+	os, err := r.Get()
 	if err != nil {
 		t.Errorf("release.Get(): got %s, want nil", err)
 		return
 	}
-	infD := Deserialize(p)
-	if inf.Name != infD.Name {
-		t.Errorf("Name: got %s; want %s", infD.Name, inf.Name)
+	osD := Deserialize(p)
+	if os.Name != osD.Name {
+		t.Errorf("Name: got %s; want %s", osD.Name, os.Name)
 	}
-	if inf.ID != infD.ID {
-		t.Errorf("ID: got %s; want %s", infD.ID, inf.ID)
+	if os.ID != osD.ID {
+		t.Errorf("ID: got %s; want %s", osD.ID, os.ID)
 	}
-	if inf.IDLike != infD.IDLike {
-		t.Errorf("IDLike: got %s; want %s", infD.IDLike, inf.IDLike)
+	if os.IDLike != osD.IDLike {
+		t.Errorf("IDLike: got %s; want %s", osD.IDLike, os.IDLike)
 	}
-	if inf.PrettyName != infD.PrettyName {
-		t.Errorf("PrettyName: got %s; want %s", infD.PrettyName, inf.PrettyName)
+	if os.PrettyName != osD.PrettyName {
+		t.Errorf("PrettyName: got %s; want %s", osD.PrettyName, os.PrettyName)
 	}
-	if inf.Version != infD.Version {
-		t.Errorf("Version: got %s; want %s", infD.Version, inf.Version)
+	if os.Version != osD.Version {
+		t.Errorf("Version: got %s; want %s", osD.Version, os.Version)
 	}
-	if inf.VersionID != infD.VersionID {
-		t.Errorf("VersionID: got %s; want %s", infD.VersionID, inf.VersionID)
+	if os.VersionID != osD.VersionID {
+		t.Errorf("VersionID: got %s; want %s", osD.VersionID, os.VersionID)
 	}
-	if inf.HomeURL != infD.HomeURL {
-		t.Errorf("HomeURL: got %s; want %s", infD.HomeURL, inf.HomeURL)
+	if os.HomeURL != osD.HomeURL {
+		t.Errorf("HomeURL: got %s; want %s", osD.HomeURL, os.HomeURL)
 	}
-	if inf.BugReportURL != infD.BugReportURL {
-		t.Errorf("BugReportURL: got %s; want %s", infD.BugReportURL, inf.BugReportURL)
+	if os.BugReportURL != osD.BugReportURL {
+		t.Errorf("BugReportURL: got %s; want %s", osD.BugReportURL, os.BugReportURL)
 	}
 }
 
@@ -81,13 +81,13 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf *r.Info
+	var os *r.OS
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf = Deserialize(tmp)
+		os = Deserialize(tmp)
 	}
-	_ = inf
+	_ = os
 }

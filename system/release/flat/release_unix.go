@@ -74,27 +74,27 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes OS release information using Flatbuffers.
-func (prof *Profiler) Serialize(inf *r.Info) []byte {
+func (prof *Profiler) Serialize(os *r.OS) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	name := prof.Builder.CreateString(inf.Name)
-	id := prof.Builder.CreateString(inf.ID)
-	idLike := prof.Builder.CreateString(inf.IDLike)
-	prettyName := prof.Builder.CreateString(inf.PrettyName)
-	version := prof.Builder.CreateString(inf.Version)
-	versionID := prof.Builder.CreateString(inf.VersionID)
-	homeURL := prof.Builder.CreateString(inf.HomeURL)
-	bugReportURL := prof.Builder.CreateString(inf.BugReportURL)
-	structs.InfoStart(prof.Builder)
-	structs.InfoAddName(prof.Builder, name)
-	structs.InfoAddID(prof.Builder, id)
-	structs.InfoAddIDLike(prof.Builder, idLike)
-	structs.InfoAddPrettyName(prof.Builder, prettyName)
-	structs.InfoAddVersion(prof.Builder, version)
-	structs.InfoAddVersionID(prof.Builder, versionID)
-	structs.InfoAddHomeURL(prof.Builder, homeURL)
-	structs.InfoAddBugReportURL(prof.Builder, bugReportURL)
-	prof.Builder.Finish(structs.InfoEnd(prof.Builder))
+	name := prof.Builder.CreateString(os.Name)
+	id := prof.Builder.CreateString(os.ID)
+	idLike := prof.Builder.CreateString(os.IDLike)
+	prettyName := prof.Builder.CreateString(os.PrettyName)
+	version := prof.Builder.CreateString(os.Version)
+	versionID := prof.Builder.CreateString(os.VersionID)
+	homeURL := prof.Builder.CreateString(os.HomeURL)
+	bugReportURL := prof.Builder.CreateString(os.BugReportURL)
+	structs.OSStart(prof.Builder)
+	structs.OSAddName(prof.Builder, name)
+	structs.OSAddID(prof.Builder, id)
+	structs.OSAddIDLike(prof.Builder, idLike)
+	structs.OSAddPrettyName(prof.Builder, prettyName)
+	structs.OSAddVersion(prof.Builder, version)
+	structs.OSAddVersionID(prof.Builder, versionID)
+	structs.OSAddHomeURL(prof.Builder, homeURL)
+	structs.OSAddBugReportURL(prof.Builder, bugReportURL)
+	prof.Builder.Finish(structs.OSEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -104,7 +104,7 @@ func (prof *Profiler) Serialize(inf *r.Info) []byte {
 
 // Serialize serializes OS release information using Flatbuffers with the
 // package's global Profiler.
-func Serialize(inf *r.Info) (p []byte, err error) {
+func Serialize(os *r.OS) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -113,21 +113,21 @@ func Serialize(inf *r.Info) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(inf), nil
+	return std.Serialize(os), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as release.Release.
-func Deserialize(p []byte) *r.Info {
-	flatInf := structs.GetRootAsInfo(p, 0)
-	var inf r.Info
-	inf.Name = string(flatInf.Name())
-	inf.ID = string(flatInf.ID())
-	inf.IDLike = string(flatInf.IDLike())
-	inf.HomeURL = string(flatInf.HomeURL())
-	inf.PrettyName = string(flatInf.PrettyName())
-	inf.Version = string(flatInf.Version())
-	inf.VersionID = string(flatInf.VersionID())
-	inf.BugReportURL = string(flatInf.BugReportURL())
-	return &inf
+func Deserialize(p []byte) *r.OS {
+	flatOS := structs.GetRootAsOS(p, 0)
+	var os r.OS
+	os.Name = string(flatOS.Name())
+	os.ID = string(flatOS.ID())
+	os.IDLike = string(flatOS.IDLike())
+	os.HomeURL = string(flatOS.HomeURL())
+	os.PrettyName = string(flatOS.PrettyName())
+	os.Version = string(flatOS.Version())
+	os.VersionID = string(flatOS.VersionID())
+	os.BugReportURL = string(flatOS.BugReportURL())
+	return &os
 }

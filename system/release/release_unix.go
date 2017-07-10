@@ -23,8 +23,8 @@ import (
 
 const etcFile = "/etc/os-release"
 
-// Info holds information about the OS release.
-type Info struct {
+// OS holds information about the OS release.
+type OS struct {
 	Name         string `json:"name"`
 	ID           string `json:"id"`
 	IDLike       string `json:"id_like"`
@@ -50,12 +50,12 @@ func NewProfiler() (prof *Profiler, err error) {
 }
 
 // Get populates Info with /etc/os-release information.
-func (prof *Profiler) Get() (inf *Info, err error) {
+func (prof *Profiler) Get() (os *OS, err error) {
 	var (
 		i, keyLen int
 		v         byte
 	)
-	inf = &Info{}
+	os = &OS{}
 	err = prof.Reset()
 	if err != nil {
 		return nil, err
@@ -85,38 +85,38 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		v = prof.Val[0]
 		if v == 'I' {
 			if prof.Val[2] == '_' {
-				inf.IDLike = string(prof.Val[keyLen:])
+				os.IDLike = string(prof.Val[keyLen:])
 				continue
 			}
-			inf.ID = string(prof.Val[keyLen:])
+			os.ID = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'V' {
 			if prof.Val[7] == '_' {
-				inf.VersionID = string(prof.Val[keyLen:])
+				os.VersionID = string(prof.Val[keyLen:])
 				continue
 			}
-			inf.Version = string(prof.Val[keyLen:])
+			os.Version = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'N' {
-			inf.Name = string(prof.Val[keyLen:])
+			os.Name = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'P' {
-			inf.PrettyName = string(prof.Val[keyLen:])
+			os.PrettyName = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'H' {
-			inf.HomeURL = string(prof.Val[keyLen:])
+			os.HomeURL = string(prof.Val[keyLen:])
 			continue
 		}
 		if v == 'B' {
-			inf.BugReportURL = string(prof.Val[keyLen:])
+			os.BugReportURL = string(prof.Val[keyLen:])
 			continue
 		}
 	}
-	return inf, nil
+	return os, nil
 }
 
 var std *Profiler
@@ -124,7 +124,7 @@ var stdMu sync.Mutex
 
 // Get gets the OS release information using the package's global Profiler,
 // which is lazily instantiated.
-func Get() (inf *Info, err error) {
+func Get() (os *OS, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {

@@ -16,38 +16,38 @@ package release
 import "testing"
 
 func TestGet(t *testing.T) {
-	r, err := Get()
+	os, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	if r.Name == "" {
+	if os.Name == "" {
 		t.Error("Name: expected a value; was empty")
 	}
-	if r.ID == "" {
+	if os.ID == "" {
 		t.Error("ID: expected a value; was empty")
 	}
-	if r.PrettyName == "" {
+	if os.PrettyName == "" {
 		t.Error("PrettyName: expected a value; was empty")
 	}
-	if r.Version == "" {
+	if os.Version == "" {
 		t.Error("Version: expected a value; was empty")
 	}
-	if r.VersionID == "" {
+	if os.VersionID == "" {
 		t.Error("VersionID: expected a value; was empty")
 	}
-	if r.HomeURL == "" {
+	if os.HomeURL == "" {
 		t.Error("HomeURL: expected a value; was empty")
 	}
-	if r.BugReportURL == "" {
+	if os.BugReportURL == "" {
 		t.Error("BugReportURL: expected a value; was empty")
 	}
-	t.Logf("%#v\n", r)
+	t.Logf("%#v\n", os)
 }
 
 func BenchmarkGet(b *testing.B) {
-	var inf *Info
+	var os *OS
 	for i := 0; i < b.N; i++ {
-		inf, _ = Get()
+		os, _ = Get()
 	}
-	_ = inf
+	_ = os
 }
