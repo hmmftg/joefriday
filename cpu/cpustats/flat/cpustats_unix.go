@@ -16,7 +16,7 @@
 // CPU elements. The values are aggregated since system boot. Instead of
 // returning a Go struct, it returns Flatbuffer serialized bytes. A function to
 // deserialize the Flatbuffer serialized bytes into a cpustats.Stats struct is
-// provided. After the first use, the flatbuffer builder is re-used.
+// provided.
 //
 // Note: the package name is cpustats and not the final element of the import
 // path (flat). 

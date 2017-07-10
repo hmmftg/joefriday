@@ -16,8 +16,7 @@
 // basic information about each physical processor, cpu, on the system, with
 // one entry per processor. Instead of returning a Go struct, it returns
 // Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
-// serialized bytes into a processors.Processors struct is provided. After the
-// first use, the flatbuffer builder is reused.
+// serialized bytes into a processors.Processors struct is provided.
 //
 // The CPUMHz field shouldn't be relied on; the CPU data of the first CPU
 // processed for each processor is used. This value may be different than that

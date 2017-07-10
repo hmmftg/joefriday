@@ -14,8 +14,7 @@
 // Package release provides OS Release information, /etc/os-release.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
 // A function to deserialize the Flatbuffer serialized bytes into a
-// release.OS struct is provided. After the first use, the flatbuffer
-// builder is reused.
+// release.OS struct is provided.
 //
 // Note: the package name is release and not the final element of the import
 // path (flat). 

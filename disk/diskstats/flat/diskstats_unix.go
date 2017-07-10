@@ -14,8 +14,7 @@
 // Package diskstats handles processing of IO statistics of each block device,
 // /proc/diskstats. Instead of returning a Go struct, it returns Flatbuffer
 // serialized bytes. A function to deserialize the Flatbuffer serialized bytes
-// into a structs.DiskStats struct is provided. After the first use, the
-// flatbuffer builder is reused.
+// into a structs.DiskStats struct is provided.
 //
 // Note: the package name is diskstats and not the final element of the import
 // path (flat). 

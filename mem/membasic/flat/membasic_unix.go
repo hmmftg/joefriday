@@ -15,7 +15,7 @@
 // returning a Go struct, it returns Flatbuffer serialized bytes. A function to
 // deserialize the Flatbuffer serialized bytes into a membasic.Info struct is
 // provided. For more detailed information about a system's memory, use the
-// meminfo package. After the first use, the flatbuffer builder is reused.
+// meminfo package.
 //
 // Note: the package name is membasic and not the final element of the import
 // path (flat). 

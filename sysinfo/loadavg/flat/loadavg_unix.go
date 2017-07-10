@@ -14,8 +14,7 @@
 // Package loadavg provides the system's loadavg information using a syscall.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
 // A function to deserialize the Flatbuffer serialized bytes into a
-// loadavg.Info struct is provided. After the first use, the flatbuffer
-// builder is reused.
+// loadavg.Info struct is provided.
 //
 // Note: the package name is loadavg and not the final element of the import
 // path (flat). 

@@ -16,8 +16,7 @@
 // /proc/net/dev. The time elapsed between the two snapshots is stored in the
 // TimeDelta field. Instead of returning a Go struct, it returns Flatbuffer
 // serialized bytes. A function to deserialize the Flatbuffer serialized bytes
-// into a structs.DevUsage struct is provided. After the first use, the
-// flatbuffer builder is reused.
+// into a structs.DevUsage struct is provided.
 //
 // Note: the package name is netusage and not the final element of the import
 // path (flat)

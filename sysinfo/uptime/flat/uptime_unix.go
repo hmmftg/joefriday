@@ -14,7 +14,7 @@
 // Package uptime gets the system's uptime using syscall. Instead of returning
 // a Go struct, it returns Flatbuffer serialized bytes. A function to
 // deserialize the Flatbuffer serialized bytes into an uptime.Info struct is
-// provided. After the first use, the flatbuffer builder is reused.
+// provided.
 //
 // Note: the package name is uptime and not the final element of the import
 // path (flat). 

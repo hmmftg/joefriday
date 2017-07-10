@@ -17,7 +17,6 @@
 // snapshots is stored in the TimeDelta field. Instead of returning a Go
 // struct, it returns Flatbuffer serialized bytes. A function to deserialize
 // the Flatbuffer serialized bytes into a struct.DiskUsage struct is provided.
-// After the first use, the flatbuffer builder is reused.
 //
 // Note: the package name is diskusage and not the final element of the import
 // path (flat). 

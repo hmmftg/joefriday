@@ -14,8 +14,7 @@
 // Package netdev gets the system's network device information: /proc/net/dev.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes. A
 // function to deserialize the Flatbuffer serialized bytes into a
-// structs.DevInfo struct is provided. After the first use, the flatbuffer
-// builder is reused.
+// structs.DevInfo struct is provided.
 //
 // Note: the package name is netdev and not the final element of the import
 // path (flat). 

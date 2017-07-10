@@ -14,8 +14,7 @@
 // Package version gets the kernel and version information from the
 // /proc/version file. Instead of returning a Go struct, it returns Flatbuffer
 // serialized bytes. A function to deserialize the Flatbuffer serialized bytes
-// into a version.Kernel struct is provided. After the first use, the
-// flatbuffer builder is reused.
+// into a version.Kernel struct is provided.
 //
 // Note: the package name is version and not the final element of the import
 // path (flat). 

@@ -14,7 +14,7 @@
 // Package mem returns memory information using syscalls. Instead of returning
 // a Go struct, it returns Flatbuffer serialized bytes. A function to
 // deserialize the Flatbuffer serialized bytes into a mem.MemInfo struct is
-// provided. After the first use, the flatbuffer builder is reused.
+// provided.
 //
 // Note: the package name is mem and not the final element of the import path
 // (flat). 

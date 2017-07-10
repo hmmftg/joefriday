@@ -14,7 +14,7 @@
 // Package uptime gets the current uptime from the /proc/uptime file. Instead
 // of returning a Go struct, it returns Flatbuffer serialized bytes. A function
 // to deserialize the Flatbuffer serialized bytes into a uptime.Uptime struct
-// is provided. After the first use, the flatbuffer builder is reused.
+// is provided.
 //
 // Note: the package name is uptime and not the final element of the import
 // path (flat). 

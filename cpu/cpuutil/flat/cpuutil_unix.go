@@ -18,7 +18,7 @@
 // stored in the TimeDelta field. Instead of returning a Go struct, it returns
 // the data as Flatbuffer serialized bytes. For convenience, a function to
 // deserialize the Flatbuffer serialized bytes into a cpuutil.Utilization
-// struct is provided. After the first use, the flatbuffer builder is reused.
+// struct is provided.
 // 
 // Note: the package name is cpuutil and not the final element of the import
 // path (flat). 

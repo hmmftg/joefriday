@@ -14,7 +14,7 @@
 // Package meminfo processes a subset of the /proc/meminfo file. Instead of
 // returning a Go struct, it returns Flatbuffer serialized bytes. A function to
 // deserialize the Flatbuffer serialized bytes into a meminfo.Info struct is
-// provided. After the first use, the flatbuffer builder is reused.
+// provided.
 //
 // Note: the package name is meminfo and not the final element of the import
 // path (flat). 
