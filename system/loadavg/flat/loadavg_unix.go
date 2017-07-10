@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package flat handles Flatbuffer based processing of a platform's loadavg
-// information: /proc/loadavg. Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
-// serialized bytes into a loadavg.Info struct is provided. After the first
-// use, the flatbuffer builder is reused.
+// Package loadAvg gets loadavg information from the /proc/loadavg file.
+// Instead of returning a Go struct, it returns Flatbuffer serialized bytes. A
+// function to deserialize the Flatbuffer serialized bytes into a
+// loadavg.LoadAvg struct is provided. After the first use, the flatbuffer
+// builder is reused.
 //
 // Note: the package name is loadavg and not the final element of the import
 // path (flat). 
@@ -31,15 +31,14 @@ import (
 	"github.com/mohae/joefriday/system/loadavg/flat/structs"
 )
 
-// Profiler is used to process the LoadAvg information, /proc/loadavg, using
+// Profiler is used to process the loadavg information, /proc/loadavg, using
 // Flatbuffers.
 type Profiler struct {
 	*l.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns an LoadAvg information profiler that utilizes
-// FlatBuffers.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := l.NewProfiler()
 	if err != nil {
@@ -48,8 +47,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current LoadAvg information as Flatbuffer serialized
-// bytes.
+// Get returns the current loadavg information as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -59,9 +57,9 @@ func (prof *Profiler) Get() ([]byte, error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current LoadAvg information as Flatbuffer serialized bytes
+// Get returns the current loadavg information as Flatbuffer serialized bytes
 // using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -95,7 +93,7 @@ func (prof *Profiler) Serialize(la l.LoadAvg) []byte {
 	return tmp
 }
 
-// Serialize serializes LoadAvg information using Flatbuffers with the
+// Serialize serializes LoadAvg information using Flatbuffers using the
 // package's global Profiler.
 func Serialize(la l.LoadAvg) (p []byte, err error) {
 	stdMu.Lock()
@@ -109,8 +107,8 @@ func Serialize(la l.LoadAvg) (p []byte, err error) {
 	return std.Serialize(la), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as loadavg.LoadAvg.
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them as
+// loadavg.LoadAvg.
 func Deserialize(p []byte) l.LoadAvg {
 	flatLA := structs.GetRootAsLoadAvg(p, 0)
 	var la l.LoadAvg
@@ -124,18 +122,18 @@ func Deserialize(p []byte) l.LoadAvg {
 	return la
 }
 
-// Ticker delivers the system's LoadAvg information at intervals.
+// Ticker delivers the system's loadavg information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

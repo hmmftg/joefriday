@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package release processes the OS Release information, /etc/os-release.
+// Package release provides OS Release information, /etc/os-release.
 package release
 
 import (
@@ -49,7 +49,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get populates Info with /etc/os-release information.
+// Get gets the OS release information, the /etc/os-release.
 func (prof *Profiler) Get() (os *OS, err error) {
 	var (
 		i, keyLen int
@@ -122,8 +122,7 @@ func (prof *Profiler) Get() (os *OS, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get gets the OS release information using the package's global Profiler,
-// which is lazily instantiated.
+// Get gets the OS release information using the package's global Profiler.
 func Get() (os *OS, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package uptime processes uptime information from the /proc/uptime file.
+// Package uptime gets the current uptime from the /proc/uptime file.
 package uptime
 
 import (
@@ -25,14 +25,14 @@ import (
 
 const procFile = "/proc/uptime"
 
-// Uptime holds uptime information
+// Uptime holds uptime information.
 type Uptime struct {
 	Timestamp int64
 	Total     float64
 	Idle      float64
 }
 
-// Profiler processes the uptime information.
+// Profiler processes uptime information, /proc/uptime.
 type Profiler struct {
 	*joe.Proc
 }
@@ -46,7 +46,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get populates Uptime with /proc/uptime information.
+// Get gets the current uptime, /proc/uptime.
 func (prof *Profiler) Get() (u Uptime, err error) {
 	err = prof.Reset()
 	if err != nil {
@@ -85,8 +85,7 @@ func (prof *Profiler) Get() (u Uptime, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get gets the uptime information using the package's global Profiler, which
-// is lazily instantiated.
+// Get gets the current uptime, /proc/uptime, using the package's global Profiler.
 func Get() (u Uptime, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -99,18 +98,18 @@ func Get() (u Uptime, err error) {
 	return std.Get()
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's uptime at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan Uptime
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

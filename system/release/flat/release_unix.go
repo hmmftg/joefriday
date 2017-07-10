@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package release handles Flatbuffer based processing of a platform's OS
-// information using /etc/os-release.  Instead of returning a Go struct, it
-// returns Flatbuffer serialized bytes.  A function to deserialize the
-// Flatbuffer serialized bytes into a release.Release struct is provided.
-//  After the first use, the flatbuffer builder is reused.
+// Package release provides OS Release information, /etc/os-release.
+// Instead of returning a Go struct, it returns Flatbuffer serialized bytes.
+// A function to deserialize the Flatbuffer serialized bytes into a
+// release.OS struct is provided. After the first use, the flatbuffer
+// builder is reused.
 //
 // Note: the package name is release and not the final element of the import
 // path (flat). 
@@ -29,15 +29,14 @@ import (
 	"github.com/mohae/joefriday/system/release/flat/structs"
 )
 
-// Profiler is used to process the os information, /etc/os-release using
-// Flatbuffers.
+// Profiler processes the OS release information, /etc/os-release,
+// using Flatbuffers.
 type Profiler struct {
 	*r.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns an OS information profiler that utilizes
-// FlatBuffers.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := r.NewProfiler()
 	if err != nil {
@@ -46,8 +45,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current OS release information as Flatbuffer serialized
-// bytes.
+// Get gets the OS release information, /etc/os-release, as Flatbuffer
+// serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	k, err := prof.Profiler.Get()
 	if err != nil {
@@ -57,10 +56,10 @@ func (prof *Profiler) Get() ([]byte, error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current OS release information as Flatbuffer serialized
-// bytes using the package's global Profiler.
+// Get gets the OS release information, /etc/os-release, as Flatbuffer
+// serialized bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -73,7 +72,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes OS release information using Flatbuffers.
+// Serialize serializes OS release information as Flatbuffers.
 func (prof *Profiler) Serialize(os *r.OS) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
@@ -102,7 +101,7 @@ func (prof *Profiler) Serialize(os *r.OS) []byte {
 	return tmp
 }
 
-// Serialize serializes OS release information using Flatbuffers with the
+// Serialize serializes OS release informationa as Flatbuffers using the
 // package's global Profiler.
 func Serialize(os *r.OS) (p []byte, err error) {
 	stdMu.Lock()
@@ -116,8 +115,8 @@ func Serialize(os *r.OS) (p []byte, err error) {
 	return std.Serialize(os), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as release.Release.
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them
+// as release.OS.
 func Deserialize(p []byte) *r.OS {
 	flatOS := structs.GetRootAsOS(p, 0)
 	var os r.OS

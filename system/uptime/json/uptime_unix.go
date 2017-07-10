@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package json handles JSON based processing of uptime information. Instead
+// Package uptime gets the current uptime from the /proc/uptime file. Instead
 // of returning a Go struct, it returns JSON serialized bytes. A function to
-// deserialize the JSON serialized bytes into an uptime.Info struct is
+// deserialize the JSON serialized bytes into an uptime.Uptime struct is
 // provided.
 //
 // Note: the package name is uptime and not the final element of the import
@@ -29,13 +29,12 @@ import (
 	u "github.com/mohae/joefriday/system/uptime"
 )
 
-// Profiler is used to process the uptime information, /proc/version, using
-// JSON.
+// Profiler processes uptime information, /proc/uptime, using JSON.
 type Profiler struct {
 	*u.Profiler
 }
 
-// Initializes and returns a json.Profiler for uptime information.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := u.NewProfiler()
 	if err != nil {
@@ -44,7 +43,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current uptime information as JSON serialized bytes.
+// Get gets the current uptime, /proc/uptime, as JSON serialized bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	k, err := prof.Profiler.Get()
 	if err != nil {
@@ -54,9 +53,9 @@ func (prof *Profiler) Get() (p []byte, err error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current uptime information as JSON serialized bytes using
+// Get gets the current uptime, /proc/uptime, as JSON serialized bytes using
 // the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -70,12 +69,12 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize uptime.Info using JSON.
+// Serialize uptime.Uptime as JSON.
 func (prof *Profiler) Serialize(up u.Uptime) ([]byte, error) {
 	return json.Marshal(up)
 }
 
-// Serialize uptime.Info using JSON with the package global Profiler.
+// Serialize uptime.Uptime as JSON using the package's global Profiler.
 func Serialize(up u.Uptime) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -88,7 +87,7 @@ func Serialize(up u.Uptime) (p []byte, err error) {
 	return std.Serialize(up)
 }
 
-// Marshal is an alias for Serialize
+// Marshal is an alias for Serialize.
 func (prof *Profiler) Marshal(up u.Uptime) ([]byte, error) {
 	return prof.Serialize(up)
 }
@@ -108,23 +107,23 @@ func Deserialize(p []byte) (up u.Uptime, err error) {
 	return up, nil
 }
 
-// Unmarshal is an alias for Deserialize
+// Unmarshal is an alias for Deserialize.
 func Unmarshal(p []byte) (up u.Uptime, err error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's uptime at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

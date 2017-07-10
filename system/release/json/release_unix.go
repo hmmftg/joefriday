@@ -11,10 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package release handles JSON based processing of OS release information,
-// /etc/os-release.  Instead of returning a Go struct, it returns JSON
-// serialized bytes.  A function to deserialize the JSON serialized bytes
-// into a release.Release struct is provided.
+// Package release provides OS Release information, /etc/os-release.
+// Instead of returning a Go struct, it returns JSON serialized bytes. A
+// function to deserialize the JSON serialized bytes into a release.OS struct
+// is provided.
 //
 // Note: the package name is release and not the final element of the import
 // path (json).
@@ -27,12 +27,13 @@ import (
 	r "github.com/mohae/joefriday/system/release"
 )
 
-// Profiler is used to process the OS release information file using JSON.
+// Profiler processes the OS release information, /etc/os-release,
+// using JSON.
 type Profiler struct {
 	*r.Profiler
 }
 
-// Initializes and returns a json.Profiler for OS release information.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := r.NewProfiler()
 	if err != nil {
@@ -41,7 +42,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p}, nil
 }
 
-// Get returns the current OS release information as JSON serialized bytes.
+// Get gets the OS release information, /etc/os-release, as JSON serialized
+// bytes.
 func (prof *Profiler) Get() (p []byte, err error) {
 	k, err := prof.Profiler.Get()
 	if err != nil {
@@ -51,10 +53,10 @@ func (prof *Profiler) Get() (p []byte, err error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current OS release information as JSON serialized bytes
-// using the package's global Profiler.
+// Get gets the OS release information, /etc/os-release, as JSON serialized
+// bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -67,12 +69,12 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize release.Info using JSON
+// Serialize release.OS as JSON
 func (prof *Profiler) Serialize(os *r.OS) ([]byte, error) {
 	return json.Marshal(os)
 }
 
-// Serialize release.Info using JSON with the package global Profiler.
+// Serialize release.OS as JSON using the package's global Profiler.
 func Serialize(os *r.OS) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -96,7 +98,7 @@ func Marshal(os *r.OS) ([]byte, error) {
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// release.Info.
+// release.OS.
 func Deserialize(p []byte) (*r.OS, error) {
 	os := &r.OS{}
 	err := json.Unmarshal(p, os)
@@ -106,7 +108,7 @@ func Deserialize(p []byte) (*r.OS, error) {
 	return os, nil
 }
 
-// Unmarshal is an alias for Deserialize
+// Unmarshal is an alias for Deserialize.
 func Unmarshal(p []byte) (*r.OS, error) {
 	return Deserialize(p)
 }

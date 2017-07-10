@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package loadAvg processes loadavg information from the /proc/loadavg file.
+// Package loadAvg gets loadavg information from the /proc/loadavg file.
 package loadavg
 
 import (
@@ -132,8 +132,7 @@ func (prof *Profiler) Get() (la LoadAvg, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get gets the loadavg information using the package's global Profiler, which
-// is lazily instantiated.
+// Get gets the loadavg information using the package's global Profiler.
 func Get() (la LoadAvg, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -146,18 +145,18 @@ func Get() (la LoadAvg, err error) {
 	return std.Get()
 }
 
-// Ticker delivers the system's LoadAvg information at intervals.
+// Ticker delivers the system's loadavg information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan LoadAvg
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

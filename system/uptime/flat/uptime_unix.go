@@ -11,11 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package uptime handles Flatbuffer based processing of a platform's uptime
-// information: /proc/uptime. Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
-// serialized bytes into a uptime.Info struct is provided. After the first use,
-// the flatbuffer builder is reused.
+// Package uptime gets the current uptime from the /proc/uptime file. Instead
+// of returning a Go struct, it returns Flatbuffer serialized bytes. A function
+// to deserialize the Flatbuffer serialized bytes into a uptime.Uptime struct
+// is provided. After the first use, the flatbuffer builder is reused.
 //
 // Note: the package name is uptime and not the final element of the import
 // path (flat). 
@@ -31,15 +30,14 @@ import (
 	"github.com/mohae/joefriday/system/uptime/flat/structs"
 )
 
-// Profiler is used to process the uptime information, /proc/uptime, using
+// Profiler processes the uptime information, /proc/uptime, using
 // Flatbuffers.
 type Profiler struct {
 	*u.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns an uptime information profiler that utilizes
-// FlatBuffers.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := u.NewProfiler()
 	if err != nil {
@@ -48,7 +46,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current uptime information as Flatbuffer serialized bytes.
+// Get gets the current uptime, /proc/uptime, as Flatbuffer serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	k, err := prof.Profiler.Get()
 	if err != nil {
@@ -60,7 +58,7 @@ func (prof *Profiler) Get() ([]byte, error) {
 var std *Profiler
 var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
 
-// Get returns the current uptime information as Flatbuffer serialized bytes
+// Get gets the current uptime, /proc/uptime, as Flatbuffer serialized bytes
 // using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -74,7 +72,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes uptime information using Flatbuffers.
+// Serialize serializes uptime information as Flatbuffers.
 func (prof *Profiler) Serialize(up u.Uptime) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
@@ -90,7 +88,7 @@ func (prof *Profiler) Serialize(up u.Uptime) []byte {
 	return tmp
 }
 
-// Serialize serializes uptime information using Flatbuffers with the
+// Serialize serializes uptime information as Flatbuffers using the
 // package's global Profiler.
 func Serialize(up u.Uptime) (p []byte, err error) {
 	stdMu.Lock()
@@ -104,7 +102,7 @@ func Serialize(up u.Uptime) (p []byte, err error) {
 	return std.Serialize(up), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them
 // as uptime.Uptime.
 func Deserialize(p []byte) u.Uptime {
 	flatUp := structs.GetRootAsUptime(p, 0)
@@ -115,18 +113,18 @@ func Deserialize(p []byte) u.Uptime {
 	return up
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's uptime at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {

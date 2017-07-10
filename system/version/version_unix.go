@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package version processes Kernel and version information from the
+// Package version gets the kernel and version information from the
 // /proc/version file.
 package version
 
@@ -50,7 +50,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Proc: proc}, nil
 }
 
-// Get populates Info with /proc/version information.
+// Get gets the kernel information from the /proc/version file.
 func (prof *Profiler) Get() (k *Kernel, err error) {
 	var (
 		i, pos, pos2 int
@@ -135,8 +135,8 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 var std *Profiler
 var stdMu sync.Mutex
 
-// Get gets the kernel information using the package's global Profiler, which
-// is lazily instantiated.
+// Get gets the kernel information from the /proc/version file using the
+// package's global profiler.
 func Get() (k *Kernel, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()

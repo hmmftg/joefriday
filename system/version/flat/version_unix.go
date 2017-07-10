@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package version handles Flatbuffer based processing of a platform's kernel
-// and version information: /proc/version. Instead of returning a Go struct, it
-// returns Flatbuffer serialized bytes. A function to deserialize the
-// Flatbuffer serialized bytes into a kernel.Kernel struct is provided. After
-// the first use, the flatbuffer builder is reused.
+// Package version gets the kernel and version information from the
+// /proc/version file. Instead of returning a Go struct, it returns Flatbuffer
+// serialized bytes. A function to deserialize the Flatbuffer serialized bytes
+// into a version.Kernel struct is provided. After the first use, the
+// flatbuffer builder is reused.
 //
 // Note: the package name is version and not the final element of the import
 // path (flat). 
@@ -29,15 +29,14 @@ import (
 	"github.com/mohae/joefriday/system/version/flat/structs"
 )
 
-// Profiler is used to process the version information, /proc/version, using
+// Profiler processes the version information, /proc/version, using
 // Flatbuffers.
 type Profiler struct {
 	*v.Profiler
 	*fb.Builder
 }
 
-// Initializes and returns a version information profiler that utilizes
-// FlatBuffers.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := v.NewProfiler()
 	if err != nil {
@@ -46,7 +45,8 @@ func NewProfiler() (prof *Profiler, err error) {
 	return &Profiler{Profiler: p, Builder: fb.NewBuilder(0)}, nil
 }
 
-// Get returns the current version information as Flatbuffer serialized bytes.
+// Get gets the kernel information from the /proc/version file as Flatbuffer
+// serialized bytes.
 func (prof *Profiler) Get() ([]byte, error) {
 	inf, err := prof.Profiler.Get()
 	if err != nil {
@@ -56,10 +56,10 @@ func (prof *Profiler) Get() ([]byte, error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current version information as Flatbuffer serialized bytes
-// using the package's global Profiler.
+// Get gets the kernel information from the /proc/version file as Flatbuffer
+// serialized bytes using the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -72,7 +72,7 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize serializes version information using Flatbuffers.
+// Serialize version.Kernel as Flatbuffers.
 func (prof *Profiler) Serialize(k *v.Kernel) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
@@ -101,8 +101,7 @@ func (prof *Profiler) Serialize(k *v.Kernel) []byte {
 	return tmp
 }
 
-// Serialize serializes version information using Flatbuffers with the
-// package's global Profiler.
+// Serialize version.Kernel as Flatbuffers using the package's global Profiler.
 func Serialize(k *v.Kernel) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -115,8 +114,8 @@ func Serialize(k *v.Kernel) (p []byte, err error) {
 	return std.Serialize(k), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them
-// as kernel.Kernel.
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them as
+// version.Kernel.
 func Deserialize(p []byte) *v.Kernel {
 	flatK := structs.GetRootAsKernel(p, 0)
 	var k v.Kernel

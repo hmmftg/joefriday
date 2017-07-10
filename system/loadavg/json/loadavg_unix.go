@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package loadavg handles JSON based processing of loadavg information.
+// Package loadAvg gets loadavg information from the /proc/loadavg file.
 // Instead of returning a Go struct, it returns JSON serialized bytes. A
 // function to deserialize the JSON serialized bytes into an loadavg.LoadAvg
 // struct is provided.
@@ -35,7 +35,7 @@ type Profiler struct {
 	*l.Profiler
 }
 
-// Initializes and returns a json.Profiler for loadavg information.
+// Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
 	p, err := l.NewProfiler()
 	if err != nil {
@@ -54,9 +54,9 @@ func (prof *Profiler) Get() (p []byte, err error) {
 }
 
 var std *Profiler
-var stdMu sync.Mutex //protects standard to preven data race on checking/instantiation
+var stdMu sync.Mutex //protects standard to prevent a data race on checking/instantiation
 
-// Get returns the current LoadAvg information as JSON serialized bytes using
+// Get returns the current loadavg information as JSON serialized bytes using
 // the package's global Profiler.
 func Get() (p []byte, err error) {
 	stdMu.Lock()
@@ -75,7 +75,7 @@ func (prof *Profiler) Serialize(la l.LoadAvg) ([]byte, error) {
 	return json.Marshal(la)
 }
 
-// Serialize loadavg.LoadAvg using JSON with the package global Profiler.
+// Serialize loadavg.LoadAvg using JSON with the package's global Profiler.
 func Serialize(la l.LoadAvg) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
@@ -88,12 +88,12 @@ func Serialize(la l.LoadAvg) (p []byte, err error) {
 	return std.Serialize(la)
 }
 
-// Marshal is an alias for Serialize
+// Marshal is an alias for Serialize.
 func (prof *Profiler) Marshal(la l.LoadAvg) ([]byte, error) {
 	return prof.Serialize(la)
 }
 
-// Marshal is an alias for Serialize that uses the package's global profiler.
+// Marshal is an alias for Serialize using the package's global profiler.
 func Marshal(la l.LoadAvg) ([]byte, error) {
 	return Serialize(la)
 }
@@ -108,23 +108,23 @@ func Deserialize(p []byte) (la l.LoadAvg, err error) {
 	return la, nil
 }
 
-// Unmarshal is an alias for Deserialize
+// Unmarshal is an alias for Deserialize.
 func Unmarshal(p []byte) (l.LoadAvg, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's memory information at intervals.
+// Ticker delivers the system's loadavg information at intervals.
 type Ticker struct {
 	*joe.Ticker
 	Data chan []byte
 	*Profiler
 }
 
-// NewTicker returns a new Ticker continaing a Data channel that delivers
-// the data at intervals and an error channel that delivers any errors
-// encountered.  Stop the ticker to signal the ticker to stop running; it
-// does not close the Data channel.  Close the ticker to close all ticker
-// channels.
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
 func NewTicker(d time.Duration) (joe.Tocker, error) {
 	p, err := NewProfiler()
 	if err != nil {
