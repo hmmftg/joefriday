@@ -16,39 +16,39 @@ package version
 import "testing"
 
 func TestGet(t *testing.T) {
-	inf, err := Get()
+	k, err := Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	if inf.OS == "" {
+	if k.OS == "" {
 		t.Error("OS: wanted a non-empty value; was empty")
 	}
-	if inf.Version == "" {
+	if k.Version == "" {
 		t.Error("Version: wanted a non-empty value; was empty")
 	}
-	if inf.CompileUser == "" {
+	if k.CompileUser == "" {
 		t.Error("CompileUser: wanted a non-empty value; was empty")
 	}
-	if inf.GCC == "" {
+	if k.GCC == "" {
 		t.Error("GCC: wanted a non-empty value; was empty")
 	}
-	if inf.OSGCC == "" {
+	if k.OSGCC == "" {
 		t.Error("OSGCC: wanted a non-empty value; was empty")
 	}
-	if inf.Type == "" {
+	if k.Type == "" {
 		t.Error("Type: wanted a non-empty value; was empty")
 	}
-	if inf.CompileDate == "" {
+	if k.CompileDate == "" {
 		t.Error("CompileDate: wanted a non-empty value; was empty")
 	}
-	if inf.Arch == "" {
+	if k.Arch == "" {
 		t.Error("Arch: wanted a non-empty value; was empty")
 	}
-	t.Logf("%#v\n", inf)
+	t.Logf("%#v\n", k)
 }
 
 func BenchmarkGet(b *testing.B) {
-	var inf *Info
+	var k *Kernel
 	b.StopTimer()
 	p, err := NewProfiler()
 	if err != nil {
@@ -56,7 +56,7 @@ func BenchmarkGet(b *testing.B) {
 	}
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = p.Get()
+		k, _ = p.Get()
 	}
-	_ = inf
+	_ = k
 }

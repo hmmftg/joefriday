@@ -73,27 +73,27 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes version information using Flatbuffers.
-func (prof *Profiler) Serialize(inf *v.Info) []byte {
+func (prof *Profiler) Serialize(k *v.Kernel) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
-	os := prof.Builder.CreateString(inf.OS)
-	version := prof.Builder.CreateString(inf.Version)
-	compileUser := prof.Builder.CreateString(inf.CompileUser)
-	gcc := prof.Builder.CreateString(inf.GCC)
-	osgcc := prof.Builder.CreateString(inf.OSGCC)
-	typ := prof.Builder.CreateString(inf.Type)
-	compileDate := prof.Builder.CreateString(inf.CompileDate)
-	arch := prof.Builder.CreateString(inf.Arch)
-	structs.InfoStart(prof.Builder)
-	structs.InfoAddOS(prof.Builder, os)
-	structs.InfoAddVersion(prof.Builder, version)
-	structs.InfoAddCompileUser(prof.Builder, compileUser)
-	structs.InfoAddGCC(prof.Builder, gcc)
-	structs.InfoAddOSGCC(prof.Builder, osgcc)
-	structs.InfoAddType(prof.Builder, typ)
-	structs.InfoAddCompileDate(prof.Builder, compileDate)
-	structs.InfoAddArch(prof.Builder, arch)
-	prof.Builder.Finish(structs.InfoEnd(prof.Builder))
+	os := prof.Builder.CreateString(k.OS)
+	version := prof.Builder.CreateString(k.Version)
+	compileUser := prof.Builder.CreateString(k.CompileUser)
+	gcc := prof.Builder.CreateString(k.GCC)
+	osgcc := prof.Builder.CreateString(k.OSGCC)
+	typ := prof.Builder.CreateString(k.Type)
+	compileDate := prof.Builder.CreateString(k.CompileDate)
+	arch := prof.Builder.CreateString(k.Arch)
+	structs.KernelStart(prof.Builder)
+	structs.KernelAddOS(prof.Builder, os)
+	structs.KernelAddVersion(prof.Builder, version)
+	structs.KernelAddCompileUser(prof.Builder, compileUser)
+	structs.KernelAddGCC(prof.Builder, gcc)
+	structs.KernelAddOSGCC(prof.Builder, osgcc)
+	structs.KernelAddType(prof.Builder, typ)
+	structs.KernelAddCompileDate(prof.Builder, compileDate)
+	structs.KernelAddArch(prof.Builder, arch)
+	prof.Builder.Finish(structs.KernelEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -103,7 +103,7 @@ func (prof *Profiler) Serialize(inf *v.Info) []byte {
 
 // Serialize serializes version information using Flatbuffers with the
 // package's global Profiler.
-func Serialize(inf *v.Info) (p []byte, err error) {
+func Serialize(k *v.Kernel) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -112,21 +112,21 @@ func Serialize(inf *v.Info) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(inf), nil
+	return std.Serialize(k), nil
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserialize's them
 // as kernel.Kernel.
-func Deserialize(p []byte) *v.Info {
-	flatInf := structs.GetRootAsInfo(p, 0)
-	var inf v.Info
-	inf.OS = string(flatInf.OS())
-	inf.Version = string(flatInf.Version())
-	inf.CompileUser = string(flatInf.CompileUser())
-	inf.GCC = string(flatInf.GCC())
-	inf.OSGCC = string(flatInf.OSGCC())
-	inf.Type = string(flatInf.Type())
-	inf.CompileDate = string(flatInf.CompileDate())
-	inf.Arch = string(flatInf.Arch())
-	return &inf
+func Deserialize(p []byte) *v.Kernel {
+	flatK := structs.GetRootAsKernel(p, 0)
+	var k v.Kernel
+	k.OS = string(flatK.OS())
+	k.Version = string(flatK.Version())
+	k.CompileUser = string(flatK.CompileUser())
+	k.GCC = string(flatK.GCC())
+	k.OSGCC = string(flatK.OSGCC())
+	k.Type = string(flatK.Type())
+	k.CompileDate = string(flatK.CompileDate())
+	k.Arch = string(flatK.Arch())
+	return &k
 }

@@ -25,39 +25,39 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	inf, err := v.Get()
+	k, err := v.Get()
 	if err != nil {
 		t.Errorf("version.Get(): got %s, want nil", err)
 		return
 	}
-	infD, err := Deserialize(p)
+	kD, err := Deserialize(p)
 	if err != nil {
 		t.Errorf("deserialize: unexpected error: %s", err)
 		return
 	}
-	if inf.OS != infD.OS {
-		t.Errorf("OS: got %s; want %s", infD.OS, inf.OS)
+	if k.OS != kD.OS {
+		t.Errorf("OS: got %s; want %s", kD.OS, k.OS)
 	}
-	if inf.Version != infD.Version {
-		t.Errorf("Version: got %s; want %s", infD.Version, inf.Version)
+	if k.Version != kD.Version {
+		t.Errorf("Version: got %s; want %s", kD.Version, k.Version)
 	}
-	if inf.CompileUser != infD.CompileUser {
-		t.Errorf("CompileUser: got %s; want %s", infD.CompileUser, inf.CompileUser)
+	if k.CompileUser != kD.CompileUser {
+		t.Errorf("CompileUser: got %s; want %s", kD.CompileUser, k.CompileUser)
 	}
-	if inf.GCC != infD.GCC {
-		t.Errorf("GCC: got %s; want %s", infD.GCC, inf.GCC)
+	if k.GCC != kD.GCC {
+		t.Errorf("GCC: got %s; want %s", kD.GCC, k.GCC)
 	}
-	if inf.OSGCC != infD.OSGCC {
-		t.Errorf("Version: got %s; want %s", infD.OSGCC, inf.OSGCC)
+	if k.OSGCC != kD.OSGCC {
+		t.Errorf("Version: got %s; want %s", kD.OSGCC, k.OSGCC)
 	}
-	if inf.Type != infD.Type {
-		t.Errorf("Version: got %s; want %s", infD.Type, inf.Type)
+	if k.Type != kD.Type {
+		t.Errorf("Version: got %s; want %s", kD.Type, k.Type)
 	}
-	if inf.CompileDate != infD.CompileDate {
-		t.Errorf("CompileDate: got %s; want %s", infD.CompileDate, inf.CompileDate)
+	if k.CompileDate != kD.CompileDate {
+		t.Errorf("CompileDate: got %s; want %s", kD.CompileDate, k.CompileDate)
 	}
-	if inf.Arch != infD.Arch {
-		t.Errorf("Arch: got %s; want %s", infD.Arch, inf.Arch)
+	if k.Arch != kD.Arch {
+		t.Errorf("Arch: got %s; want %s", kD.Arch, k.Arch)
 	}
 }
 
@@ -97,25 +97,25 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf *v.Info
+	var k *v.Kernel
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = Deserialize(tmp)
+		k, _ = Deserialize(tmp)
 	}
-	_ = inf
+	_ = k
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var inf *v.Info
+	var k *v.Kernel
 	b.StartTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = Unmarshal(tmp)
+		k, _ = Unmarshal(tmp)
 	}
-	_ = inf
+	_ = k
 }

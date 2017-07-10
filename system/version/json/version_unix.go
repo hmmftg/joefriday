@@ -69,12 +69,12 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize version.Info using JSON
-func (prof *Profiler) Serialize(inf *v.Info) ([]byte, error) {
-	return json.Marshal(inf)
+func (prof *Profiler) Serialize(k *v.Kernel) ([]byte, error) {
+	return json.Marshal(k)
 }
 
 // Serialize version.Info using JSON with the package global Profiler.
-func Serialize(inf *v.Info) (p []byte, err error) {
+func Serialize(k *v.Kernel) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -83,31 +83,31 @@ func Serialize(inf *v.Info) (p []byte, err error) {
 			return nil, err
 		}
 	}
-	return std.Serialize(inf)
+	return std.Serialize(k)
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(inf *v.Info) ([]byte, error) {
-	return prof.Serialize(inf)
+func (prof *Profiler) Marshal(k *v.Kernel) ([]byte, error) {
+	return prof.Serialize(k)
 }
 
 // Marshal is an alias for Serialize that uses the package's global profiler.
-func Marshal(inf *v.Info) ([]byte, error) {
-	return Serialize(inf)
+func Marshal(k *v.Kernel) ([]byte, error) {
+	return Serialize(k)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // version.Info.
-func Deserialize(p []byte) (*v.Info, error) {
-	inf := &v.Info{}
-	err := json.Unmarshal(p, inf)
+func Deserialize(p []byte) (*v.Kernel, error) {
+	k := &v.Kernel{}
+	err := json.Unmarshal(p, k)
 	if err != nil {
 		return nil, err
 	}
-	return inf, nil
+	return k, nil
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*v.Info, error) {
+func Unmarshal(p []byte) (*v.Kernel, error) {
 	return Deserialize(p)
 }

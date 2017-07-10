@@ -24,8 +24,8 @@ import (
 
 const procFile = "/proc/version"
 
-// Info holds information about the kernel and version.
-type Info struct {
+// Kernel holds information about the kernel and version.
+type Kernel struct {
 	OS          string `json:"os"`
 	Version     string `json:"version"`
 	CompileUser string `json:"compile_user"`
@@ -51,7 +51,7 @@ func NewProfiler() (prof *Profiler, err error) {
 }
 
 // Get populates Info with /proc/version information.
-func (prof *Profiler) Get() (inf *Info, err error) {
+func (prof *Profiler) Get() (k *Kernel, err error) {
 	var (
 		i, pos, pos2 int
 		v            byte
@@ -61,7 +61,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		return nil, err
 	}
 	// This will always be linux, I think.
-	inf = &Info{OS: "linux"}
+	k = &Kernel{OS: "linux"}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -74,7 +74,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		for i, v = range prof.Line {
 			if v == 0x28 {
 				// get the OS
-				inf.Version = string(prof.Line[pos2+1 : i-1])
+				k.Version = string(prof.Line[pos2+1 : i-1])
 				pos = i + 1
 				break
 			}
@@ -85,11 +85,11 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 			}
 		}
 		// Set the arch
-		inf.SetArch()
+		k.SetArch()
 		// The CompileUser is everything up to the next ')', 0x29
 		for i, v = range prof.Line[pos:] {
 			if v == 0x29 {
-				inf.CompileUser = string(prof.Line[pos : pos+i])
+				k.CompileUser = string(prof.Line[pos : pos+i])
 				pos += i + 3
 				break
 			}
@@ -100,13 +100,13 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 		for i, v = range prof.Line[pos:] {
 			if v == 0x28 {
 				inOSGCC = true
-				inf.GCC = string(prof.Line[pos : pos+i-1])
+				k.GCC = string(prof.Line[pos : pos+i-1])
 				pos2 = i + pos + 1
 				continue
 			}
 			if v == 0x29 {
 				if inOSGCC {
-					inf.OSGCC = string(prof.Line[pos2 : pos+i])
+					k.OSGCC = string(prof.Line[pos2 : pos+i])
 					inOSGCC = false
 					continue
 				}
@@ -115,21 +115,21 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 			}
 		}
 		// Check if GCC is empty, this happens if there wasn't an OSGCC value
-		if inf.GCC == "" {
-			inf.GCC = string(prof.Line[pos2 : pos-1])
+		if k.GCC == "" {
+			k.GCC = string(prof.Line[pos2 : pos-1])
 		}
 		// Get the type information, everything up to '('
 		for i, v = range prof.Line[pos:] {
 			if v == 0x28 {
-				inf.Type = string(prof.Line[pos : pos+i-1])
+				k.Type = string(prof.Line[pos : pos+i-1])
 				pos += i + 1
 				break
 			}
 		}
 		// The rest is the compile date.
-		inf.CompileDate = string(prof.Line[pos : len(prof.Line)-2])
+		k.CompileDate = string(prof.Line[pos : len(prof.Line)-2])
 	}
-	return inf, nil
+	return k, nil
 }
 
 var std *Profiler
@@ -137,7 +137,7 @@ var stdMu sync.Mutex
 
 // Get gets the kernel information using the package's global Profiler, which
 // is lazily instantiated.
-func Get() (inf *Info, err error) {
+func Get() (k *Kernel, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -151,11 +151,11 @@ func Get() (inf *Info, err error) {
 
 // Set the Version's architecture information.  This is the last segment of
 // the Version.
-func (inf *Info) SetArch() {
+func (k *Kernel) SetArch() {
 	// get everything after the last -
-	for i := len(inf.Version) - 1; i > 0; i-- {
-		if inf.Version[i] == '-' {
-			inf.Arch = string(inf.Version[i+1:])
+	for i := len(k.Version) - 1; i > 0; i-- {
+		if k.Version[i] == '-' {
+			k.Arch = string(k.Version[i+1:])
 			return
 		}
 	}
