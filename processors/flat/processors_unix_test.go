@@ -41,6 +41,9 @@ func TestSerialize(t *testing.T) {
 		if procD.CPU[i].CPUCores == 0 {
 			t.Errorf("%d: CPUCores: expected non-zero value; was 0", i)
 		}
+		if int(procD.CPU[i].BogoMIPS) == 0 {
+			t.Errorf("%d: expected a non-zero value for bogomips", i)
+		}
 	}
 	_, err = Serialize(procD)
 	if err != nil {

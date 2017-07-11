@@ -132,6 +132,7 @@ func (p *Profiler) SerializeCPU(c *procs.CPU) fb.UOffsetT {
 	structs.CPUAddCPUMHz(p.Builder, c.CPUMHz)
 	structs.CPUAddCacheSize(p.Builder, cacheSize)
 	structs.CPUAddCPUCores(p.Builder, c.CPUCores)
+	structs.CPUAddBogoMIPS(p.Builder, c.BogoMIPS)
 	structs.CPUAddFlags(p.Builder, flags)
 	return structs.CPUEnd(p.Builder)
 }
@@ -172,6 +173,7 @@ func Deserialize(p []byte) *procs.Processors {
 		cpu.CPUMHz = flatC.CPUMHz()
 		cpu.CacheSize = string(flatC.CacheSize())
 		cpu.CPUCores = flatC.CPUCores()
+		cpu.BogoMIPS = flatC.BogoMIPS()
 		cpu.Flags = make([]string, flatC.FlagsLength())
 		for i := 0; i < len(cpu.Flags); i++ {
 			cpu.Flags[i] = string(flatC.Flags(i))

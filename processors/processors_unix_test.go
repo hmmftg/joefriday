@@ -40,6 +40,9 @@ func TestProcessors(t *testing.T) {
 		if len(cpu.Flags) == 0 {
 			t.Errorf("%d: expected flags to be not be empty; it was", i)
 		}
+		if int(cpu.BogoMIPS) == 0 {
+			t.Errorf("%d: expected a non-zero value for bogomips", i)
+		}
 	}
 	t.Logf("%#v", procs)
 }

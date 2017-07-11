@@ -57,6 +57,7 @@ type CPU struct {
 	CPUMHz     float32  `json:"cpu_mhz"`
 	CacheSize  string   `json:"cache_size"`
 	CPUCores   int16    `json:"cpu_cores"`
+	BogoMIPS   float32  `json:"bogomips"`
 	Flags      []string `json:"flags"`
 }
 
@@ -207,6 +208,16 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 		if v == 'v' { // vendor_id
 			cpu.VendorID = string(prof.Val[nameLen:])
 		}
+		// also check 2nd name pos for o as some output also have a bugs line.
+		if v == 'b' && prof.Val[1] == 'o' { // bogomips
+			f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
+			if err != nil {
+				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+			}
+			cpu.BogoMIPS = float32(f)
+			continue
+		}
+		
 	}
 	// append the current processor informatin
 	if add {

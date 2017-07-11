@@ -43,6 +43,9 @@ func TestGet(t *testing.T) {
 		if len(v.Flags) == 0 {
 			t.Errorf("%d: expected flags to have values; it was empty", i)
 		}
+		if int(v.BogoMIPS) == 0 {
+			t.Errorf("%d: expected a non-zero value for bogomips", i)
+		}
 	}
 	t.Logf("%#v\n", p)
 }

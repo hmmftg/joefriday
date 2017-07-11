@@ -18,6 +18,7 @@ table CPU {
 	CPUMHz:float;
 	CacheSize:string;
 	CPUCores:short;
+	BogoMIPS:float;
 	Flags:[string];
 }
 
