@@ -36,7 +36,7 @@ type Kernel struct {
 	Arch        string `json:"arch"`
 }
 
-// Profiler processes the version information.
+// Profiler processes the version information, /proc/version.
 type Profiler struct {
 	*joe.Proc
 }
