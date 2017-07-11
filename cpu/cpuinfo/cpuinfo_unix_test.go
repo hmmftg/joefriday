@@ -42,7 +42,7 @@ func TestFacts(t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	var inf *Info
+	var inf *CPUInfo
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()

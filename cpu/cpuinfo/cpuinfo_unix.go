@@ -28,9 +28,9 @@ import (
 
 const procFile = "/proc/cpuinfo"
 
-// Info holds information about the system's cpus; CPU will have one entry per
-// processor.
-type Info struct {
+// CPUInfo holds information about the system's cpus; CPU will have one entry
+// per processor.
+type CPUInfo struct {
 	Timestamp int64
 	CPU       []CPU `json:"cpus"`
 }
@@ -79,7 +79,7 @@ func NewProfiler() (prof *Profiler, err error) {
 }
 
 // Get returns the current cpuinfo.
-func (prof *Profiler) Get() (inf *Info, err error) {
+func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 	var (
 		cpuCnt, i, pos, nameLen int
 		n                       uint64
@@ -90,7 +90,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 	if err != nil {
 		return nil, err
 	}
-	inf = &Info{Timestamp: time.Now().UTC().UnixNano()}
+	inf = &CPUInfo{Timestamp: time.Now().UTC().UnixNano()}
 	for {
 		prof.Line, err = prof.Buf.ReadSlice('\n')
 		if err != nil {
@@ -294,7 +294,7 @@ var std *Profiler
 var stdMu sync.Mutex
 
 // Get returns the current cpuinfo using the package's global Profiler.
-func Get() (inf *Info, err error) {
+func Get() (inf *CPUInfo, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {

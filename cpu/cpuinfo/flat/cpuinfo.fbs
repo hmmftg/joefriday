@@ -1,7 +1,7 @@
-// info.fbs
+// cpuinfo.fbs
 namespace structs;
 
-table Info {
+table CPUInfo {
 	Timestamp:long;
 	CPU:[CPU];
 }
@@ -34,4 +34,4 @@ table CPU {
 	PowerManagement:string;
 }
 
-root_type Info;
+root_type CPUInfo;

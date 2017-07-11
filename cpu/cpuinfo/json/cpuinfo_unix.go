@@ -13,8 +13,8 @@
 
 // Package cpuinfo (json) handles JSON based processing of /proc/cpuinfo.
 // Instead of returning a Go struct, it returns JSON serialized bytes. A
-// function to deserialize the JSON serialized bytes into a cpuinfo.Info struct
-// is provided.
+// function to deserialize the JSON serialized bytes into a cpuinfo.CPUInfo
+// struct is provided.
 //
 // Note: the package name is cpuinfo and not the final element of the import
 // path (json). 
@@ -68,12 +68,12 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize cpuinfo as JSON.
-func (prof *Profiler) Serialize(inf *info.Info) ([]byte, error) {
+func (prof *Profiler) Serialize(inf *info.CPUInfo) ([]byte, error) {
 	return json.Marshal(inf)
 }
 
 // Serialize cpuinfo as JSON using package globals.
-func Serialize(inf *info.Info) (p []byte, err error) {
+func Serialize(inf *info.CPUInfo) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -86,19 +86,19 @@ func Serialize(inf *info.Info) (p []byte, err error) {
 }
 
 // Marshal is an alias for serialize.
-func (prof *Profiler) Marshal(inf *info.Info) ([]byte, error) {
+func (prof *Profiler) Marshal(inf *info.CPUInfo) ([]byte, error) {
 	return prof.Serialize(inf)
 }
 
 // Marshal is an alias for Serialize using package globals.
-func Marshal(inf *info.Info) ([]byte, error) {
+func Marshal(inf *info.CPUInfo) ([]byte, error) {
 	return std.Serialize(inf)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// cpuinfo.Info.
-func Deserialize(p []byte) (*info.Info, error) {
-	inf := &info.Info{}
+// cpuinfo.CPUInfo.
+func Deserialize(p []byte) (*info.CPUInfo, error) {
+	inf := &info.CPUInfo{}
 	err := json.Unmarshal(p, inf)
 	if err != nil {
 		return nil, err
@@ -107,6 +107,6 @@ func Deserialize(p []byte) (*info.Info, error) {
 }
 
 // Unmarshal is an alias for Deserialize using package globals.
-func Unmarshal(p []byte) (*info.Info, error) {
+func Unmarshal(p []byte) (*info.CPUInfo, error) {
 	return Deserialize(p)
 }

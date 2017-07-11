@@ -83,7 +83,7 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf *info.Info
+	var inf *info.CPUInfo
 	b.StopTimer()
 	p, _ := NewProfiler()
 	infB, _ := p.Get()
@@ -95,7 +95,7 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var inf *info.Info
+	var inf *info.CPUInfo
 	b.StartTimer()
 	p, _ := NewProfiler()
 	infB, _ := p.Get()

@@ -13,8 +13,8 @@
 
 // Package cpuinfo (flat) handles Flatbuffer based processing of /proc/cpuinfo.
 // Instead of returning a Go struct, it returns Flatbuffer serialized bytes. A
-// function to deserialize the Flatbuffer serialized bytes into a cpuinfo.Info
-// struct is provided.
+// function to deserialize the Flatbuffer serialized bytes into a
+// cpuinfo.CPUInfo struct is provided.
 //
 // Note: the package name is cpuinfo and not the final element of the import
 // path (flat). 
@@ -71,22 +71,22 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes cpuinfo using Flatbuffers.
-func (p *Profiler) Serialize(inf *info.Info) []byte {
+func (p *Profiler) Serialize(inf *info.CPUInfo) []byte {
 	// ensure the Builder is in a usable state.
 	p.Builder.Reset()
 	uoffs := make([]fb.UOffsetT, len(inf.CPU))
 	for i, cpu := range inf.CPU {
 		uoffs[i] = p.SerializeCPU(&cpu)
 	}
-	structs.InfoStartCPUVector(p.Builder, len(uoffs))
+	structs.CPUInfoStartCPUVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	cpusV := p.Builder.EndVector(len(uoffs))
-	structs.InfoStart(p.Builder)
-	structs.InfoAddTimestamp(p.Builder, inf.Timestamp)
-	structs.InfoAddCPU(p.Builder, cpusV)
-	p.Builder.Finish(structs.InfoEnd(p.Builder))
+	structs.CPUInfoStart(p.Builder)
+	structs.CPUInfoAddTimestamp(p.Builder, inf.Timestamp)
+	structs.CPUInfoAddCPU(p.Builder, cpusV)
+	p.Builder.Finish(structs.CPUInfoEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(b))
@@ -116,7 +116,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	for i, flag := range cpu.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
-	structs.InfoStartCPUVector(p.Builder, len(uoffs))
+	structs.CPUInfoStartCPUVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
@@ -150,8 +150,8 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	return structs.CPUEnd(p.Builder)
 }
 
-// Serialize cpuinfo.Info using the package global profiler.
-func Serialize(inf *info.Info) (p []byte, err error) {
+// Serialize cpuinfo.CPUInfo using the package global profiler.
+func Serialize(inf *info.CPUInfo) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -164,11 +164,11 @@ func Serialize(inf *info.Info) (p []byte, err error) {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserializes them
-// as cpuinfo.Info.
-func Deserialize(p []byte) *info.Info {
-	fInf := structs.GetRootAsInfo(p, 0)
+// as cpuinfo.CPUInfo.
+func Deserialize(p []byte) *info.CPUInfo {
+	fInf := structs.GetRootAsCPUInfo(p, 0)
 	l := fInf.CPULength()
-	inf := &info.Info{}
+	inf := &info.CPUInfo{}
 	fCPU := &structs.CPU{}
 	cpu := info.CPU{}
 	inf.Timestamp = fInf.Timestamp()

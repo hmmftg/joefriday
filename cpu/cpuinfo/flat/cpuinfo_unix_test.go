@@ -76,7 +76,7 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf *info.Info
+	var inf *info.CPUInfo
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
