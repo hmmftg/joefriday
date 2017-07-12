@@ -122,7 +122,10 @@ func runCPUBenches(bench benchutil.Benchmarker) {
 }
 
 func runMemBenches(bench benchutil.Benchmarker) {
-	b := mem.JoeFridayGetMemInfo()
+	b := mem.JoeFridayGetMemBasic()
+	bench.Append(b)
+
+	b = mem.JoeFridayGetMemInfo()
 	bench.Append(b)
 
 	b = mem.JoeFridayGetSysinfoMemInfo()

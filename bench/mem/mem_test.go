@@ -7,10 +7,22 @@ import (
 	"github.com/DataDog/gohai/memory"
 	"github.com/cloudfoundry/gosigar"
 	meminfo "github.com/guillermo/go.procmeminfo"
+	basic "github.com/mohae/joefriday/mem/membasic"
 	info "github.com/mohae/joefriday/mem/meminfo"
 	sysmem "github.com/mohae/joefriday/sysinfo/mem"
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
+
+func BenchmarkJoeFridayGetMemBasic(b *testing.B) {
+	var mem *basic.Info
+	b.StopTimer()
+	p, _ := basic.NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		mem, _ = p.Get()
+	}
+	_ = mem
+}
 
 func BenchmarkJoeFridayGetMemInfo(b *testing.B) {
 	var mem *info.Info
@@ -70,6 +82,21 @@ func BenchmarkShirouGopsutilMem(b *testing.B) {
 
 // These tests exist to print out the data that is collected; not to test the
 // methods themselves.  Run with the -v flag.
+func TestJoeFridayGetMemBasic(t *testing.T) {
+	prof, _ := basic.NewProfiler()
+	mem, err := prof.Get()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	p, err := json.MarshalIndent(mem, "", "\t")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("%s\n", string(p))
+}
+
 func TestJoeFridayGetMemInfo(t *testing.T) {
 	prof, _ := info.NewProfiler()
 	mem, err := prof.Get()

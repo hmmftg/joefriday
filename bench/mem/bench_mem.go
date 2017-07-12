@@ -7,12 +7,31 @@ import (
 	"github.com/cloudfoundry/gosigar"
 	meminfo "github.com/guillermo/go.procmeminfo"
 	"github.com/mohae/benchutil"
+	basic "github.com/mohae/joefriday/mem/membasic"
 	info "github.com/mohae/joefriday/mem/meminfo"
 	sysmem "github.com/mohae/joefriday/sysinfo/mem"
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
 
 const MemGroup = "Memory"
+
+func BenchJoeFridayGetMemBasic(b *testing.B) {
+	var mem *basic.Info
+	b.StopTimer()
+	p, _ := basic.NewProfiler()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		mem, _ = p.Get()
+	}
+	_ = mem
+}
+
+func JoeFridayGetMemBasic() benchutil.Bench {
+	bench := benchutil.NewBench("joefriday/mem/membasic.Get")
+	bench.Group = MemGroup
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetMemBasic))
+	return bench
+}
 
 func BenchJoeFridayGetMemInfo(b *testing.B) {
 	var mem *info.Info
