@@ -64,7 +64,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkStats(n string, s *stats.Stats, t *testing.T) {
+func checkStats(n string, s *stats.CPUStats, t *testing.T) {
 	if int16(stats.CLK_TCK) != s.ClkTck {
 		t.Errorf("%s: ClkTck: got %s; want %s", n, s.ClkTck, stats.CLK_TCK)
 	}
@@ -132,7 +132,7 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var stts *stats.Stats
+	var stts *stats.CPUStats
 	b.StopTimer()
 	p, _ := NewProfiler()
 	sttsB, _ := p.Get()
@@ -144,7 +144,7 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var stts *stats.Stats
+	var stts *stats.CPUStats
 	b.StartTimer()
 	p, _ := NewProfiler()
 	sttsB, _ := p.Get()

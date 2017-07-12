@@ -12,8 +12,8 @@
 // limitations under the License.
 
 // Package cpustats handles the processing of information about kernel activity,
-// /proc/stat. The first Stats.CPU element aggregates the values for all other
-// CPU elements. The values are aggregated since system boot.
+// /proc/stat. The first CPUStats.CPU element aggregates the values for all
+// other CPU elements. The values are aggregated since system boot.
 package cpustats
 
 import (
@@ -58,10 +58,10 @@ func ClkTck() error {
 	return nil
 }
 
-// Stats holds the kernel activity information; /proc/stat. The first CPU
+// CPUStats holds the kernel activity information; /proc/stat. The first CPU
 // element's values are the aggregates of all other CPU elements. The stats are
 // aggregated from sytem boot.
-type Stats struct {
+type CPUStats struct {
 	ClkTck    int16  `json:"clk_tck"`
 	Timestamp int64  `json:"timestamp"`
 	Ctxt      int64  `json:"ctxt"`
@@ -108,7 +108,7 @@ func NewProfiler() (prof *Profiler, err error) {
 }
 
 // Get returns information about current kernel activity.
-func (prof *Profiler) Get() (stats *Stats, err error) {
+func (prof *Profiler) Get() (stats *CPUStats, err error) {
 	err = prof.Reset()
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (prof *Profiler) Get() (stats *Stats, err error) {
 		stop                bool
 	)
 
-	stats = &Stats{Timestamp: time.Now().UTC().UnixNano(), ClkTck: prof.ClkTck, CPU: make([]CPU, 0, 2)}
+	stats = &CPUStats{Timestamp: time.Now().UTC().UnixNano(), ClkTck: prof.ClkTck, CPU: make([]CPU, 0, 2)}
 
 	// read each line until eof
 	for {
@@ -247,7 +247,7 @@ var stdMu sync.Mutex
 
 // Get returns the current kernel activity information using the package's
 // global Profiler.
-func Get() (stat *Stats, err error) {
+func Get() (stat *CPUStats, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -262,7 +262,7 @@ func Get() (stat *Stats, err error) {
 // Ticker delivers the system's kernel activity information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan *Stats
+	Data chan *CPUStats
 	*Profiler
 }
 
@@ -276,7 +276,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *Stats), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *CPUStats), Profiler: p}
 	go t.Run()
 	return &t, nil
 }

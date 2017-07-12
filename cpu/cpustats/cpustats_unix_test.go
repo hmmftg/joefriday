@@ -61,7 +61,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkStats(n string, s *Stats, t *testing.T) {
+func checkStats(n string, s *CPUStats, t *testing.T) {
 	if int16(CLK_TCK) != s.ClkTck {
 		t.Errorf("%s: ClkTck: got %s; want %s", n, s.ClkTck, CLK_TCK)
 	}
@@ -93,7 +93,7 @@ func checkStats(n string, s *Stats, t *testing.T) {
 	}
 }
 
-var stts *Stats
+var stts *CPUStats
 
 func BenchmarkGet(b *testing.B) {
 	b.StopTimer()

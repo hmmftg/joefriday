@@ -15,7 +15,8 @@
 // /proc/stat. The first Stats.CPU element aggregates the values for all other
 // CPU elements. The values are aggregated since system boot. Instead of
 // returning a Go struct, it returns JSON serialized bytes. A function to
-// deserialize the JSON serialized bytes into a cpustats.Stats struct is provided.
+// deserialize the JSON serialized bytes into a cpustats.CPUStats struct is
+// provided.
 //
 // Note: the package name is cpustats and not the final element of the import
 // path (json). 
@@ -71,13 +72,13 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize cpustats.Stats as JSON.
-func (prof *Profiler) Serialize(st *stats.Stats) ([]byte, error) {
+// Serialize cpustats.CPUStats as JSON.
+func (prof *Profiler) Serialize(st *stats.CPUStats) ([]byte, error) {
 	return json.Marshal(st)
 }
 
-// Serialize cpustats.Stats as JSON using package globals.
-func Serialize(st *stats.Stats) (p []byte, err error) {
+// Serialize cpustats.CPUStats as JSON using package globals.
+func Serialize(st *stats.CPUStats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -90,19 +91,19 @@ func Serialize(st *stats.Stats) (p []byte, err error) {
 }
 
 // Marshal is an alias for Serialize.
-func (prof *Profiler) Marshal(st *stats.Stats) ([]byte, error) {
+func (prof *Profiler) Marshal(st *stats.CPUStats) ([]byte, error) {
 	return prof.Serialize(st)
 }
 
 // Marshal is an alias for Serialize using package globals.
-func Marshal(st *stats.Stats) ([]byte, error) {
+func Marshal(st *stats.CPUStats) ([]byte, error) {
 	return std.Serialize(st)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
 // cpustats.Stats
-func Deserialize(p []byte) (*stats.Stats, error) {
-	st := &stats.Stats{}
+func Deserialize(p []byte) (*stats.CPUStats, error) {
+	st := &stats.CPUStats{}
 	err := json.Unmarshal(p, st)
 	if err != nil {
 		return nil, err
@@ -111,7 +112,7 @@ func Deserialize(p []byte) (*stats.Stats, error) {
 }
 
 // Unmarshal is an alias for Deserialize
-func Unmarshal(p []byte) (*stats.Stats, error) {
+func Unmarshal(p []byte) (*stats.CPUStats, error) {
 	return Deserialize(p)
 }
 

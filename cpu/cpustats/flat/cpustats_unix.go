@@ -15,8 +15,8 @@
 // /proc/stat. The first Stats.CPU element aggregates the values for all other
 // CPU elements. The values are aggregated since system boot. Instead of
 // returning a Go struct, it returns Flatbuffer serialized bytes. A function to
-// deserialize the Flatbuffer serialized bytes into a cpustats.Stats struct is
-// provided.
+// deserialize the Flatbuffer serialized bytes into a cpustats.CPUStats struct
+// is provided.
 //
 // Note: the package name is cpustats and not the final element of the import
 // path (flat). 
@@ -78,8 +78,8 @@ func Get() (p []byte, err error) {
 	return std.Get()
 }
 
-// Serialize cpustats.Stats using Flatbuffers.
-func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
+// Serialize cpustats.CPUStats using Flatbuffers.
+func (prof *Profiler) Serialize(stts *stats.CPUStats) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
 	cpusF := make([]fb.UOffsetT, len(stts.CPU))
@@ -102,19 +102,19 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 		structs.CPUAddQuestNice(prof.Builder, stts.CPU[i].QuestNice)
 		cpusF[i] = structs.CPUEnd(prof.Builder)
 	}
-	structs.StatsStartCPUVector(prof.Builder, len(cpusF))
+	structs.CPUStatsStartCPUVector(prof.Builder, len(cpusF))
 	for i := len(cpusF) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(cpusF[i])
 	}
 	cpusV := prof.Builder.EndVector(len(cpusF))
-	structs.StatsStart(prof.Builder)
-	structs.StatsAddClkTck(prof.Builder, stts.ClkTck)
-	structs.StatsAddTimestamp(prof.Builder, stts.Timestamp)
-	structs.StatsAddCtxt(prof.Builder, stts.Ctxt)
-	structs.StatsAddBTime(prof.Builder, stts.BTime)
-	structs.StatsAddProcesses(prof.Builder, stts.Processes)
-	structs.StatsAddCPU(prof.Builder, cpusV)
-	prof.Builder.Finish(structs.StatsEnd(prof.Builder))
+	structs.CPUStatsStart(prof.Builder)
+	structs.CPUStatsAddClkTck(prof.Builder, stts.ClkTck)
+	structs.CPUStatsAddTimestamp(prof.Builder, stts.Timestamp)
+	structs.CPUStatsAddCtxt(prof.Builder, stts.Ctxt)
+	structs.CPUStatsAddBTime(prof.Builder, stts.BTime)
+	structs.CPUStatsAddProcesses(prof.Builder, stts.Processes)
+	structs.CPUStatsAddCPU(prof.Builder, cpusV)
+	prof.Builder.Finish(structs.CPUStatsEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -122,8 +122,9 @@ func (prof *Profiler) Serialize(stts *stats.Stats) []byte {
 	return tmp
 }
 
-// Serialize cpustats.Stats with Flatbuffers using the package global Profiler.
-func Serialize(stts *stats.Stats) (p []byte, err error) {
+// Serialize cpustats.CPUStats with Flatbuffers using the package's global
+// Profiler.
+func Serialize(stts *stats.CPUStats) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -135,12 +136,12 @@ func Serialize(stts *stats.Stats) (p []byte, err error) {
 	return std.Serialize(stts), nil
 }
 
-// Deserialize takes some Flatbuffer serialized bytes and deserialize's them as
-// cpustats.Stats.
-func Deserialize(p []byte) *stats.Stats {
-	statsS := &stats.Stats{}
+// Deserialize takes some Flatbuffer serialized bytes and deserializes them as
+// cpustats.CPUStats.
+func Deserialize(p []byte) *stats.CPUStats {
+	statsS := &stats.CPUStats{}
 	cpuF := &structs.CPU{}
-	statsF := structs.GetRootAsStats(p, 0)
+	statsF := structs.GetRootAsCPUStats(p, 0)
 	statsS.ClkTck = statsF.ClkTck()
 	statsS.Timestamp = statsF.Timestamp()
 	statsS.Ctxt = statsF.Ctxt()

@@ -1,7 +1,7 @@
-// stats.fbs
+// cpustats.fbs
 namespace structs;
 
-table Stats {
+table CPUStats {
     ClkTck:short;
     Timestamp:long;
     Ctxt:long;
@@ -24,4 +24,4 @@ table CPU {
     QuestNice:long;
 }
 
-root_type Stats;
+root_type CPUStats;
