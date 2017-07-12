@@ -31,7 +31,7 @@ func JoeFridayGetCPUInfo() benchutil.Bench {
 }
 
 func BenchJoeFridayGetCPUStats(b *testing.B) {
-	var st *cpustats.Stats
+	var st *cpustats.CPUStats
 	b.StopTimer()
 	p, _ := cpustats.NewProfiler()
 	b.StartTimer()

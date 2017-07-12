@@ -22,7 +22,7 @@ func BenchmarkJoeFridayGetInfo(b *testing.B) {
 }
 
 func BenchmarkJoeFridayGetStats(b *testing.B) {
-	var st *cpustats.Stats
+	var st *cpustats.CPUStats
 	b.StopTimer()
 	p, _ := cpustats.NewProfiler()
 	b.StartTimer()
