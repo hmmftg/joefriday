@@ -1,16 +1,16 @@
-// utilization.fbs
+// cpuutil.fbs
 namespace structs;
 
-table Utilization {
+table CPUUtil {
     Timestamp:long;
     TimeDelta:long;
     BTimeDelta:int;
     CtxtDelta:long;
     Processes:int;
-    CPU:[Util];
+    CPU:[Utilization];
 }
 
-table Util {
+table Utilization {
     ID:string;
     Usage:float;
     User:float;
@@ -20,4 +20,4 @@ table Util {
     IOWait:float;
 }
 
-root_type Utilization;
+root_type CPUUtil;

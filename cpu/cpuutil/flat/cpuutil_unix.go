@@ -17,8 +17,8 @@
 // represented as a percentage. The time elapsed between the two snapshots is
 // stored in the TimeDelta field. Instead of returning a Go struct, it returns
 // the data as Flatbuffer serialized bytes. For convenience, a function to
-// deserialize the Flatbuffer serialized bytes into a cpuutil.Utilization
-// struct is provided.
+// deserialize the Flatbuffer serialized bytes into a cpuutil.CPUUtil struct is
+// provided.
 // 
 // Note: the package name is cpuutil and not the final element of the import
 // path (flat). 
@@ -84,7 +84,7 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize cpu utilization using Flatbuffers.
-func (prof *Profiler) Serialize(u *util.Utilization) []byte {
+func (prof *Profiler) Serialize(u *util.CPUUtil) []byte {
 	// ensure the Builder is in a usable state.
 	prof.Builder.Reset()
 	utils := make([]fb.UOffsetT, len(u.CPU))
@@ -93,29 +93,29 @@ func (prof *Profiler) Serialize(u *util.Utilization) []byte {
 		ids[i] = prof.Builder.CreateString(u.CPU[i].ID)
 	}
 	for i := 0; i < len(utils); i++ {
-		structs.UtilStart(prof.Builder)
-		structs.UtilAddID(prof.Builder, ids[i])
-		structs.UtilAddUsage(prof.Builder, u.CPU[i].Usage)
-		structs.UtilAddUser(prof.Builder, u.CPU[i].User)
-		structs.UtilAddNice(prof.Builder, u.CPU[i].Nice)
-		structs.UtilAddSystem(prof.Builder, u.CPU[i].System)
-		structs.UtilAddIdle(prof.Builder, u.CPU[i].Idle)
-		structs.UtilAddIOWait(prof.Builder, u.CPU[i].IOWait)
-		utils[i] = structs.UtilEnd(prof.Builder)
+		structs.UtilizationStart(prof.Builder)
+		structs.UtilizationAddID(prof.Builder, ids[i])
+		structs.UtilizationAddUsage(prof.Builder, u.CPU[i].Usage)
+		structs.UtilizationAddUser(prof.Builder, u.CPU[i].User)
+		structs.UtilizationAddNice(prof.Builder, u.CPU[i].Nice)
+		structs.UtilizationAddSystem(prof.Builder, u.CPU[i].System)
+		structs.UtilizationAddIdle(prof.Builder, u.CPU[i].Idle)
+		structs.UtilizationAddIOWait(prof.Builder, u.CPU[i].IOWait)
+		utils[i] = structs.UtilizationEnd(prof.Builder)
 	}
-	structs.UtilizationStartCPUVector(prof.Builder, len(utils))
+	structs.CPUUtilStartCPUVector(prof.Builder, len(utils))
 	for i := len(utils) - 1; i >= 0; i-- {
 		prof.Builder.PrependUOffsetT(utils[i])
 	}
 	utilsV := prof.Builder.EndVector(len(utils))
-	structs.UtilizationStart(prof.Builder)
-	structs.UtilizationAddTimestamp(prof.Builder, u.Timestamp)
-	structs.UtilizationAddTimeDelta(prof.Builder, u.TimeDelta)
-	structs.UtilizationAddBTimeDelta(prof.Builder, u.BTimeDelta)
-	structs.UtilizationAddCtxtDelta(prof.Builder, u.CtxtDelta)
-	structs.UtilizationAddProcesses(prof.Builder, u.Processes)
-	structs.UtilizationAddCPU(prof.Builder, utilsV)
-	prof.Builder.Finish(structs.UtilizationEnd(prof.Builder))
+	structs.CPUUtilStart(prof.Builder)
+	structs.CPUUtilAddTimestamp(prof.Builder, u.Timestamp)
+	structs.CPUUtilAddTimeDelta(prof.Builder, u.TimeDelta)
+	structs.CPUUtilAddBTimeDelta(prof.Builder, u.BTimeDelta)
+	structs.CPUUtilAddCtxtDelta(prof.Builder, u.CtxtDelta)
+	structs.CPUUtilAddProcesses(prof.Builder, u.Processes)
+	structs.CPUUtilAddCPU(prof.Builder, utilsV)
+	prof.Builder.Finish(structs.CPUUtilEnd(prof.Builder))
 	p := prof.Builder.Bytes[prof.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
 	tmp := make([]byte, len(p))
@@ -124,7 +124,7 @@ func (prof *Profiler) Serialize(u *util.Utilization) []byte {
 }
 
 // Serialize the CPU Utilization using the package global Profiler.
-func Serialize(u *util.Utilization) (p []byte, err error) {
+func Serialize(u *util.CPUUtil) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -137,21 +137,21 @@ func Serialize(u *util.Utilization) (p []byte, err error) {
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserializes them as
-// cpuutil.Utilization.
-func Deserialize(p []byte) *util.Utilization {
-	u := &util.Utilization{}
-	uF := &structs.Util{}
-	flatUtil := structs.GetRootAsUtilization(p, 0)
-	u.Timestamp = flatUtil.Timestamp()
-	u.TimeDelta = flatUtil.TimeDelta()
-	u.CtxtDelta = flatUtil.CtxtDelta()
-	u.BTimeDelta = flatUtil.BTimeDelta()
-	u.Processes = flatUtil.Processes()
-	len := flatUtil.CPULength()
-	u.CPU = make([]util.Util, len)
+// cpuutil.CPUUtil.
+func Deserialize(p []byte) *util.CPUUtil {
+	cpuU := &util.CPUUtil{}
+	uF := &structs.Utilization{}
+	flatCPUUtil := structs.GetRootAsCPUUtil(p, 0)
+	cpuU.Timestamp = flatCPUUtil.Timestamp()
+	cpuU.TimeDelta = flatCPUUtil.TimeDelta()
+	cpuU.CtxtDelta = flatCPUUtil.CtxtDelta()
+	cpuU.BTimeDelta = flatCPUUtil.BTimeDelta()
+	cpuU.Processes = flatCPUUtil.Processes()
+	len := flatCPUUtil.CPULength()
+	cpuU.CPU = make([]util.Utilization, len)
 	for i := 0; i < len; i++ {
-		var util util.Util
-		if flatUtil.CPU(uF, i) {
+		var util util.Utilization
+		if flatCPUUtil.CPU(uF, i) {
 			util.ID = string(uF.ID())
 			util.Usage = uF.Usage()
 			util.User = uF.User()
@@ -160,9 +160,9 @@ func Deserialize(p []byte) *util.Utilization {
 			util.Idle = uF.Idle()
 			util.IOWait = uF.IOWait()
 		}
-		u.CPU[i] = util
+		cpuU.CPU[i] = util
 	}
-	return u
+	return cpuU
 }
 
 // Ticker delivers the system's CPU utilization information at intervals.

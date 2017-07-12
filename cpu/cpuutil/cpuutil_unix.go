@@ -27,11 +27,11 @@ import (
 	stats "github.com/mohae/joefriday/cpu/cpustats"
 )
 
-// Utilization holds information about cpu, kernel, utilization. The first CPU
+// CPUUtil holds information about cpu, kernel, utilization. The first CPU
 // entry aggregates the numbers found in all of the other CPU[n] entries.
 // Utilization is calculated using the difference between the current and prior
 // /proc/stat snapshot.
-type Utilization struct {
+type CPUUtil struct {
 	Timestamp int64 `json:"timestamp"`
 	// the time since the prior snapshot; the window that the utilization covers.
 	TimeDelta int64 `json:"time_delta"`
@@ -42,11 +42,11 @@ type Utilization struct {
 	// current number of Processes
 	Processes int32 `json:"processes"`
 	// cpu specific utilization information
-	CPU []Util `json:"cpu"`
+	CPU []Utilization `json:"cpu"`
 }
 
-// Util holds kernel utilization information, as percentages, for a CPU.
-type Util struct {
+// Utilization holds kernel utilization information, as percentages, for a CPU.
+type Utilization struct {
 	ID     string  `json:"id"`
 	Usage  float32 `json:"usage"`
 	User   float32 `json:"user"`
@@ -60,7 +60,7 @@ type Util struct {
 // information.
 type Profiler struct {
 	*stats.Profiler
-	prior stats.Stats
+	prior stats.CPUStats
 }
 
 // Returns an initialized Profiler; ready to use. Upon creation, a /proc/stat
@@ -84,7 +84,7 @@ func NewProfiler() (prof *Profiler, err error) {
 // on the next Get call. If ongoing utilitzation information is desired, the
 // Ticker should be used; it's better suited for ongoing utilization
 // information.
-func (prof *Profiler) Get() (u *Utilization, err error) {
+func (prof *Profiler) Get() (u *CPUUtil, err error) {
 	stat, err := prof.Profiler.Get()
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ var stdMu sync.Mutex
 // the first usage information will not be useful due to minimal time elapsing
 // between the initial and second snapshots used for usage calculations; the
 // results of the first call should be discarded.
-func Get() (*Utilization, error) {
+func Get() (*CPUUtil, error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -117,19 +117,19 @@ func Get() (*Utilization, error) {
 
 // utilizaton =
 //   (Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
-func (prof *Profiler) calculateUtilization(cur *stats.Stats) *Utilization {
-	u := &Utilization{
+func (prof *Profiler) calculateUtilization(cur *stats.CPUStats) *CPUUtil {
+	u := &CPUUtil{
 		Timestamp:  cur.Timestamp,
 		TimeDelta:  cur.Timestamp - prof.prior.Timestamp,
 		BTimeDelta: int32(cur.Timestamp/1000000000 - cur.BTime),
 		CtxtDelta:  cur.Ctxt - prof.prior.Ctxt,
 		Processes:  int32(cur.Processes),
-		CPU:        make([]Util, len(cur.CPU)),
+		CPU:        make([]Utilization, len(cur.CPU)),
 	}
 	var dUser, dNice, dSys, dIdle, tot float32
 	// Rest of the calculations are per core
 	for i := 0; i < len(cur.CPU); i++ {
-		v := Util{ID: cur.CPU[i].ID}
+		v := Utilization{ID: cur.CPU[i].ID}
 		dUser = float32(cur.CPU[i].User - prof.prior.CPU[i].User)
 		dNice = float32(cur.CPU[i].Nice - prof.prior.CPU[i].Nice)
 		dSys = float32(cur.CPU[i].System - prof.prior.CPU[i].System)
@@ -149,7 +149,7 @@ func (prof *Profiler) calculateUtilization(cur *stats.Stats) *Utilization {
 // Ticker delivers the system's CPU utilization information at intervals.
 type Ticker struct {
 	*joe.Ticker
-	Data chan *Utilization
+	Data chan *CPUUtil
 	*Profiler
 }
 
@@ -163,7 +163,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *Utilization), Profiler: p}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *CPUUtil), Profiler: p}
 	go t.Run()
 	return &t, nil
 }
@@ -177,7 +177,7 @@ func (t *Ticker) Run() {
 		v                   byte
 		stop                bool
 		err                 error
-		cur                 stats.Stats
+		cur                 stats.CPUStats
 		cpu                stats.CPU
 	)
 	for {

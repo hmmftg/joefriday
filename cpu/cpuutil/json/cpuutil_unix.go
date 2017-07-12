@@ -17,7 +17,7 @@
 // percentage. The time elapsed between the two snapshots is stored in the
 // TimeDelta field. Instead of returning a Go struct, it returns JSON
 // serialized bytes. For convenience, a function to deserialize the JSON
-// serialized bytes into a cpuutil.Utilization struct is provided.
+// serialized bytes into a cpuutil.CPUUtil struct is provided.
 //
 // Note: the package name is cpuutil and not the final element of the import
 // path (json). 
@@ -84,12 +84,12 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize cpu Utilization using JSON.
-func (prof *Profiler) Serialize(ut *util.Utilization) ([]byte, error) {
+func (prof *Profiler) Serialize(ut *util.CPUUtil) ([]byte, error) {
 	return json.Marshal(ut)
 }
 
 // Serialize the CPU Utilization as JSON using the package global Profiler.
-func Serialize(ut *util.Utilization) (p []byte, err error) {
+func Serialize(ut *util.CPUUtil) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -102,19 +102,19 @@ func Serialize(ut *util.Utilization) (p []byte, err error) {
 }
 
 // Marshal is an alias for Serialize
-func (prof *Profiler) Marshal(ut *util.Utilization) ([]byte, error) {
+func (prof *Profiler) Marshal(ut *util.CPUUtil) ([]byte, error) {
 	return prof.Serialize(ut)
 }
 
 // Marsha is an alias for Serialize using the package global Profiler.
-func Marshal(ut *util.Utilization) ([]byte, error) {
+func Marshal(ut *util.CPUUtil) ([]byte, error) {
 	return Serialize(ut)
 }
 
 // Deserialize takes some JSON serialized bytes and unmarshals them as
-// cpuutil.Utilization.
-func Deserialize(p []byte) (*util.Utilization, error) {
-	ut := &util.Utilization{}
+// cpuutil.CPUUtil.
+func Deserialize(p []byte) (*util.CPUUtil, error) {
+	ut := &util.CPUUtil{}
 	err := json.Unmarshal(p, ut)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func Deserialize(p []byte) (*util.Utilization, error) {
 }
 
 // Unmarshal is an alias for Deserialize.
-func Unmarshal(p []byte) (*util.Utilization, error) {
+func Unmarshal(p []byte) (*util.CPUUtil, error) {
 	return Deserialize(p)
 }
 

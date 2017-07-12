@@ -30,7 +30,7 @@ func TestGet(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 		return
 	}
-	checkUtilization("get", u, t)
+	checkCPUUtil("get", u, t)
 }
 
 func TestTicker(t *testing.T) {
@@ -48,7 +48,7 @@ func TestTicker(t *testing.T) {
 			if !ok {
 				break
 			}
-			checkUtilization("ticker", v, t)
+			checkCPUUtil("ticker", v, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -57,7 +57,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUtilization(name string, u *Utilization, t *testing.T) {
+func checkCPUUtil(name string, u *CPUUtil, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: timestamp: expected on-zero", name)
 	}
@@ -83,8 +83,8 @@ func checkUtilization(name string, u *Utilization, t *testing.T) {
 	}
 }
 
-func BenchmarkUtilization(b *testing.B) {
-	var u *Utilization
+func BenchmarkCPUUtil(b *testing.B) {
+	var u *CPUUtil
 	b.StopTimer()
 	p, _ := NewProfiler()
 	b.StartTimer()

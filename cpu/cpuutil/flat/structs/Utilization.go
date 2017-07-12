@@ -9,88 +9,73 @@ type Utilization struct {
 	_tab flatbuffers.Table
 }
 
-func GetRootAsUtilization(buf []byte, offset flatbuffers.UOffsetT) *Utilization {
-	n := flatbuffers.GetUOffsetT(buf[offset:])
-	x := &Utilization{}
-	x.Init(buf, n + offset)
-	return x
-}
-
 func (rcv *Utilization) Init(buf []byte, i flatbuffers.UOffsetT) {
 	rcv._tab.Bytes = buf
 	rcv._tab.Pos = i
 }
 
-func (rcv *Utilization) Timestamp() int64 {
+func (rcv *Utilization) ID() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
-		return rcv._tab.GetInt64(o + rcv._tab.Pos)
+		return rcv._tab.ByteVector(o + rcv._tab.Pos)
 	}
-	return 0
+	return nil
 }
 
-func (rcv *Utilization) TimeDelta() int64 {
+func (rcv *Utilization) Usage() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
-		return rcv._tab.GetInt64(o + rcv._tab.Pos)
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
 	}
-	return 0
+	return 0.0
 }
 
-func (rcv *Utilization) BTimeDelta() int32 {
+func (rcv *Utilization) User() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
-		return rcv._tab.GetInt32(o + rcv._tab.Pos)
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
 	}
-	return 0
+	return 0.0
 }
 
-func (rcv *Utilization) CtxtDelta() int64 {
+func (rcv *Utilization) Nice() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
 	if o != 0 {
-		return rcv._tab.GetInt64(o + rcv._tab.Pos)
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
 	}
-	return 0
+	return 0.0
 }
 
-func (rcv *Utilization) Processes() int32 {
+func (rcv *Utilization) System() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
-		return rcv._tab.GetInt32(o + rcv._tab.Pos)
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
 	}
-	return 0
+	return 0.0
 }
 
-func (rcv *Utilization) CPU(obj *Util, j int) bool {
+func (rcv *Utilization) Idle() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(14))
 	if o != 0 {
-		x := rcv._tab.Vector(o)
-		x += flatbuffers.UOffsetT(j) * 4
-		x = rcv._tab.Indirect(x)
-	if obj == nil {
-		obj = new(Util)
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
 	}
-		obj.Init(rcv._tab.Bytes, x)
-		return true
-	}
-	return false
+	return 0.0
 }
 
-func (rcv *Utilization) CPULength() int {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(14))
+func (rcv *Utilization) IOWait() float32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
 	if o != 0 {
-		return rcv._tab.VectorLen(o)
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
 	}
-	return 0
+	return 0.0
 }
 
-func UtilizationStart(builder *flatbuffers.Builder) { builder.StartObject(6) }
-func UtilizationAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
-func UtilizationAddTimeDelta(builder *flatbuffers.Builder, TimeDelta int64) { builder.PrependInt64Slot(1, TimeDelta, 0) }
-func UtilizationAddBTimeDelta(builder *flatbuffers.Builder, BTimeDelta int32) { builder.PrependInt32Slot(2, BTimeDelta, 0) }
-func UtilizationAddCtxtDelta(builder *flatbuffers.Builder, CtxtDelta int64) { builder.PrependInt64Slot(3, CtxtDelta, 0) }
-func UtilizationAddProcesses(builder *flatbuffers.Builder, Processes int32) { builder.PrependInt32Slot(4, Processes, 0) }
-func UtilizationAddCPU(builder *flatbuffers.Builder, CPU flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(5, flatbuffers.UOffsetT(CPU), 0) }
-func UtilizationStartCPUVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
-}
+func UtilizationStart(builder *flatbuffers.Builder) { builder.StartObject(7) }
+func UtilizationAddID(builder *flatbuffers.Builder, ID flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(ID), 0) }
+func UtilizationAddUsage(builder *flatbuffers.Builder, Usage float32) { builder.PrependFloat32Slot(1, Usage, 0.0) }
+func UtilizationAddUser(builder *flatbuffers.Builder, User float32) { builder.PrependFloat32Slot(2, User, 0.0) }
+func UtilizationAddNice(builder *flatbuffers.Builder, Nice float32) { builder.PrependFloat32Slot(3, Nice, 0.0) }
+func UtilizationAddSystem(builder *flatbuffers.Builder, System float32) { builder.PrependFloat32Slot(4, System, 0.0) }
+func UtilizationAddIdle(builder *flatbuffers.Builder, Idle float32) { builder.PrependFloat32Slot(5, Idle, 0.0) }
+func UtilizationAddIOWait(builder *flatbuffers.Builder, IOWait float32) { builder.PrependFloat32Slot(6, IOWait, 0.0) }
 func UtilizationEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

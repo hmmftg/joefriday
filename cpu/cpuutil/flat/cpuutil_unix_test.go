@@ -33,7 +33,7 @@ func TestGet(t *testing.T) {
 		return
 	}
 	u := Deserialize(b)
-	checkUtilization("get", u, t)
+	checkCPUUtil("get", u, t)
 }
 
 func TestTicker(t *testing.T) {
@@ -52,7 +52,7 @@ func TestTicker(t *testing.T) {
 				break
 			}
 			u := Deserialize(v)
-			checkUtilization("ticker", u, t)
+			checkCPUUtil("ticker", u, t)
 		case err := <-tk.Errs:
 			t.Errorf("unexpected error: %s", err)
 		}
@@ -61,7 +61,7 @@ func TestTicker(t *testing.T) {
 	tk.Close()
 }
 
-func checkUtilization(name string, u *util.Utilization, t *testing.T) {
+func checkCPUUtil(name string, u *util.CPUUtil, t *testing.T) {
 	if u.Timestamp == 0 {
 		t.Errorf("%s: timestamp: expected on-zero", name)
 	}
@@ -111,7 +111,7 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var u *util.Utilization
+	var u *util.CPUUtil
 	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
