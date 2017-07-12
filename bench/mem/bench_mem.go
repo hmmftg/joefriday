@@ -7,7 +7,7 @@ import (
 	"github.com/cloudfoundry/gosigar"
 	meminfo "github.com/guillermo/go.procmeminfo"
 	"github.com/mohae/benchutil"
-	joe "github.com/mohae/joefriday/mem"
+	info "github.com/mohae/joefriday/mem/meminfo"
 	sysmem "github.com/mohae/joefriday/sysinfo/mem"
 	gopsutilmem "github.com/shirou/gopsutil/mem"
 )
@@ -15,9 +15,9 @@ import (
 const MemGroup = "Memory"
 
 func BenchJoeFridayGetMemInfo(b *testing.B) {
-	var mem *joe.Info
+	var mem *info.Info
 	b.StopTimer()
-	p, _ := joe.NewProfiler()
+	p, _ := info.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		mem, _ = p.Get()
@@ -26,14 +26,14 @@ func BenchJoeFridayGetMemInfo(b *testing.B) {
 }
 
 func JoeFridayGetMemInfo() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/mem.Get")
+	bench := benchutil.NewBench("joefriday/mem/meminfo.Get")
 	bench.Group = MemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetMemInfo))
 	return bench
 }
 
 func BenchJoeFridayGetSysinfoMemInfo(b *testing.B) {
-	var mem sysmem.Info
+	var mem sysmem.MemInfo
 	for i := 0; i < b.N; i++ {
 		_ = mem.Get()
 	}
@@ -41,7 +41,7 @@ func BenchJoeFridayGetSysinfoMemInfo(b *testing.B) {
 }
 
 func JoeFridayGetSysinfoMemInfo() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/sysinfo/mem.Info.Get")
+	bench := benchutil.NewBench("joefriday/sysinfo/mem.MemInfo.Get")
 	bench.Group = MemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetSysinfoMemInfo))
 	return bench

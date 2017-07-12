@@ -5,35 +5,35 @@ import (
 
 	"github.com/DataDog/gohai/cpu"
 	"github.com/mohae/benchutil"
-	joefacts "github.com/mohae/joefriday/cpu/facts"
-	joestats "github.com/mohae/joefriday/cpu/stats"
+	"github.com/mohae/joefriday/cpu/cpuinfo"
+	"github.com/mohae/joefriday/cpu/cpustats"
 	gopsutilcpu "github.com/shirou/gopsutil/cpu"
 )
 
 const CPUGroup = "CPU"
 
-func BenchJoeFridayGetFacts(b *testing.B) {
-	var fct *joefacts.Facts
+func BenchJoeFridayGetCPUInfo(b *testing.B) {
+	var inf *cpuinfo.CPUInfo
 	b.StopTimer()
-	p, _ := joefacts.NewProfiler()
+	p, _ := cpuinfo.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		fct, _ = p.Get()
+		inf, _ = p.Get()
 	}
-	_ = fct
+	_ = inf
 }
 
-func JoeFridayGetFacts() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/cpu/facts.Get")
+func JoeFridayGetCPUInfo() benchutil.Bench {
+	bench := benchutil.NewBench("joefriday/cpu/cpuinfo.Get")
 	bench.Group = CPUGroup
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetFacts))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetCPUInfo))
 	return bench
 }
 
-func BenchJoeFridayGetStats(b *testing.B) {
-	var st *joestats.Stats
+func BenchJoeFridayGetCPUStats(b *testing.B) {
+	var st *cpustats.Stats
 	b.StopTimer()
-	p, _ := joestats.NewProfiler()
+	p, _ := cpustats.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = p.Get()
@@ -41,10 +41,10 @@ func BenchJoeFridayGetStats(b *testing.B) {
 	_ = st
 }
 
-func JoeFridayGetStats() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/cpu/stats.Get")
+func JoeFridayGetCPUStats() benchutil.Bench {
+	bench := benchutil.NewBench("joefriday/cpu/cpustats.Get")
 	bench.Group = CPUGroup
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetStats))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetCPUStats))
 	return bench
 }
 

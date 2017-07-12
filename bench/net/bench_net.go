@@ -5,18 +5,18 @@ import (
 
 	"github.com/DataDog/gohai/network"
 	"github.com/mohae/benchutil"
-	joeinfo "github.com/mohae/joefriday/net/info"
-	joestructs "github.com/mohae/joefriday/net/structs"
-	joeusage "github.com/mohae/joefriday/net/usage"
+	"github.com/mohae/joefriday/net/netdev"
+	"github.com/mohae/joefriday/net/structs"
+	"github.com/mohae/joefriday/net/netusage"
 	gopsutilnet "github.com/shirou/gopsutil/net"
 )
 
 const NetGroup = "Network"
 
-func BenchJoeFridayGetInfo(b *testing.B) {
-	var inf *joestructs.Info
+func BenchJoeFridayGetNetDev(b *testing.B) {
+	var inf *structs.DevInfo
 	b.StopTimer()
-	p, _ := joeinfo.NewProfiler()
+	p, _ := netdev.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
@@ -24,17 +24,17 @@ func BenchJoeFridayGetInfo(b *testing.B) {
 	_ = inf
 }
 
-func JoeFridayGetInfo() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/net/info.Get")
+func JoeFridayGetNetDev() benchutil.Bench {
+	bench := benchutil.NewBench("joefriday/net/netdev.Get")
 	bench.Group = NetGroup
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetInfo))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetNetDev))
 	return bench
 }
 
-func BenchJoeFridayGetUsage(b *testing.B) {
-	var u *joestructs.Usage
+func BenchJoeFridayGetNetUsage(b *testing.B) {
+	var u *structs.DevUsage
 	b.StopTimer()
-	p, _ := joeusage.NewProfiler()
+	p, _ := netusage.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
@@ -42,10 +42,10 @@ func BenchJoeFridayGetUsage(b *testing.B) {
 	_ = u
 }
 
-func JoeFridayGetUsage() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/net/usage.Get")
+func JoeFridayGetNetUsage() benchutil.Bench {
+	bench := benchutil.NewBench("joefriday/net/netusage.Get")
 	bench.Group = NetGroup
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetUsage))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetNetUsage))
 	return bench
 }
 

@@ -1,4 +1,4 @@
-package platform
+package system
 
 import (
 	"testing"
@@ -6,21 +6,21 @@ import (
 	"github.com/DataDog/gohai/platform"
 	"github.com/cloudfoundry/gosigar"
 	"github.com/mohae/benchutil"
-	joekernel "github.com/mohae/joefriday/platform/kernel"
-	joeloadavg "github.com/mohae/joefriday/platform/loadavg"
-	joerelease "github.com/mohae/joefriday/platform/release"
-	joeuptime "github.com/mohae/joefriday/platform/uptime"
-	sysload "github.com/mohae/joefriday/sysinfo/load"
+	joeloadavg "github.com/mohae/joefriday/system/loadavg"
+	joerelease "github.com/mohae/joefriday/system/release"
+	joeversion "github.com/mohae/joefriday/system/version"
+	joeuptime "github.com/mohae/joefriday/system/uptime"
+	sysload "github.com/mohae/joefriday/sysinfo/loadavg"
 	sysuptime "github.com/mohae/joefriday/sysinfo/uptime"
 	"github.com/shirou/gopsutil/load"
 )
 
-const PlatformGroup = "Platform"
+const SystemGroup = "System"
 
-func BenchJoeFridayGetKernel(b *testing.B) {
-	var fct *joekernel.Kernel
+func BenchJoeFridayGetVersion(b *testing.B) {
+	var fct *joeversion.Kernel
 	b.StopTimer()
-	p, _ := joekernel.NewProfiler()
+	p, _ := joeversion.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		fct, _ = p.Get()
@@ -28,27 +28,27 @@ func BenchJoeFridayGetKernel(b *testing.B) {
 	_ = fct
 }
 
-func JoeFridayGetKernel() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/platform/kernel.Get")
-	bench.Group = PlatformGroup
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetKernel))
+func JoeFridayGetVersion() benchutil.Bench {
+	bench := benchutil.NewBench("joefriday/system/version.Get")
+	bench.Group = SystemGroup
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetVersion))
 	return bench
 }
 
 func BenchJoeFridayGetRelease(b *testing.B) {
-	var st *joerelease.Release
+	var os *joerelease.OS
 	b.StopTimer()
 	p, _ := joerelease.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		st, _ = p.Get()
+		os, _ = p.Get()
 	}
-	_ = st
+	_ = os
 }
 
 func JoeFridayGetRelease() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/platform/release.Get")
-	bench.Group = PlatformGroup
+	bench := benchutil.NewBench("joefriday/system/release.Get")
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetRelease))
 	return bench
 }
@@ -68,7 +68,7 @@ func BenchDataDogGohaiplatform(b *testing.B) {
 
 func DataDogGohaiplatform() benchutil.Bench {
 	bench := benchutil.NewBench("DataDog/gohai/platform.Platform.Collect")
-	bench.Group = PlatformGroup
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchDataDogGohaiplatform))
 	return bench
 }
@@ -85,8 +85,8 @@ func BenchJoeFridayGetLoadAvg(b *testing.B) {
 }
 
 func JoeFridayGetLoadAvg() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/platform/loadavg.Get")
-	bench.Group = PlatformGroup
+	bench := benchutil.NewBench("joefriday/system/loadavg.Get")
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetLoadAvg))
 	return bench
 }
@@ -100,8 +100,8 @@ func BenchJoeFridayGetSysinfoLoadAvg(b *testing.B) {
 }
 
 func JoeFridayGetSysinfoLoadAvg() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/sysinfo/load.LoadAvg.Get")
-	bench.Group = PlatformGroup
+	bench := benchutil.NewBench("joefriday/sysinfo/loadavg.LoadAvg.Get")
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetSysinfoLoadAvg))
 	return bench
 }
@@ -116,7 +116,7 @@ func BenchCloudFoundryGoSigarLoadAverage(b *testing.B) {
 
 func CloudFoundryGoSigarLoadAverage() benchutil.Bench {
 	bench := benchutil.NewBench("cloudfoundry/gosigar.LoadAverage.Get")
-	bench.Group = PlatformGroup
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCloudFoundryGoSigarLoadAverage))
 	return bench
 }
@@ -131,7 +131,7 @@ func BenchShirouGopsutilLoadAvg(b *testing.B) {
 
 func ShirouGopsutilLoadAvg() benchutil.Bench {
 	bench := benchutil.NewBench("shirou/gopsutil/load.Avg")
-	bench.Group = PlatformGroup
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchShirouGopsutilLoadAvg))
 	return bench
 }
@@ -146,7 +146,7 @@ func BenchShirouGopsutilLoadMisc(b *testing.B) {
 
 func ShirouGopsutilLoadMisc() benchutil.Bench {
 	bench := benchutil.NewBench("shirou/gopsutil/load.Misc")
-	bench.Group = PlatformGroup
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchShirouGopsutilLoadMisc))
 	return bench
 }
@@ -163,8 +163,8 @@ func BenchJoeFridayGetUptime(b *testing.B) {
 }
 
 func JoeFridayGetUptime() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/platform/uptime.Get")
-	bench.Group = PlatformGroup
+	bench := benchutil.NewBench("joefriday/system/uptime.Get")
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetUptime))
 	return bench
 }
@@ -179,7 +179,7 @@ func BenchJoeFridayGetSysinfoUptime(b *testing.B) {
 
 func JoeFridayGetSysinfoUptime() benchutil.Bench {
 	bench := benchutil.NewBench("joefriday/sysinfo/uptime.Uptime.Get")
-	bench.Group = PlatformGroup
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetSysinfoUptime))
 	return bench
 }
@@ -194,7 +194,7 @@ func BenchCloudFoundryGoSigarUptime(b *testing.B) {
 
 func CloudFoundryGoSigarUptime() benchutil.Bench {
 	bench := benchutil.NewBench("cloudfoundry/gosigar.Uptime.Get")
-	bench.Group = PlatformGroup
+	bench.Group = SystemGroup
 	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCloudFoundryGoSigarUptime))
 	return bench
 }

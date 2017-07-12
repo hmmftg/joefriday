@@ -23,7 +23,7 @@ import (
 	"github.com/mohae/joefriday/bench/cpu"
 	"github.com/mohae/joefriday/bench/mem"
 	"github.com/mohae/joefriday/bench/net"
-	"github.com/mohae/joefriday/bench/platform"
+	"github.com/mohae/joefriday/bench/system"
 )
 
 // flags
@@ -94,8 +94,8 @@ func main() {
 	// Net
 	runNetBenches(bench)
 
-	// Platform
-	runPlatformBenches(bench)
+	// System
+	runSystemBenches(bench)
 
 	fmt.Println("\ngenerating output...\n")
 	err = bench.Out()
@@ -105,10 +105,10 @@ func main() {
 }
 
 func runCPUBenches(bench benchutil.Benchmarker) {
-	b := cpu.JoeFridayGetFacts()
+	b := cpu.JoeFridayGetCPUInfo()
 	bench.Append(b)
 
-	b = cpu.JoeFridayGetStats()
+	b = cpu.JoeFridayGetCPUStats()
 	bench.Append(b)
 
 	b = cpu.DataDogGohaiCPU()
@@ -142,10 +142,10 @@ func runMemBenches(bench benchutil.Benchmarker) {
 }
 
 func runNetBenches(bench benchutil.Benchmarker) {
-	b := net.JoeFridayGetInfo()
+	b := net.JoeFridayGetNetDev()
 	bench.Append(b)
 
-	b = net.JoeFridayGetUsage()
+	b = net.JoeFridayGetNetUsage()
 	bench.Append(b)
 
 	b = net.DataDogGohaiNetwork()
@@ -158,37 +158,37 @@ func runNetBenches(bench benchutil.Benchmarker) {
 	bench.Append(b)
 }
 
-func runPlatformBenches(bench benchutil.Benchmarker) {
-	b := platform.JoeFridayGetKernel()
+func runSystemBenches(bench benchutil.Benchmarker) {
+	b := system.JoeFridayGetVersion()
 	bench.Append(b)
 
-	b = platform.JoeFridayGetRelease()
+	b = system.JoeFridayGetRelease()
 	bench.Append(b)
 
-	b = platform.DataDogGohaiplatform()
+	b = system.DataDogGohaiplatform()
 	bench.Append(b)
 
-	b = platform.JoeFridayGetLoadAvg()
+	b = system.JoeFridayGetLoadAvg()
 	bench.Append(b)
 
-	b = platform.JoeFridayGetSysinfoLoadAvg()
+	b = system.JoeFridayGetSysinfoLoadAvg()
 	bench.Append(b)
 
-	b = platform.CloudFoundryGoSigarLoadAverage()
+	b = system.CloudFoundryGoSigarLoadAverage()
 	bench.Append(b)
 
-	b = platform.ShirouGopsutilLoadAvg()
+	b = system.ShirouGopsutilLoadAvg()
 	bench.Append(b)
 
-	b = platform.ShirouGopsutilLoadMisc()
+	b = system.ShirouGopsutilLoadMisc()
 	bench.Append(b)
 
-	b = platform.JoeFridayGetUptime()
+	b = system.JoeFridayGetUptime()
 	bench.Append(b)
 
-	b = platform.JoeFridayGetSysinfoUptime()
+	b = system.JoeFridayGetSysinfoUptime()
 	bench.Append(b)
 
-	b = platform.CloudFoundryGoSigarUptime()
+	b = system.CloudFoundryGoSigarUptime()
 	bench.Append(b)
 }

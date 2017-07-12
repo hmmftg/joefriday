@@ -5,26 +5,26 @@ import (
 	"testing"
 
 	"github.com/DataDog/gohai/cpu"
-	joefacts "github.com/mohae/joefriday/cpu/facts"
-	joestats "github.com/mohae/joefriday/cpu/stats"
+	"github.com/mohae/joefriday/cpu/cpuinfo"
+	"github.com/mohae/joefriday/cpu/cpustats"
 	gopsutilcpu "github.com/shirou/gopsutil/cpu"
 )
 
-func BenchmarkJoeFridayGetFacts(b *testing.B) {
-	var fct *joefacts.Facts
+func BenchmarkJoeFridayGetInfo(b *testing.B) {
+	var inf *cpuinfo.CPUInfo
 	b.StopTimer()
-	p, _ := joefacts.NewProfiler()
+	p, _ := cpuinfo.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		fct, _ = p.Get()
+		inf, _ = p.Get()
 	}
-	_ = fct
+	_ = inf
 }
 
 func BenchmarkJoeFridayGetStats(b *testing.B) {
-	var st *joestats.Stats
+	var st *cpustats.Stats
 	b.StopTimer()
-	p, _ := joestats.NewProfiler()
+	p, _ := cpustats.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = p.Get()
@@ -63,18 +63,18 @@ func BenchmarkShirouGopsutilTimeStat(b *testing.B) {
 
 // These tests exist to print out the data that is collected; not to test the
 // methods themselves.  Run with the -v flag.
-func TestJoeFridayGetFacts(t *testing.T) {
-	prof, err := joefacts.NewProfiler()
+func TestJoeFridayGetCPUInfo(t *testing.T) {
+	prof, err := cpuinfo.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	fct, err := prof.Get()
+	inf, err := prof.Get()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	p, err := json.MarshalIndent(fct, "", "\t")
+	p, err := json.MarshalIndent(inf, "", "\t")
 	if err != nil {
 		t.Error(err)
 		return
@@ -82,8 +82,8 @@ func TestJoeFridayGetFacts(t *testing.T) {
 	t.Logf("%s\n", string(p))
 }
 
-func TestJoeFridayGetStats(t *testing.T) {
-	prof, err := joestats.NewProfiler()
+func TestJoeFridayGetCPUStats(t *testing.T) {
+	prof, err := cpustats.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return

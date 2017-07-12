@@ -5,16 +5,16 @@ import (
 	"testing"
 
 	"github.com/DataDog/gohai/network"
-	joeinfo "github.com/mohae/joefriday/net/info"
-	joestructs "github.com/mohae/joefriday/net/structs"
-	joeusage "github.com/mohae/joefriday/net/usage"
+	"github.com/mohae/joefriday/net/netdev"
+	"github.com/mohae/joefriday/net/structs"
+	"github.com/mohae/joefriday/net/netusage"
 	gopsutilnet "github.com/shirou/gopsutil/net"
 )
 
-func BenchmarkJoeFridayGetInfo(b *testing.B) {
-	var inf *joestructs.Info
+func BenchmarkJoeFridayGetDevInfo(b *testing.B) {
+	var inf *structs.DevInfo
 	b.StopTimer()
-	p, _ := joeinfo.NewProfiler()
+	p, _ := netdev.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
@@ -22,10 +22,10 @@ func BenchmarkJoeFridayGetInfo(b *testing.B) {
 	_ = inf
 }
 
-func BenchmarkJoeFridayGetUsage(b *testing.B) {
-	var u *joestructs.Usage
+func BenchmarkJoeFridayGetDevUsage(b *testing.B) {
+	var u *structs.DevUsage
 	b.StopTimer()
-	p, _ := joeusage.NewProfiler()
+	p, _ := netusage.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
@@ -64,8 +64,8 @@ func BenchmarkShirouGopsutilTimeStat(b *testing.B) {
 
 // These tests exist to print out the data that is collected; not to test the
 // methods themselves.  Run with the -v flag.
-func TestJoeFridayGetInfo(t *testing.T) {
-	prof, err := joeinfo.NewProfiler()
+func TestJoeFridayGetDevInfo(t *testing.T) {
+	prof, err := netdev.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
@@ -83,8 +83,8 @@ func TestJoeFridayGetInfo(t *testing.T) {
 	t.Logf("%s\n", string(p))
 }
 
-func TestJoeFridayGetUsage(t *testing.T) {
-	prof, err := joeusage.NewProfiler()
+func TestJoeFridayGetNetUsage(t *testing.T) {
+	prof, err := netusage.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return

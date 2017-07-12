@@ -1,4 +1,4 @@
-package platform
+package system
 
 import (
 	"encoding/json"
@@ -6,19 +6,19 @@ import (
 
 	"github.com/DataDog/gohai/platform"
 	"github.com/cloudfoundry/gosigar"
-	joekernel "github.com/mohae/joefriday/platform/kernel"
-	joeloadavg "github.com/mohae/joefriday/platform/loadavg"
-	joerelease "github.com/mohae/joefriday/platform/release"
-	joeuptime "github.com/mohae/joefriday/platform/uptime"
-	sysload "github.com/mohae/joefriday/sysinfo/load"
+	joeloadavg "github.com/mohae/joefriday/system/loadavg"
+	joerelease "github.com/mohae/joefriday/system/release"
+	joeversion "github.com/mohae/joefriday/system/version"
+	joeuptime "github.com/mohae/joefriday/system/uptime"
+	sysload "github.com/mohae/joefriday/sysinfo/loadavg"
 	sysuptime "github.com/mohae/joefriday/sysinfo/uptime"
 	"github.com/shirou/gopsutil/load"
 )
 
-func BenchmarkJoeFridayGetKernel(b *testing.B) {
-	var fct *joekernel.Kernel
+func BenchmarkJoeFridayGetVersion(b *testing.B) {
+	var fct *joeversion.Kernel
 	b.StopTimer()
-	p, _ := joekernel.NewProfiler()
+	p, _ := joeversion.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		fct, _ = p.Get()
@@ -70,7 +70,7 @@ func BenchmarkShirouGopsutilLoadMisc(b *testing.B) {
 }
 
 func BenchmarkJoeFridayGetReleases(b *testing.B) {
-	var st *joerelease.Release
+	var st *joerelease.OS
 	b.StopTimer()
 	p, _ := joerelease.NewProfiler()
 	b.StartTimer()
@@ -122,8 +122,8 @@ func BenchmarkCloudFoundryGoSigarUptime(b *testing.B) {
 
 // These tests exist to print out the data that is collected; not to test the
 // methods themselves.  Run with the -v flag.
-func TestJoeFridayGetKernel(t *testing.T) {
-	prof, err := joekernel.NewProfiler()
+func TestJoeFridayGetVersion(t *testing.T) {
+	prof, err := joeversion.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return
