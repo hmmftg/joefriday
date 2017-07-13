@@ -17,9 +17,9 @@ import (
 	"testing"
 
 	"github.com/mohae/benchutil"
-	"github.com/mohae/joefriday/sysinfo/load"
-	lfb "github.com/mohae/joefriday/sysinfo/load/flat"
-	ljson "github.com/mohae/joefriday/sysinfo/load/json"
+	load "github.com/mohae/joefriday/sysinfo/loadavg"
+	lfb "github.com/mohae/joefriday/sysinfo/loadavg/flat"
+	ljson "github.com/mohae/joefriday/sysinfo/loadavg/json"
 	"github.com/mohae/joefriday/sysinfo/mem"
 	mfb "github.com/mohae/joefriday/sysinfo/mem/flat"
 	mjson "github.com/mohae/joefriday/sysinfo/mem/json"
@@ -200,7 +200,7 @@ func SysinfoLoadAvgDeserializeJSON() benchutil.Bench {
 
 // Mem Info
 func BenchSysinfoMemInfoGet(b *testing.B) {
-	m := &mem.Info{}
+	m := &mem.MemInfo{}
 	for i := 0; i < b.N; i++ {
 		m.Get()
 	}
@@ -233,7 +233,7 @@ func SysinfoMemInfoGetFB() benchutil.Bench {
 func BenchSysinfoMemInfoSerializeFB(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	m := &mem.Info{}
+	m := &mem.MemInfo{}
 	m.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -251,7 +251,7 @@ func SysinfoMemInfoSerializeFB() benchutil.Bench {
 }
 
 func BenchSysinfoMemInfoDeserializeFB(b *testing.B) {
-	var m *mem.Info
+	var m *mem.MemInfo
 	b.StopTimer()
 	tmp, _ := mfb.Get()
 	b.StartTimer()
@@ -286,7 +286,7 @@ func SysinfoMemInfoGetJSON() benchutil.Bench {
 }
 
 func BenchSysinfoMemInfoDeserializeJSON(b *testing.B) {
-	var m *mem.Info
+	var m *mem.MemInfo
 	b.StopTimer()
 	tmp, _ := mjson.Get()
 	b.StartTimer()

@@ -98,8 +98,8 @@ func main() {
 	// Network
 	runNetBenchmarks(bench)
 
-	// Platform
-	runPlatformBenchmarks(bench)
+	// System
+	runSystemBenchmarks(bench)
 
 	// Sysinfo
 	runSysinfoBenchmarks(bench)

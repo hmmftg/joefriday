@@ -17,46 +17,46 @@ import (
 	"testing"
 
 	"github.com/mohae/benchutil"
-	"github.com/mohae/joefriday/net/info"
-	ifb "github.com/mohae/joefriday/net/info/flat"
-	ijson "github.com/mohae/joefriday/net/info/json"
+	"github.com/mohae/joefriday/net/netdev"
+	dfb "github.com/mohae/joefriday/net/netdev/flat"
+	djson "github.com/mohae/joefriday/net/netdev/json"
 	"github.com/mohae/joefriday/net/structs"
-	"github.com/mohae/joefriday/net/usage"
-	ufb "github.com/mohae/joefriday/net/usage/flat"
-	ujson "github.com/mohae/joefriday/net/usage/json"
+	"github.com/mohae/joefriday/net/netusage"
+	ufb "github.com/mohae/joefriday/net/netusage/flat"
+	ujson "github.com/mohae/joefriday/net/netusage/json"
 )
 
 const (
-	NetInfo  = "Net Info"
-	NetUsage = "Net Usage"
+	NetDev  = "Network Devices"
+	NetUsage = "Network Usage"
 )
 
 func runNetBenchmarks(bench benchutil.Benchmarker) {
-	b := NetInfoGet()
+	b := NetDevGet()
 	bench.Append(b)
 
-	b = NetInfoGetFB()
+	b = NetDevGetFB()
 	bench.Append(b)
 
-	b = NetInfoSerializeFB()
+	b = NetDevSerializeFB()
 	bench.Append(b)
 
-	b = NetInfoDeserializeFB()
+	b = NetDevDeserializeFB()
 	bench.Append(b)
 
-	b = NetInfoGetSON()
+	b = NetDevGetSON()
 	bench.Append(b)
 
-	b = NetInfoSerializeJSON()
+	b = NetDevSerializeJSON()
 	bench.Append(b)
 
-	b = NetInfoDeserializeJSON()
+	b = NetDevDeserializeJSON()
 	bench.Append(b)
 
-	b = NetGetUsage()
+	b = NetUsageGet()
 	bench.Append(b)
 
-	b = NetGetUsageFB()
+	b = NetUsageGetFB()
 	bench.Append(b)
 
 	b = NetUsageSerializeFB()
@@ -65,7 +65,7 @@ func runNetBenchmarks(bench benchutil.Benchmarker) {
 	b = NetUsageDeserializeFB()
 	bench.Append(b)
 
-	b = NetGetUsageJSON()
+	b = NetUsageGetJSON()
 	bench.Append(b)
 
 	b = NetUsageSerializeJSON()
@@ -75,10 +75,10 @@ func runNetBenchmarks(bench benchutil.Benchmarker) {
 	bench.Append(b)
 }
 
-func BenchNetInfoGet(b *testing.B) {
-	var inf *structs.Info
+func BenchNetDevGet(b *testing.B) {
+	var inf *structs.DevInfo
 	b.StopTimer()
-	p, _ := info.NewProfiler()
+	p, _ := netdev.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
@@ -86,17 +86,17 @@ func BenchNetInfoGet(b *testing.B) {
 	_ = inf
 }
 
-func NetInfoGet() benchutil.Bench {
+func NetDevGet() benchutil.Bench {
 	bench := benchutil.NewBench("Get")
-	bench.Group = NetInfo
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetInfoGet))
+	bench.Group = NetDev
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetDevGet))
 	return bench
 }
 
-func BenchNetInfoGetFB(b *testing.B) {
+func BenchNetDevGetFB(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := ifb.NewProfiler()
+	p, _ := dfb.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -104,58 +104,58 @@ func BenchNetInfoGetFB(b *testing.B) {
 	_ = tmp
 }
 
-func NetInfoGetFB() benchutil.Bench {
+func NetDevGetFB() benchutil.Bench {
 	bench := benchutil.NewBench("flat.Get")
-	bench.Group = NetInfo
+	bench.Group = NetDev
 	bench.Desc = Flat
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetInfoGetFB))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetDevGetFB))
 	return bench
 }
 
-func BenchNetInfoSerializeFB(b *testing.B) {
+func BenchNetDevSerializeFB(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := info.NewProfiler()
+	p, _ := netdev.NewProfiler()
 	inf, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = ifb.Serialize(inf)
+		tmp, _ = dfb.Serialize(inf)
 	}
 	_ = tmp
 }
 
-func NetInfoSerializeFB() benchutil.Bench {
+func NetDevSerializeFB() benchutil.Bench {
 	bench := benchutil.NewBench("flat.Serialize")
-	bench.Group = NetInfo
+	bench.Group = NetDev
 	bench.Desc = Flat
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetInfoSerializeFB))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetDevSerializeFB))
 	return bench
 }
 
-func BenchNetInfoDeserializeFB(b *testing.B) {
-	var inf *structs.Info
+func BenchNetDevDeserializeFB(b *testing.B) {
+	var inf *structs.DevInfo
 	b.StopTimer()
-	p, _ := ifb.NewProfiler()
+	p, _ := dfb.NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf = ifb.Deserialize(tmp)
+		inf = dfb.Deserialize(tmp)
 	}
 	_ = inf
 }
 
-func NetInfoDeserializeFB() benchutil.Bench {
+func NetDevDeserializeFB() benchutil.Bench {
 	bench := benchutil.NewBench("flat.Deserialize")
-	bench.Group = NetInfo
+	bench.Group = NetDev
 	bench.Desc = Flat
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetInfoDeserializeFB))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetDevDeserializeFB))
 	return bench
 }
 
-func BenchNetInfoGetJSON(b *testing.B) {
+func BenchNetDevGetJSON(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := ijson.NewProfiler()
+	p, _ := djson.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -163,59 +163,59 @@ func BenchNetInfoGetJSON(b *testing.B) {
 	_ = tmp
 }
 
-func NetInfoGetSON() benchutil.Bench {
+func NetDevGetSON() benchutil.Bench {
 	bench := benchutil.NewBench("json.Get")
-	bench.Group = NetInfo
+	bench.Group = NetDev
 	bench.Desc = JSON
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetInfoGetJSON))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetDevGetJSON))
 	return bench
 }
 
-func BenchNetInfoSerializeJSON(b *testing.B) {
+func BenchNetDevSerializeJSON(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := info.NewProfiler()
+	p, _ := netdev.NewProfiler()
 	sts, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = ijson.Serialize(sts)
+		tmp, _ = djson.Serialize(sts)
 	}
 	_ = tmp
 }
 
-func NetInfoSerializeJSON() benchutil.Bench {
+func NetDevSerializeJSON() benchutil.Bench {
 	bench := benchutil.NewBench("json.Serialize")
-	bench.Group = NetInfo
+	bench.Group = NetDev
 	bench.Desc = JSON
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetInfoSerializeJSON))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetDevSerializeJSON))
 	return bench
 }
 
-func BenchNetInfoDeserializeJSON(b *testing.B) {
-	var inf *structs.Info
+func BenchNetDevDeserializeJSON(b *testing.B) {
+	var inf *structs.DevInfo
 	b.StopTimer()
-	p, _ := ijson.NewProfiler()
+	p, _ := djson.NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		inf, _ = ijson.Deserialize(tmp)
+		inf, _ = djson.Deserialize(tmp)
 	}
 	_ = inf
 }
 
-func NetInfoDeserializeJSON() benchutil.Bench {
+func NetDevDeserializeJSON() benchutil.Bench {
 	bench := benchutil.NewBench("json.Deserialize")
-	bench.Group = NetInfo
+	bench.Group = NetDev
 	bench.Desc = JSON
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetInfoDeserializeJSON))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetDevDeserializeJSON))
 	return bench
 }
 
 // Usage
-func BenchNetGetUsage(b *testing.B) {
-	var u *structs.Usage
+func BenchNetUsageGet(b *testing.B) {
+	var u *structs.DevUsage
 	b.StopTimer()
-	p, _ := usage.NewProfiler()
+	p, _ := netusage.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
@@ -223,14 +223,14 @@ func BenchNetGetUsage(b *testing.B) {
 	_ = u
 }
 
-func NetGetUsage() benchutil.Bench {
+func NetUsageGet() benchutil.Bench {
 	bench := benchutil.NewBench("Get")
 	bench.Group = NetUsage
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetGetUsage))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetUsageGet))
 	return bench
 }
 
-func BenchNetGetUsageFB(b *testing.B) {
+func BenchNetUsageGetFB(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
 	p, _ := ufb.NewProfiler()
@@ -241,18 +241,18 @@ func BenchNetGetUsageFB(b *testing.B) {
 	_ = tmp
 }
 
-func NetGetUsageFB() benchutil.Bench {
+func NetUsageGetFB() benchutil.Bench {
 	bench := benchutil.NewBench("flat.Get")
 	bench.Group = NetUsage
 	bench.Desc = Flat
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetGetUsageFB))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchNetUsageGetFB))
 	return bench
 }
 
 func BenchNetUsageSerializeFB(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := usage.NewProfiler()
+	p, _ := netusage.NewProfiler()
 	u, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -270,7 +270,7 @@ func NetUsageSerializeFB() benchutil.Bench {
 }
 
 func BenchNetUsageDeserializeFB(b *testing.B) {
-	var u *structs.Usage
+	var u *structs.DevUsage
 	b.StopTimer()
 	p, _ := ufb.NewProfiler()
 	tmp, _ := p.Get()
@@ -300,7 +300,7 @@ func BenchNetUsageGetJSON(b *testing.B) {
 	_ = tmp
 }
 
-func NetGetUsageJSON() benchutil.Bench {
+func NetUsageGetJSON() benchutil.Bench {
 	bench := benchutil.NewBench("json.Get")
 	bench.Group = NetUsage
 	bench.Desc = JSON
@@ -311,7 +311,7 @@ func NetGetUsageJSON() benchutil.Bench {
 func BenchNetUsageSerializeJSON(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := usage.NewProfiler()
+	p, _ := netusage.NewProfiler()
 	u, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -329,7 +329,7 @@ func NetUsageSerializeJSON() benchutil.Bench {
 }
 
 func BenchNetUsageDeserializeJSON(b *testing.B) {
-	var u *structs.Usage
+	var u *structs.DevUsage
 	b.StopTimer()
 	p, _ := ujson.NewProfiler()
 	tmp, _ := p.Get()

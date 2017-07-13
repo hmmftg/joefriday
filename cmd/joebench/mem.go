@@ -17,9 +17,9 @@ import (
 	"testing"
 
 	"github.com/mohae/benchutil"
-	"github.com/mohae/joefriday/mem"
-	mfb "github.com/mohae/joefriday/mem/flat"
-	mjson "github.com/mohae/joefriday/mem/json"
+	"github.com/mohae/joefriday/mem/meminfo"
+	mfb "github.com/mohae/joefriday/mem/meminfo/flat"
+	mjson "github.com/mohae/joefriday/mem/meminfo/json"
 )
 
 const (
@@ -50,9 +50,9 @@ func runMemBenchmarks(bench benchutil.Benchmarker) {
 }
 
 func BenchMemInfoGet(b *testing.B) {
-	var inf *mem.Info
+	var inf *meminfo.Info
 	b.StopTimer()
-	p, _ := mem.NewProfiler()
+	p, _ := meminfo.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
@@ -89,7 +89,7 @@ func MemInfoGetFB() benchutil.Bench {
 func BenchMemInfoSerializeFB(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := mem.NewProfiler()
+	p, _ := meminfo.NewProfiler()
 	inf, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -107,7 +107,7 @@ func MemInfoSerializeFB() benchutil.Bench {
 }
 
 func BenchMemInfoDeserializeFB(b *testing.B) {
-	var inf *mem.Info
+	var inf *meminfo.Info
 	b.StopTimer()
 	p, _ := mfb.NewProfiler()
 	tmp, _ := p.Get()
@@ -148,7 +148,7 @@ func MemInfoGetSON() benchutil.Bench {
 func BenchMemInfoSerializeJSON(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := mem.NewProfiler()
+	p, _ := meminfo.NewProfiler()
 	sts, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -166,7 +166,7 @@ func MemInfoSerializeJSON() benchutil.Bench {
 }
 
 func BenchMemInfoDeserializeJSON(b *testing.B) {
-	var inf *mem.Info
+	var inf *meminfo.Info
 	b.StopTimer()
 	p, _ := mjson.NewProfiler()
 	tmp, _ := p.Get()

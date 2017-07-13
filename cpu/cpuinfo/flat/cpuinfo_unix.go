@@ -116,7 +116,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	for i, flag := range cpu.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
-	structs.CPUStartFlagVector(p.Builder, len(uoffs))
+	structs.CPUStartFlagsVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}

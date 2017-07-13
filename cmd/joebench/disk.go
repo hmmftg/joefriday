@@ -17,13 +17,13 @@ import (
 	"testing"
 
 	"github.com/mohae/benchutil"
-	"github.com/mohae/joefriday/disk/stats"
-	sfb "github.com/mohae/joefriday/disk/stats/flat"
-	sjson "github.com/mohae/joefriday/disk/stats/json"
+	stats "github.com/mohae/joefriday/disk/diskstats"
+	sfb "github.com/mohae/joefriday/disk/diskstats/flat"
+	sjson "github.com/mohae/joefriday/disk/diskstats/json"
 	"github.com/mohae/joefriday/disk/structs"
-	"github.com/mohae/joefriday/disk/usage"
-	ufb "github.com/mohae/joefriday/disk/usage/flat"
-	ujson "github.com/mohae/joefriday/disk/usage/json"
+	usage "github.com/mohae/joefriday/disk/diskusage"
+	ufb "github.com/mohae/joefriday/disk/diskusage/flat"
+	ujson "github.com/mohae/joefriday/disk/diskusage/json"
 )
 
 const (
@@ -67,7 +67,7 @@ func runDiskBenchmarks(bench benchutil.Benchmarker) {
 }
 
 func BenchDiskGetStats(b *testing.B) {
-	var stts *structs.Stats
+	var stts *structs.DiskStats
 	b.StopTimer()
 	p, _ := stats.NewProfiler()
 	b.StartTimer()
@@ -124,7 +124,7 @@ func DiskStatsSerializeFB() benchutil.Bench {
 }
 
 func BenchDiskStatsDeserializeFB(b *testing.B) {
-	var sts *structs.Stats
+	var sts *structs.DiskStats
 	b.StopTimer()
 	p, _ := sfb.NewProfiler()
 	tmp, _ := p.Get()
@@ -183,7 +183,7 @@ func DiskStatsSerializeJSON() benchutil.Bench {
 }
 
 func BenchDiskStatsDeserializeJSON(b *testing.B) {
-	var sts *structs.Stats
+	var sts *structs.DiskStats
 	b.StopTimer()
 	p, _ := sjson.NewProfiler()
 	tmp, _ := p.Get()
@@ -204,7 +204,7 @@ func DiskStatsDeserializeJSON() benchutil.Bench {
 
 // Usage
 func BenchDiskGetUsage(b *testing.B) {
-	var u *structs.Usage
+	var u *structs.DiskUsage
 	b.StopTimer()
 	p, _ := usage.NewProfiler()
 	b.StartTimer()
@@ -261,7 +261,7 @@ func DiskUsageSerializeFB() benchutil.Bench {
 }
 
 func BenchDiskUsageDeserializeFB(b *testing.B) {
-	var u *structs.Usage
+	var u *structs.DiskUsage
 	b.StopTimer()
 	p, _ := ufb.NewProfiler()
 	tmp, _ := p.Get()
@@ -320,7 +320,7 @@ func DiskUsageSerializeJSON() benchutil.Bench {
 }
 
 func BenchDiskUsageDeserializeJSON(b *testing.B) {
-	var u *structs.Usage
+	var u *structs.DiskUsage
 	b.StopTimer()
 	p, _ := ujson.NewProfiler()
 	tmp, _ := p.Get()
