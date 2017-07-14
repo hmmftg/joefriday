@@ -79,7 +79,7 @@ func NewProfiler() (prof *Profiler, err error) {
 // Get returns the processor information.
 func (prof *Profiler) Get() (procs *Processors, err error) {
 	var (
-		procCnt, i, pos, nameLen int
+		i, pos, nameLen int
 		priorID                 int16
 		n                       uint64
 		v                       byte
@@ -193,7 +193,6 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 					procs.Socket = append(procs.Socket, proc)
 					add = false
 				}
-				procCnt++
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
