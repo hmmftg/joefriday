@@ -4,10 +4,10 @@ namespace structs;
 table Processors {
 	Timestamp:long;
 	Count:short;
-	Socket:[CPU];
+	Socket:[Processor];
 }
 
-table CPU {
+table Processor {
 	PhysicalID:short;
 	VendorID:string;
 	CPUFamily:string;

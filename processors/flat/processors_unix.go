@@ -33,20 +33,20 @@ import (
 	"sync"
 
 	fb "github.com/google/flatbuffers/go"
-	procs "github.com/mohae/joefriday/processors"
+	"github.com/mohae/joefriday/processors"
 	"github.com/mohae/joefriday/processors/flat/structs"
 )
 
 // Profiler is used to get the processor information, as Flatbuffers serialized
 // bytes, by processing the /proc/cpuinfo file.
 type Profiler struct {
-	*procs.Profiler
+	*processors.Profiler
 	*fb.Builder
 }
 
 // Returns an initialized Profiler; ready to use.
 func NewProfiler() (p *Profiler, err error) {
-	prof, err := procs.NewProfiler()
+	prof, err := processors.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
@@ -80,22 +80,22 @@ func Get() (p []byte, err error) {
 }
 
 // Serialize serializes Processors using Flatbuffers.
-func (p *Profiler) Serialize(proc *procs.Processors) []byte {
+func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	// ensure the Builder is in a usable state.
 	p.Builder.Reset()
-	uoffs := make([]fb.UOffsetT, len(proc.Socket))
-	for i, cpu := range proc.Socket {
-		uoffs[i] = p.SerializeCPU(&cpu)
+	uoffs := make([]fb.UOffsetT, len(procs.Socket))
+	for i, proc := range procs.Socket {
+		uoffs[i] = p.SerializeProcessor(&proc)
 	}
 	structs.ProcessorsStartSocketVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
-	cpus := p.Builder.EndVector(len(uoffs))
+	procsV := p.Builder.EndVector(len(uoffs))
 	structs.ProcessorsStart(p.Builder)
-	structs.ProcessorsAddTimestamp(p.Builder, proc.Timestamp)
-	structs.ProcessorsAddCount(p.Builder, proc.Count)
-	structs.ProcessorsAddSocket(p.Builder, cpus)
+	structs.ProcessorsAddTimestamp(p.Builder, procs.Timestamp)
+	structs.ProcessorsAddCount(p.Builder, procs.Count)
+	structs.ProcessorsAddSocket(p.Builder, procsV)
 	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -104,41 +104,41 @@ func (p *Profiler) Serialize(proc *procs.Processors) []byte {
 	return tmp
 }
 
-func (p *Profiler) SerializeCPU(c *procs.Processor) fb.UOffsetT {
-	vendorID := p.Builder.CreateString(c.VendorID)
-	cpuFamily := p.Builder.CreateString(c.CPUFamily)
-	model := p.Builder.CreateString(c.Model)
-	modelName := p.Builder.CreateString(c.ModelName)
-	stepping := p.Builder.CreateString(c.Stepping)
-	microcode := p.Builder.CreateString(c.Microcode)
-	cacheSize := p.Builder.CreateString(c.CacheSize)
-	uoffs := make([]fb.UOffsetT, len(c.Flags))
-	for i, flag := range c.Flags {
+func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
+	vendorID := p.Builder.CreateString(proc.VendorID)
+	cpuFamily := p.Builder.CreateString(proc.CPUFamily)
+	model := p.Builder.CreateString(proc.Model)
+	modelName := p.Builder.CreateString(proc.ModelName)
+	stepping := p.Builder.CreateString(proc.Stepping)
+	microcode := p.Builder.CreateString(proc.Microcode)
+	cacheSize := p.Builder.CreateString(proc.CacheSize)
+	uoffs := make([]fb.UOffsetT, len(proc.Flags))
+	for i, flag := range proc.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
-	structs.CPUStartFlagsVector(p.Builder, len(uoffs))
+	structs.ProcessorStartFlagsVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	flags := p.Builder.EndVector(len(uoffs))
-	structs.CPUStart(p.Builder)
-	structs.CPUAddPhysicalID(p.Builder, c.PhysicalID)
-	structs.CPUAddVendorID(p.Builder, vendorID)
-	structs.CPUAddCPUFamily(p.Builder, cpuFamily)
-	structs.CPUAddModel(p.Builder, model)
-	structs.CPUAddModelName(p.Builder, modelName)
-	structs.CPUAddStepping(p.Builder, stepping)
-	structs.CPUAddMicrocode(p.Builder, microcode)
-	structs.CPUAddCPUMHz(p.Builder, c.CPUMHz)
-	structs.CPUAddCacheSize(p.Builder, cacheSize)
-	structs.CPUAddCPUCores(p.Builder, c.CPUCores)
-	structs.CPUAddBogoMIPS(p.Builder, c.BogoMIPS)
-	structs.CPUAddFlags(p.Builder, flags)
-	return structs.CPUEnd(p.Builder)
+	structs.ProcessorStart(p.Builder)
+	structs.ProcessorAddPhysicalID(p.Builder, proc.PhysicalID)
+	structs.ProcessorAddVendorID(p.Builder, vendorID)
+	structs.ProcessorAddCPUFamily(p.Builder, cpuFamily)
+	structs.ProcessorAddModel(p.Builder, model)
+	structs.ProcessorAddModelName(p.Builder, modelName)
+	structs.ProcessorAddStepping(p.Builder, stepping)
+	structs.ProcessorAddMicrocode(p.Builder, microcode)
+	structs.ProcessorAddCPUMHz(p.Builder, proc.CPUMHz)
+	structs.ProcessorAddCacheSize(p.Builder, cacheSize)
+	structs.ProcessorAddCPUCores(p.Builder, proc.CPUCores)
+	structs.ProcessorAddBogoMIPS(p.Builder, proc.BogoMIPS)
+	structs.ProcessorAddFlags(p.Builder, flags)
+	return structs.ProcessorEnd(p.Builder)
 }
 
 // Serialize processors information.
-func Serialize(proc *procs.Processors) (p []byte, err error) {
+func Serialize(proc *processors.Processors) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
@@ -152,33 +152,33 @@ func Serialize(proc *procs.Processors) (p []byte, err error) {
 
 // Deserialize takes some Flatbuffer serialized bytes and deserializes them
 // as processors.Processors.
-func Deserialize(p []byte) *procs.Processors {
+func Deserialize(p []byte) *processors.Processors {
 	flatP := structs.GetRootAsProcessors(p, 0)
-	proc := &procs.Processors{}
-	flatC := &structs.CPU{}
-	cpu := procs.Processor{}
-	proc.Timestamp = flatP.Timestamp()
-	proc.Socket = make([]procs.Processor, flatP.Count())
-	for i := 0; i < len(proc.Socket); i++ {
-		if !flatP.Socket(flatC, i) {
+	procs := &processors.Processors{}
+	flatProc := &structs.Processor{}
+	proc := processors.Processor{}
+	procs.Timestamp = flatP.Timestamp()
+	procs.Socket = make([]processors.Processor, flatP.Count())
+	for i := 0; i < len(procs.Socket); i++ {
+		if !flatP.Socket(flatProc, i) {
 			continue
 		}
-		cpu.PhysicalID = flatC.PhysicalID()
-		cpu.VendorID = string(flatC.VendorID())
-		cpu.CPUFamily = string(flatC.CPUFamily())
-		cpu.Model = string(flatC.Model())
-		cpu.ModelName = string(flatC.ModelName())
-		cpu.Stepping = string(flatC.Stepping())
-		cpu.Microcode = string(flatC.Microcode())
-		cpu.CPUMHz = flatC.CPUMHz()
-		cpu.CacheSize = string(flatC.CacheSize())
-		cpu.CPUCores = flatC.CPUCores()
-		cpu.BogoMIPS = flatC.BogoMIPS()
-		cpu.Flags = make([]string, flatC.FlagsLength())
-		for i := 0; i < len(cpu.Flags); i++ {
-			cpu.Flags[i] = string(flatC.Flags(i))
+		proc.PhysicalID = flatProc.PhysicalID()
+		proc.VendorID = string(flatProc.VendorID())
+		proc.CPUFamily = string(flatProc.CPUFamily())
+		proc.Model = string(flatProc.Model())
+		proc.ModelName = string(flatProc.ModelName())
+		proc.Stepping = string(flatProc.Stepping())
+		proc.Microcode = string(flatProc.Microcode())
+		proc.CPUMHz = flatProc.CPUMHz()
+		proc.CacheSize = string(flatProc.CacheSize())
+		proc.CPUCores = flatProc.CPUCores()
+		proc.BogoMIPS = flatProc.BogoMIPS()
+		proc.Flags = make([]string, flatProc.FlagsLength())
+		for i := 0; i < len(proc.Flags); i++ {
+			proc.Flags[i] = string(flatProc.Flags(i))
 		}
-		proc.Socket[i] = cpu
+		procs.Socket[i] = proc
 	}
-	return proc
+	return procs
 }

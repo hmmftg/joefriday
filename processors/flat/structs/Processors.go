@@ -37,14 +37,14 @@ func (rcv *Processors) Count() int16 {
 	return 0
 }
 
-func (rcv *Processors) Socket(obj *CPU, j int) bool {
+func (rcv *Processors) Socket(obj *Processor, j int) bool {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
 		x := rcv._tab.Vector(o)
 		x += flatbuffers.UOffsetT(j) * 4
 		x = rcv._tab.Indirect(x)
 	if obj == nil {
-		obj = new(CPU)
+		obj = new(Processor)
 	}
 		obj.Init(rcv._tab.Bytes, x)
 		return true
