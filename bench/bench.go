@@ -165,7 +165,7 @@ func runSystemBenches(bench benchutil.Benchmarker) {
 	b := system.JoeFridayGetVersion()
 	bench.Append(b)
 
-	b = system.JoeFridayGetRelease()
+	b = system.JoeFridayGetOS()
 	bench.Append(b)
 
 	b = system.DataDogGohaiplatform()

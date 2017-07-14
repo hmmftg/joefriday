@@ -7,7 +7,7 @@ import (
 	"github.com/DataDog/gohai/platform"
 	"github.com/cloudfoundry/gosigar"
 	joeloadavg "github.com/mohae/joefriday/system/loadavg"
-	joerelease "github.com/mohae/joefriday/system/release"
+	joeos "github.com/mohae/joefriday/system/os"
 	joeversion "github.com/mohae/joefriday/system/version"
 	joeuptime "github.com/mohae/joefriday/system/uptime"
 	sysload "github.com/mohae/joefriday/sysinfo/loadavg"
@@ -69,8 +69,8 @@ func BenchmarkShirouGopsutilLoadMisc(b *testing.B) {
 	_ = tmp
 }
 
-func BenchmarkJoeFridayGetReleases(b *testing.B) {
-	var st *joerelease.OS
+func BenchmarkJoeFridayGetOS(b *testing.B) {
+	var st *joeos.OS
 	b.StopTimer()
 	p, _ := joerelease.NewProfiler()
 	b.StartTimer()
@@ -199,8 +199,8 @@ func TestShirouGopsutilLoadMisc(t *testing.T) {
 	t.Logf("%s\n", string(p))
 }
 
-func TestJoeFridayGetRelease(t *testing.T) {
-	prof, err := joerelease.NewProfiler()
+func TestJoeFridayGetOS(t *testing.T) {
+	prof, err := joeos.NewProfiler()
 	if err != nil {
 		t.Error(err)
 		return

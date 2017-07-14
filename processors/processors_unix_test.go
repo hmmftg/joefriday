@@ -26,11 +26,11 @@ func TestProcessors(t *testing.T) {
 	if procs.Count == 0 {
 		t.Errorf("expected the processor count to be a nonzero value, it wasn't")
 	}
-	if len(procs.CPU) == 0 {
+	if len(procs.Socket) == 0 {
 		t.Error("Expected at least 1 chip entry, got none")
 	}
 	// spot check some vars
-	for i, cpu := range procs.CPU {
+	for i, cpu := range procs.Socket {
 		if cpu.VendorID == "" {
 			t.Errorf("%d: expected a vendor id value; it was empty", i)
 		}

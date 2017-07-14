@@ -42,7 +42,7 @@ type Processors struct {
 	Timestamp int64  `json:"timestamp"`
 	// The number of physical processors.
 	Count     int16  `json:"count"`
-	CPU     []CPU `json:"cpu"`
+	Socket     []CPU `json:"cpu"`
 }
 
 // CPU holds the /proc/cpuinfo for a single physical cpu.
@@ -190,7 +190,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 			// processed processor, only add it if it is a different physical processor.
 			if v == 'r' { // processor
 				if add {
-					procs.CPU = append(procs.CPU, cpu)
+					procs.Socket = append(procs.Socket, cpu)
 					add = false
 				}
 				cpuCnt++
@@ -221,9 +221,9 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 	}
 	// append the current processor informatin
 	if add {
-		procs.CPU = append(procs.CPU, cpu)
+		procs.Socket = append(procs.Socket, cpu)
 	}
-	procs.Count = int16(len(procs.CPU))
+	procs.Count = int16(len(procs.Socket))
 	return procs, nil
 }
 

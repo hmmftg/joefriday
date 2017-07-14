@@ -7,7 +7,7 @@ import (
 	"github.com/cloudfoundry/gosigar"
 	"github.com/mohae/benchutil"
 	joeloadavg "github.com/mohae/joefriday/system/loadavg"
-	joerelease "github.com/mohae/joefriday/system/release"
+	joeos "github.com/mohae/joefriday/system/os"
 	joeversion "github.com/mohae/joefriday/system/version"
 	joeuptime "github.com/mohae/joefriday/system/uptime"
 	sysload "github.com/mohae/joefriday/sysinfo/loadavg"
@@ -35,10 +35,10 @@ func JoeFridayGetVersion() benchutil.Bench {
 	return bench
 }
 
-func BenchJoeFridayGetRelease(b *testing.B) {
-	var os *joerelease.OS
+func BenchJoeFridayGetOS(b *testing.B) {
+	var os *joeos.OS
 	b.StopTimer()
-	p, _ := joerelease.NewProfiler()
+	p, _ := joeos.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		os, _ = p.Get()
@@ -46,10 +46,10 @@ func BenchJoeFridayGetRelease(b *testing.B) {
 	_ = os
 }
 
-func JoeFridayGetRelease() benchutil.Bench {
-	bench := benchutil.NewBench("joefriday/system/release.Get")
+func JoeFridayGetOS() benchutil.Bench {
+	bench := benchutil.NewBench("joefriday/system/os.Get")
 	bench.Group = SystemGroup
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetRelease))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchJoeFridayGetOS))
 	return bench
 }
 
