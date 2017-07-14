@@ -104,7 +104,7 @@ func (p *Profiler) Serialize(proc *procs.Processors) []byte {
 	return tmp
 }
 
-func (p *Profiler) SerializeCPU(c *procs.CPU) fb.UOffsetT {
+func (p *Profiler) SerializeCPU(c *procs.Processor) fb.UOffsetT {
 	vendorID := p.Builder.CreateString(c.VendorID)
 	cpuFamily := p.Builder.CreateString(c.CPUFamily)
 	model := p.Builder.CreateString(c.Model)
@@ -156,9 +156,9 @@ func Deserialize(p []byte) *procs.Processors {
 	flatP := structs.GetRootAsProcessors(p, 0)
 	proc := &procs.Processors{}
 	flatC := &structs.CPU{}
-	cpu := procs.CPU{}
+	cpu := procs.Processor{}
 	proc.Timestamp = flatP.Timestamp()
-	proc.Socket = make([]procs.CPU, flatP.Count())
+	proc.Socket = make([]procs.Processor, flatP.Count())
 	for i := 0; i < len(proc.Socket); i++ {
 		if !flatP.Socket(flatC, i) {
 			continue

@@ -42,11 +42,11 @@ type Processors struct {
 	Timestamp int64  `json:"timestamp"`
 	// The number of physical processors.
 	Count     int16  `json:"count"`
-	Socket     []CPU `json:"cpu"`
+	Socket     []Processor `json:"processor"`
 }
 
-// CPU holds the /proc/cpuinfo for a single physical cpu.
-type CPU struct {
+// Processor holds the /proc/cpuinfo for a single physical cpu.
+type Processor struct {
 	PhysicalID int16    `json:"physical_id"`
 	VendorID   string   `json:"vendor_id"`
 	CPUFamily  string   `json:"cpu_family"`
@@ -79,11 +79,11 @@ func NewProfiler() (prof *Profiler, err error) {
 // Get returns the processor information.
 func (prof *Profiler) Get() (procs *Processors, err error) {
 	var (
-		cpuCnt, i, pos, nameLen int
+		procCnt, i, pos, nameLen int
 		priorID                 int16
 		n                       uint64
 		v                       byte
-		cpu                     CPU
+		proc                     Processor
 		first                   = true // set to false after first proc
 		add                     bool
 	)
@@ -131,11 +131,11 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					cpu.CPUCores = int16(n)
+					proc.CPUCores = int16(n)
 					continue
 				}
 				if v == 'f' { // cpu family
-					cpu.CPUFamily = string(prof.Val[nameLen:])
+					proc.CPUFamily = string(prof.Val[nameLen:])
 					continue
 				}
 				if v == 'M' { // cpu MHz
@@ -143,32 +143,32 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					cpu.CPUMHz = float32(f)
+					proc.CPUMHz = float32(f)
 				}
 				continue
 			}
 			if prof.Val[5] == ' ' { // cache size
-				cpu.CacheSize = string(prof.Val[nameLen:])
+				proc.CacheSize = string(prof.Val[nameLen:])
 			}
 			continue
 		}
 		if v == 'f' {
 			if prof.Val[1] == 'l' { // flags
-				cpu.Flags = strings.Split(string(prof.Val[nameLen:]), " ")
+				proc.Flags = strings.Split(string(prof.Val[nameLen:]), " ")
 			}
 			continue
 		}
 		if v == 'm' {
 			if prof.Val[1] == 'o' {
 				if nameLen == 5 { // model
-					cpu.Model = string(prof.Val[nameLen:])
+					proc.Model = string(prof.Val[nameLen:])
 					continue
 				}
-				cpu.ModelName = string(prof.Val[nameLen:])
+				proc.ModelName = string(prof.Val[nameLen:])
 				continue
 			}
 			if prof.Val[1] == 'i' {
-				cpu.Microcode = string(prof.Val[nameLen:])
+				proc.Microcode = string(prof.Val[nameLen:])
 			}
 			continue
 		}
@@ -179,21 +179,21 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.PhysicalID = int16(n)
-				if first || cpu.PhysicalID != priorID {
+				proc.PhysicalID = int16(n)
+				if first || proc.PhysicalID != priorID {
 					add = true
 				}
-				priorID = cpu.PhysicalID
+				priorID = proc.PhysicalID
 				continue
 			}
 			// processor starts information about a logical processor; if there was a previously
 			// processed processor, only add it if it is a different physical processor.
 			if v == 'r' { // processor
 				if add {
-					procs.Socket = append(procs.Socket, cpu)
+					procs.Socket = append(procs.Socket, proc)
 					add = false
 				}
-				cpuCnt++
+				procCnt++
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
@@ -202,11 +202,11 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 			continue
 		}
 		if v == 's' && prof.Val[1] == 't' { // stepping
-			cpu.Stepping = string(prof.Val[nameLen:])
+			proc.Stepping = string(prof.Val[nameLen:])
 			continue
 		}
 		if v == 'v' { // vendor_id
-			cpu.VendorID = string(prof.Val[nameLen:])
+			proc.VendorID = string(prof.Val[nameLen:])
 		}
 		// also check 2nd name pos for o as some output also have a bugs line.
 		if v == 'b' && prof.Val[1] == 'o' { // bogomips
@@ -214,14 +214,14 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 			if err != nil {
 				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}
-			cpu.BogoMIPS = float32(f)
+			proc.BogoMIPS = float32(f)
 			continue
 		}
 		
 	}
 	// append the current processor informatin
 	if add {
-		procs.Socket = append(procs.Socket, cpu)
+		procs.Socket = append(procs.Socket, proc)
 	}
 	procs.Count = int16(len(procs.Socket))
 	return procs, nil
