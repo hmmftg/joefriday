@@ -1,0 +1,15 @@
+// os.fbs
+namespace structs;
+
+table OS {
+	Name:string;
+    ID:string;
+    IDLike:string;
+    PrettyName:string;
+    Version:string;
+    VersionID:string;
+    HomeURL:string;
+    BugReportURL:string;
+}
+
+root_type OS;
