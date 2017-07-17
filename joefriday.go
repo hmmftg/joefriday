@@ -26,9 +26,13 @@ package joefriday
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/mohae/randchars"
 )
 
 type ResetError struct {
@@ -132,7 +136,7 @@ func (p *Proc) Reset() error {
 }
 
 type Tocker interface {
-	Close() // Close the Tocker's resources.
+	Close() // Close the Tocker's resources
 	Run()   // Run some code on an interval.
 	Stop()  // Stop the Tocker.
 }
@@ -199,4 +203,65 @@ func TrimLeadingSpaces(p []byte) []byte {
 	}
 	// it was all spaces
 	return p[:0]
+}
+
+// TempFileProc is used to do Proc processing off of a temp file. Prefer using
+// the Proc type instead.
+type TempFileProc struct {
+	*Proc
+	// The directory holding the temp file.
+	Dir string
+	// The name of the file.
+	Name string
+}
+
+// NewTempFileProc creates a temporary file with data as its contents and
+// returns a TempFileProc that uses the temporary file. The file will be saved
+// in a randomly generated tempdir that starts with prefix. If prefix is empty
+// the os.TempDir will be used as the save directory. Name is the name of the
+// temporary file that will be created. If name is empty, the name will be 12
+// randomly selected characters without an extension. The data will be used for
+// the file and the file will be created with 0777 perms. If an error occurs,
+// proc will be nil.
+func NewTempFileProc(prefix, name string, data []byte) (proc *TempFileProc, err error) {
+	var t TempFileProc
+	if prefix == "" {
+		t.Dir = os.TempDir()
+	} else {
+		t.Dir, err = ioutil.TempDir("", prefix)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if name == "" {
+		name = string(randchars.AlphaNum(12))
+	}
+	t.Name = name
+
+	err = ioutil.WriteFile(t.FullPath(), data, 0777)
+	if err != nil {
+		return nil, err
+	}
+
+	t.Proc, err = New(t.FullPath())
+	if err != nil {
+		return nil, err
+	}
+
+	return &t, nil
+}
+
+// Returns the full path of the temp file for this TempFileProc.
+func (t *TempFileProc) FullPath() string {
+	return filepath.Join(t.Dir, t.Name)
+}
+
+// Remove removes the temp dir and temp file.
+func (t *TempFileProc) Remove() error {
+	// only remove the directory if it is a subdir of the default temp dir.
+	if t.Dir != os.TempDir() {
+		os.RemoveAll(t.Dir)
+	}
+	// otherwise just remove the file
+	return os.RemoveAll(t.FullPath())
 }

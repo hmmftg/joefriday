@@ -15,6 +15,8 @@ package joefriday
 import (
 	"bytes"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -287,4 +289,69 @@ func BenchmarkTrimSpaceString(b *testing.B) {
 		}
 	}
 	_ = tmp
+}
+
+func TestNewTempFileProc(t *testing.T) {
+	data := "abcdefghijklmnopqrstuvwxyz"
+	tests := []struct{
+		prefix string
+		name string
+	}{
+		{"", ""},
+		{"", "abc"},
+		{"abc", ""},
+		{"abc", "abc"},
+	}
+	for i, test := range tests {
+		p, err := NewTempFileProc(test.prefix, test.name, []byte(data))
+		if err != nil {
+			t.Errorf("%d: %s", i, err)
+			continue
+		}
+		if test.prefix == "" {
+			if p.Dir != os.TempDir() {
+				t.Errorf("%d: Dir: got %q; want %q", i, p.Dir, os.TempDir)
+			}
+		} else {
+			dir := filepath.Base(p.Dir)
+			if !strings.HasPrefix(dir, test.prefix) {
+				t.Errorf("%d: Dir: expected %q to have a prefix of %q; it didn't", i, dir, test.prefix)
+			}
+		}
+		if test.name == "" {
+			if len(p.Name) != 12 {
+				t.Errorf("%d: Name: expected random name to be 12 chars; got %d chars", i, len(p.Name))
+			}
+		} else {
+			if test.name != p.Name {
+				t.Errorf("%d: Name: got %q; want %q", i, p.Name, test.name)
+			}
+		}
+		s, err := p.Buf.ReadString('z')
+		if err != nil {
+			t.Errorf("%d: unexpected error: %q", i, err)
+			goto remove
+		}
+		if s != data {
+			t.Errorf("%d: got %q; want %q", i, s, data)
+		}
+
+	remove:
+		err = p.Remove()
+		if err != nil {
+			t.Errorf("%d: unexpected error: %q", i, err)
+		}
+
+		if p.Dir == os.TempDir() {
+			_, err = os.Stat(p.FullPath())
+			if !os.IsNotExist(err) {
+				t.Errorf("%d: stat of %q: expected IsNotExist err; got %q", i, p.FullPath(), err)
+			}
+		} else {
+			_, err = os.Stat(p.Dir)
+			if !os.IsNotExist(err) {
+				t.Errorf("%d: stat of %q: expected IsNotExist err; got %q", i, p.Dir, err)
+			}
+		}
+	}
 }
