@@ -107,12 +107,15 @@ func IsParseError(e error) bool {
 	return false
 }
 
+// Procer processes things.
+type Procer interface {
+	ReadSlice(byte) ([]byte, error)
+	Reset() error
+}
 // A Proc holds everything related to a proc file and some processing vars.
 type Proc struct {
 	*os.File
 	Buf  *bufio.Reader
-	Line []byte // current line
-	Val  []byte
 }
 
 // Creats a Proc using the file handle.
@@ -121,7 +124,12 @@ func New(fname string) (*Proc, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Proc{File: f, Buf: bufio.NewReader(f), Val: make([]byte, 0, 32)}, nil
+	return &Proc{File: f, Buf: bufio.NewReader(f)}, nil
+}
+
+// ReadSlice is a wrapper for bufio.Reader.ReadSlice.
+func (p *Proc) ReadSlice(delim byte) (line []byte, err error) {
+	return p.Buf.ReadSlice(delim)
 }
 
 // Reset reset's the profiler's resources.
@@ -131,7 +139,6 @@ func (p *Proc) Reset() error {
 		return &ResetError{err}
 	}
 	p.Buf.Reset(p.File)
-	p.Val = p.Val[:0]
 	return nil
 }
 
