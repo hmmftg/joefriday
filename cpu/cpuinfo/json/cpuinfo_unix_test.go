@@ -17,10 +17,21 @@ import (
 	"testing"
 
 	info "github.com/mohae/joefriday/cpu/cpuinfo"
+	"github.com/mohae/joefriday"
+	"github.com/mohae/joefriday/cpu/testinfo"
 )
 
-func TestGet(t *testing.T) {
-	inf, err := Get()
+func TestGeti75600u(t *testing.T) {
+	tProc, err := joefriday.NewTempFileProc("intel", "i9700u", testinfo.I75600uCPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof, err := NewProfiler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof.Profiler.Procer = tProc
+	inf, err := prof.Get()
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
@@ -30,19 +41,9 @@ func TestGet(t *testing.T) {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	if infS.Timestamp == 0 {
-		t.Error("expected timestamp to be a non-zero value; got 0")
-	}
-	if len(infS.CPU) == 0 {
-		t.Error("expected CPUs to be a non-zero value; got 0")
-	}
-	for i, v := range infS.CPU {
-		if v.VendorID == "" {
-			t.Errorf("%d: expected vendor_id to have a value; it was empty", i)
-		}
-		if len(v.Flags) == 0 {
-			t.Errorf("%d: expected flags to have values; it was empty", i)
-		}
+	err = testinfo.ValidateI75600uCPUInfo(infS)
+	if err != nil {
+		t.Error(err)
 	}
 	t.Logf("%#v\n", infS)
 }

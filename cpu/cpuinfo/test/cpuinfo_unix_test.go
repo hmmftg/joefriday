@@ -16,69 +16,28 @@ package cpuinfo
 import (
 	"testing"
 
-	info "github.com/mohae/joefriday/cpu/cpuinfo"
 	"github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/cpu/testinfo"
+	"github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
-func TestSerialize(t *testing.T) {
+func TestGeti75600u(t *testing.T) {
 	tProc, err := joefriday.NewTempFileProc("intel", "i9700u", testinfo.I75600uCPUInfo)
 	if err != nil {
 		t.Fatal(err)
 	}
-	prof, err := NewProfiler()
+	prof, err := cpuinfo.NewProfiler()
 	if err != nil {
 		t.Fatal(err)
 	}
-	prof.Profiler.Procer = tProc
-	inf, err := prof.Get()
-	
+	prof.Procer = tProc
+	inf, err := prof.Get()	
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	infD := Deserialize(inf)
-	err = testinfo.ValidateI75600uCPUInfo(infD)
+	err = testinfo.ValidateI75600uCPUInfo(inf)
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = Serialize(infD)
-	if err != nil {
-		t.Errorf("unexpected serialization error: %s", err)
-		return
-	}
-}
-
-func BenchmarkGet(b *testing.B) {
-	var tmp []byte
-	b.StopTimer()
-	p, _ := NewProfiler()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		tmp, _ = p.Get()
-	}
-	_ = tmp
-}
-
-func BenchmarkSerialize(b *testing.B) {
-	var tmp []byte
-	b.StopTimer()
-	p, _ := NewProfiler()
-	inf, _ := p.Profiler.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		tmp, _ = Serialize(inf)
-	}
-	_ = tmp
-}
-
-func BenchmarkDeserialize(b *testing.B) {
-	var inf *info.CPUInfo
-	b.StopTimer()
-	p, _ := NewProfiler()
-	tmp, _ := p.Get()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		inf = Deserialize(tmp)
-	}
-	_ = inf
+	t.Logf("%#v", inf)
 }

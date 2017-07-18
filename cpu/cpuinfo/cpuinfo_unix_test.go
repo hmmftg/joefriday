@@ -13,33 +13,9 @@
 
 package cpuinfo
 
-import "testing"
-
-func TestFacts(t *testing.T) {
-	inf, err := Get()
-	if err != nil {
-		t.Errorf("unexpected error: %s", err)
-	}
-	if inf.Timestamp == 0 {
-		t.Error("expected timestamp to have a nonzero value, it didn't")
-	}
-	if len(inf.CPU) == 0 {
-		t.Error("Expected at least 1 CPU entry, got none")
-	}
-	// spot check some vars
-	for i, cpu := range inf.CPU {
-		if cpu.VendorID == "" {
-			t.Errorf("%d: expected a vendor id value; it was empty", i)
-		}
-		if cpu.CPUCores == 0 {
-			t.Errorf("%d: expected cpu cores to have a non-zero value; it was 0", i)
-		}
-		if len(cpu.Flags) == 0 {
-			t.Errorf("%d: expected flags to be not be empty; it was", i)
-		}
-	}
-	t.Logf("%#v", inf)
-}
+import (
+	"testing"
+)
 
 func BenchmarkGet(b *testing.B) {
 	var inf *CPUInfo
