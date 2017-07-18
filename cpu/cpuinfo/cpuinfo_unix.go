@@ -66,7 +66,9 @@ type CPU struct {
 
 // Profiler is used to process the /proc/cpuinfo file.
 type Profiler struct {
-	*joe.Proc
+	joe.Procer
+	Line []byte
+	Val []byte
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -75,7 +77,13 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: proc}, nil
+	return &Profiler{Procer: proc, Val: make([]byte, 0, 32)}, nil
+}
+
+// Reset resources; after reset the profiler is ready to be used again.
+func (prof *Profiler) Reset() error {
+	prof.Val = prof.Val[:0]
+	return prof.Procer.Reset()
 }
 
 // Get returns the current cpuinfo.
@@ -92,7 +100,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 	}
 	inf = &CPUInfo{Timestamp: time.Now().UTC().UnixNano()}
 	for {
-		prof.Line, err = prof.Buf.ReadSlice('\n')
+		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
