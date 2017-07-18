@@ -285,7 +285,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			cpu.InitialApicID = int16(n)
 			continue
 		}
-		if v == 'W' { // WP
+		if v == 'w' { // WP
 			cpu.WP = string(prof.Val[nameLen:])
 			continue
 		}
