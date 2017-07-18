@@ -118,7 +118,7 @@ func (rcv *CPU) CPUCores() int16 {
 	return 0
 }
 
-func (rcv *CPU) ApicID() int16 {
+func (rcv *CPU) APICID() int16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(30))
 	if o != 0 {
 		return rcv._tab.GetInt16(o + rcv._tab.Pos)
@@ -126,7 +126,7 @@ func (rcv *CPU) ApicID() int16 {
 	return 0
 }
 
-func (rcv *CPU) InitialApicID() int16 {
+func (rcv *CPU) InitialAPICID() int16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(32))
 	if o != 0 {
 		return rcv._tab.GetInt16(o + rcv._tab.Pos)
@@ -237,8 +237,8 @@ func CPUAddPhysicalID(builder *flatbuffers.Builder, PhysicalID int16) { builder.
 func CPUAddSiblings(builder *flatbuffers.Builder, Siblings int16) { builder.PrependInt16Slot(10, Siblings, 0) }
 func CPUAddCoreID(builder *flatbuffers.Builder, CoreID int16) { builder.PrependInt16Slot(11, CoreID, 0) }
 func CPUAddCPUCores(builder *flatbuffers.Builder, CPUCores int16) { builder.PrependInt16Slot(12, CPUCores, 0) }
-func CPUAddApicID(builder *flatbuffers.Builder, ApicID int16) { builder.PrependInt16Slot(13, ApicID, 0) }
-func CPUAddInitialApicID(builder *flatbuffers.Builder, InitialApicID int16) { builder.PrependInt16Slot(14, InitialApicID, 0) }
+func CPUAddAPICID(builder *flatbuffers.Builder, APICID int16) { builder.PrependInt16Slot(13, APICID, 0) }
+func CPUAddInitialAPICID(builder *flatbuffers.Builder, InitialAPICID int16) { builder.PrependInt16Slot(14, InitialAPICID, 0) }
 func CPUAddFPU(builder *flatbuffers.Builder, FPU flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(15, flatbuffers.UOffsetT(FPU), 0) }
 func CPUAddFPUException(builder *flatbuffers.Builder, FPUException flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(16, flatbuffers.UOffsetT(FPUException), 0) }
 func CPUAddCPUIDLevel(builder *flatbuffers.Builder, CPUIDLevel flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(17, flatbuffers.UOffsetT(CPUIDLevel), 0) }

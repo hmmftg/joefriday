@@ -50,8 +50,8 @@ type CPU struct {
 	Siblings        int16    `json:"siblings"`
 	CoreID          int16    `json:"core_id"`
 	CPUCores        int16    `json:"cpu_cores"`
-	ApicID          int16    `json:"apicid"`
-	InitialApicID   int16    `json:"initial_apicid"`
+	APICID          int16    `json:"apicid"`
+	InitialAPICID   int16    `json:"initial_apicid"`
 	FPU             string   `json:"fpu"`
 	FPUException    string   `json:"fpu_exception"`
 	CPUIDLevel      string   `json:"cpuid_level"`
@@ -140,7 +140,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.ApicID = int16(n)
+				cpu.APICID = int16(n)
 			}
 			continue
 		}
@@ -282,7 +282,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			if err != nil {
 				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}
-			cpu.InitialApicID = int16(n)
+			cpu.InitialAPICID = int16(n)
 			continue
 		}
 		if v == 'w' { // WP

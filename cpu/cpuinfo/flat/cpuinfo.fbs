@@ -20,8 +20,8 @@ table CPU {
 	Siblings:short;
 	CoreID:short;
 	CPUCores:short;
-	ApicID:short;
-	InitialApicID:short;
+	APICID:short;
+	InitialAPICID:short;
 	FPU:string;
 	FPUException:string;
 	CPUIDLevel:string;
