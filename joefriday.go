@@ -259,16 +259,31 @@ func NewTempFileProc(prefix, name string, data []byte) (proc *TempFileProc, err 
 }
 
 // Returns the full path of the temp file for this TempFileProc.
-func (t *TempFileProc) FullPath() string {
-	return filepath.Join(t.Dir, t.Name)
+func (p *TempFileProc) FullPath() string {
+	return filepath.Join(p.Dir, p.Name)
+}
+
+// ReadSlice is a wrapper for bufio.Reader.ReadSlice.
+func (p *TempFileProc) ReadSlice(delim byte) (line []byte, err error) {
+	return p.Buf.ReadSlice(delim)
+}
+
+// Reset reset's the profiler's resources.
+func (p *TempFileProc) Reset() error {
+	_, err := p.File.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return &ResetError{err}
+	}
+	p.Buf.Reset(p.File)
+	return nil
 }
 
 // Remove removes the temp dir and temp file.
-func (t *TempFileProc) Remove() error {
+func (p *TempFileProc) Remove() error {
 	// only remove the directory if it is a subdir of the default temp dir.
-	if t.Dir != os.TempDir() {
-		os.RemoveAll(t.Dir)
+	if p.Dir != os.TempDir() {
+		os.RemoveAll(p.Dir)
 	}
 	// otherwise just remove the file
-	return os.RemoveAll(t.FullPath())
+	return os.RemoveAll(p.FullPath())
 }
