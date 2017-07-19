@@ -191,6 +191,9 @@ func ValidateI75600uCPUInfo(inf *cpuinfo.CPUInfo) error {
 		if len(cpu.PowerManagement) != 0 {
 			return fmt.Errorf("%d: power management: got %d; wanted 0", i, len(cpu.PowerManagement))
 		}
+		if len(cpu.AddressSizes) != 2 {
+			return fmt.Errorf("%d: address sizes: got %d; want 2", i, len(cpu.AddressSizes))
+		}
 	}
 	return nil
 }

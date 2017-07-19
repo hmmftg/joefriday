@@ -224,12 +224,21 @@ func (rcv *CPU) CacheAlignment() []byte {
 	return nil
 }
 
-func (rcv *CPU) AddressSizes() []byte {
+func (rcv *CPU) AddressSizes(j int) []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(52))
 	if o != 0 {
-		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+		a := rcv._tab.Vector(o)
+		return rcv._tab.ByteVector(a + flatbuffers.UOffsetT(j * 4))
 	}
 	return nil
+}
+
+func (rcv *CPU) AddressSizesLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(52))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
 }
 
 func (rcv *CPU) PowerManagement(j int) []byte {
@@ -287,6 +296,8 @@ func CPUAddBogoMIPS(builder *flatbuffers.Builder, BogoMIPS float32) { builder.Pr
 func CPUAddCLFlushSize(builder *flatbuffers.Builder, CLFlushSize flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(22, flatbuffers.UOffsetT(CLFlushSize), 0) }
 func CPUAddCacheAlignment(builder *flatbuffers.Builder, CacheAlignment flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(23, flatbuffers.UOffsetT(CacheAlignment), 0) }
 func CPUAddAddressSizes(builder *flatbuffers.Builder, AddressSizes flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(24, flatbuffers.UOffsetT(AddressSizes), 0) }
+func CPUStartAddressSizesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
+}
 func CPUAddPowerManagement(builder *flatbuffers.Builder, PowerManagement flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(25, flatbuffers.UOffsetT(PowerManagement), 0) }
 func CPUStartPowerManagementVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }

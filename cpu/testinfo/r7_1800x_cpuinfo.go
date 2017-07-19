@@ -518,7 +518,10 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 			return fmt.Errorf("%d: tlb size: got %q; want %q", i, cpu.TLBSize, tlbSize)
 		}
 		if len(cpu.PowerManagement) != 7 {
-			return fmt.Errorf("%d: power management: got %d; want 7", len(cpu.PowerManagement))
+			return fmt.Errorf("%d: power management: got %d; want 7", i, len(cpu.PowerManagement))
+		}
+		if len(cpu.AddressSizes) != 2 {
+			return fmt.Errorf("%d: address sizes: got %d; want 2", i, len(cpu.AddressSizes))
 		}
 	}
 	return nil

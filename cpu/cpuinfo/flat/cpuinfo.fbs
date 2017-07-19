@@ -31,7 +31,7 @@ table CPU {
 	BogoMIPS:float;
 	CLFlushSize:string;
 	CacheAlignment:string;
-	AddressSizes:string;
+	AddressSizes:[string];
 	PowerManagement:[string];
 	TLBSize:string;
 }

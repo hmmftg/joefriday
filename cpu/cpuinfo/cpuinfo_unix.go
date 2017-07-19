@@ -61,7 +61,7 @@ type CPU struct {
 	Bugs            []string `json:"bugs"`
 	CLFlushSize     string   `json:"clflush_size"`
 	CacheAlignment  string   `json:"cache_alignment"`
-	AddressSizes    string   `json:"address_sizes"`
+	AddressSizes    []string   `json:"address_sizes"`
 	PowerManagement []string   `json:"power_management"`
 	TLBSize         string   `json:"tlb_size"`
 }
@@ -134,7 +134,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 		if v == 'a' {
 			v = prof.Val[1]
 			if v == 'd' { // address sizes
-				cpu.AddressSizes = string(prof.Val[nameLen:])
+				cpu.AddressSizes = strings.Split(string(prof.Val[nameLen:]), ", ")
 				continue
 			}
 			if v == 'p' { // apicid

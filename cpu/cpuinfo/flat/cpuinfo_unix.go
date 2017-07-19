@@ -110,7 +110,6 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	wp := p.Builder.CreateString(cpu.WP)
 	clFlushSize := p.Builder.CreateString(cpu.CLFlushSize)
 	cacheAlignment := p.Builder.CreateString(cpu.CacheAlignment)
-	addressSize := p.Builder.CreateString(cpu.AddressSizes)
 	tlbSize := p.Builder.CreateString(cpu.TLBSize)
 	uoffs := make([]fb.UOffsetT, len(cpu.Flags))
 	for i, flag := range cpu.Flags {
@@ -131,6 +130,17 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	bugs := p.Builder.EndVector(len(uoffs))
+	
+	uoffs = make([]fb.UOffsetT, len(cpu.AddressSizes))
+	for i, addr := range cpu.AddressSizes {
+		uoffs[i] = p.Builder.CreateString(addr)
+	}
+	structs.CPUStartAddressSizesVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
+	}
+	addressSizes := p.Builder.EndVector(len(uoffs))
+	
 	uoffs = make([]fb.UOffsetT, len(cpu.PowerManagement))
 	for i, pm := range cpu.PowerManagement {
 		uoffs[i] = p.Builder.CreateString(pm)
@@ -165,7 +175,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	structs.CPUAddBugs(p.Builder, bugs)
 	structs.CPUAddCLFlushSize(p.Builder, clFlushSize)
 	structs.CPUAddCacheAlignment(p.Builder, cacheAlignment)
-	structs.CPUAddAddressSizes(p.Builder, addressSize)
+	structs.CPUAddAddressSizes(p.Builder, addressSizes)
 	structs.CPUAddPowerManagement(p.Builder, powerManagement)
 	structs.CPUAddTLBSize(p.Builder, tlbSize)
 	return structs.CPUEnd(p.Builder)
@@ -223,7 +233,10 @@ func Deserialize(p []byte) *info.CPUInfo {
 		cpu.BogoMIPS = fCPU.BogoMIPS()
 		cpu.CLFlushSize = string(fCPU.CLFlushSize())
 		cpu.CacheAlignment = string(fCPU.CacheAlignment())
-		cpu.AddressSizes = string(fCPU.AddressSizes())
+		cpu.AddressSizes = make([]string, fCPU.AddressSizesLength())
+		for i := 0; i < len(cpu.AddressSizes); i++ {
+			cpu.AddressSizes[i] = string(fCPU.AddressSizes(i))
+		}
 		cpu.PowerManagement = make([]string, fCPU.PowerManagementLength())
 		for i := 0; i < len(cpu.PowerManagement); i++ {
 			cpu.PowerManagement[i] = string(fCPU.PowerManagement(i))
