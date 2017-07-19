@@ -112,6 +112,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	cacheAlignment := p.Builder.CreateString(cpu.CacheAlignment)
 	addressSize := p.Builder.CreateString(cpu.AddressSizes)
 	powerManagement := p.Builder.CreateString(cpu.PowerManagement)
+	tlbSize := p.Builder.CreateString(cpu.TLBSize)
 	uoffs := make([]fb.UOffsetT, len(cpu.Flags))
 	for i, flag := range cpu.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
@@ -158,7 +159,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	structs.CPUAddCacheAlignment(p.Builder, cacheAlignment)
 	structs.CPUAddAddressSizes(p.Builder, addressSize)
 	structs.CPUAddPowerManagement(p.Builder, powerManagement)
-	structs.CPUAddTLBSize(p.Builder, cpu.TLBSize)
+	structs.CPUAddTLBSize(p.Builder, tlbSize)
 	return structs.CPUEnd(p.Builder)
 }
 

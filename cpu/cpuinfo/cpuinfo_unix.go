@@ -16,6 +16,9 @@
 package cpuinfo
 
 import (
+	"fmt"
+	"os"
+	
 	"io"
 	"strconv"
 	"strings"
@@ -281,8 +284,9 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			}
 			if prof.Val[1] == 'u' { // bugs
 				cpu.Bugs = strings.Split(string(prof.Val[nameLen:]), " ")
-				continue
+				fmt.Fprintf(os.Stderr, "%#v\n", cpu.Bugs)
 			}
+			continue
 		}
 		if v == 'i' { // initial apicid
 			n, err = helpers.ParseUint(prof.Val[nameLen:])
