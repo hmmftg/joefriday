@@ -188,8 +188,8 @@ func ValidateI75600uCPUInfo(inf *cpuinfo.CPUInfo) error {
 		if cpu.CacheAlignment != "64" {
 			return fmt.Errorf("%d: cache alignment size: got %q; want 64", i, cpu.CacheAlignment)
 		} 
-		if cpu.PowerManagement != "" {
-			return fmt.Errorf("%d: power management: got %q; wanted an empty string", i, cpu.PowerManagement)
+		if len(cpu.PowerManagement) != 0 {
+			return fmt.Errorf("%d: power management: got %d; wanted 0", i, len(cpu.PowerManagement))
 		}
 	}
 	return nil

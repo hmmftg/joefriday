@@ -32,7 +32,7 @@ table CPU {
 	CLFlushSize:string;
 	CacheAlignment:string;
 	AddressSizes:string;
-	PowerManagement:string;
+	PowerManagement:[string];
 	TLBSize:string;
 }
 

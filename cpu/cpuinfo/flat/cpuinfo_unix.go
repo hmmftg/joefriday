@@ -111,7 +111,6 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	clFlushSize := p.Builder.CreateString(cpu.CLFlushSize)
 	cacheAlignment := p.Builder.CreateString(cpu.CacheAlignment)
 	addressSize := p.Builder.CreateString(cpu.AddressSizes)
-	powerManagement := p.Builder.CreateString(cpu.PowerManagement)
 	tlbSize := p.Builder.CreateString(cpu.TLBSize)
 	uoffs := make([]fb.UOffsetT, len(cpu.Flags))
 	for i, flag := range cpu.Flags {
@@ -132,6 +131,15 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	bugs := p.Builder.EndVector(len(uoffs))
+	uoffs = make([]fb.UOffsetT, len(cpu.PowerManagement))
+	for i, pm := range cpu.PowerManagement {
+		uoffs[i] = p.Builder.CreateString(pm)
+	}
+	structs.CPUStartPowerManagementVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
+	}
+	powerManagement := p.Builder.EndVector(len(uoffs))
 	structs.CPUStart(p.Builder)
 	structs.CPUAddProcessor(p.Builder, cpu.Processor)
 	structs.CPUAddVendorID(p.Builder, vendorID)
@@ -216,8 +224,15 @@ func Deserialize(p []byte) *info.CPUInfo {
 		cpu.CLFlushSize = string(fCPU.CLFlushSize())
 		cpu.CacheAlignment = string(fCPU.CacheAlignment())
 		cpu.AddressSizes = string(fCPU.AddressSizes())
-		cpu.PowerManagement = string(fCPU.PowerManagement())
+		cpu.PowerManagement = make([]string, fCPU.PowerManagementLength())
+		for i := 0; i < len(cpu.PowerManagement); i++ {
+			cpu.PowerManagement[i] = string(fCPU.PowerManagement(i))
+		}
 		cpu.TLBSize = string(fCPU.TLBSize())
+		cpu.Bugs = make([]string, fCPU.BugsLength())
+		for i := 0; i < len(cpu.Bugs); i++ {
+			cpu.Bugs[i] = string(fCPU.Bugs(i))
+		}
 		inf.CPU = append(inf.CPU, cpu)
 	}
 	return inf

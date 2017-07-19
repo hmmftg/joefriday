@@ -16,9 +16,6 @@
 package cpuinfo
 
 import (
-	"fmt"
-	"os"
-	
 	"io"
 	"strconv"
 	"strings"
@@ -65,7 +62,7 @@ type CPU struct {
 	CLFlushSize     string   `json:"clflush_size"`
 	CacheAlignment  string   `json:"cache_alignment"`
 	AddressSizes    string   `json:"address_sizes"`
-	PowerManagement string   `json:"power_management"`
+	PowerManagement []string   `json:"power_management"`
 	TLBSize         string   `json:"tlb_size"`
 }
 
@@ -241,7 +238,11 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				continue
 			}
 			if v == 'o' { // power management
-				cpu.PowerManagement = string(prof.Val[nameLen:])
+				tmp := string(prof.Val[nameLen:])
+				if tmp == "" {
+					continue
+				}
+				cpu.PowerManagement = strings.Split(tmp, " ")
 				continue
 			}
 			// processor starts information about a processor.
@@ -284,7 +285,6 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			}
 			if prof.Val[1] == 'u' { // bugs
 				cpu.Bugs = strings.Split(string(prof.Val[nameLen:]), " ")
-				fmt.Fprintf(os.Stderr, "%#v\n", cpu.Bugs)
 			}
 			continue
 		}
