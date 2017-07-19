@@ -26,6 +26,7 @@ func TestGeti75600u(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer tProc.Remove()
 	prof, err := NewProfiler()
 	if err != nil {
 		t.Fatal(err)
@@ -50,6 +51,7 @@ func TestGetR71800x(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer tProc.Remove()
 	prof, err := NewProfiler()
 	if err != nil {
 		t.Fatal(err)
@@ -75,6 +77,7 @@ func TestSerialize(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer tProc.Remove()
 	prof, err := NewProfiler()
 	if err != nil {
 		t.Fatal(err)
