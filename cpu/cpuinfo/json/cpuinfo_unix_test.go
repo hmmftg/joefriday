@@ -46,7 +46,7 @@ func TestGeti75600u(t *testing.T) {
 	}
 }
 
-func TestGetR71800x(t *testing.T) {
+func TestGetR71800xJSON(t *testing.T) {
 	tProc, err := joefriday.NewTempFileProc("amd", "r71800x", testinfo.R71800xCPUInfo)
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +69,7 @@ func TestGetR71800x(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(inf)
+	t.Log(info)
 }
 
 func BenchmarkGet(b *testing.B) {

@@ -466,52 +466,52 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 	
 	for i, cpu := range inf.CPU {
 		if cpu.VendorID != "AuthenticAMD" {
-			fmt.Errorf("%d: VendorID: got %q; want \"AuthenticAMD\"", i, cpu.VendorID)
+			return fmt.Errorf("%d: VendorID: got %q; want \"AuthenticAMD\"", i, cpu.VendorID)
 		}
 		if cpu.CPUFamily != "23" {
-			fmt.Errorf("%d: CPUFamily: got %q; want \"23\"", i, cpu.CPUFamily)
+			return fmt.Errorf("%d: CPUFamily: got %q; want \"23\"", i, cpu.CPUFamily)
 		}
 		if cpu.Model != "1" {
-			fmt.Errorf("%d: Model: got %q; want \"1\"", i, cpu.Model)
+			return fmt.Errorf("%d: Model: got %q; want \"1\"", i, cpu.Model)
 		}
 		if cpu.ModelName != "AMD Ryzen 7 1800X Eight-Core Processor" {
-			fmt.Errorf("%d: ModelName: got %q; want \"AMD Ryzen 7 1800X Eight-Core Processor\"", i, cpu.ModelName)
+			return fmt.Errorf("%d: ModelName: got %q; want \"AMD Ryzen 7 1800X Eight-Core Processor\"", i, cpu.ModelName)
 		}
 		if cpu.Stepping != "1" {
-			fmt.Errorf("%d: Stepping: got %q; want \"1\"", i, cpu.Stepping)
+			return fmt.Errorf("%d: Stepping: got %q; want \"1\"", i, cpu.Stepping)
 		}
 		if cpu.Microcode != "0x800111c" {
-			fmt.Errorf("%d: MicroCode: got %q; want \"0x800111c\"", i, cpu.Microcode)
+			return fmt.Errorf("%d: MicroCode: got %q; want \"0x800111c\"", i, cpu.Microcode)
 		}
 		if int(cpu.CPUMHz) != 2200 {
-			fmt.Errorf("%d: CPUMHz: got %d; want 2200", i, int(cpu.CPUMHz))
+			return fmt.Errorf("%d: CPUMHz: got %d; want 2200", i, int(cpu.CPUMHz))
 		}
 		if cpu.CacheSize != "512 KB" {
-			fmt.Errorf("%d: CacheSize: got %q; want \"512 KB\"", cpu.CacheSize)
+			return fmt.Errorf("%d: CacheSize: got %q; want \"512 KB\"", cpu.CacheSize)
 		}
 		if cpu.Siblings != 16 {
-			fmt.Errorf("%d: Siblings: got %d; want 16", cpu.Siblings)
+			return fmt.Errorf("%d: Siblings: got %d; want 16", cpu.Siblings)
 		}
 		if cpu.CPUCores != 8 {
-			fmt.Errorf("%d: CPUCores: got %d; want 8", i, cpu.CPUCores)
+			return fmt.Errorf("%d: CPUCores: got %d; want 8", i, cpu.CPUCores)
 		}
 		if cpu.FPU != "yes" {
-			fmt.Errorf("%d: FPU: got %q; want \"yes\"", i, cpu.FPU)
+			return fmt.Errorf("%d: FPU: got %q; want \"yes\"", i, cpu.FPU)
 		}
 		if cpu.FPUException != "yes" {
-			fmt.Errorf("%d: FPUException: got %q; want \"yes\"", i, cpu.FPUException)
+			return fmt.Errorf("%d: FPUException: got %q; want \"yes\"", i, cpu.FPUException)
 		}
 		if cpu.CPUIDLevel != "13" {
-			fmt.Errorf("%d: CPUIDLevel: got %q; want \"13\"", i, cpu.CPUIDLevel)
+			return fmt.Errorf("%d: CPUIDLevel: got %q; want \"13\"", i, cpu.CPUIDLevel)
 		}
 		if cpu.WP != "yes" {
-			fmt.Errorf("%d: WP: got %q; want \"yes\"", i, cpu.WP)
+			return fmt.Errorf("%d: WP: got %q; want \"yes\"", i, cpu.WP)
 		}
 		if len(cpu.Flags) != 103 {
-			fmt.Errorf("%d: Flags: got %q; want 103", i, len(cpu.Flags))
+			return fmt.Errorf("%d: Flags: got %q; want 103", i, len(cpu.Flags))
 		}
 		if len(cpu.Bugs) != 3 {
-			fmt.Errorf("%d: Bugs: got %d; want 3", i, len(cpu.Bugs))
+			return fmt.Errorf("%d: Bugs: got %d; want 3", i, len(cpu.Bugs))
 		}
 	}
 	return nil
