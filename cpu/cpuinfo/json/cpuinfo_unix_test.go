@@ -16,7 +16,7 @@ package cpuinfo
 import (
 	"testing"
 
-	info "github.com/mohae/joefriday/cpu/cpuinfo"
+	"github.com/mohae/joefriday/cpu/cpuinfo"
 	"github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/cpu/testinfo"
 )
@@ -33,19 +33,41 @@ func TestGeti75600u(t *testing.T) {
 	prof.Profiler.Procer = tProc
 	inf, err := prof.Get()
 	if err != nil {
-		t.Errorf("got %s, want nil", err)
-		return
+		t.Errorf("unexpected error: %s", err)
 	}
-	infS, err := Unmarshal(inf)
+	info, err := Unmarshal(inf)
 	if err != nil {
-		t.Errorf("got %s, want nil", err)
-		return
+		t.Errorf("unexpected error: %s", err)
 	}
-	err = testinfo.ValidateI75600uCPUInfo(infS)
+	err = testinfo.ValidateI75600uCPUInfo(info)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Logf("%#v\n", infS)
+}
+
+func TestGetR71800x(t *testing.T) {
+	tProc, err := joefriday.NewTempFileProc("amd", "r71800x", testinfo.R71800xCPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof, err := NewProfiler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof.Procer = tProc
+	inf, err := prof.Get()	
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	info, err := Unmarshal(inf)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	err = testinfo.ValidateR71800xCPUInfo(info)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(inf)
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -84,7 +106,7 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var inf *info.CPUInfo
+	var inf *cpuinfo.CPUInfo
 	b.StopTimer()
 	p, _ := NewProfiler()
 	infB, _ := p.Get()
@@ -96,7 +118,7 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var inf *info.CPUInfo
+	var inf *cpuinfo.CPUInfo
 	b.StartTimer()
 	p, _ := NewProfiler()
 	infB, _ := p.Get()

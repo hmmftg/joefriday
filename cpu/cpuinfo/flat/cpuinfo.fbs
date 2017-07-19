@@ -27,6 +27,7 @@ table CPU {
 	CPUIDLevel:string;
 	WP:string;
 	Flags:[string];
+	Bugs:[string];
 	BogoMIPS:float;
 	CLFlushSize:string;
 	CacheAlignment:string;

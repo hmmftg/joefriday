@@ -58,6 +58,7 @@ type CPU struct {
 	WP              string   `json:"wp"`
 	Flags           []string `json:"flags"`
 	BogoMIPS        float32  `json:"bogomips"`
+	Bugs            []string `json:"bugs"`
 	CLFlushSize     string   `json:"clflush_size"`
 	CacheAlignment  string   `json:"cache_alignment"`
 	AddressSizes    string   `json:"address_sizes"`
@@ -268,14 +269,19 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			}
 			continue
 		}
-		// also check 2nd name pos for o as some output also have a bugs line.
-		if v == 'b' && prof.Val[1] == 'o' { // bogomips
-			f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
-			if err != nil {
-				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+		if v == 'b' {
+			if prof.Val[1] == 'o' { // bogomips
+				f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
+				if err != nil {
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}
+				cpu.BogoMIPS = float32(f)
+				continue
 			}
-			cpu.BogoMIPS = float32(f)
-			continue
+			if prof.Val[1] == 'u' { // bugs
+				cpu.Bugs = strings.Split(string(prof.Val[nameLen:]), " ")
+				continue
+			}
 		}
 		if v == 'i' { // initial apicid
 			n, err = helpers.ParseUint(prof.Val[nameLen:])

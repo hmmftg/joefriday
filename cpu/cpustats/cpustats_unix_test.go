@@ -16,6 +16,7 @@ package cpustats
 import (
 	"testing"
 	"time"
+
 )
 
 func TestClkTck(t *testing.T) {

@@ -41,3 +41,25 @@ func TestGeti75600u(t *testing.T) {
 	}
 	t.Logf("%#v", inf)
 }
+
+
+func TestGetR71800x(t *testing.T) {
+	tProc, err := joefriday.NewTempFileProc("amd", "r71800x", testinfo.R71800xCPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof, err := cpuinfo.NewProfiler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof.Procer = tProc
+	inf, err := prof.Get()	
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	err = testinfo.ValidateR71800xCPUInfo(inf)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(inf)
+}

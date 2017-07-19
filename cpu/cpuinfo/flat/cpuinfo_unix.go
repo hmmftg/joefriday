@@ -121,6 +121,16 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	flags := p.Builder.EndVector(len(uoffs))
+	
+	uoffs = make([]fb.UOffsetT, len(cpu.Bugs))
+	for i, bug := range cpu.Bugs {
+		uoffs[i] = p.Builder.CreateString(bug)
+	}
+	structs.CPUStartBugsVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
+	}
+	bugs := p.Builder.EndVector(len(uoffs))
 	structs.CPUStart(p.Builder)
 	structs.CPUAddProcessor(p.Builder, cpu.Processor)
 	structs.CPUAddVendorID(p.Builder, vendorID)
@@ -141,12 +151,13 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	structs.CPUAddFPUException(p.Builder, fpuException)
 	structs.CPUAddCPUIDLevel(p.Builder, cpuIDLevel)
 	structs.CPUAddWP(p.Builder, wp)
+	structs.CPUAddFlags(p.Builder, flags)
 	structs.CPUAddBogoMIPS(p.Builder, cpu.BogoMIPS)
+	structs.CPUAddBugs(p.Builder, bugs)
 	structs.CPUAddCLFlushSize(p.Builder, clFlushSize)
 	structs.CPUAddCacheAlignment(p.Builder, cacheAlignment)
 	structs.CPUAddAddressSizes(p.Builder, addressSize)
 	structs.CPUAddPowerManagement(p.Builder, powerManagement)
-	structs.CPUAddFlags(p.Builder, flags)
 	return structs.CPUEnd(p.Builder)
 }
 
