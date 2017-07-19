@@ -63,6 +63,7 @@ type CPU struct {
 	CacheAlignment  string   `json:"cache_alignment"`
 	AddressSizes    string   `json:"address_sizes"`
 	PowerManagement string   `json:"power_management"`
+	TLBSize         string   `json:"tlb_size"`
 }
 
 // Profiler is used to process the /proc/cpuinfo file.
@@ -297,6 +298,9 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 		}
 		if v == 'v' { // vendor_id
 			cpu.VendorID = string(prof.Val[nameLen:])
+		}
+		if v == 'T' { //tlb size
+			cpu.TLBSize = string(prof.Val[nameLen:])
 		}
 	}
 	// append the current processor informatin

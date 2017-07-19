@@ -33,6 +33,7 @@ table CPU {
 	CacheAlignment:string;
 	AddressSizes:string;
 	PowerManagement:string;
+	TLBSize:string;
 }
 
 root_type CPUInfo;

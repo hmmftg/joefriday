@@ -513,6 +513,10 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 		if len(cpu.Bugs) != 3 {
 			return fmt.Errorf("%d: Bugs: got %d; want 3", i, len(cpu.Bugs))
 		}
+		tlbSize := "2560 4K pages"
+		if cpu.TLBSize != tlbSize {
+			return fmt.Errorf("%d: tlb size: got %q; want %q", i, cpu.TLBSize, tlbSize)
+		}
 	}
 	return nil
 }

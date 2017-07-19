@@ -158,6 +158,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	structs.CPUAddCacheAlignment(p.Builder, cacheAlignment)
 	structs.CPUAddAddressSizes(p.Builder, addressSize)
 	structs.CPUAddPowerManagement(p.Builder, powerManagement)
+	structs.CPUAddTLBSize(p.Builder, cpu.TLBSize)
 	return structs.CPUEnd(p.Builder)
 }
 
@@ -215,6 +216,7 @@ func Deserialize(p []byte) *info.CPUInfo {
 		cpu.CacheAlignment = string(fCPU.CacheAlignment())
 		cpu.AddressSizes = string(fCPU.AddressSizes())
 		cpu.PowerManagement = string(fCPU.PowerManagement())
+		cpu.TLBSize = string(fCPU.TLBSize())
 		inf.CPU = append(inf.CPU, cpu)
 	}
 	return inf
