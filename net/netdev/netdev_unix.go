@@ -37,7 +37,7 @@ type Profiler struct {
 
 // Returns an initialized Profiler; ready to use.
 func NewProfiler() (prof *Profiler, err error) {
-	proc, err := joe.New(ProcFile)
+	proc, err := joe.NewProc(ProcFile)
 	if err != nil {
 		return nil, err
 	}

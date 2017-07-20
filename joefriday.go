@@ -118,8 +118,8 @@ type Proc struct {
 	Buf  *bufio.Reader
 }
 
-// Creats a Proc using the file handle.
-func New(fname string) (*Proc, error) {
+// NewProc Creates a Proc using the file handle.
+func NewProc(fname string) (*Proc, error) {
 	f, err := os.Open(fname)
 	if err != nil {
 		return nil, err
@@ -250,7 +250,7 @@ func NewTempFileProc(prefix, name string, data []byte) (proc *TempFileProc, err 
 		return nil, err
 	}
 
-	t.Proc, err = New(t.FullPath())
+	t.Proc, err = NewProc(t.FullPath())
 	if err != nil {
 		return nil, err
 	}
