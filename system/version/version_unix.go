@@ -38,7 +38,8 @@ type Kernel struct {
 
 // Profiler processes the version information, /proc/version.
 type Profiler struct {
-	*joe.Proc
+	joe.Procer
+	*joe.Buffer
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -47,7 +48,13 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: proc}, nil
+		return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
+}
+
+// Reset resources: after reset, the profiler is ready to be used again.
+func (prof *Profiler) Reset() error {
+	prof.Buffer.Reset()
+	return prof.Procer.Reset()
 }
 
 // Get gets the kernel information from the /proc/version file.
@@ -63,7 +70,7 @@ func (prof *Profiler) Get() (k *Kernel, err error) {
 	// This will always be linux, I think.
 	k = &Kernel{OS: "linux"}
 	for {
-		prof.Line, err = prof.Buf.ReadSlice('\n')
+		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break

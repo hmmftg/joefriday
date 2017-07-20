@@ -34,7 +34,8 @@ type Uptime struct {
 
 // Profiler processes uptime information, /proc/uptime.
 type Profiler struct {
-	*joe.Proc
+	joe.Procer
+	*joe.Buffer
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -43,7 +44,13 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: proc}, nil
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
+}
+
+// Reset resources: after reset, the profiler is ready to be used again.
+func (prof *Profiler) Reset() error {
+	prof.Buffer.Reset()
+	return prof.Procer.Reset()
 }
 
 // Get gets the current uptime, /proc/uptime.
@@ -56,7 +63,7 @@ func (prof *Profiler) Get() (u Uptime, err error) {
 	var v byte
 	u.Timestamp = time.Now().UTC().UnixNano()
 	for {
-		prof.Line, err = prof.Buf.ReadSlice('\n')
+		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
