@@ -194,7 +194,7 @@ func (t *Ticker) Run() {
 			cur.CPU = cur.CPU[:0]
 			// read each line until eof
 			for {
-				t.Line, err = t.Buf.ReadSlice('\n')
+				t.Line, err = t.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
 						break
