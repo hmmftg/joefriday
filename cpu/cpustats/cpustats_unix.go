@@ -87,7 +87,8 @@ type CPU struct {
 
 // Profiler is used to process the /proc/stats file.
 type Profiler struct {
-	*joe.Proc
+	joe.Procer
+	*joe.Buffer
 	ClkTck int16
 }
 
@@ -104,7 +105,13 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: proc, ClkTck: int16(atomic.LoadInt32(&CLK_TCK))}, nil
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer(), ClkTck: int16(atomic.LoadInt32(&CLK_TCK))}, nil
+}
+
+// Reset resources: after reset, the profiler is ready to be used again.
+func (prof *Profiler) Reset() error {
+	prof.Buffer.Reset()
+	return prof.Procer.Reset()
 }
 
 // Get returns information about current kernel activity.
@@ -124,7 +131,7 @@ func (prof *Profiler) Get() (stats *CPUStats, err error) {
 
 	// read each line until eof
 	for {
-		prof.Line, err = prof.Buf.ReadSlice('\n')
+		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
