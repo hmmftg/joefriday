@@ -30,7 +30,8 @@ const procFile = "/proc/diskstats"
 
 // Profiler is used to process the /proc/diskstats file.
 type Profiler struct {
-	*joe.Proc
+	joe.Procer
+	*joe.Buffer
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -39,7 +40,13 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: proc}, nil
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
+}
+
+// Reset resources: after reset, the profiler is ready to be used again.
+func (prof *Profiler) Reset() error {
+	prof.Buffer.Reset()
+	return prof.Procer.Reset()
 }
 
 // Get returns information about current IO statistics of the block devices.
@@ -59,7 +66,7 @@ func (prof *Profiler) Get() (stats *structs.DiskStats, err error) {
 
 	// read each line until eof
 	for {
-		prof.Line, err = prof.Buf.ReadSlice('\n')
+		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
