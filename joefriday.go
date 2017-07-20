@@ -287,3 +287,20 @@ func (p *TempFileProc) Remove() error {
 	// otherwise just remove the file
 	return os.RemoveAll(p.FullPath())
 }
+
+// Buffer is used to hold lines and values being processed.
+type Buffer struct {
+	Line []byte
+	Val []byte
+}
+
+// NewBuffer returns an initialized Buffer.
+func NewBuffer() *Buffer {
+	return &Buffer{Line: []byte{}, Val: make([]byte, 0, 32)}
+}
+
+// Reset resets the Buffer's slices len to 0 so that they can be re-used.
+func (b *Buffer) Reset() {
+	b.Line = b.Line[:0]
+	b.Val = b.Val[:0]
+}
