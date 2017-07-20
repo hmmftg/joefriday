@@ -69,8 +69,7 @@ type CPU struct {
 // Profiler is used to process the /proc/cpuinfo file.
 type Profiler struct {
 	joe.Procer
-	Line []byte
-	Val []byte
+	*joe.Buffer
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -79,12 +78,12 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Procer: proc, Val: make([]byte, 0, 32)}, nil
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
 }
 
 // Reset resources; after reset the profiler is ready to be used again.
 func (prof *Profiler) Reset() error {
-	prof.Val = prof.Val[:0]
+	prof.Buffer.Reset()
 	return prof.Procer.Reset()
 }
 
