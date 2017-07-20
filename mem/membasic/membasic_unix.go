@@ -43,7 +43,8 @@ type Info struct {
 // Profiler is used to get the basic memory information by processing the
 // /proc/meminfo file.
 type Profiler struct {
-	*joe.Proc
+	joe.Procer
+	*joe.Buffer
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -52,7 +53,13 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Proc: proc}, nil
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
+}
+
+// Reset resources: after reset, the profiler is ready to be used again.
+func (prof *Profiler) Reset() error {
+	prof.Buffer.Reset()
+	return prof.Procer.Reset()
 }
 
 // Get returns the current basic memory information.
@@ -70,7 +77,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 	inf.Timestamp = time.Now().UTC().UnixNano()
 	for {
 		prof.Val = prof.Val[:0]
-		prof.Line, err = prof.Buf.ReadSlice('\n')
+		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -223,7 +230,7 @@ func (t *Ticker) Run() {
 			inf.Timestamp = time.Now().UTC().UnixNano()
 			for {
 				t.Val = t.Val[:0]
-				t.Line, err = t.Buf.ReadSlice('\n')
+				t.Line, err = t.ReadSlice('\n')
 				if err != nil {
 					if err == io.EOF {
 						break
