@@ -15,9 +15,8 @@ import (
 
 func BenchmarkJoeFridayGetMemBasic(b *testing.B) {
 	var mem *basic.Info
-	b.StopTimer()
 	p, _ := basic.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mem, _ = p.Get()
 	}
@@ -26,9 +25,8 @@ func BenchmarkJoeFridayGetMemBasic(b *testing.B) {
 
 func BenchmarkJoeFridayGetMemInfo(b *testing.B) {
 	var mem *info.Info
-	b.StopTimer()
 	p, _ := info.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mem, _ = p.Get()
 	}

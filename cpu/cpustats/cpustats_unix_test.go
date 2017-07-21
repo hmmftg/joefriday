@@ -97,9 +97,8 @@ func checkStats(n string, s *CPUStats, t *testing.T) {
 var stts *CPUStats
 
 func BenchmarkGet(b *testing.B) {
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		stts, _ = p.Get()
 	}

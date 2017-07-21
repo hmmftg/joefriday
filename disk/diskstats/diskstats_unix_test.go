@@ -73,9 +73,8 @@ func checkStats(n string, s *structs.DiskStats, t *testing.T) {
 var stts *structs.DiskStats
 
 func BenchmarkGet(b *testing.B) {
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		stts, _ = p.Get()
 	}

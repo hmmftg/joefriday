@@ -79,9 +79,8 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	var inf m.MemInfo
-	b.StopTimer()
 	inf.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp = Serialize(&inf)
 	}
@@ -91,9 +90,8 @@ func BenchmarkSerialize(b *testing.B) {
 var inf *m.MemInfo
 
 func BenchmarkDeserialize(b *testing.B) {
-	b.StopTimer()
 	p, _ := Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf = Deserialize(p)
 	}

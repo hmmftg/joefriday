@@ -85,9 +85,8 @@ func checkCPUUtil(name string, u *CPUUtil, t *testing.T) {
 
 func BenchmarkCPUUtil(b *testing.B) {
 	var u *CPUUtil
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
 	}

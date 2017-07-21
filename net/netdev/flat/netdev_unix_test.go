@@ -78,9 +78,8 @@ func checkInfo(n string, inf *structs.DevInfo, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -91,10 +90,9 @@ var inf *structs.DevInfo
 
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	inf, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = Serialize(inf)
 	}
@@ -102,10 +100,9 @@ func BenchmarkSerialize(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf = Deserialize(tmp)
 	}

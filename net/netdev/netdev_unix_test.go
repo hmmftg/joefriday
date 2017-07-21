@@ -72,9 +72,8 @@ func checkInfo(n string, dev *structs.DevInfo, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var inf *structs.DevInfo
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}

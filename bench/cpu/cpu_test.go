@@ -12,9 +12,8 @@ import (
 
 func BenchmarkJoeFridayGetInfo(b *testing.B) {
 	var inf *cpuinfo.CPUInfo
-	b.StopTimer()
 	p, _ := cpuinfo.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}
@@ -23,9 +22,8 @@ func BenchmarkJoeFridayGetInfo(b *testing.B) {
 
 func BenchmarkJoeFridayGetStats(b *testing.B) {
 	var st *cpustats.CPUStats
-	b.StopTimer()
 	p, _ := cpustats.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = p.Get()
 	}

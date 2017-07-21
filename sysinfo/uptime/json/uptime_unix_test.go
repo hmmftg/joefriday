@@ -83,9 +83,8 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var u *up.Uptime
-	b.StopTimer()
 	p, _ := Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = Deserialize(p)
 	}

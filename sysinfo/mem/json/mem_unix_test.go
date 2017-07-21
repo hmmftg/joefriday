@@ -87,9 +87,8 @@ func BenchmarkGet(b *testing.B) {
 var inf *m.MemInfo
 
 func BenchmarkDeserialize(b *testing.B) {
-	b.StopTimer()
 	p, _ := Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = Deserialize(p)
 	}

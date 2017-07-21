@@ -49,12 +49,11 @@ func TestGet(t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var k *Kernel
-	b.StopTimer()
 	p, err := NewProfiler()
 	if err != nil {
 		return
 	}
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		k, _ = p.Get()
 	}

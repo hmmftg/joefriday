@@ -17,9 +17,8 @@ import (
 
 func BenchmarkJoeFridayGetVersion(b *testing.B) {
 	var fct *joeversion.Kernel
-	b.StopTimer()
 	p, _ := joeversion.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		fct, _ = p.Get()
 	}
@@ -36,9 +35,8 @@ func BenchmarkCloudFoundryGoSigarLoadAverage(b *testing.B) {
 
 func BenchmarkJoeFridayGetLoadAvg(b *testing.B) {
 	var tmp joeloadavg.LoadAvg
-	b.StopTimer()
 	p, _ := joeloadavg.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -71,9 +69,8 @@ func BenchmarkShirouGopsutilLoadMisc(b *testing.B) {
 
 func BenchmarkJoeFridayGetOS(b *testing.B) {
 	var st *joeos.OS
-	b.StopTimer()
 	p, _ := joeos.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = p.Get()
 	}
@@ -95,9 +92,8 @@ func BenchmarkDataDogGohaiplatform(b *testing.B) {
 
 func BenchmarkJoeFridayGetUptime(b *testing.B) {
 	var tmp joeuptime.Uptime
-	b.StopTimer()
 	p, _ := joeuptime.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}

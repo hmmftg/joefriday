@@ -54,9 +54,8 @@ func TestSerialize(t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -65,10 +64,9 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	proc, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = Serialize(proc)
 	}
@@ -77,10 +75,9 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var proc *procs.Processors
-	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		proc = Deserialize(tmp)
 	}

@@ -69,9 +69,8 @@ func checkUptime(n string, up u.Uptime, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -80,10 +79,9 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	k, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = Serialize(k)
 	}
@@ -92,10 +90,9 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var up u.Uptime
-	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		up = Deserialize(tmp)
 	}

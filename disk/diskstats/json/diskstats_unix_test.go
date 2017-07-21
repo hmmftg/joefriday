@@ -83,9 +83,8 @@ func checkStats(n string, s *structs.DiskStats, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
 	}
@@ -94,10 +93,9 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Serialize(v)
 	}
@@ -106,10 +104,9 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Marshal(v)
 	}
@@ -118,10 +115,9 @@ func BenchmarkMarshal(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var st *structs.DiskStats
-	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = Deserialize(tmp)
 	}
@@ -130,10 +126,9 @@ func BenchmarkDeserialize(b *testing.B) {
 
 func BenchmarkUnmarshal(b *testing.B) {
 	var st *structs.DiskStats
-	b.StartTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = Unmarshal(tmp)
 	}

@@ -19,9 +19,8 @@ const SystemGroup = "System"
 
 func BenchJoeFridayGetVersion(b *testing.B) {
 	var fct *joeversion.Kernel
-	b.StopTimer()
 	p, _ := joeversion.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		fct, _ = p.Get()
 	}
@@ -37,9 +36,8 @@ func JoeFridayGetVersion() benchutil.Bench {
 
 func BenchJoeFridayGetOS(b *testing.B) {
 	var os *joeos.OS
-	b.StopTimer()
 	p, _ := joeos.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		os, _ = p.Get()
 	}
@@ -75,9 +73,8 @@ func DataDogGohaiplatform() benchutil.Bench {
 
 func BenchJoeFridayGetLoadAvg(b *testing.B) {
 	var tmp joeloadavg.LoadAvg
-	b.StopTimer()
 	p, _ := joeloadavg.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -153,9 +150,8 @@ func ShirouGopsutilLoadMisc() benchutil.Bench {
 
 func BenchJoeFridayGetUptime(b *testing.B) {
 	var tmp joeuptime.Uptime
-	b.StopTimer()
 	p, _ := joeuptime.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}

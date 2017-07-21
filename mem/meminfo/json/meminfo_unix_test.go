@@ -150,9 +150,8 @@ func checkInfo(n string, i mem.Info, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
 	}
@@ -161,10 +160,9 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Serialize(v)
 	}
@@ -173,10 +171,9 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Marshal(v)
 	}
@@ -186,10 +183,9 @@ func BenchmarkMarshal(b *testing.B) {
 var inf *mem.Info
 
 func BenchmarkDeserialize(b *testing.B) {
-	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = Deserialize(tmp)
 	}
@@ -197,10 +193,9 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	b.StartTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = Unmarshal(tmp)
 	}

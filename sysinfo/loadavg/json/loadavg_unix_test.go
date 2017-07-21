@@ -89,9 +89,8 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var l *load.LoadAvg
-	b.StopTimer()
 	p, _ := Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		l, _ = Deserialize(p)
 	}

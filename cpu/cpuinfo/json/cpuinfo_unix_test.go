@@ -74,9 +74,8 @@ func TestGetR71800xJSON(t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
 	}
@@ -85,10 +84,9 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Serialize(v)
 	}
@@ -97,10 +95,9 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkMarshal(b *testing.B) {
 	var jsn []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	v, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Marshal(v)
 	}
@@ -109,10 +106,9 @@ func BenchmarkMarshal(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var inf *cpuinfo.CPUInfo
-	b.StopTimer()
 	p, _ := NewProfiler()
 	infB, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = Deserialize(infB)
 	}
@@ -121,10 +117,9 @@ func BenchmarkDeserialize(b *testing.B) {
 
 func BenchmarkUnmarshal(b *testing.B) {
 	var inf *cpuinfo.CPUInfo
-	b.StartTimer()
 	p, _ := NewProfiler()
 	infB, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = Unmarshal(infB)
 	}

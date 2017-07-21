@@ -81,9 +81,8 @@ func checkInfo(n string, i Info, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var inf *Info
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}

@@ -65,12 +65,11 @@ func checkUptime(n string, u Uptime, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var u Uptime
-	b.StopTimer()
 	p, err := NewProfiler()
 	if err != nil {
 		return
 	}
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
 	}

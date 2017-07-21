@@ -13,9 +13,8 @@ import (
 
 func BenchmarkJoeFridayGetDevInfo(b *testing.B) {
 	var inf *structs.DevInfo
-	b.StopTimer()
 	p, _ := netdev.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}
@@ -24,9 +23,8 @@ func BenchmarkJoeFridayGetDevInfo(b *testing.B) {
 
 func BenchmarkJoeFridayGetDevUsage(b *testing.B) {
 	var u *structs.DevUsage
-	b.StopTimer()
 	p, _ := netusage.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
 	}

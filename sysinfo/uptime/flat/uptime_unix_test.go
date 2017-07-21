@@ -76,9 +76,8 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	var u up.Uptime
-	b.StopTimer()
 	u.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp = Serialize(&u)
 	}
@@ -87,9 +86,8 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var u *up.Uptime
-	b.StopTimer()
 	p, _ := Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u = Deserialize(p)
 	}

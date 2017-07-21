@@ -128,9 +128,8 @@ func runSystemBenchmarks(bench benchutil.Benchmarker) {
 // LoadAvg
 func BenchSystemLoadAvgGet(b *testing.B) {
 	var l loadavg.LoadAvg
-	b.StopTimer()
 	p, _ := loadavg.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		l, _ = p.Get()
 	}
@@ -146,9 +145,8 @@ func SystemLoadAvgGet() benchutil.Bench {
 
 func BenchSystemLoadAvgGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := lfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -165,10 +163,9 @@ func SystemLoadAvgGetFB() benchutil.Bench {
 
 func BenchSystemLoadAvgSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := loadavg.NewProfiler()
 	l, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = lfb.Serialize(l)
 	}
@@ -185,10 +182,9 @@ func SystemLoadAvgSerializeFB() benchutil.Bench {
 
 func BenchSystemLoadAvgDeserializeFB(b *testing.B) {
 	var l loadavg.LoadAvg
-	b.StopTimer()
 	p, _ := lfb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		l = lfb.Deserialize(tmp)
 	}
@@ -205,9 +201,8 @@ func SystemLoadAvgDeserializeFB() benchutil.Bench {
 
 func BenchSystemLoadAvgGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := ljson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -224,10 +219,9 @@ func SystemLoadAvgGetJSON() benchutil.Bench {
 
 func BenchSystemLoadAvgSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := loadavg.NewProfiler()
 	l, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = ljson.Serialize(l)
 	}
@@ -244,10 +238,9 @@ func SystemLoadAvgSerializeJSON() benchutil.Bench {
 
 func BenchSystemLoadAvgDeserializeJSON(b *testing.B) {
 	var l loadavg.LoadAvg
-	b.StopTimer()
 	p, _ := ljson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		l, _ = ljson.Deserialize(tmp)
 	}
@@ -265,9 +258,8 @@ func SystemLoadAvgDeserializeJSON() benchutil.Bench {
 // OS
 func BenchSystemOSGet(b *testing.B) {
 	var o *os.OS
-	b.StopTimer()
 	p, _ := os.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		o, _ = p.Get()
 	}
@@ -283,9 +275,8 @@ func SystemOSGet() benchutil.Bench {
 
 func BenchSystemOSGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := osfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -302,10 +293,9 @@ func SystemOSGetFB() benchutil.Bench {
 
 func BenchSystemOSSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := os.NewProfiler()
 	l, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = osfb.Serialize(l)
 	}
@@ -322,10 +312,9 @@ func SystemOSSerializeFB() benchutil.Bench {
 
 func BenchSystemOSDeserializeFB(b *testing.B) {
 	var o *os.OS
-	b.StopTimer()
 	p, _ := osfb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		o = osfb.Deserialize(tmp)
 	}
@@ -342,9 +331,8 @@ func SystemOSDeserializeFB() benchutil.Bench {
 
 func BenchSystemOSGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := osjson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -361,10 +349,9 @@ func SystemOSGetJSON() benchutil.Bench {
 
 func BenchSystemOSSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := os.NewProfiler()
 	l, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = osjson.Serialize(l)
 	}
@@ -381,10 +368,9 @@ func SystemOSSerializeJSON() benchutil.Bench {
 
 func BenchSystemOSDeserializeJSON(b *testing.B) {
 	var o *os.OS
-	b.StopTimer()
 	p, _ := osjson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		o, _ = osjson.Deserialize(tmp)
 	}
@@ -402,9 +388,8 @@ func SystemOSDeserializeJSON() benchutil.Bench {
 // uptime
 func BenchSystemUptimeGet(b *testing.B) {
 	var u uptime.Uptime
-	b.StopTimer()
 	p, _ := uptime.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
 	}
@@ -420,9 +405,8 @@ func SystemUptimeGet() benchutil.Bench {
 
 func BenchSystemUptimeGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := ufb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -439,10 +423,9 @@ func SystemUptimeGetFB() benchutil.Bench {
 
 func BenchSystemUptimeSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := uptime.NewProfiler()
 	l, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = ufb.Serialize(l)
 	}
@@ -459,10 +442,9 @@ func SystemUptimeSerializeFB() benchutil.Bench {
 
 func BenchSystemUptimeDeserializeFB(b *testing.B) {
 	var u uptime.Uptime
-	b.StopTimer()
 	p, _ := ufb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u = ufb.Deserialize(tmp)
 	}
@@ -479,9 +461,8 @@ func SystemUptimeDeserializeFB() benchutil.Bench {
 
 func BenchSystemUptimeGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := ujson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -498,10 +479,9 @@ func SystemUptimeGetJSON() benchutil.Bench {
 
 func BenchSystemUptimeSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := uptime.NewProfiler()
 	u, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = ujson.Serialize(u)
 	}
@@ -518,10 +498,9 @@ func SystemUptimeSerializeJSON() benchutil.Bench {
 
 func BenchSystemUptimeDeserializeJSON(b *testing.B) {
 	var u uptime.Uptime
-	b.StopTimer()
 	p, _ := ujson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = ujson.Deserialize(tmp)
 	}
@@ -539,9 +518,8 @@ func SystemUptimeDeserializeJSON() benchutil.Bench {
 // Version
 func BenchSystemVersionGet(b *testing.B) {
 	var k *version.Kernel
-	b.StopTimer()
 	p, _ := version.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		k, _ = p.Get()
 	}
@@ -557,9 +535,8 @@ func SystemVersionGet() benchutil.Bench {
 
 func BenchSystemVersionGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := vfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -576,10 +553,9 @@ func SystemVersionGetFB() benchutil.Bench {
 
 func BenchSystemVersionSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := version.NewProfiler()
 	k, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = vfb.Serialize(k)
 	}
@@ -596,10 +572,9 @@ func SystemVersionSerializeFB() benchutil.Bench {
 
 func BenchSystemVersionDeserializeFB(b *testing.B) {
 	var k *version.Kernel
-	b.StopTimer()
 	p, _ := vfb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		k = vfb.Deserialize(tmp)
 	}
@@ -616,9 +591,8 @@ func SystemVersionDeserializeFB() benchutil.Bench {
 
 func BenchSystemVersionGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := vjson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -635,10 +609,9 @@ func SystemVersionGetJSON() benchutil.Bench {
 
 func BenchSystemVersionSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := version.NewProfiler()
 	k, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = vjson.Serialize(k)
 	}
@@ -655,10 +628,9 @@ func SystemVersionSerializeJSON() benchutil.Bench {
 
 func BenchSystemVersionDeserializeJSON(b *testing.B) {
 	var k *version.Kernel
-	b.StopTimer()
 	p, _ := vjson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		k, _ = vjson.Deserialize(tmp)
 	}

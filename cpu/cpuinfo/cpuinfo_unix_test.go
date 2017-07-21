@@ -19,9 +19,8 @@ import (
 
 func BenchmarkGet(b *testing.B) {
 	var inf *CPUInfo
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}

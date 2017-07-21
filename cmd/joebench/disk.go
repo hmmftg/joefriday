@@ -68,9 +68,8 @@ func runDiskBenchmarks(bench benchutil.Benchmarker) {
 
 func BenchDiskGetStats(b *testing.B) {
 	var stts *structs.DiskStats
-	b.StopTimer()
 	p, _ := stats.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		stts, _ = p.Get()
 	}
@@ -86,9 +85,8 @@ func DiskGetStats() benchutil.Bench {
 
 func BenchDiskGetStatsFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := sfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -105,10 +103,9 @@ func DiskGetStatsFB() benchutil.Bench {
 
 func BenchDiskStatsSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := stats.NewProfiler()
 	sts, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = sfb.Serialize(sts)
 	}
@@ -125,10 +122,9 @@ func DiskStatsSerializeFB() benchutil.Bench {
 
 func BenchDiskStatsDeserializeFB(b *testing.B) {
 	var sts *structs.DiskStats
-	b.StopTimer()
 	p, _ := sfb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sts = sfb.Deserialize(tmp)
 	}
@@ -145,9 +141,8 @@ func DiskStatsDeserializeFB() benchutil.Bench {
 
 func BenchDiskStatsGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := sjson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -164,10 +159,9 @@ func DiskGetStatsJSON() benchutil.Bench {
 
 func BenchDiskStatsSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := stats.NewProfiler()
 	sts, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = sjson.Serialize(sts)
 	}
@@ -184,10 +178,9 @@ func DiskStatsSerializeJSON() benchutil.Bench {
 
 func BenchDiskStatsDeserializeJSON(b *testing.B) {
 	var sts *structs.DiskStats
-	b.StopTimer()
 	p, _ := sjson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sts, _ = sjson.Deserialize(tmp)
 	}
@@ -205,9 +198,8 @@ func DiskStatsDeserializeJSON() benchutil.Bench {
 // Usage
 func BenchDiskGetUsage(b *testing.B) {
 	var u *structs.DiskUsage
-	b.StopTimer()
 	p, _ := usage.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
 	}
@@ -223,9 +215,8 @@ func DiskGetUsage() benchutil.Bench {
 
 func BenchDiskGetUsageFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := sfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -242,10 +233,9 @@ func DiskGetUsageFB() benchutil.Bench {
 
 func BenchDiskUsageSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := usage.NewProfiler()
 	u, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = ufb.Serialize(u)
 	}
@@ -262,10 +252,9 @@ func DiskUsageSerializeFB() benchutil.Bench {
 
 func BenchDiskUsageDeserializeFB(b *testing.B) {
 	var u *structs.DiskUsage
-	b.StopTimer()
 	p, _ := ufb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u = ufb.Deserialize(tmp)
 	}
@@ -282,9 +271,8 @@ func DiskUsageDeserializeFB() benchutil.Bench {
 
 func BenchDiskUsageGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := ujson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -301,10 +289,9 @@ func DiskGetUsageJSON() benchutil.Bench {
 
 func BenchDiskUsageSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := usage.NewProfiler()
 	u, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = ujson.Serialize(u)
 	}
@@ -321,10 +308,9 @@ func DiskUsageSerializeJSON() benchutil.Bench {
 
 func BenchDiskUsageDeserializeJSON(b *testing.B) {
 	var u *structs.DiskUsage
-	b.StopTimer()
 	p, _ := ujson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = ujson.Deserialize(tmp)
 	}

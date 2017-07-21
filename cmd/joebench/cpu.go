@@ -101,9 +101,8 @@ func runCPUBenchmarks(bench benchutil.Benchmarker) {
 
 func BenchCPUInfoGet(b *testing.B) {
 	var inf *cpuinfo.CPUInfo
-	b.StopTimer()
 	p, _ := cpuinfo.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}
@@ -119,9 +118,8 @@ func CPUInfoGet() benchutil.Bench {
 
 func BenchCPUInfoGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := infofb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -138,10 +136,9 @@ func CPUInfoGetFB() benchutil.Bench {
 
 func BenchCPUInfoSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := cpuinfo.NewProfiler()
 	fct, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = infofb.Serialize(fct)
 	}
@@ -158,10 +155,9 @@ func CPUInfoSerializeFB() benchutil.Bench {
 
 func BenchCPUInfoDeserializeFB(b *testing.B) {
 	var inf *cpuinfo.CPUInfo
-	b.StopTimer()
 	p, _ := infofb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf = infofb.Deserialize(tmp)
 	}
@@ -178,9 +174,8 @@ func CPUInfoDeserializeFB() benchutil.Bench {
 
 func BenchCPUInfoGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := infojson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -197,10 +192,9 @@ func CPUInfoGetJSON() benchutil.Bench {
 
 func BenchCPUInfoSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := infojson.NewProfiler()
 	fct, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = infojson.Serialize(fct)
 	}
@@ -217,10 +211,9 @@ func CPUInfoSerializeJSON() benchutil.Bench {
 
 func BenchCPUInfoDeserializeJSON(b *testing.B) {
 	var fct *cpuinfo.CPUInfo
-	b.StopTimer()
 	p, _ := infojson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		fct, _ = infojson.Deserialize(tmp)
 	}
@@ -238,9 +231,8 @@ func CPUInfoDeserializeJSON() benchutil.Bench {
 // Stats
 func BenchCPUStatsGet(b *testing.B) {
 	var sts *cpustats.CPUStats
-	b.StopTimer()
 	p, _ := cpustats.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sts, _ = p.Get()
 	}
@@ -256,9 +248,8 @@ func CPUStatsGet() benchutil.Bench {
 
 func BenchCPUStatsGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := statsfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -275,10 +266,9 @@ func CPUStatsGetFB() benchutil.Bench {
 
 func BenchCPUStatsSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := cpustats.NewProfiler()
 	sts, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = statsfb.Serialize(sts)
 	}
@@ -295,10 +285,9 @@ func CPUStatsSerializeFB() benchutil.Bench {
 
 func BenchCPUStatsDeserializeFB(b *testing.B) {
 	var sts *cpustats.CPUStats
-	b.StopTimer()
 	p, _ := statsfb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sts = statsfb.Deserialize(tmp)
 	}
@@ -315,9 +304,8 @@ func CPUStatsDeserializeFB() benchutil.Bench {
 
 func BenchCPUStatsGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := statsjson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -334,10 +322,9 @@ func CPUStatsGetJSON() benchutil.Bench {
 
 func BenchCPUStatsSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := cpustats.NewProfiler()
 	sts, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = statsjson.Serialize(sts)
 	}
@@ -354,10 +341,9 @@ func CPUStatsSerializeJSON() benchutil.Bench {
 
 func BenchCPUStatsDeserializeJSON(b *testing.B) {
 	var sts *cpustats.CPUStats
-	b.StopTimer()
 	p, _ := statsjson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sts, _ = statsjson.Deserialize(tmp)
 	}
@@ -375,9 +361,8 @@ func CPUStatsDeserializeJSON() benchutil.Bench {
 // Utilization
 func BenchCPUUtilGet(b *testing.B) {
 	var u *cpuutil.CPUUtil
-	b.StopTimer()
 	p, _ := cpuutil.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
 	}
@@ -393,9 +378,8 @@ func CPUUtilGet() benchutil.Bench {
 
 func BenchCPUUtilGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := utilfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -412,10 +396,9 @@ func CPUUtilGetFB() benchutil.Bench {
 
 func BenchCPUUtilSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := cpuutil.NewProfiler()
 	u, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = utilfb.Serialize(u)
 	}
@@ -432,10 +415,9 @@ func CPUUtilSerializeFB() benchutil.Bench {
 
 func BenchCPUUtilDeserializeFB(b *testing.B) {
 	var u *cpuutil.CPUUtil
-	b.StopTimer()
 	p, _ := utilfb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u = utilfb.Deserialize(tmp)
 	}
@@ -452,9 +434,8 @@ func CPUUtilDeserializeFB() benchutil.Bench {
 
 func BenchCPUUtilGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := utiljson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -471,10 +452,9 @@ func CPUUtilGetJSON() benchutil.Bench {
 
 func BenchCPUUtilSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := cpuutil.NewProfiler()
 	u, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = utiljson.Serialize(u)
 	}
@@ -491,10 +471,9 @@ func CPUUtilSerializeJSON() benchutil.Bench {
 
 func BenchCPUUtilDeserializeJSON(b *testing.B) {
 	var u *cpuutil.CPUUtil
-	b.StopTimer()
 	p, _ := utiljson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = utiljson.Deserialize(tmp)
 	}

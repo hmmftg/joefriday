@@ -78,12 +78,11 @@ func checkLoad(n string, la LoadAvg, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var la LoadAvg
-	b.StopTimer()
 	p, err := NewProfiler()
 	if err != nil {
 		return
 	}
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		la, _ = p.Get()
 	}

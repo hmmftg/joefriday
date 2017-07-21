@@ -51,9 +51,8 @@ func runMemBenchmarks(bench benchutil.Benchmarker) {
 
 func BenchMemInfoGet(b *testing.B) {
 	var inf *meminfo.Info
-	b.StopTimer()
 	p, _ := meminfo.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}
@@ -69,9 +68,8 @@ func MemInfoGet() benchutil.Bench {
 
 func BenchMemInfoGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := mfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -88,10 +86,9 @@ func MemInfoGetFB() benchutil.Bench {
 
 func BenchMemInfoSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := meminfo.NewProfiler()
 	inf, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = mfb.Serialize(inf)
 	}
@@ -108,10 +105,9 @@ func MemInfoSerializeFB() benchutil.Bench {
 
 func BenchMemInfoDeserializeFB(b *testing.B) {
 	var inf *meminfo.Info
-	b.StopTimer()
 	p, _ := mfb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf = mfb.Deserialize(tmp)
 	}
@@ -128,9 +124,8 @@ func MemInfoDeserializeFB() benchutil.Bench {
 
 func BenchMemInfoGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := mjson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -147,10 +142,9 @@ func MemInfoGetSON() benchutil.Bench {
 
 func BenchMemInfoSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := meminfo.NewProfiler()
 	sts, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = mjson.Serialize(sts)
 	}
@@ -167,10 +161,9 @@ func MemInfoSerializeJSON() benchutil.Bench {
 
 func BenchMemInfoDeserializeJSON(b *testing.B) {
 	var inf *meminfo.Info
-	b.StopTimer()
 	p, _ := mjson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = mjson.Deserialize(tmp)
 	}

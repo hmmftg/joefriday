@@ -126,10 +126,9 @@ func SysinfoLoadAvgGetFB() benchutil.Bench {
 
 func BenchSysinfoLoadAvgSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	l := &load.LoadAvg{}
 	l.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp = lfb.Serialize(l)
 	}
@@ -146,9 +145,8 @@ func SysinfoLoadAvgSerializeFB() benchutil.Bench {
 
 func BenchSysinfoLoadAvgDeserializeFB(b *testing.B) {
 	var l *load.LoadAvg
-	b.StopTimer()
 	tmp, _ := lfb.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		l = lfb.Deserialize(tmp)
 	}
@@ -181,9 +179,8 @@ func SysinfoLoadAvgGetJSON() benchutil.Bench {
 
 func BenchSysinfoLoadAvgDeserializeJSON(b *testing.B) {
 	var l *load.LoadAvg
-	b.StopTimer()
 	tmp, _ := ljson.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		l, _ = ljson.Deserialize(tmp)
 	}
@@ -232,10 +229,9 @@ func SysinfoMemInfoGetFB() benchutil.Bench {
 
 func BenchSysinfoMemInfoSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	m := &mem.MemInfo{}
 	m.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp = mfb.Serialize(m)
 	}
@@ -252,9 +248,8 @@ func SysinfoMemInfoSerializeFB() benchutil.Bench {
 
 func BenchSysinfoMemInfoDeserializeFB(b *testing.B) {
 	var m *mem.MemInfo
-	b.StopTimer()
 	tmp, _ := mfb.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		m = mfb.Deserialize(tmp)
 	}
@@ -287,9 +282,8 @@ func SysinfoMemInfoGetJSON() benchutil.Bench {
 
 func BenchSysinfoMemInfoDeserializeJSON(b *testing.B) {
 	var m *mem.MemInfo
-	b.StopTimer()
 	tmp, _ := mjson.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		m, _ = mjson.Deserialize(tmp)
 	}
@@ -338,10 +332,9 @@ func SysinfoUptimeGetFB() benchutil.Bench {
 
 func BenchSysinfoUptimeSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	u := &uptime.Uptime{}
 	u.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp = ufb.Serialize(u)
 	}
@@ -358,9 +351,8 @@ func SysinfoUptimeSerializeFB() benchutil.Bench {
 
 func BenchSysinfoUptimeDeserializeFB(b *testing.B) {
 	var u *uptime.Uptime
-	b.StopTimer()
 	tmp, _ := ufb.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u = ufb.Deserialize(tmp)
 	}
@@ -393,9 +385,8 @@ func SysinfoUptimeGetJSON() benchutil.Bench {
 
 func BenchSysinfoUptimeDeserializeJSON(b *testing.B) {
 	var u *uptime.Uptime
-	b.StopTimer()
 	tmp, _ := ujson.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = ujson.Deserialize(tmp)
 	}

@@ -77,9 +77,8 @@ func runNetBenchmarks(bench benchutil.Benchmarker) {
 
 func BenchNetDevGet(b *testing.B) {
 	var inf *structs.DevInfo
-	b.StopTimer()
 	p, _ := netdev.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = p.Get()
 	}
@@ -95,9 +94,8 @@ func NetDevGet() benchutil.Bench {
 
 func BenchNetDevGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := dfb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -114,10 +112,9 @@ func NetDevGetFB() benchutil.Bench {
 
 func BenchNetDevSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := netdev.NewProfiler()
 	inf, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = dfb.Serialize(inf)
 	}
@@ -134,10 +131,9 @@ func NetDevSerializeFB() benchutil.Bench {
 
 func BenchNetDevDeserializeFB(b *testing.B) {
 	var inf *structs.DevInfo
-	b.StopTimer()
 	p, _ := dfb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf = dfb.Deserialize(tmp)
 	}
@@ -154,9 +150,8 @@ func NetDevDeserializeFB() benchutil.Bench {
 
 func BenchNetDevGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := djson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -173,10 +168,9 @@ func NetDevGetSON() benchutil.Bench {
 
 func BenchNetDevSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := netdev.NewProfiler()
 	sts, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = djson.Serialize(sts)
 	}
@@ -193,10 +187,9 @@ func NetDevSerializeJSON() benchutil.Bench {
 
 func BenchNetDevDeserializeJSON(b *testing.B) {
 	var inf *structs.DevInfo
-	b.StopTimer()
 	p, _ := djson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf, _ = djson.Deserialize(tmp)
 	}
@@ -214,9 +207,8 @@ func NetDevDeserializeJSON() benchutil.Bench {
 // Usage
 func BenchNetUsageGet(b *testing.B) {
 	var u *structs.DevUsage
-	b.StopTimer()
 	p, _ := netusage.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = p.Get()
 	}
@@ -232,9 +224,8 @@ func NetUsageGet() benchutil.Bench {
 
 func BenchNetUsageGetFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := ufb.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -251,10 +242,9 @@ func NetUsageGetFB() benchutil.Bench {
 
 func BenchNetUsageSerializeFB(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := netusage.NewProfiler()
 	u, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = ufb.Serialize(u)
 	}
@@ -271,10 +261,9 @@ func NetUsageSerializeFB() benchutil.Bench {
 
 func BenchNetUsageDeserializeFB(b *testing.B) {
 	var u *structs.DevUsage
-	b.StopTimer()
 	p, _ := ufb.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u = ufb.Deserialize(tmp)
 	}
@@ -291,9 +280,8 @@ func NetUsageDeserializeFB() benchutil.Bench {
 
 func BenchNetUsageGetJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := ujson.NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -310,10 +298,9 @@ func NetUsageGetJSON() benchutil.Bench {
 
 func BenchNetUsageSerializeJSON(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := netusage.NewProfiler()
 	u, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = ujson.Serialize(u)
 	}
@@ -330,10 +317,9 @@ func NetUsageSerializeJSON() benchutil.Bench {
 
 func BenchNetUsageDeserializeJSON(b *testing.B) {
 	var u *structs.DevUsage
-	b.StopTimer()
 	p, _ := ujson.NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ = ujson.Deserialize(tmp)
 	}

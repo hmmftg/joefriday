@@ -82,9 +82,8 @@ func BenchmarkGet(b *testing.B) {
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
 	var l load.LoadAvg
-	b.StopTimer()
 	l.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp = Serialize(&l)
 	}
@@ -93,9 +92,8 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var l *load.LoadAvg
-	b.StopTimer()
 	p, _ := Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		l = Deserialize(p)
 	}

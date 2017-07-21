@@ -88,9 +88,8 @@ func checkInfo(n string, i basic.Info, t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
 	}
@@ -99,10 +98,9 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var tmp []byte
-	b.StopTimer()
 	p, _ := NewProfiler()
 	inf, _ := p.Profiler.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = Serialize(inf)
 	}
@@ -112,10 +110,9 @@ func BenchmarkSerialize(b *testing.B) {
 var inf *basic.Info
 
 func BenchmarkDeserialize(b *testing.B) {
-	b.StopTimer()
 	p, _ := NewProfiler()
 	tmp, _ := p.Get()
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		inf = Deserialize(tmp)
 	}
