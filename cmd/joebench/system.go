@@ -20,9 +20,9 @@ import (
 	"github.com/mohae/joefriday/system/loadavg"
 	lfb "github.com/mohae/joefriday/system/loadavg/flat"
 	ljson "github.com/mohae/joefriday/system/loadavg/json"
-	"github.com/mohae/joefriday/system/release"
-	rfb "github.com/mohae/joefriday/system/release/flat"
-	rjson "github.com/mohae/joefriday/system/release/json"
+	"github.com/mohae/joefriday/system/os"
+	osfb "github.com/mohae/joefriday/system/os/flat"
+	osjson "github.com/mohae/joefriday/system/os/json"
 	"github.com/mohae/joefriday/system/uptime"
 	ufb "github.com/mohae/joefriday/system/uptime/flat"
 	ujson "github.com/mohae/joefriday/system/uptime/json"
@@ -35,7 +35,7 @@ import (
 const (
 	SystemVersion  = "System Version"
 	SystemLoadAvg = "System LoadAvg"
-	SystemRelease = "System Release"
+	SystemOS = "System OS"
 	SystemUptime  = "System Uptime"
 )
 
@@ -61,25 +61,25 @@ func runSystemBenchmarks(bench benchutil.Benchmarker) {
 	b = SystemLoadAvgDeserializeJSON()
 	bench.Append(b)
 
-	b = SystemReleaseGet()
+	b = SystemOSGet()
 	bench.Append(b)
 
-	b = SystemReleaseGetFB()
+	b = SystemOSGetFB()
 	bench.Append(b)
 
-	b = SystemReleaseSerializeFB()
+	b = SystemOSSerializeFB()
 	bench.Append(b)
 
-	b = SystemReleaseDeserializeFB()
+	b = SystemOSDeserializeFB()
 	bench.Append(b)
 
-	b = SystemReleaseGetJSON()
+	b = SystemOSGetJSON()
 	bench.Append(b)
 
-	b = SystemReleaseSerializeJSON()
+	b = SystemOSSerializeJSON()
 	bench.Append(b)
 
-	b = SystemReleaseDeserializeJSON()
+	b = SystemOSDeserializeJSON()
 	bench.Append(b)
 
 	b = SystemUptimeGet()
@@ -262,29 +262,29 @@ func SystemLoadAvgDeserializeJSON() benchutil.Bench {
 	return bench
 }
 
-// release
-func BenchSystemReleaseGet(b *testing.B) {
-	var r *release.OS
+// OS
+func BenchSystemOSGet(b *testing.B) {
+	var o *os.OS
 	b.StopTimer()
-	p, _ := release.NewProfiler()
+	p, _ := os.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		r, _ = p.Get()
+		o, _ = p.Get()
 	}
-	_ = r
+	_ = o
 }
 
-func SystemReleaseGet() benchutil.Bench {
+func SystemOSGet() benchutil.Bench {
 	bench := benchutil.NewBench("Get")
-	bench.Group = SystemRelease
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemReleaseGet))
+	bench.Group = SystemOS
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemOSGet))
 	return bench
 }
 
-func BenchSystemReleaseGetFB(b *testing.B) {
+func BenchSystemOSGetFB(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := rfb.NewProfiler()
+	p, _ := osfb.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -292,58 +292,58 @@ func BenchSystemReleaseGetFB(b *testing.B) {
 	_ = tmp
 }
 
-func SystemReleaseGetFB() benchutil.Bench {
+func SystemOSGetFB() benchutil.Bench {
 	bench := benchutil.NewBench("flat.Get")
-	bench.Group = SystemRelease
+	bench.Group = SystemOS
 	bench.Desc = Flat
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemReleaseGetFB))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemOSGetFB))
 	return bench
 }
 
-func BenchSystemReleaseSerializeFB(b *testing.B) {
+func BenchSystemOSSerializeFB(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := release.NewProfiler()
+	p, _ := os.NewProfiler()
 	l, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = rfb.Serialize(l)
+		tmp, _ = osfb.Serialize(l)
 	}
 	_ = tmp
 }
 
-func SystemReleaseSerializeFB() benchutil.Bench {
+func SystemOSSerializeFB() benchutil.Bench {
 	bench := benchutil.NewBench("flat.Serialize")
-	bench.Group = SystemRelease
+	bench.Group = SystemOS
 	bench.Desc = Flat
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemReleaseSerializeFB))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemOSSerializeFB))
 	return bench
 }
 
-func BenchSystemReleaseDeserializeFB(b *testing.B) {
-	var r *release.OS
+func BenchSystemOSDeserializeFB(b *testing.B) {
+	var o *os.OS
 	b.StopTimer()
-	p, _ := rfb.NewProfiler()
+	p, _ := osfb.NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		r = rfb.Deserialize(tmp)
+		o = osfb.Deserialize(tmp)
 	}
-	_ = r
+	_ = o
 }
 
-func SystemReleaseDeserializeFB() benchutil.Bench {
+func SystemOSDeserializeFB() benchutil.Bench {
 	bench := benchutil.NewBench("flat.Deserialize")
-	bench.Group = SystemRelease
+	bench.Group = SystemOS
 	bench.Desc = Flat
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemReleaseDeserializeFB))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemOSDeserializeFB))
 	return bench
 }
 
-func BenchSystemReleaseGetJSON(b *testing.B) {
+func BenchSystemOSGetJSON(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := rjson.NewProfiler()
+	p, _ := osjson.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		tmp, _ = p.Get()
@@ -351,51 +351,51 @@ func BenchSystemReleaseGetJSON(b *testing.B) {
 	_ = tmp
 }
 
-func SystemReleaseGetJSON() benchutil.Bench {
+func SystemOSGetJSON() benchutil.Bench {
 	bench := benchutil.NewBench("json.Get")
-	bench.Group = SystemRelease
+	bench.Group = SystemOS
 	bench.Desc = JSON
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemReleaseGetJSON))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemOSGetJSON))
 	return bench
 }
 
-func BenchSystemReleaseSerializeJSON(b *testing.B) {
+func BenchSystemOSSerializeJSON(b *testing.B) {
 	var tmp []byte
 	b.StopTimer()
-	p, _ := release.NewProfiler()
+	p, _ := os.NewProfiler()
 	l, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tmp, _ = rjson.Serialize(l)
+		tmp, _ = osjson.Serialize(l)
 	}
 	_ = tmp
 }
 
-func SystemReleaseSerializeJSON() benchutil.Bench {
+func SystemOSSerializeJSON() benchutil.Bench {
 	bench := benchutil.NewBench("json.Serialize")
-	bench.Group = SystemRelease
+	bench.Group = SystemOS
 	bench.Desc = JSON
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemReleaseSerializeJSON))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemOSSerializeJSON))
 	return bench
 }
 
-func BenchSystemReleaseDeserializeJSON(b *testing.B) {
-	var r *release.OS
+func BenchSystemOSDeserializeJSON(b *testing.B) {
+	var o *os.OS
 	b.StopTimer()
-	p, _ := rjson.NewProfiler()
+	p, _ := osjson.NewProfiler()
 	tmp, _ := p.Get()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		r, _ = rjson.Deserialize(tmp)
+		o, _ = osjson.Deserialize(tmp)
 	}
-	_ = r
+	_ = o
 }
 
-func SystemReleaseDeserializeJSON() benchutil.Bench {
+func SystemOSDeserializeJSON() benchutil.Bench {
 	bench := benchutil.NewBench("json.Deserialize")
-	bench.Group = SystemRelease
+	bench.Group = SystemOS
 	bench.Desc = JSON
-	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemReleaseDeserializeJSON))
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchSystemOSDeserializeJSON))
 	return bench
 }
 

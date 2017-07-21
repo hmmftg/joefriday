@@ -72,7 +72,7 @@ func BenchmarkShirouGopsutilLoadMisc(b *testing.B) {
 func BenchmarkJoeFridayGetOS(b *testing.B) {
 	var st *joeos.OS
 	b.StopTimer()
-	p, _ := joerelease.NewProfiler()
+	p, _ := joeos.NewProfiler()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		st, _ = p.Get()
