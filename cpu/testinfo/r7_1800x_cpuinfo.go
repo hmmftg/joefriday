@@ -488,10 +488,10 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 			return fmt.Errorf("%d: CPUMHz: got %d; want 2200", i, int(cpu.CPUMHz))
 		}
 		if cpu.CacheSize != "512 KB" {
-			return fmt.Errorf("%d: CacheSize: got %q; want \"512 KB\"", cpu.CacheSize)
+			return fmt.Errorf("%d: CacheSize: got %q; want \"512 KB\"", i, cpu.CacheSize)
 		}
 		if cpu.Siblings != 16 {
-			return fmt.Errorf("%d: Siblings: got %d; want 16", cpu.Siblings)
+			return fmt.Errorf("%d: Siblings: got %d; want 16", i, cpu.Siblings)
 		}
 		if cpu.CPUCores != 8 {
 			return fmt.Errorf("%d: CPUCores: got %d; want 8", i, cpu.CPUCores)
@@ -513,6 +513,12 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 		}
 		if len(cpu.Bugs) != 3 {
 			return fmt.Errorf("%d: Bugs: got %d; want 3", i, len(cpu.Bugs))
+		}
+		if int(cpu.CLFlushSize) != 64 {
+			return fmt.Errorf("%d: Siblings: got %d; want 64", i, cpu.CLFlushSize)
+		}
+		if int(cpu.CacheAlignment) != 64 {
+			return fmt.Errorf("%d: Siblings: got %d; want 64", i, cpu.CacheAlignment)
 		}
 		tlbSize := "2560 4K pages"
 		if cpu.TLBSize != tlbSize {

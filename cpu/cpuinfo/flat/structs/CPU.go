@@ -208,20 +208,20 @@ func (rcv *CPU) BogoMIPS() float32 {
 	return 0.0
 }
 
-func (rcv *CPU) CLFlushSize() []byte {
+func (rcv *CPU) CLFlushSize() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(48))
 	if o != 0 {
-		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
-	return nil
+	return 0
 }
 
-func (rcv *CPU) CacheAlignment() []byte {
+func (rcv *CPU) CacheAlignment() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(50))
 	if o != 0 {
-		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
-	return nil
+	return 0
 }
 
 func (rcv *CPU) AddressSizes(j int) []byte {
@@ -293,8 +293,8 @@ func CPUAddBugs(builder *flatbuffers.Builder, Bugs flatbuffers.UOffsetT) { build
 func CPUStartBugsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func CPUAddBogoMIPS(builder *flatbuffers.Builder, BogoMIPS float32) { builder.PrependFloat32Slot(21, BogoMIPS, 0.0) }
-func CPUAddCLFlushSize(builder *flatbuffers.Builder, CLFlushSize flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(22, flatbuffers.UOffsetT(CLFlushSize), 0) }
-func CPUAddCacheAlignment(builder *flatbuffers.Builder, CacheAlignment flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(23, flatbuffers.UOffsetT(CacheAlignment), 0) }
+func CPUAddCLFlushSize(builder *flatbuffers.Builder, CLFlushSize uint16) { builder.PrependUint16Slot(22, CLFlushSize, 0) }
+func CPUAddCacheAlignment(builder *flatbuffers.Builder, CacheAlignment uint16) { builder.PrependUint16Slot(23, CacheAlignment, 0) }
 func CPUAddAddressSizes(builder *flatbuffers.Builder, AddressSizes flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(24, flatbuffers.UOffsetT(AddressSizes), 0) }
 func CPUStartAddressSizesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }

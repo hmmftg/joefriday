@@ -29,8 +29,8 @@ table CPU {
 	Flags:[string];
 	Bugs:[string];
 	BogoMIPS:float;
-	CLFlushSize:string;
-	CacheAlignment:string;
+	CLFlushSize:ushort;
+	CacheAlignment:ushort;
 	AddressSizes:[string];
 	PowerManagement:[string];
 	TLBSize:string;

@@ -59,10 +59,10 @@ type CPU struct {
 	Flags           []string `json:"flags"`
 	BogoMIPS        float32  `json:"bogomips"`
 	Bugs            []string `json:"bugs"`
-	CLFlushSize     string   `json:"clflush_size"`
-	CacheAlignment  string   `json:"cache_alignment"`
-	AddressSizes    []string   `json:"address_sizes"`
-	PowerManagement []string   `json:"power_management"`
+	CLFlushSize     uint16   `json:"clflush_size"`
+	CacheAlignment  uint16   `json:"cache_alignment"`
+	AddressSizes    []string `json:"address_sizes"`
+	PowerManagement []string `json:"power_management"`
 	TLBSize         string   `json:"tlb_size"`
 }
 
@@ -176,7 +176,12 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			}
 			v = prof.Val[5]
 			if v == '_' { // cache_alignment
-				cpu.CacheAlignment = string(prof.Val[nameLen:])
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+					if err != nil {
+						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+					}
+					
+				cpu.CacheAlignment = uint16(n)
 				continue
 			}
 			if v == ' ' { // cache size
@@ -184,7 +189,11 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				continue
 			}
 			if v == 's' { // clflush size
-				cpu.CLFlushSize = string(prof.Val[nameLen:])
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}	
+				cpu.CLFlushSize = uint16(n)
 				continue
 			}
 			if v == 'i' { // core id

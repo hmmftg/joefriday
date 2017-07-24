@@ -183,10 +183,10 @@ func ValidateI75600uCPUInfo(inf *cpuinfo.CPUInfo) error {
 		if int(cpu.BogoMIPS) < 5100 {
 			return fmt.Errorf("%d: bogomips: got %.3f; want a value >= 5100", i, cpu.BogoMIPS)
 		}
-		if cpu.CLFlushSize != "64" {
+		if int(cpu.CLFlushSize) != 64 {
 			return fmt.Errorf("%d: clflush size: got %q; want 64", i, cpu.CLFlushSize)
 		} 
-		if cpu.CacheAlignment != "64" {
+		if int(cpu.CacheAlignment) != 64 {
 			return fmt.Errorf("%d: cache alignment size: got %q; want 64", i, cpu.CacheAlignment)
 		} 
 		if len(cpu.PowerManagement) != 0 {

@@ -108,8 +108,6 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	fpuException := p.Builder.CreateString(cpu.FPUException)
 	cpuIDLevel := p.Builder.CreateString(cpu.CPUIDLevel)
 	wp := p.Builder.CreateString(cpu.WP)
-	clFlushSize := p.Builder.CreateString(cpu.CLFlushSize)
-	cacheAlignment := p.Builder.CreateString(cpu.CacheAlignment)
 	tlbSize := p.Builder.CreateString(cpu.TLBSize)
 	uoffs := make([]fb.UOffsetT, len(cpu.Flags))
 	for i, flag := range cpu.Flags {
@@ -173,8 +171,8 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 	structs.CPUAddFlags(p.Builder, flags)
 	structs.CPUAddBogoMIPS(p.Builder, cpu.BogoMIPS)
 	structs.CPUAddBugs(p.Builder, bugs)
-	structs.CPUAddCLFlushSize(p.Builder, clFlushSize)
-	structs.CPUAddCacheAlignment(p.Builder, cacheAlignment)
+	structs.CPUAddCLFlushSize(p.Builder, cpu.CLFlushSize)
+	structs.CPUAddCacheAlignment(p.Builder, cpu.CacheAlignment)
 	structs.CPUAddAddressSizes(p.Builder, addressSizes)
 	structs.CPUAddPowerManagement(p.Builder, powerManagement)
 	structs.CPUAddTLBSize(p.Builder, tlbSize)
@@ -231,8 +229,8 @@ func Deserialize(p []byte) *info.CPUInfo {
 			cpu.Flags[i] = string(fCPU.Flags(i))
 		}
 		cpu.BogoMIPS = fCPU.BogoMIPS()
-		cpu.CLFlushSize = string(fCPU.CLFlushSize())
-		cpu.CacheAlignment = string(fCPU.CacheAlignment())
+		cpu.CLFlushSize = fCPU.CLFlushSize()
+		cpu.CacheAlignment = fCPU.CacheAlignment()
 		cpu.AddressSizes = make([]string, fCPU.AddressSizesLength())
 		for i := 0; i < len(cpu.AddressSizes); i++ {
 			cpu.AddressSizes[i] = string(fCPU.AddressSizes(i))
