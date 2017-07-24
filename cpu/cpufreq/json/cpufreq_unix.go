@@ -23,7 +23,9 @@ package cpufreq
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
+	joe "github.com/mohae/joefriday"
 	freq "github.com/mohae/joefriday/cpu/cpufreq"
 )
 
@@ -110,4 +112,50 @@ func Deserialize(p []byte) (*freq.Frequency, error) {
 // Unmarshal is an alias for Deserialize using package globals.
 func Unmarshal(p []byte) (*freq.Frequency, error) {
 	return Deserialize(p)
+}
+
+// Ticker delivers the CPU Frequencies at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan []byte
+	*Profiler
+}
+
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan []byte), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	// ticker
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.C:
+			p, err := t.Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- p
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
 }

@@ -15,6 +15,7 @@ package cpufreq
 
 import (
 	"testing"
+	"time"
 
 	freq "github.com/mohae/joefriday/cpu/cpufreq"
 	"github.com/mohae/joefriday"
@@ -98,6 +99,47 @@ func TestSerialize(t *testing.T) {
 		t.Errorf("unexpected serialization error: %s", err)
 		return
 	}
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tProc, err := joefriday.NewTempFileProc("intel", "i9700u", testinfo.I75600uCPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tProc.Remove()
+	prof, err := NewProfiler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof.Procer = tProc
+	
+	tk := tkr.(*Ticker)
+	tk.Profiler = prof
+	
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			f := Deserialize(v)
+			err = testinfo.ValidateI75600uCPUFreq(f)
+			if err != nil {
+				t.Error(err)
+			}
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+	}
+	tk.Stop()
+	tk.Close()
 }
 
 func BenchmarkGet(b *testing.B) {

@@ -180,3 +180,49 @@ func Get() (f *Frequency, err error) {
 	}
 	return std.Get()
 }
+
+// Ticker delivers the CPU Frequencies at intervals.
+type Ticker struct {
+	*joe.Ticker
+	Data chan *Frequency
+	*Profiler
+}
+
+// NewTicker returns a new Ticker containing a Data channel that delivers the
+// data at intervals and an error channel that delivers any errors encountered.
+// Stop the ticker to signal the ticker to stop running. Stopping the ticker
+// does not close the Data channel; call Close to close both the ticker and the
+// data channel.
+func NewTicker(d time.Duration) (joe.Tocker, error) {
+	p, err := NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *Frequency), Profiler: p}
+	go t.Run()
+	return &t, nil
+}
+
+// Run runs the ticker.
+func (t *Ticker) Run() {
+	// ticker
+	for {
+		select {
+		case <-t.Done:
+			return
+		case <-t.C:
+			s, err := t.Get()
+			if err != nil {
+				t.Errs <- err
+				continue
+			}
+			t.Data <- s
+		}
+	}
+}
+
+// Close closes the ticker resources.
+func (t *Ticker) Close() {
+	t.Ticker.Close()
+	close(t.Data)
+}

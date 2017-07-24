@@ -15,6 +15,7 @@ package cpufreqtest
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/cpu/testinfo"
@@ -64,4 +65,43 @@ func TestGetR71800x(t *testing.T) {
 		t.Error(err)
 	}
 	t.Log(f)
+}
+
+func TestTicker(t *testing.T) {
+	tkr, err := cpufreq.NewTicker(time.Millisecond)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tProc, err := joefriday.NewTempFileProc("intel", "i9700u", testinfo.I75600uCPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tProc.Remove()
+	prof, err := cpufreq.NewProfiler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof.Procer = tProc
+	
+	tk := tkr.(*cpufreq.Ticker)
+	tk.Profiler = prof
+	for i := 0; i < 5; i++ {
+		select {
+		case <-tk.Done:
+			break
+		case v, ok := <-tk.Data:
+			if !ok {
+				break
+			}
+			err = testinfo.ValidateI75600uCPUFreq(v)
+			if err != nil {
+				t.Error(err)
+			}
+		case err := <-tk.Errs:
+			t.Errorf("unexpected error: %s", err)
+		}
+	}
+	tk.Stop()
+	tk.Close()
 }
