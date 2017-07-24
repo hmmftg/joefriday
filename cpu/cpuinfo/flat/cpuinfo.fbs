@@ -7,7 +7,7 @@ table CPUInfo {
 }
 
 table CPU {
-	Processor:short;
+	Processor:ushort;
 	VendorID:string;
 	CPUFamily:string;
 	Model:string;
@@ -16,12 +16,12 @@ table CPU {
 	Microcode:string;
 	CPUMHz:float;
 	CacheSize:string;
-	PhysicalID:short;
-	Siblings:short;
-	CoreID:short;
-	CPUCores:short;
-	APICID:short;
-	InitialAPICID:short;
+	PhysicalID:ushort;
+	Siblings:ushort;
+	CoreID:ushort;
+	CPUCores:ushort;
+	APICID:ushort;
+	InitialAPICID:ushort;
 	FPU:string;
 	FPUException:string;
 	CPUIDLevel:string;

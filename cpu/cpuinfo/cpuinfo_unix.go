@@ -37,7 +37,7 @@ type CPUInfo struct {
 
 // CPU holds the /proc/cpuinfo for a single processor.
 type CPU struct {
-	Processor       int16    `json:"processor"`
+	Processor       uint16   `json:"processor"`
 	VendorID        string   `json:"vendor_id"`
 	CPUFamily       string   `json:"cpu_family"`
 	Model           string   `json:"model"`
@@ -46,12 +46,12 @@ type CPU struct {
 	Microcode       string   `json:"microcode"`
 	CPUMHz          float32  `json:"cpu_mhz"`
 	CacheSize       string   `json:"cache_size"`
-	PhysicalID      int16    `json:"physical_id"`
-	Siblings        int16    `json:"siblings"`
-	CoreID          int16    `json:"core_id"`
-	CPUCores        int16    `json:"cpu_cores"`
-	APICID          int16    `json:"apicid"`
-	InitialAPICID   int16    `json:"initial_apicid"`
+	PhysicalID      uint16   `json:"physical_id"`
+	Siblings        uint16   `json:"siblings"`
+	CoreID          uint16   `json:"core_id"`
+	CPUCores        uint16   `json:"cpu_cores"`
+	APICID          uint16   `json:"apicid"`
+	InitialAPICID   uint16   `json:"initial_apicid"`
 	FPU             string   `json:"fpu"`
 	FPUException    string   `json:"fpu_exception"`
 	CPUIDLevel      string   `json:"cpuid_level"`
@@ -141,7 +141,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.APICID = int16(n)
+				cpu.APICID = uint16(n)
 			}
 			continue
 		}
@@ -154,7 +154,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					cpu.CPUCores = int16(n)
+					cpu.CPUCores = uint16(n)
 					continue
 				}
 				if v == 'f' { // cpu family
@@ -201,7 +201,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.CoreID = int16(n)
+				cpu.CoreID = uint16(n)
 			}
 			continue
 		}
@@ -242,7 +242,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.PhysicalID = int16(n)
+				cpu.PhysicalID = uint16(n)
 				continue
 			}
 			if v == 'o' { // power management
@@ -263,7 +263,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu = CPU{Processor: int16(n)}
+				cpu = CPU{Processor: uint16(n)}
 			}
 			continue
 		}
@@ -274,7 +274,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.Siblings = int16(n)
+				cpu.Siblings = uint16(n)
 				continue
 			}
 			if v == 't' { // stepping
@@ -301,7 +301,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			if err != nil {
 				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}
-			cpu.InitialAPICID = int16(n)
+			cpu.InitialAPICID = uint16(n)
 			continue
 		}
 		if v == 'w' { // WP

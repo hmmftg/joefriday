@@ -14,10 +14,10 @@ func (rcv *CPU) Init(buf []byte, i flatbuffers.UOffsetT) {
 	rcv._tab.Pos = i
 }
 
-func (rcv *CPU) Processor() int16 {
+func (rcv *CPU) Processor() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
 	return 0
 }
@@ -86,50 +86,50 @@ func (rcv *CPU) CacheSize() []byte {
 	return nil
 }
 
-func (rcv *CPU) PhysicalID() int16 {
+func (rcv *CPU) PhysicalID() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *CPU) Siblings() int16 {
+func (rcv *CPU) Siblings() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(24))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *CPU) CoreID() int16 {
+func (rcv *CPU) CoreID() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(26))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *CPU) CPUCores() int16 {
+func (rcv *CPU) CPUCores() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(28))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *CPU) APICID() int16 {
+func (rcv *CPU) APICID() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(30))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *CPU) InitialAPICID() int16 {
+func (rcv *CPU) InitialAPICID() uint16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(32))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetUint16(o + rcv._tab.Pos)
 	}
 	return 0
 }
@@ -267,7 +267,7 @@ func (rcv *CPU) TLBSize() []byte {
 }
 
 func CPUStart(builder *flatbuffers.Builder) { builder.StartObject(27) }
-func CPUAddProcessor(builder *flatbuffers.Builder, Processor int16) { builder.PrependInt16Slot(0, Processor, 0) }
+func CPUAddProcessor(builder *flatbuffers.Builder, Processor uint16) { builder.PrependUint16Slot(0, Processor, 0) }
 func CPUAddVendorID(builder *flatbuffers.Builder, VendorID flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(VendorID), 0) }
 func CPUAddCPUFamily(builder *flatbuffers.Builder, CPUFamily flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(CPUFamily), 0) }
 func CPUAddModel(builder *flatbuffers.Builder, Model flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(Model), 0) }
@@ -276,12 +276,12 @@ func CPUAddStepping(builder *flatbuffers.Builder, Stepping flatbuffers.UOffsetT)
 func CPUAddMicrocode(builder *flatbuffers.Builder, Microcode flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(6, flatbuffers.UOffsetT(Microcode), 0) }
 func CPUAddCPUMHz(builder *flatbuffers.Builder, CPUMHz float32) { builder.PrependFloat32Slot(7, CPUMHz, 0.0) }
 func CPUAddCacheSize(builder *flatbuffers.Builder, CacheSize flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(8, flatbuffers.UOffsetT(CacheSize), 0) }
-func CPUAddPhysicalID(builder *flatbuffers.Builder, PhysicalID int16) { builder.PrependInt16Slot(9, PhysicalID, 0) }
-func CPUAddSiblings(builder *flatbuffers.Builder, Siblings int16) { builder.PrependInt16Slot(10, Siblings, 0) }
-func CPUAddCoreID(builder *flatbuffers.Builder, CoreID int16) { builder.PrependInt16Slot(11, CoreID, 0) }
-func CPUAddCPUCores(builder *flatbuffers.Builder, CPUCores int16) { builder.PrependInt16Slot(12, CPUCores, 0) }
-func CPUAddAPICID(builder *flatbuffers.Builder, APICID int16) { builder.PrependInt16Slot(13, APICID, 0) }
-func CPUAddInitialAPICID(builder *flatbuffers.Builder, InitialAPICID int16) { builder.PrependInt16Slot(14, InitialAPICID, 0) }
+func CPUAddPhysicalID(builder *flatbuffers.Builder, PhysicalID uint16) { builder.PrependUint16Slot(9, PhysicalID, 0) }
+func CPUAddSiblings(builder *flatbuffers.Builder, Siblings uint16) { builder.PrependUint16Slot(10, Siblings, 0) }
+func CPUAddCoreID(builder *flatbuffers.Builder, CoreID uint16) { builder.PrependUint16Slot(11, CoreID, 0) }
+func CPUAddCPUCores(builder *flatbuffers.Builder, CPUCores uint16) { builder.PrependUint16Slot(12, CPUCores, 0) }
+func CPUAddAPICID(builder *flatbuffers.Builder, APICID uint16) { builder.PrependUint16Slot(13, APICID, 0) }
+func CPUAddInitialAPICID(builder *flatbuffers.Builder, InitialAPICID uint16) { builder.PrependUint16Slot(14, InitialAPICID, 0) }
 func CPUAddFPU(builder *flatbuffers.Builder, FPU flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(15, flatbuffers.UOffsetT(FPU), 0) }
 func CPUAddFPUException(builder *flatbuffers.Builder, FPUException flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(16, flatbuffers.UOffsetT(FPUException), 0) }
 func CPUAddCPUIDLevel(builder *flatbuffers.Builder, CPUIDLevel flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(17, flatbuffers.UOffsetT(CPUIDLevel), 0) }
