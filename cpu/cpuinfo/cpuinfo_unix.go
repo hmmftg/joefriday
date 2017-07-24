@@ -47,7 +47,7 @@ type CPU struct {
 	Microcode       string   `json:"microcode"`
 	CPUMHz          float32  `json:"cpu_mhz"`
 	CacheSize       string   `json:"cache_size"`
-	PhysicalID      uint16   `json:"physical_id"`
+	PhysicalID      uint8    `json:"physical_id"`
 	Siblings        uint16   `json:"siblings"`
 	CoreID          uint16   `json:"core_id"`
 	CPUCores        uint16   `json:"cpu_cores"`
@@ -93,7 +93,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 	var (
 		cpuCnt, i, pos, nameLen int
 		n                       uint64
-		physIDs                  []uint16 // tracks unique physical IDs encountered
+		physIDs                 []uint8 // tracks unique physical IDs encountered
 		pidFound                bool
 		v                       byte
 		cpu                     CPU
@@ -245,7 +245,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.PhysicalID = uint16(n)
+				cpu.PhysicalID = uint8(n)
 				for i := range physIDs {
 					if physIDs[i] == cpu.PhysicalID {
 						pidFound = true

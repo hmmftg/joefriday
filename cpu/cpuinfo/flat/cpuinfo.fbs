@@ -17,7 +17,7 @@ table CPU {
 	Microcode:string;
 	CPUMHz:float;
 	CacheSize:string;
-	PhysicalID:ushort;
+	PhysicalID:ubyte;
 	Siblings:ushort;
 	CoreID:ushort;
 	CPUCores:ushort;
