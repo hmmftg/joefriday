@@ -464,7 +464,9 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 	if len(inf.CPU) != 16 {
 		return fmt.Errorf("Expected 16 CPU entries, got %d", len(inf.CPU))
 	}
-	
+	if inf.Sockets != 1 {
+		return fmt.Errorf("got %d socket; want 1", len(inf.CPU))
+	}
 	for i, cpu := range inf.CPU {
 		if cpu.VendorID != "AuthenticAMD" {
 			return fmt.Errorf("%d: VendorID: got %q; want \"AuthenticAMD\"", i, cpu.VendorID)

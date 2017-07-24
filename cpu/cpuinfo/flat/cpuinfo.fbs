@@ -3,6 +3,7 @@ namespace structs;
 
 table CPUInfo {
 	Timestamp:long;
+	Sockets:ubyte;
 	CPU:[CPU];
 }
 

@@ -32,6 +32,7 @@ const procFile = "/proc/cpuinfo"
 // per processor.
 type CPUInfo struct {
 	Timestamp int64
+	Sockets   uint8
 	CPU       []CPU `json:"cpus"`
 }
 
@@ -92,6 +93,8 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 	var (
 		cpuCnt, i, pos, nameLen int
 		n                       uint64
+		physIDs                  []uint16 // tracks unique physical IDs encountered
+		pidFound                bool
 		v                       byte
 		cpu                     CPU
 	)
@@ -243,6 +246,18 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
 				cpu.PhysicalID = uint16(n)
+				for i := range physIDs {
+					if physIDs[i] == cpu.PhysicalID {
+						pidFound = true
+						break
+					}
+				}
+				if pidFound {
+					pidFound = false  // reset for next use
+				} else {
+					// physical id hasn't been encountered yet; add it
+					physIDs = append(physIDs, cpu.PhysicalID)
+				}
 				continue
 			}
 			if v == 'o' { // power management
@@ -317,6 +332,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 	}
 	// append the current processor informatin
 	inf.CPU = append(inf.CPU, cpu)
+	inf.Sockets = uint8(len(physIDs))
 	return inf, nil
 }
 

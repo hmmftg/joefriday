@@ -129,6 +129,9 @@ func ValidateI75600uCPUInfo(inf *cpuinfo.CPUInfo) error {
 	if len(inf.CPU) != 4 {
 		return fmt.Errorf("CPU: got %d; want 4", len(inf.CPU))
 	}
+	if inf.Sockets != 1 {
+		return fmt.Errorf("got %d socket; want 1", len(inf.CPU))
+	}
 	modelName := "Intel(R) Core(TM) i7-5600U CPU @ 2.60GHz"
 	for i, cpu := range inf.CPU {
 		if cpu.VendorID != "GenuineIntel" {

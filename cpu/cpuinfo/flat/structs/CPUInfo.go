@@ -29,8 +29,16 @@ func (rcv *CPUInfo) Timestamp() int64 {
 	return 0
 }
 
-func (rcv *CPUInfo) CPU(obj *CPU, j int) bool {
+func (rcv *CPUInfo) Sockets() byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
+	if o != 0 {
+		return rcv._tab.GetByte(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *CPUInfo) CPU(obj *CPU, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
 		x := rcv._tab.Vector(o)
 		x += flatbuffers.UOffsetT(j) * 4
@@ -45,16 +53,17 @@ func (rcv *CPUInfo) CPU(obj *CPU, j int) bool {
 }
 
 func (rcv *CPUInfo) CPULength() int {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
 		return rcv._tab.VectorLen(o)
 	}
 	return 0
 }
 
-func CPUInfoStart(builder *flatbuffers.Builder) { builder.StartObject(2) }
+func CPUInfoStart(builder *flatbuffers.Builder) { builder.StartObject(3) }
 func CPUInfoAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
-func CPUInfoAddCPU(builder *flatbuffers.Builder, CPU flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(CPU), 0) }
+func CPUInfoAddSockets(builder *flatbuffers.Builder, Sockets byte) { builder.PrependByteSlot(1, Sockets, 0) }
+func CPUInfoAddCPU(builder *flatbuffers.Builder, CPU flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(CPU), 0) }
 func CPUInfoStartCPUVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func CPUInfoEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

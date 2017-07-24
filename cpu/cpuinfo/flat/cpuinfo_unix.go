@@ -85,6 +85,7 @@ func (p *Profiler) Serialize(inf *info.CPUInfo) []byte {
 	cpusV := p.Builder.EndVector(len(uoffs))
 	structs.CPUInfoStart(p.Builder)
 	structs.CPUInfoAddTimestamp(p.Builder, inf.Timestamp)
+	structs.CPUInfoAddSockets(p.Builder, inf.Sockets)
 	structs.CPUInfoAddCPU(p.Builder, cpusV)
 	p.Builder.Finish(structs.CPUInfoEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
@@ -201,6 +202,7 @@ func Deserialize(p []byte) *info.CPUInfo {
 	fCPU := &structs.CPU{}
 	cpu := info.CPU{}
 	inf.Timestamp = fInf.Timestamp()
+	inf.Sockets = fInf.Sockets()
 	for i := 0; i < l; i++ {
 		if !fInf.CPU(fCPU, i) {
 			continue
