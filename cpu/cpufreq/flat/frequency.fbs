@@ -1,0 +1,17 @@
+// frequency.fbs
+namespace structs;
+
+table Frequency {
+	Timestamp:long;
+	CPU:[CPU];
+}
+
+table CPU {
+	Processor:short;
+	CPUMHz:float;
+	PhysicalID:short;
+	CoreID:short;
+	APICID:short;
+}
+
+root_type Frequency;

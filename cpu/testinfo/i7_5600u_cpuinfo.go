@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/mohae/joefriday/cpu/cpufreq"
 	"github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
@@ -193,6 +194,37 @@ func ValidateI75600uCPUInfo(inf *cpuinfo.CPUInfo) error {
 		}
 		if len(cpu.AddressSizes) != 2 {
 			return fmt.Errorf("%d: address sizes: got %d; want 2", i, len(cpu.AddressSizes))
+		}
+	}
+	return nil
+}
+
+// ValidateI75600uCPUFreq verifies that the info in the struct info is
+// consistent with relevant parts of the above data. If everything verifies a
+// nil is returned, otherwise an error is returned. This is used for testing.
+func ValidateI75600uCPUFreq(f *cpufreq.Frequency) error {
+	if f.Timestamp == 0 {
+		return errors.New("expected Timestamp to have a non-zero value; it didn't")
+	}
+	if len(f.CPU) != 4 {
+		return fmt.Errorf("CPU: got %d; want 4", len(f.CPU))
+	}
+	for i, cpu := range f.CPU {	
+		if int(cpu.CPUMHz) < 2500 {
+			return fmt.Errorf("%d: cpu MHz: got %.3f; want a value >= 2500", i, cpu.CPUMHz)
+		}
+		if int(cpu.PhysicalID) != 0 {
+			return fmt.Errorf("%d: physical id: got %d; want 0", i, cpu.PhysicalID)
+		}
+		if int(cpu.Processor) != i {
+			return fmt.Errorf("%d: processor: got %d; want %d", i, cpu.Processor, i)
+		}
+		// APICID happens to be consistent with i
+		if int(cpu.APICID) != i {
+			return fmt.Errorf("%d: apicid: got %d; want %d", i, cpu.APICID, i)
+		}
+		if int(cpu.CoreID) != i/2 {
+			return fmt.Errorf("%d: core id: got %d; want %d", i, cpu.CoreID, i/2)
 		}
 	}
 	return nil
