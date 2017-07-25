@@ -36,11 +36,11 @@ type Frequency struct {
 
 // CPU holds the clock info for a single processor.
 type CPU struct {
-	Processor       int16    `json:"processor"`
+	Processor       uint16    `json:"processor"`
 	CPUMHz          float32  `json:"cpu_mhz"`
-	PhysicalID      int16    `json:"physical_id"`
-	CoreID          int16    `json:"core_id"`
-	APICID          int16    `json:"apicid"`
+	PhysicalID      uint8    `json:"physical_id"`
+	CoreID          uint16    `json:"core_id"`
+	APICID          uint16    `json:"apicid"`
 }
 
 // Profiler is used to process the frequency information.
@@ -112,7 +112,7 @@ func (prof *Profiler) Get() (f *Frequency, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.APICID = int16(n)
+				cpu.APICID = uint16(n)
 			}
 			continue
 		}
@@ -132,7 +132,7 @@ func (prof *Profiler) Get() (f *Frequency, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.CoreID = int16(n)
+				cpu.CoreID = uint16(n)
 			}
 			continue
 		}
@@ -142,7 +142,7 @@ func (prof *Profiler) Get() (f *Frequency, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.PhysicalID = int16(n)
+				cpu.PhysicalID = uint8(n)
 				continue
 			}
 			// processor starts information about a processor.
@@ -155,7 +155,7 @@ func (prof *Profiler) Get() (f *Frequency, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu = CPU{Processor: int16(n)}
+				cpu = CPU{Processor: uint16(n)}
 			}
 		}
 		continue
@@ -186,6 +186,7 @@ type Ticker struct {
 	*joe.Ticker
 	Data chan *Frequency
 	*Profiler
+	Sockets uint8
 }
 
 // NewTicker returns a new Ticker containing a Data channel that delivers the

@@ -7,11 +7,11 @@ table Frequency {
 }
 
 table CPU {
-	Processor:short;
+	Processor:ushort;
 	CPUMHz:float;
-	PhysicalID:short;
-	CoreID:short;
-	APICID:short;
+	PhysicalID:ubyte;
+	CoreID:ushort;
+	APICID:ushort;
 }
 
 root_type Frequency;
