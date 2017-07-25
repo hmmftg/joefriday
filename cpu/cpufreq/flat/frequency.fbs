@@ -3,6 +3,7 @@ namespace structs;
 
 table Frequency {
 	Timestamp:long;
+	Sockets:ubyte;
 	CPU:[CPU];
 }
 

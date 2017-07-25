@@ -31,6 +31,7 @@ const procFile = "/proc/cpuinfo"
 // The reported values are the current speeds as reported by /proc/cpuinfo.
 type Frequency struct {
 	Timestamp int64
+	Sockets   uint8
 	CPU       []CPU `json:"cpu"`
 }
 
@@ -200,6 +201,7 @@ func NewTicker(d time.Duration) (joe.Tocker, error) {
 		return nil, err
 	}
 	t := Ticker{Ticker: joe.NewTicker(d), Data: make(chan *Frequency), Profiler: p}
+	t.sockets()  // set the sockets so this doesn't have to be recalculated
 	go t.Run()
 	return &t, nil
 }
