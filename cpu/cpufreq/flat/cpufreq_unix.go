@@ -87,6 +87,7 @@ func (p *Profiler) Serialize(f *freq.Frequency) []byte {
 	cpusV := p.Builder.EndVector(len(uoffs))
 	structs.FrequencyStart(p.Builder)
 	structs.FrequencyAddTimestamp(p.Builder, f.Timestamp)
+	structs.FrequencyAddSockets(p.Builder, f.Sockets)
 	structs.FrequencyAddCPU(p.Builder, cpusV)
 	p.Builder.Finish(structs.FrequencyEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
@@ -130,6 +131,7 @@ func Deserialize(p []byte) *freq.Frequency {
 	fCPU := &structs.CPU{}
 	cpu := freq.CPU{}
 	f.Timestamp = ff.Timestamp()
+	f.Sockets = ff.Sockets()
 	for i := 0; i < l; i++ {
 		if !ff.CPU(fCPU, i) {
 			continue
