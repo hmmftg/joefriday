@@ -33,6 +33,7 @@ func TestGeti75600u(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Profiler.Procer = tProc
+	err = prof.InitFrequency()
 	f, err := prof.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -58,6 +59,7 @@ func TestGetR71800xJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Procer = tProc
+	err = prof.InitFrequency()
 	f, err := prof.Get()	
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -71,6 +73,33 @@ func TestGetR71800xJSON(t *testing.T) {
 		t.Error(err)
 	}
 	t.Log(ff)
+}
+
+
+func TestGetXeonE52690(t *testing.T) {
+	tProc, err := joefriday.NewTempFileProc("intel", "xeon_e52690", testinfo.XeonE52690CPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tProc.Remove()
+	prof, err := NewProfiler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof.Profiler.Procer = tProc
+	err = prof.InitFrequency()
+	f, err := prof.Get()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	freq, err := Unmarshal(f)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	err = testinfo.ValidateXeonE52690CPUFreq(freq)
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestTicker(t *testing.T) {
@@ -89,7 +118,7 @@ func TestTicker(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Procer = tProc
-	
+	err = prof.InitFrequency()
 	tk := tkr.(*Ticker)
 	tk.Profiler = prof
 	

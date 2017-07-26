@@ -48,6 +48,7 @@ type CPU struct {
 type Profiler struct {
 	joe.Procer
 	*joe.Buffer
+	Frequency  // this is used too hold the socket/cpu info so that everything doesn't have to be reprocessed.
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -56,7 +57,12 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
+	prof = &Profiler{Procer: proc, Buffer: joe.NewBuffer()}
+	err = prof.InitFrequency()
+	if err != nil {
+		return nil, err
+	}
+	return prof, nil
 }
 
 // Reset resources; after reset the profiler is ready to be used again.
@@ -65,19 +71,135 @@ func (prof *Profiler) Reset() error {
 	return prof.Procer.Reset()
 }
 
-// Get returns the current Frequency.
-func (prof *Profiler) Get() (f *Frequency, err error) {
+// InitFrequency sets the profiler's frequency with the static information so
+// that everything doesn't need to be reprocessed every time the frequency is
+// requested. This assumes that cpuinfo returns processor information in the
+// same order every time.
+//
+// This shouldn't be used; it's exported for testing reasons.
+func (prof *Profiler) InitFrequency() error {
 	var (
-		cpuCnt, i, pos, nameLen int
-		n                       uint64
-		v                       byte
-		cpu                     CPU
+		err          error
+		n            uint64
+		pos, cpuCnt  int
+		pidFound     bool
+		physIDs      []uint8 // tracks unique physical IDs encountered
+		cpu          CPU
 	)
+
+	prof.Frequency = Frequency{}
+	for {
+		prof.Line, err = prof.ReadSlice('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return &joe.ReadError{Err: err}
+		}
+		prof.Val = prof.Val[:0]
+		// First grab the attribute name; everything up to the ':'.  The key may have
+		// spaces and has trailing spaces; that gets trimmed.
+		for i, v := range prof.Line {
+			if v == 0x3A {
+				prof.Val = prof.Line[:i]
+				pos = i + 1
+				break
+			}
+			//prof.Val = append(prof.Val, v)
+		}
+		prof.Val = joe.TrimTrailingSpaces(prof.Val[:])
+		nameLen := len(prof.Val)
+		// if there's no name; skip.
+		if nameLen == 0 {
+			continue
+		}
+		// if there's anything left, the value is everything else; trim spaces
+		if pos+1 < len(prof.Line) {
+			prof.Val = append(prof.Val, joe.TrimTrailingSpaces(prof.Line[pos+1:])...)
+		}
+		if prof.Val[0] == 'a' {
+			if prof.Val[1] == 'p' { // apicid
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}
+				cpu.APICID = uint16(n)
+			}
+			continue
+		}
+		if prof.Val[0] == 'c' {
+			if prof.Val[1] == 'o' { // core id
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}
+				cpu.CoreID = uint16(n)
+			}
+			continue
+		}
+		if prof.Val[0] == 'p' {
+			if prof.Val[1] == 'h' { // physical id
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}
+				cpu.PhysicalID = uint8(n)
+				for i := range physIDs {
+					if physIDs[i] == cpu.PhysicalID {
+						pidFound = true
+						break
+					}
+				}
+				if pidFound {
+					pidFound = false  // reset for next use
+				} else {
+					// physical id hasn't been encountered yet; add it
+					physIDs = append(physIDs, cpu.PhysicalID)
+				}
+				continue
+			}
+			// processor starts information about a processor.
+			if prof.Val[1] == 'r' { // processor
+				if cpuCnt > 0 {
+					prof.Frequency.CPU = append(prof.Frequency.CPU, cpu)
+				}
+				cpuCnt++
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}
+				cpu = CPU{Processor: uint16(n)}
+			}
+		}
+		continue
+	}
+	// append the current processor informatin
+	prof.Frequency.CPU = append(prof.Frequency.CPU, cpu)
+	prof.Frequency.Sockets = uint8(len(physIDs))
+	return  nil
+}
+
+// returns a copy of the profiler's frequency.
+func (prof *Profiler) newFrequency() *Frequency {
+	f := &Frequency{Timestamp: time.Now().UTC().UnixNano(), Sockets: prof.Frequency.Sockets, CPU: make([]CPU, len(prof.Frequency.CPU))}
+	copy(f.CPU, prof.Frequency.CPU)
+	return f
+}
+
+// Get returns Frequency information.
+func (prof *Profiler) Get() (f *Frequency, err error) {
+	f = prof.newFrequency()
 	err = prof.Reset()
 	if err != nil {
 		return nil, err
 	}
-	f = &Frequency{Timestamp: time.Now().UTC().UnixNano()}
+
+	var (
+		i, pos, nameLen int
+		v               byte
+		x               float64
+	)
+	processor := -1  // start at -1 because it'll be incremented before use as it's the first line encountered
 	for {
 		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
@@ -107,62 +229,23 @@ func (prof *Profiler) Get() (f *Frequency, err error) {
 		if pos+1 < len(prof.Line) {
 			prof.Val = append(prof.Val, joe.TrimTrailingSpaces(prof.Line[pos+1:])...)
 		}
-		if prof.Val[0] == 'a' {
-			if prof.Val[1] == 'p' { // apicid
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
-				if err != nil {
-					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
-				}
-				cpu.APICID = uint16(n)
-			}
-			continue
-		}
 		if prof.Val[0] == 'c' {
-			if prof.Val[1] == 'p' {
-				if prof.Val[4] == 'M' { // cpu MHz
-					f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
-					if err != nil {
-						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
-					}
-					cpu.CPUMHz = float32(f)
-				}
-				continue
-			}
-			if prof.Val[1] == 'o' { // core id
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+			if prof.Val[4] == 'M' { // cpu MHz
+				x, err = strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.CoreID = uint16(n)
+				f.CPU[processor].CPUMHz = float32(x)
 			}
 			continue
 		}
 		if prof.Val[0] == 'p' {
-			if prof.Val[1] == 'h' { // physical id
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
-				if err != nil {
-					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
-				}
-				cpu.PhysicalID = uint8(n)
-				continue
-			}
-			// processor starts information about a processor.
+		// processor starts information about a processor.
 			if prof.Val[1] == 'r' { // processor
-				if cpuCnt > 0 {
-					f.CPU = append(f.CPU, cpu)
-				}
-				cpuCnt++
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
-				if err != nil {
-					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
-				}
-				cpu = CPU{Processor: uint16(n)}
+				processor++
 			}
 		}
-		continue
 	}
-	// append the current processor informatin
-	f.CPU = append(f.CPU, cpu)
 	return f, nil
 }
 

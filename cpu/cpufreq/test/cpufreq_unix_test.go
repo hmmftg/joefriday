@@ -33,6 +33,11 @@ func TestGeti75600u(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Procer = tProc
+	err = prof.InitFrequency()
+	if err != nil {
+		t.Fatal(err)
+	}
+	
 	f, err := prof.Get()	
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -56,11 +61,43 @@ func TestGetR71800x(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Procer = tProc
+	err = prof.InitFrequency()
+	if err != nil {
+		t.Fatal(err)
+	}
+	
 	f, err := prof.Get()	
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 	err = testinfo.ValidateR71800xCPUFreq(f)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(f)
+}
+
+func TestGetXeonE52690(t *testing.T) {
+	tProc, err := joefriday.NewTempFileProc("intel", "xeonE52690", testinfo.XeonE52690CPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tProc.Remove()
+	prof, err := cpufreq.NewProfiler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof.Procer = tProc
+	err = prof.InitFrequency()
+	if err != nil {
+		t.Fatal(err)
+	}
+	
+	f, err := prof.Get()	
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	err = testinfo.ValidateXeonE52690CPUFreq(f)
 	if err != nil {
 		t.Error(err)
 	}
@@ -83,6 +120,10 @@ func TestTicker(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Procer = tProc
+	err = prof.InitFrequency()
+	if err != nil {
+		t.Fatal(err)
+	}
 	
 	tk := tkr.(*cpufreq.Ticker)
 	tk.Profiler = prof
@@ -104,4 +145,78 @@ func TestTicker(t *testing.T) {
 	}
 	tk.Stop()
 	tk.Close()
+}
+
+func BenchmarkGeti75600u(b *testing.B) {
+	var f *cpufreq.Frequency
+	p, _ := cpufreq.NewProfiler()
+	tProc, err := joefriday.NewTempFileProc("intel", "i9700u", testinfo.I75600uCPUInfo)
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer tProc.Remove()
+	prof, err := cpufreq.NewProfiler()
+	if err != nil {
+		b.Fatal(err)
+	}
+	prof.Procer = tProc
+	err = prof.InitFrequency()
+	if err != nil {
+		b.Fatal(err)
+	}
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f, _ = p.Get()
+	}
+	_ = f
+}
+
+func BenchmarkGetXeonE52690(b *testing.B) {
+	var f *cpufreq.Frequency
+	p, _ := cpufreq.NewProfiler()
+	tProc, err := joefriday.NewTempFileProc("intel", "xeonE5290", testinfo.XeonE52690CPUInfo)
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer tProc.Remove()
+	prof, err := cpufreq.NewProfiler()
+	if err != nil {
+		b.Fatal(err)
+	}
+	prof.Procer = tProc
+	err = prof.InitFrequency()
+	if err != nil {
+		b.Fatal(err)
+	}
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f, _ = p.Get()
+	}
+	_ = f
+}
+func BenchmarkGetR71800x(b *testing.B) {
+	var f *cpufreq.Frequency
+	p, _ := cpufreq.NewProfiler()
+	tProc, err := joefriday.NewTempFileProc("amd", "r71800x", testinfo.R71800xCPUInfo)
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer tProc.Remove()
+	prof, err := cpufreq.NewProfiler()
+	if err != nil {
+		b.Fatal(err)
+	}
+	prof.Procer = tProc
+	err = prof.InitFrequency()
+	if err != nil {
+		b.Fatal(err)
+	}
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f, _ = p.Get()
+	}
+	_ = f
 }

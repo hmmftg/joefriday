@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/mohae/joefriday/cpu/cpufreq"
 	"github.com/mohae/joefriday/cpu/cpuinfo"
 )
 
@@ -882,8 +883,8 @@ func ValidateXeonE52690CPUInfo(inf *cpuinfo.CPUInfo) error {
 	if inf.Timestamp == 0 {
 		return errors.New("expected Timestamp to have a non-zero value; it didn't")
 	}
-	if len(inf.CPU) != 4 {
-		return fmt.Errorf("CPU: got %d; want 4", len(inf.CPU))
+	if len(inf.CPU) != 32 {
+		return fmt.Errorf("CPU: got %d; want 32", len(inf.CPU))
 	}
 	if inf.Sockets != 2 {
 		return fmt.Errorf("got %d socket; want 2", len(inf.CPU))
@@ -953,6 +954,27 @@ func ValidateXeonE52690CPUInfo(inf *cpuinfo.CPUInfo) error {
 		}
 		if len(cpu.AddressSizes) != 2 {
 			return fmt.Errorf("%d: address sizes: got %d; want 2", i, len(cpu.AddressSizes))
+		}
+	}
+	return nil
+}
+
+func ValidateXeonE52690CPUFreq(f *cpufreq.Frequency) error {
+	if f.Timestamp == 0 {
+		return errors.New("expected Timestamp to have a non-zero value; it didn't")
+	}
+	if len(f.CPU) != 32 {
+		return fmt.Errorf("CPU: got %d; want 32", len(f.CPU))
+	}
+	if f.Sockets != 2 {
+		return fmt.Errorf("got %d socket; want 2", len(f.CPU))
+	}
+	for i, cpu := range f.CPU {
+		if int(cpu.CPUMHz) < 1200 {
+			return fmt.Errorf("%d: cpu MHz: got %.3f; want a value >= 1200", i, cpu.CPUMHz)
+		}
+		if cpu.PhysicalID != 0 && cpu.PhysicalID != 1 {
+			return fmt.Errorf("%d: physical id: got %d; want 0 or 1", i, cpu.PhysicalID)
 		}
 	}
 	return nil
