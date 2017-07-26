@@ -17,6 +17,9 @@ import (
 	"testing"
 
 	"github.com/mohae/benchutil"
+	"github.com/mohae/joefriday/cpu/cpufreq"
+	freqfb "github.com/mohae/joefriday/cpu/cpufreq/flat"
+	freqjson "github.com/mohae/joefriday/cpu/cpufreq/json"
 	"github.com/mohae/joefriday/cpu/cpuinfo"
 	infofb "github.com/mohae/joefriday/cpu/cpuinfo/flat"
 	infojson "github.com/mohae/joefriday/cpu/cpuinfo/json"
@@ -29,13 +32,35 @@ import (
 )
 
 const (
+	CPUFreq  = "CPU Frequency"
 	CPUInfo  = "CPU Info"
 	CPUStats = "CPU Stats"
 	CPUUtil  = "CPU Utilization"
 )
 
 func runCPUBenchmarks(bench benchutil.Benchmarker) {
-	b := CPUInfoGet()
+	b := CPUFreqGet()
+	bench.Append(b)
+
+	b = CPUFreqGetFB()
+	bench.Append(b)
+
+	b = CPUFreqSerializeFB()
+	bench.Append(b)
+
+	b = CPUFreqDeserializeFB()
+	bench.Append(b)
+
+	b = CPUFreqGetJSON()
+	bench.Append(b)
+
+	b = CPUFreqSerializeJSON()
+	bench.Append(b)
+
+	b = CPUFreqDeserializeJSON()
+	bench.Append(b)
+
+	b = CPUInfoGet()
 	bench.Append(b)
 
 	b = CPUInfoGetFB()
@@ -99,6 +124,137 @@ func runCPUBenchmarks(bench benchutil.Benchmarker) {
 	bench.Append(b)
 }
 
+// Freq
+func BenchCPUFreqGet(b *testing.B) {
+	var f *cpufreq.Frequency
+	p, _ := cpufreq.NewProfiler()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f, _ = p.Get()
+	}
+	_ = f
+}
+
+func CPUFreqGet() benchutil.Bench {
+	bench := benchutil.NewBench("Get")
+	bench.Group = CPUFreq
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFreqGet))
+	return bench
+}
+
+func BenchCPUFreqGetFB(b *testing.B) {
+	var tmp []byte
+	p, _ := freqfb.NewProfiler()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func CPUFreqGetFB() benchutil.Bench {
+	bench := benchutil.NewBench("flat.Get")
+	bench.Group = CPUFreq
+	bench.Desc = Flat
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFreqGetFB))
+	return bench
+}
+
+func BenchCPUFreqSerializeFB(b *testing.B) {
+	var tmp []byte
+	p, _ := cpufreq.NewProfiler()
+	fct, _ := p.Get()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = freqfb.Serialize(fct)
+	}
+	_ = tmp
+}
+
+func CPUFreqSerializeFB() benchutil.Bench {
+	bench := benchutil.NewBench("flat.Serialize")
+	bench.Group = CPUFreq
+	bench.Desc = Flat
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFreqSerializeFB))
+	return bench
+}
+
+func BenchCPUFreqDeserializeFB(b *testing.B) {
+	var f *cpufreq.Frequency
+	p, _ := freqfb.NewProfiler()
+	tmp, _ := p.Get()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f = freqfb.Deserialize(tmp)
+	}
+	_ = f
+}
+
+func CPUFreqDeserializeFB() benchutil.Bench {
+	bench := benchutil.NewBench("flat.Deserialize")
+	bench.Group = CPUFreq
+	bench.Desc = Flat
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFreqDeserializeFB))
+	return bench
+}
+
+func BenchCPUFreqGetJSON(b *testing.B) {
+	var tmp []byte
+	p, _ := freqjson.NewProfiler()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = p.Get()
+	}
+	_ = tmp
+}
+
+func CPUFreqGetJSON() benchutil.Bench {
+	bench := benchutil.NewBench("json.Get")
+	bench.Group = CPUFreq
+	bench.Desc = JSON
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFreqGetJSON))
+	return bench
+}
+
+func BenchCPUFreqSerializeJSON(b *testing.B) {
+	var tmp []byte
+	p, _ := freqjson.NewProfiler()
+	fct, _ := p.Profiler.Get()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		tmp, _ = freqjson.Serialize(fct)
+	}
+	_ = tmp
+}
+
+func CPUFreqSerializeJSON() benchutil.Bench {
+	bench := benchutil.NewBench("json.Serialize")
+	bench.Group = CPUFreq
+	bench.Desc = JSON
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFreqSerializeJSON))
+	return bench
+}
+
+func BenchCPUFreqDeserializeJSON(b *testing.B) {
+	var f *cpufreq.Frequency
+	p, _ := freqjson.NewProfiler()
+	tmp, _ := p.Get()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f, _ = freqjson.Deserialize(tmp)
+	}
+	_ = f
+}
+
+func CPUFreqDeserializeJSON() benchutil.Bench {
+	bench := benchutil.NewBench("json.Deserialize")
+	bench.Group = CPUFreq
+	bench.Desc = JSON
+	bench.Result = benchutil.ResultFromBenchmarkResult(testing.Benchmark(BenchCPUFreqDeserializeJSON))
+	return bench
+}
+
+// Info
 func BenchCPUInfoGet(b *testing.B) {
 	var inf *cpuinfo.CPUInfo
 	p, _ := cpuinfo.NewProfiler()
