@@ -30,25 +30,25 @@ const procFile = "/proc/cpuinfo"
 // Frequency holds information about the frequency of a system's cpus, in MHz.
 // The reported values are the current speeds as reported by /proc/cpuinfo.
 type Frequency struct {
-	Timestamp int64
-	Sockets   uint8
+	Timestamp int64 `json:"timestamp"`
+	Sockets   uint8 `json:"sockets"`
 	CPU       []CPU `json:"cpu"`
 }
 
 // CPU holds the clock info for a single processor.
 type CPU struct {
-	Processor       uint16    `json:"processor"`
-	CPUMHz          float32  `json:"cpu_mhz"`
-	PhysicalID      uint8    `json:"physical_id"`
-	CoreID          uint16    `json:"core_id"`
-	APICID          uint16    `json:"apicid"`
+	Processor  uint16  `json:"processor"`
+	CPUMHz     float32 `json:"cpu_mhz"`
+	PhysicalID uint8   `json:"physical_id"`
+	CoreID     uint16  `json:"core_id"`
+	APICID     uint16  `json:"apicid"`
 }
 
 // Profiler is used to process the frequency information.
 type Profiler struct {
 	joe.Procer
 	*joe.Buffer
-	Frequency  // this is used too hold the socket/cpu info so that everything doesn't have to be reprocessed.
+	Frequency // this is used too hold the socket/cpu info so that everything doesn't have to be reprocessed.
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -79,12 +79,12 @@ func (prof *Profiler) Reset() error {
 // This shouldn't be used; it's exported for testing reasons.
 func (prof *Profiler) InitFrequency() error {
 	var (
-		err          error
-		n            uint64
-		pos, cpuCnt  int
-		pidFound     bool
-		physIDs      []uint8 // tracks unique physical IDs encountered
-		cpu          CPU
+		err         error
+		n           uint64
+		pos, cpuCnt int
+		pidFound    bool
+		physIDs     []uint8 // tracks unique physical IDs encountered
+		cpu         CPU
 	)
 
 	prof.Frequency = Frequency{}
@@ -151,7 +151,7 @@ func (prof *Profiler) InitFrequency() error {
 					}
 				}
 				if pidFound {
-					pidFound = false  // reset for next use
+					pidFound = false // reset for next use
 				} else {
 					// physical id hasn't been encountered yet; add it
 					physIDs = append(physIDs, cpu.PhysicalID)
@@ -176,7 +176,7 @@ func (prof *Profiler) InitFrequency() error {
 	// append the current processor informatin
 	prof.Frequency.CPU = append(prof.Frequency.CPU, cpu)
 	prof.Frequency.Sockets = uint8(len(physIDs))
-	return  nil
+	return nil
 }
 
 // returns a copy of the profiler's frequency.
@@ -199,7 +199,7 @@ func (prof *Profiler) Get() (f *Frequency, err error) {
 		v               byte
 		x               float64
 	)
-	processor := -1  // start at -1 because it'll be incremented before use as it's the first line encountered
+	processor := -1 // start at -1 because it'll be incremented before use as it's the first line encountered
 	for {
 		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
@@ -240,7 +240,7 @@ func (prof *Profiler) Get() (f *Frequency, err error) {
 			continue
 		}
 		if prof.Val[0] == 'p' {
-		// processor starts information about a processor.
+			// processor starts information about a processor.
 			if prof.Val[1] == 'r' { // processor
 				processor++
 			}
