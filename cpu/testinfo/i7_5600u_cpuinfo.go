@@ -188,10 +188,10 @@ func ValidateI75600uCPUInfo(inf *cpuinfo.CPUInfo) error {
 		}
 		if int(cpu.CLFlushSize) != 64 {
 			return fmt.Errorf("%d: clflush size: got %q; want 64", i, cpu.CLFlushSize)
-		} 
+		}
 		if int(cpu.CacheAlignment) != 64 {
 			return fmt.Errorf("%d: cache alignment size: got %q; want 64", i, cpu.CacheAlignment)
-		} 
+		}
 		if len(cpu.PowerManagement) != 0 {
 			return fmt.Errorf("%d: power management: got %d; wanted 0", i, len(cpu.PowerManagement))
 		}
@@ -212,7 +212,7 @@ func ValidateI75600uCPUFreq(f *cpufreq.Frequency) error {
 	if len(f.CPU) != 4 {
 		return fmt.Errorf("CPU: got %d; want 4", len(f.CPU))
 	}
-	for i, cpu := range f.CPU {	
+	for i, cpu := range f.CPU {
 		if int(cpu.CPUMHz) < 2500 {
 			return fmt.Errorf("%d: cpu MHz: got %.3f; want a value >= 2500", i, cpu.CPUMHz)
 		}

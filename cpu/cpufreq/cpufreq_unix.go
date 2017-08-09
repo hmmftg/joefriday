@@ -27,8 +27,9 @@ import (
 
 const procFile = "/proc/cpuinfo"
 
-// Frequency holds information about the frequency of a system's cpus, in MHz.
-// The reported values are the current speeds as reported by /proc/cpuinfo.
+// Frequency holds information about the current frequency of a system's cpus,
+// in MHz. The reported values are the current speeds as reported by
+// /proc/cpuinfo.
 type Frequency struct {
 	Timestamp int64 `json:"timestamp"`
 	Sockets   uint8 `json:"sockets"`

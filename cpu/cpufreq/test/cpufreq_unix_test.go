@@ -18,12 +18,12 @@ import (
 	"time"
 
 	"github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/testinfo"
 	"github.com/mohae/joefriday/cpu/cpufreq"
+	"github.com/mohae/joefriday/cpu/testinfo"
 )
 
 func TestGeti75600u(t *testing.T) {
-	tProc, err := joefriday.NewTempFileProc("intel", "i9700u", testinfo.I75600uCPUInfo)
+	tProc, err := joefriday.NewTempFileProc("intel", "i75600u", testinfo.I75600uCPUInfo)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,8 +37,8 @@ func TestGeti75600u(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	
-	f, err := prof.Get()	
+
+	f, err := prof.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -48,7 +48,6 @@ func TestGeti75600u(t *testing.T) {
 	}
 	t.Logf("%#v", f)
 }
-
 
 func TestGetR71800x(t *testing.T) {
 	tProc, err := joefriday.NewTempFileProc("amd", "r71800x", testinfo.R71800xCPUInfo)
@@ -65,8 +64,8 @@ func TestGetR71800x(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	
-	f, err := prof.Get()	
+
+	f, err := prof.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -92,8 +91,8 @@ func TestGetXeonE52690(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	
-	f, err := prof.Get()	
+
+	f, err := prof.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -124,7 +123,7 @@ func TestTicker(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	tk := tkr.(*cpufreq.Ticker)
 	tk.Profiler = prof
 	for i := 0; i < 5; i++ {
@@ -164,7 +163,7 @@ func BenchmarkGeti75600u(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f, _ = p.Get()
@@ -189,7 +188,7 @@ func BenchmarkGetXeonE52690(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f, _ = p.Get()
@@ -213,7 +212,7 @@ func BenchmarkGetR71800x(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		f, _ = p.Get()
