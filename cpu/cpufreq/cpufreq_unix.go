@@ -38,11 +38,11 @@ type Frequency struct {
 
 // CPU holds the clock info for a single processor.
 type CPU struct {
-	Processor  uint16  `json:"processor"`
+	Processor  int     `json:"processor"`
 	CPUMHz     float32 `json:"cpu_mhz"`
-	PhysicalID uint8   `json:"physical_id"`
-	CoreID     uint16  `json:"core_id"`
-	APICID     uint16  `json:"apicid"`
+	PhysicalID int     `json:"physical_id"`
+	CoreID     int     `json:"core_id"`
+	APICID     int     `json:"apicid"`
 }
 
 // Profiler is used to process the frequency information.
@@ -84,7 +84,7 @@ func (prof *Profiler) InitFrequency() error {
 		n           uint64
 		pos, cpuCnt int
 		pidFound    bool
-		physIDs     []uint8 // tracks unique physical IDs encountered
+		physIDs     []int // tracks unique physical IDs encountered
 		cpu         CPU
 	)
 
@@ -124,7 +124,7 @@ func (prof *Profiler) InitFrequency() error {
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.APICID = uint16(n)
+				cpu.APICID = int(n)
 			}
 			continue
 		}
@@ -134,7 +134,7 @@ func (prof *Profiler) InitFrequency() error {
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.CoreID = uint16(n)
+				cpu.CoreID = int(n)
 			}
 			continue
 		}
@@ -144,7 +144,7 @@ func (prof *Profiler) InitFrequency() error {
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.PhysicalID = uint8(n)
+				cpu.PhysicalID = int(n)
 				for i := range physIDs {
 					if physIDs[i] == cpu.PhysicalID {
 						pidFound = true
@@ -169,7 +169,7 @@ func (prof *Profiler) InitFrequency() error {
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu = CPU{Processor: uint16(n)}
+				cpu = CPU{Processor: int(n)}
 			}
 		}
 		continue
