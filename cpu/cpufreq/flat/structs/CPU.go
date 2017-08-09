@@ -14,10 +14,10 @@ func (rcv *CPU) Init(buf []byte, i flatbuffers.UOffsetT) {
 	rcv._tab.Pos = i
 }
 
-func (rcv *CPU) Processor() uint16 {
+func (rcv *CPU) Processor() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
-		return rcv._tab.GetUint16(o + rcv._tab.Pos)
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
 	return 0
 }
@@ -30,34 +30,34 @@ func (rcv *CPU) CPUMHz() float32 {
 	return 0.0
 }
 
-func (rcv *CPU) PhysicalID() byte {
+func (rcv *CPU) PhysicalID() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
-		return rcv._tab.GetByte(o + rcv._tab.Pos)
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *CPU) CoreID() uint16 {
+func (rcv *CPU) CoreID() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
 	if o != 0 {
-		return rcv._tab.GetUint16(o + rcv._tab.Pos)
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *CPU) APICID() uint16 {
+func (rcv *CPU) APICID() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
-		return rcv._tab.GetUint16(o + rcv._tab.Pos)
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
 func CPUStart(builder *flatbuffers.Builder) { builder.StartObject(5) }
-func CPUAddProcessor(builder *flatbuffers.Builder, Processor uint16) { builder.PrependUint16Slot(0, Processor, 0) }
+func CPUAddProcessor(builder *flatbuffers.Builder, Processor int32) { builder.PrependInt32Slot(0, Processor, 0) }
 func CPUAddCPUMHz(builder *flatbuffers.Builder, CPUMHz float32) { builder.PrependFloat32Slot(1, CPUMHz, 0.0) }
-func CPUAddPhysicalID(builder *flatbuffers.Builder, PhysicalID byte) { builder.PrependByteSlot(2, PhysicalID, 0) }
-func CPUAddCoreID(builder *flatbuffers.Builder, CoreID uint16) { builder.PrependUint16Slot(3, CoreID, 0) }
-func CPUAddAPICID(builder *flatbuffers.Builder, APICID uint16) { builder.PrependUint16Slot(4, APICID, 0) }
+func CPUAddPhysicalID(builder *flatbuffers.Builder, PhysicalID int32) { builder.PrependInt32Slot(2, PhysicalID, 0) }
+func CPUAddCoreID(builder *flatbuffers.Builder, CoreID int32) { builder.PrependInt32Slot(3, CoreID, 0) }
+func CPUAddAPICID(builder *flatbuffers.Builder, APICID int32) { builder.PrependInt32Slot(4, APICID, 0) }
 func CPUEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

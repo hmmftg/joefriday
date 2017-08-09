@@ -32,13 +32,13 @@ const procFile = "/proc/cpuinfo"
 // per processor.
 type CPUInfo struct {
 	Timestamp int64
-	Sockets   uint8
+	Sockets   int32
 	CPU       []CPU `json:"cpus"`
 }
 
 // CPU holds the /proc/cpuinfo for a single processor.
 type CPU struct {
-	Processor       uint16   `json:"processor"`
+	Processor       int32    `json:"processor"`
 	VendorID        string   `json:"vendor_id"`
 	CPUFamily       string   `json:"cpu_family"`
 	Model           string   `json:"model"`
@@ -47,12 +47,12 @@ type CPU struct {
 	Microcode       string   `json:"microcode"`
 	CPUMHz          float32  `json:"cpu_mhz"`
 	CacheSize       string   `json:"cache_size"`
-	PhysicalID      uint8    `json:"physical_id"`
-	Siblings        uint16   `json:"siblings"`
-	CoreID          uint16   `json:"core_id"`
-	CPUCores        uint16   `json:"cpu_cores"`
-	APICID          uint16   `json:"apicid"`
-	InitialAPICID   uint16   `json:"initial_apicid"`
+	PhysicalID      int32    `json:"physical_id"`
+	Siblings        int32    `json:"siblings"`
+	CoreID          int32    `json:"core_id"`
+	CPUCores        int32    `json:"cpu_cores"`
+	APICID          int32    `json:"apicid"`
+	InitialAPICID   int32    `json:"initial_apicid"`
 	FPU             string   `json:"fpu"`
 	FPUException    string   `json:"fpu_exception"`
 	CPUIDLevel      string   `json:"cpuid_level"`
@@ -93,7 +93,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 	var (
 		cpuCnt, i, pos, nameLen int
 		n                       uint64
-		physIDs                 []uint8 // tracks unique physical IDs encountered
+		physIDs                 []int32 // tracks unique physical IDs encountered
 		pidFound                bool
 		v                       byte
 		cpu                     CPU
@@ -144,7 +144,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.APICID = uint16(n)
+				cpu.APICID = int32(n)
 			}
 			continue
 		}
@@ -157,7 +157,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					cpu.CPUCores = uint16(n)
+					cpu.CPUCores = int32(n)
 					continue
 				}
 				if v == 'f' { // cpu family
@@ -180,10 +180,10 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			v = prof.Val[5]
 			if v == '_' { // cache_alignment
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
-					if err != nil {
-						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
-					}
-					
+				if err != nil {
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}
+
 				cpu.CacheAlignment = uint16(n)
 				continue
 			}
@@ -195,7 +195,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
-				}	
+				}
 				cpu.CLFlushSize = uint16(n)
 				continue
 			}
@@ -204,7 +204,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.CoreID = uint16(n)
+				cpu.CoreID = int32(n)
 			}
 			continue
 		}
@@ -245,7 +245,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.PhysicalID = uint8(n)
+				cpu.PhysicalID = int32(n)
 				for i := range physIDs {
 					if physIDs[i] == cpu.PhysicalID {
 						pidFound = true
@@ -253,7 +253,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 					}
 				}
 				if pidFound {
-					pidFound = false  // reset for next use
+					pidFound = false // reset for next use
 				} else {
 					// physical id hasn't been encountered yet; add it
 					physIDs = append(physIDs, cpu.PhysicalID)
@@ -278,7 +278,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu = CPU{Processor: uint16(n)}
+				cpu = CPU{Processor: int32(n)}
 			}
 			continue
 		}
@@ -289,7 +289,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.Siblings = uint16(n)
+				cpu.Siblings = int32(n)
 				continue
 			}
 			if v == 't' { // stepping
@@ -316,7 +316,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			if err != nil {
 				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}
-			cpu.InitialAPICID = uint16(n)
+			cpu.InitialAPICID = int32(n)
 			continue
 		}
 		if v == 'w' { // WP
@@ -332,7 +332,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 	}
 	// append the current processor informatin
 	inf.CPU = append(inf.CPU, cpu)
-	inf.Sockets = uint8(len(physIDs))
+	inf.Sockets = int32(len(physIDs))
 	return inf, nil
 }
 

@@ -3,12 +3,12 @@ namespace structs;
 
 table CPUInfo {
 	Timestamp:long;
-	Sockets:ubyte;
+	Sockets:int;
 	CPU:[CPU];
 }
 
 table CPU {
-	Processor:ushort;
+	Processor:int;
 	VendorID:string;
 	CPUFamily:string;
 	Model:string;
@@ -17,12 +17,12 @@ table CPU {
 	Microcode:string;
 	CPUMHz:float;
 	CacheSize:string;
-	PhysicalID:ubyte;
-	Siblings:ushort;
-	CoreID:ushort;
-	CPUCores:ushort;
-	APICID:ushort;
-	InitialAPICID:ushort;
+	PhysicalID:int;
+	Siblings:int;
+	CoreID:int;
+	CPUCores:int;
+	APICID:int;
+	InitialAPICID:int;
 	FPU:string;
 	FPUException:string;
 	CPUIDLevel:string;

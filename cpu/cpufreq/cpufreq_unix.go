@@ -32,17 +32,17 @@ const procFile = "/proc/cpuinfo"
 // /proc/cpuinfo.
 type Frequency struct {
 	Timestamp int64 `json:"timestamp"`
-	Sockets   uint8 `json:"sockets"`
+	Sockets   int32 `json:"sockets"`
 	CPU       []CPU `json:"cpu"`
 }
 
 // CPU holds the clock info for a single processor.
 type CPU struct {
-	Processor  int     `json:"processor"`
+	Processor  int32   `json:"processor"`
 	CPUMHz     float32 `json:"cpu_mhz"`
-	PhysicalID int     `json:"physical_id"`
-	CoreID     int     `json:"core_id"`
-	APICID     int     `json:"apicid"`
+	PhysicalID int32   `json:"physical_id"`
+	CoreID     int32   `json:"core_id"`
+	APICID     int32   `json:"apicid"`
 }
 
 // Profiler is used to process the frequency information.
@@ -84,7 +84,7 @@ func (prof *Profiler) InitFrequency() error {
 		n           uint64
 		pos, cpuCnt int
 		pidFound    bool
-		physIDs     []int // tracks unique physical IDs encountered
+		physIDs     []int32 // tracks unique physical IDs encountered
 		cpu         CPU
 	)
 
@@ -124,7 +124,7 @@ func (prof *Profiler) InitFrequency() error {
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.APICID = int(n)
+				cpu.APICID = int32(n)
 			}
 			continue
 		}
@@ -134,7 +134,7 @@ func (prof *Profiler) InitFrequency() error {
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.CoreID = int(n)
+				cpu.CoreID = int32(n)
 			}
 			continue
 		}
@@ -144,7 +144,7 @@ func (prof *Profiler) InitFrequency() error {
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.PhysicalID = int(n)
+				cpu.PhysicalID = int32(n)
 				for i := range physIDs {
 					if physIDs[i] == cpu.PhysicalID {
 						pidFound = true
@@ -169,14 +169,14 @@ func (prof *Profiler) InitFrequency() error {
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu = CPU{Processor: int(n)}
+				cpu = CPU{Processor: int32(n)}
 			}
 		}
 		continue
 	}
 	// append the current processor informatin
 	prof.Frequency.CPU = append(prof.Frequency.CPU, cpu)
-	prof.Frequency.Sockets = uint8(len(physIDs))
+	prof.Frequency.Sockets = int32(len(physIDs))
 	return nil
 }
 

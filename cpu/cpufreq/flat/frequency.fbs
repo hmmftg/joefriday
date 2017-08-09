@@ -3,16 +3,16 @@ namespace structs;
 
 table Frequency {
 	Timestamp:long;
-	Sockets:ubyte;
+	Sockets:int;
 	CPU:[CPU];
 }
 
 table CPU {
-	Processor:ushort;
+	Processor:int;
 	CPUMHz:float;
-	PhysicalID:ubyte;
-	CoreID:ushort;
-	APICID:ushort;
+	PhysicalID:int;
+	CoreID:int;
+	APICID:int;
 }
 
 root_type Frequency;

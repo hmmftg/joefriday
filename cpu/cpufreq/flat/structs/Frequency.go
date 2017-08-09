@@ -29,10 +29,10 @@ func (rcv *Frequency) Timestamp() int64 {
 	return 0
 }
 
-func (rcv *Frequency) Sockets() byte {
+func (rcv *Frequency) Sockets() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
-		return rcv._tab.GetByte(o + rcv._tab.Pos)
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
 	return 0
 }
@@ -62,7 +62,7 @@ func (rcv *Frequency) CPULength() int {
 
 func FrequencyStart(builder *flatbuffers.Builder) { builder.StartObject(3) }
 func FrequencyAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
-func FrequencyAddSockets(builder *flatbuffers.Builder, Sockets byte) { builder.PrependByteSlot(1, Sockets, 0) }
+func FrequencyAddSockets(builder *flatbuffers.Builder, Sockets int32) { builder.PrependInt32Slot(1, Sockets, 0) }
 func FrequencyAddCPU(builder *flatbuffers.Builder, CPU flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(CPU), 0) }
 func FrequencyStartCPUVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
