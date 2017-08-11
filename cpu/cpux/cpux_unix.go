@@ -1,0 +1,225 @@
+// Copyright 2016 Joel Scoble and The JoeFriday authors.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package cpux provides information about each cpuX on the system, where X is
+// the integer of each CPU on the system, e.g. cpu0, cpu1, etc. On linux
+// systems this comes from /sys/devices/system/cpu. Not all paths are available
+// on all systems, e.g. /sys/devices/system/cpu/cpuX/cpufreq and its children
+// may not exist on some systems. If the system doesn't have a particular file
+// within this path, the field's value will be the type's zero value.
+//
+// This package does not currently have a ticker implementation. It does not
+// provide flatbuffer or JSON implementations.
+package cpux
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strconv"
+)
+
+const (
+	SystemCPUPath = "/sys/devices/system/cpu"
+	CPUFreq       = "cpufreq"
+)
+
+type CPUs struct {
+	Sockets int32 `json:"sockets"`
+	CPU     []CPU `json:"cpu"`
+}
+
+type CPU struct {
+	PhysicalPackageID int32   `json:"physical_package_id"`
+	CoreID            int32   `json:"core_id"`
+	MHzMin            float32 `json:"mhz_min"`
+	MHzMax            float32 `json:"mhz_max"`
+}
+
+// GetCPU returns the cpu information for the provided physical_package_id
+// (pID) and core_id (coreID). A false will be returned if an entry matching
+// the physical_package_id and core_id is not found.
+func (c *CPUs) GetCPU(pID, coreID int32) (cpu CPU, found bool) {
+	for i := 0; i < len(c.CPU); i++ {
+		if c.CPU[i].PhysicalPackageID == pID && c.CPU[i].CoreID == coreID {
+			return c.CPU[i], true
+		}
+	}
+	return CPU{}, false
+}
+
+// Profiler is used to process the frequency information.
+type Profiler struct {
+	// this is an exported fied for testing purposes. It should not be set in
+	// non-test usage
+	NumCPU int
+	// this is an exported fied for testing purposes. It should not be set in
+	// non-test usage
+	SystemCPUPath string
+}
+
+// Returns an initialized Profiler; ready to use.
+func NewProfiler() (prof *Profiler, err error) {
+	// NumCPU provides the number of logical cpus usable by the current process.
+	// Is this sufficient, or will there ever be a delta between that and either
+	// what /proc/cpuinfo reports or what is available on /sys/devices/system/cpu/
+	return &Profiler{NumCPU: runtime.NumCPU(), SystemCPUPath: SystemCPUPath}, nil
+}
+
+// Reset resources: this does nothing for this implemenation.
+func (prof *Profiler) Reset() error {
+	return nil
+}
+
+// Get the cpuX info for each cpu. Currently only min and max frequency are
+// implemented.
+func (prof *Profiler) Get() (*CPUs, error) {
+	cpus := &CPUs{CPU: make([]CPU, prof.NumCPU)}
+	var err error
+	var pids []int32 // the physical ids encountered
+
+	hasFreq := prof.hasCPUFreq()
+	for x := 0; x < prof.NumCPU; x++ {
+		var cpu CPU
+		var found bool
+
+		cpu.PhysicalPackageID, err = prof.physicalPackageID(x)
+		if err != nil {
+			return nil, err
+		}
+		// see if this is a new physical id; if so, add it to the inventory
+		for _, v := range pids {
+			if v == cpu.PhysicalPackageID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			pids = append(pids, cpu.PhysicalPackageID)
+		}
+		cpu.CoreID, err = prof.coreID(x)
+		if err != nil {
+			return nil, err
+		}
+
+		if !hasFreq {
+			continue
+		}
+		cpu.MHzMin, err = prof.cpuMHzMin(x)
+		if err != nil {
+			return nil, err
+		}
+		cpu.MHzMax, err = prof.cpuMHzMax(x)
+		if err != nil {
+			return nil, err
+		}
+		cpus.CPU[x] = cpu
+	}
+	cpus.Sockets = int32(len(pids))
+	return cpus, nil
+}
+
+// cpuXPath returns the system's cpuX path for a given cpu number.
+func (prof *Profiler) cpuXPath(x int) string {
+	return fmt.Sprintf("%s/cpu%d", prof.SystemCPUPath, x)
+}
+
+// coreIDPath returns the path of the core_id file for the given cpuX.
+func (prof *Profiler) coreIDPath(x int) string {
+	return fmt.Sprintf("%s/topology/core_id", prof.cpuXPath(x))
+}
+
+// physicalPackageIDPath returns the path of the physical_package_id file for
+// the given cpuX.
+func (prof *Profiler) physicalPackageIDPath(x int) string {
+	return fmt.Sprintf("%s/topology/physical_package_id", prof.cpuXPath(x))
+}
+
+// cpuInfoFreqMaxPath returns the path for the cpuinfo_max_freq file of the
+// given cpuX.
+func (prof *Profiler) cpuInfoFreqMaxPath(x int) string {
+	return fmt.Sprintf("%s/cpufreq/cpuinfo_max_freq", prof.cpuXPath(x))
+}
+
+// cpuInfoFreqMinPath returns the path for the cpuinfo_min_freq file of the
+// given cpuX.
+func (prof *Profiler) cpuInfoFreqMinPath(x int) string {
+	return fmt.Sprintf("%s/cpufreq/cpuinfo_min_freq", prof.cpuXPath(x))
+}
+
+// hasCPUFreq returns if the system has cpufreq information:
+func (prof *Profiler) hasCPUFreq() bool {
+	_, err := os.Stat(filepath.Join(prof.SystemCPUPath, CPUFreq))
+	if err == nil {
+		return true
+	}
+	return false
+}
+
+// gets the core_id of cpuX
+func (prof *Profiler) coreID(x int) (int32, error) {
+	v, err := ioutil.ReadFile(prof.coreIDPath(x))
+	if err != nil {
+		return 0, err
+	}
+	id, err := strconv.Atoi(string(v))
+	if err != nil {
+		return 0, fmt.Errorf("cpu%d core_id: conversion error: %s", x, err)
+	}
+	return int32(id), nil
+}
+
+// gets the physical_package_id of cpuX
+func (prof *Profiler) physicalPackageID(x int) (int32, error) {
+	v, err := ioutil.ReadFile(prof.physicalPackageIDPath(x))
+	if err != nil {
+		return 0, err
+	}
+	id, err := strconv.Atoi(string(v))
+	if err != nil {
+		return 0, fmt.Errorf("cpu%d physical_package_id: conversion error: %s", x, err)
+	}
+	return int32(id), nil
+}
+
+// gets the cpu_mhz_min information
+func (prof *Profiler) cpuMHzMin(x int) (float32, error) {
+	v, err := ioutil.ReadFile(prof.cpuInfoFreqMinPath(x))
+	if err != nil {
+		return 0, err
+	}
+	// insert the . in the appropriate spot
+	v = append(v[:len(v)-3], append([]byte{'.'}, v[len(v)-3:]...)...)
+	m, err := strconv.ParseFloat(string(v), 32)
+	if err != nil {
+		return 0, fmt.Errorf("cpu%d MHz min: conversion error: %s", x, err)
+	}
+	return float32(m), nil
+}
+
+// gets the cpu_mhz_max information
+func (prof *Profiler) cpuMHzMax(x int) (float32, error) {
+	v, err := ioutil.ReadFile(prof.cpuInfoFreqMaxPath(x))
+	if err != nil {
+		return 0, err
+	}
+	// insert the . in the appropriate spot
+	v = append(v[:len(v)-3], append([]byte{'.'}, v[len(v)-3:]...)...)
+	m, err := strconv.ParseFloat(string(v), 32)
+	if err != nil {
+		return 0, fmt.Errorf("cpu%d MHz max: conversion error: %s", x, err)
+	}
+	return float32(m), nil
+}
