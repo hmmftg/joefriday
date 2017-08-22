@@ -28,7 +28,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -42,10 +44,13 @@ type CPUs struct {
 }
 
 type CPU struct {
-	PhysicalPackageID int32   `json:"physical_package_id"`
-	CoreID            int32   `json:"core_id"`
-	MHzMin            float32 `json:"mhz_min"`
-	MHzMax            float32 `json:"mhz_max"`
+	PhysicalPackageID int32             `json:"physical_package_id"`
+	CoreID            int32             `json:"core_id"`
+	MHzMin            float32           `json:"mhz_min"`
+	MHzMax            float32           `json:"mhz_max"`
+	Cache             map[string]string `json:"cache:`
+	// a sorted list of caches so that the cache info can be pulled out in order.
+	CacheIDs []string
 }
 
 // GetCPU returns the cpu information for the provided physical_package_id
@@ -113,7 +118,10 @@ func (prof *Profiler) Get() (*CPUs, error) {
 		if err != nil {
 			return nil, err
 		}
-
+		err := prof.cache(x, &cpu)
+		if err != nil {
+			return nil, err
+		}
 		if !hasFreq {
 			continue
 		}
@@ -157,6 +165,11 @@ func (prof *Profiler) cpuInfoFreqMaxPath(x int) string {
 // given cpuX.
 func (prof *Profiler) cpuInfoFreqMinPath(x int) string {
 	return fmt.Sprintf("%s/cpufreq/cpuinfo_min_freq", prof.cpuXPath(x))
+}
+
+// cachePath returns the path for the cache dir
+func (prof *Profiler) cachePath(x int) string {
+	return fmt.Sprintf("%s/cache", prof.cpuXPath(x))
 }
 
 // hasCPUFreq returns if the system has cpufreq information:
@@ -222,4 +235,54 @@ func (prof *Profiler) cpuMHzMax(x int) (float32, error) {
 		return 0, fmt.Errorf("cpu%d MHz max: conversion error: %s", x, err)
 	}
 	return float32(m), nil
+}
+
+// Get the cache info for the given cpuX entry
+func (prof *Profiler) cache(x int, cpu *CPU) error {
+	cpu.Cache = map[string]string{}
+	//go through all the entries in cpuX/cache
+	p := prof.cachePath(x)
+	dirs, err := ioutil.ReadDir(p)
+	if err != nil {
+		return err
+	}
+	var cacheID string
+	// all the entries should be dirs with their contents holding the cache info
+	for _, d := range dirs {
+		if !d.IsDir() {
+			continue // this shouldn't happen but if it does we just skip the entry
+		}
+		// cache level
+		l, err := ioutil.ReadFile(filepath.Join(p, d.Name(), "level"))
+		if err != nil {
+			return err
+		}
+
+		t, err := ioutil.ReadFile(filepath.Join(p, d.Name(), "type"))
+		if err != nil {
+			return err
+		}
+
+		// cache type: unified entries aren't decorated, otherwise the first letter is used
+		// like what lscpu does.
+		if t[0] != 'U' && t[0] != 'u' {
+			cacheID = fmt.Sprintf("L%s%s cache", string(l), strings.ToLower(string(t[0])))
+		} else {
+			cacheID = fmt.Sprintf("L%s cache", string(l))
+		}
+
+		// cache size
+		s, err := ioutil.ReadFile(filepath.Join(p, d.Name(), "size"))
+		if err != nil {
+			return err
+		}
+
+		// add the info
+		cpu.Cache[cacheID] = string(s)
+		cpu.CacheIDs = append(cpu.CacheIDs, cacheID)
+	}
+	// sort the cache names
+	sort.Strings(cpu.CacheIDs)
+
+	return nil
 }

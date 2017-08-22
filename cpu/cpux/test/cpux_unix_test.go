@@ -24,6 +24,9 @@ func TestCPUX(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	js, _ := json.MarshalIndent(cpus, "", "\t")
+	t.Log(string(js))
+
 	// set up test stuff w freq
 	dir, err = testinfo.TempSysDevicesSystemCPU(true)
 	prof.SystemCPUPath = dir
@@ -31,7 +34,7 @@ func TestCPUX(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	js, _ := json.MarshalIndent(cpus, "", "\t")
+	js, _ = json.MarshalIndent(cpus, "", "\t")
 	t.Log(string(js))
 	// compare results with frequency
 	err = testinfo.ValidateCPUX(cpus, true)
