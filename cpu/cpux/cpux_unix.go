@@ -123,14 +123,14 @@ func (prof *Profiler) Get() (*CPUs, error) {
 			return nil, err
 		}
 		if hasFreq {
-		cpu.MHzMin, err = prof.cpuMHzMin(x)
-		if err != nil {
-			return nil, err
-		}
-		cpu.MHzMax, err = prof.cpuMHzMax(x)
-		if err != nil {
-			return nil, err
-		}
+			cpu.MHzMin, err = prof.cpuMHzMin(x)
+			if err != nil {
+				return nil, err
+			}
+			cpu.MHzMax, err = prof.cpuMHzMax(x)
+			if err != nil {
+				return nil, err
+			}
 		}
 		cpus.CPU[x] = cpu
 	}
@@ -186,7 +186,7 @@ func (prof *Profiler) coreID(x int) (int32, error) {
 	if err != nil {
 		return 0, err
 	}
-	id, err := strconv.Atoi(string(v))
+	id, err := strconv.Atoi(string(v[:len(v)-1]))
 	if err != nil {
 		return 0, fmt.Errorf("cpu%d core_id: conversion error: %s", x, err)
 	}
@@ -199,7 +199,7 @@ func (prof *Profiler) physicalPackageID(x int) (int32, error) {
 	if err != nil {
 		return 0, err
 	}
-	id, err := strconv.Atoi(string(v))
+	id, err := strconv.Atoi(string(v[:len(v)-1]))
 	if err != nil {
 		return 0, fmt.Errorf("cpu%d physical_package_id: conversion error: %s", x, err)
 	}
@@ -213,8 +213,8 @@ func (prof *Profiler) cpuMHzMin(x int) (float32, error) {
 		return 0, err
 	}
 	// insert the . in the appropriate spot
-	v = append(v[:len(v)-3], append([]byte{'.'}, v[len(v)-3:]...)...)
-	m, err := strconv.ParseFloat(string(v), 32)
+	v = append(v[:len(v)-4], append([]byte{'.'}, v[len(v)-4:len(v)-1]...)...)
+	m, err := strconv.ParseFloat(string(v[:len(v)-1]), 32)
 	if err != nil {
 		return 0, fmt.Errorf("cpu%d MHz min: conversion error: %s", x, err)
 	}
@@ -228,8 +228,8 @@ func (prof *Profiler) cpuMHzMax(x int) (float32, error) {
 		return 0, err
 	}
 	// insert the . in the appropriate spot
-	v = append(v[:len(v)-3], append([]byte{'.'}, v[len(v)-3:]...)...)
-	m, err := strconv.ParseFloat(string(v), 32)
+	v = append(v[:len(v)-4], append([]byte{'.'}, v[len(v)-4:len(v)-1]...)...)
+	m, err := strconv.ParseFloat(string(v[:len(v)-1]), 32)
 	if err != nil {
 		return 0, fmt.Errorf("cpu%d MHz max: conversion error: %s", x, err)
 	}
@@ -265,9 +265,9 @@ func (prof *Profiler) cache(x int, cpu *CPU) error {
 		// cache type: unified entries aren't decorated, otherwise the first letter is used
 		// like what lscpu does.
 		if t[0] != 'U' && t[0] != 'u' {
-			cacheID = fmt.Sprintf("L%s%s cache", string(l), strings.ToLower(string(t[0])))
+			cacheID = fmt.Sprintf("L%s%s cache", string(l[:len(l)-1]), strings.ToLower(string(t[0])))
 		} else {
-			cacheID = fmt.Sprintf("L%s cache", string(l))
+			cacheID = fmt.Sprintf("L%s cache", string(l[:len(l)-1]))
 		}
 
 		// cache size
@@ -277,7 +277,7 @@ func (prof *Profiler) cache(x int, cpu *CPU) error {
 		}
 
 		// add the info
-		cpu.Cache[cacheID] = string(s)
+		cpu.Cache[cacheID] = string(s[:len(s)-1])
 		cpu.CacheIDs = append(cpu.CacheIDs, cacheID)
 	}
 	// sort the cache names

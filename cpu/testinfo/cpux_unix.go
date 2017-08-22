@@ -47,13 +47,13 @@ func TempSysDevicesSystemCPU(freq bool) (dir string, err error) {
 		if err != nil {
 			goto cleanup
 		}
-		err = ioutil.WriteFile(filepath.Join(tmp, "core_id"), []byte(fmt.Sprintf("%d", 3-i)), 0777)
+		err = ioutil.WriteFile(filepath.Join(tmp, "core_id"), []byte(fmt.Sprintf("%d\n", 3-i)), 0777)
 		if err != nil {
 			goto cleanup
 		}
 		// make all physical package ids 0; this means testing a multi-socket sytem isn't currently
 		// implemented
-		err = ioutil.WriteFile(filepath.Join(tmp, "physical_package_id"), []byte("0"), 0777)
+		err = ioutil.WriteFile(filepath.Join(tmp, "physical_package_id"), []byte("0\n"), 0777)
 		if err != nil {
 			goto cleanup
 		}
@@ -65,15 +65,15 @@ func TempSysDevicesSystemCPU(freq bool) (dir string, err error) {
 			if err != nil {
 				goto cleanup
 			}
-			err = ioutil.WriteFile(filepath.Join(cD, "level"), []byte(cacheLevels[j]), 0777)
+			err = ioutil.WriteFile(filepath.Join(cD, "level"), []byte(cacheLevels[j]+"\n"), 0777)
 			if err != nil {
 				goto cleanup
 			}
-			err = ioutil.WriteFile(filepath.Join(cD, "type"), []byte(cacheTypes[j]), 0777)
+			err = ioutil.WriteFile(filepath.Join(cD, "type"), []byte(cacheTypes[j]+"\n"), 0777)
 			if err != nil {
 				goto cleanup
 			}
-			err = ioutil.WriteFile(filepath.Join(cD, "size"), []byte(cache[j]), 0777)
+			err = ioutil.WriteFile(filepath.Join(cD, "size"), []byte(cache[j]+"\n"), 0777)
 			if err != nil {
 				goto cleanup
 			}
@@ -87,12 +87,12 @@ func TempSysDevicesSystemCPU(freq bool) (dir string, err error) {
 		if err != nil {
 			goto cleanup
 		}
-		err = ioutil.WriteFile(filepath.Join(tmp, "cpuinfo_min_freq"), []byte("1600000"), 0777)
+		err = ioutil.WriteFile(filepath.Join(tmp, "cpuinfo_min_freq"), []byte("1600000\n"), 0777)
 		if err != nil {
 			goto cleanup
 
 		}
-		err = ioutil.WriteFile(filepath.Join(tmp, "cpuinfo_max_freq"), []byte("2800000"), 0777)
+		err = ioutil.WriteFile(filepath.Join(tmp, "cpuinfo_max_freq"), []byte("2800000\n"), 0777)
 		if err != nil {
 			goto cleanup
 
