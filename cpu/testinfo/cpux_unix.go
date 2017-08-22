@@ -59,21 +59,21 @@ func TempSysDevicesSystemCPU(freq bool) (dir string, err error) {
 		}
 
 		// cache entries
-		for i := range cacheLevels {
-			cD := filepath.Join(dir, cpuX, "cache", fmt.Sprintf("index%d", i))
+		for j := range cacheLevels {
+			cD := filepath.Join(dir, cpuX, "cache", fmt.Sprintf("index%d", j))
 			err = os.MkdirAll(cD, 0777)
 			if err != nil {
 				goto cleanup
 			}
-			err = ioutil.WriteFile(filepath.Join(cD, "level"), []byte(cacheLevels[i]), 0777)
+			err = ioutil.WriteFile(filepath.Join(cD, "level"), []byte(cacheLevels[j]), 0777)
 			if err != nil {
 				goto cleanup
 			}
-			err = ioutil.WriteFile(filepath.Join(cD, "type"), []byte(cacheTypes[i]), 0777)
+			err = ioutil.WriteFile(filepath.Join(cD, "type"), []byte(cacheTypes[j]), 0777)
 			if err != nil {
 				goto cleanup
 			}
-			err = ioutil.WriteFile(filepath.Join(cD, "size"), []byte(cache[i]), 0777)
+			err = ioutil.WriteFile(filepath.Join(cD, "size"), []byte(cache[j]), 0777)
 			if err != nil {
 				goto cleanup
 			}

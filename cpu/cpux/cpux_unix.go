@@ -122,9 +122,7 @@ func (prof *Profiler) Get() (*CPUs, error) {
 		if err != nil {
 			return nil, err
 		}
-		if !hasFreq {
-			continue
-		}
+		if hasFreq {
 		cpu.MHzMin, err = prof.cpuMHzMin(x)
 		if err != nil {
 			return nil, err
@@ -132,6 +130,7 @@ func (prof *Profiler) Get() (*CPUs, error) {
 		cpu.MHzMax, err = prof.cpuMHzMax(x)
 		if err != nil {
 			return nil, err
+		}
 		}
 		cpus.CPU[x] = cpu
 	}
