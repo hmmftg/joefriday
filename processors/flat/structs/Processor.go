@@ -14,10 +14,10 @@ func (rcv *Processor) Init(buf []byte, i flatbuffers.UOffsetT) {
 	rcv._tab.Pos = i
 }
 
-func (rcv *Processor) PhysicalID() int16 {
+func (rcv *Processor) PhysicalID() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
 	return 0
 }
@@ -86,10 +86,10 @@ func (rcv *Processor) CacheSize() []byte {
 	return nil
 }
 
-func (rcv *Processor) CPUCores() int16 {
+func (rcv *Processor) CPUCores() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
 	if o != 0 {
-		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
 	return 0
 }
@@ -120,7 +120,7 @@ func (rcv *Processor) FlagsLength() int {
 }
 
 func ProcessorStart(builder *flatbuffers.Builder) { builder.StartObject(12) }
-func ProcessorAddPhysicalID(builder *flatbuffers.Builder, PhysicalID int16) { builder.PrependInt16Slot(0, PhysicalID, 0) }
+func ProcessorAddPhysicalID(builder *flatbuffers.Builder, PhysicalID int32) { builder.PrependInt32Slot(0, PhysicalID, 0) }
 func ProcessorAddVendorID(builder *flatbuffers.Builder, VendorID flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(VendorID), 0) }
 func ProcessorAddCPUFamily(builder *flatbuffers.Builder, CPUFamily flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(CPUFamily), 0) }
 func ProcessorAddModel(builder *flatbuffers.Builder, Model flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(Model), 0) }
@@ -129,7 +129,7 @@ func ProcessorAddStepping(builder *flatbuffers.Builder, Stepping flatbuffers.UOf
 func ProcessorAddMicrocode(builder *flatbuffers.Builder, Microcode flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(6, flatbuffers.UOffsetT(Microcode), 0) }
 func ProcessorAddCPUMHz(builder *flatbuffers.Builder, CPUMHz float32) { builder.PrependFloat32Slot(7, CPUMHz, 0.0) }
 func ProcessorAddCacheSize(builder *flatbuffers.Builder, CacheSize flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(8, flatbuffers.UOffsetT(CacheSize), 0) }
-func ProcessorAddCPUCores(builder *flatbuffers.Builder, CPUCores int16) { builder.PrependInt16Slot(9, CPUCores, 0) }
+func ProcessorAddCPUCores(builder *flatbuffers.Builder, CPUCores int32) { builder.PrependInt32Slot(9, CPUCores, 0) }
 func ProcessorAddBogoMIPS(builder *flatbuffers.Builder, BogoMIPS float32) { builder.PrependFloat32Slot(10, BogoMIPS, 0.0) }
 func ProcessorAddFlags(builder *flatbuffers.Builder, Flags flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(11, flatbuffers.UOffsetT(Flags), 0) }
 func ProcessorStartFlagsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)

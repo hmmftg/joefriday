@@ -14,7 +14,7 @@
 // Package processors gathers information about the physical processors on a
 // system by parsing the information from /procs/cpuinfo. This package gathers
 // basic information about each physical processor, cpu, on the system, with
-// one entry per processor. 
+// one entry per processor.
 //
 // The CPUMHz field shouldn't be relied on; the CPU data of the first CPU
 // processed for each processor is used. This value may be different than that
@@ -39,15 +39,15 @@ const procFile = "/proc/cpuinfo"
 
 // Processors holds information about a system's processors
 type Processors struct {
-	Timestamp int64  `json:"timestamp"`
+	Timestamp int64 `json:"timestamp"`
 	// The number of physical processors.
-	Count     int16  `json:"count"`
-	Socket     []Processor `json:"processor"`
+	Count  int32       `json:"count"`
+	Socket []Processor `json:"processor"`
 }
 
 // Processor holds the /proc/cpuinfo for a single physical cpu.
 type Processor struct {
-	PhysicalID int16    `json:"physical_id"`
+	PhysicalID int32    `json:"physical_id"`
 	VendorID   string   `json:"vendor_id"`
 	CPUFamily  string   `json:"cpu_family"`
 	Model      string   `json:"model"`
@@ -56,7 +56,7 @@ type Processor struct {
 	Microcode  string   `json:"microcode"`
 	CPUMHz     float32  `json:"cpu_mhz"`
 	CacheSize  string   `json:"cache_size"`
-	CPUCores   int16    `json:"cpu_cores"`
+	CPUCores   int32    `json:"cpu_cores"`
 	BogoMIPS   float32  `json:"bogomips"`
 	Flags      []string `json:"flags"`
 }
@@ -87,12 +87,12 @@ func (prof *Profiler) Reset() error {
 func (prof *Profiler) Get() (procs *Processors, err error) {
 	var (
 		i, pos, nameLen int
-		priorID                 int16
-		n                       uint64
-		v                       byte
-		proc                     Processor
-		first                   = true // set to false after first proc
-		add                     bool
+		priorID         int32
+		n               uint64
+		v               byte
+		proc            Processor
+		first           = true // set to false after first proc
+		add             bool
 	)
 	err = prof.Reset()
 	if err != nil {
@@ -138,7 +138,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					proc.CPUCores = int16(n)
+					proc.CPUCores = int32(n)
 					continue
 				}
 				if v == 'f' { // cpu family
@@ -186,7 +186,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				proc.PhysicalID = int16(n)
+				proc.PhysicalID = int32(n)
 				if first || proc.PhysicalID != priorID {
 					add = true
 				}
@@ -223,13 +223,13 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 			proc.BogoMIPS = float32(f)
 			continue
 		}
-		
+
 	}
 	// append the current processor informatin
 	if add {
 		procs.Socket = append(procs.Socket, proc)
 	}
-	procs.Count = int16(len(procs.Socket))
+	procs.Count = int32(len(procs.Socket))
 	return procs, nil
 }
 

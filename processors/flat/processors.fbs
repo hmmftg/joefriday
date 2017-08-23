@@ -3,12 +3,12 @@ namespace structs;
 
 table Processors {
 	Timestamp:long;
-	Count:short;
+	Count:int;
 	Socket:[Processor];
 }
 
 table Processor {
-	PhysicalID:short;
+	PhysicalID:int;
 	VendorID:string;
 	CPUFamily:string;
 	Model:string;
@@ -17,7 +17,7 @@ table Processor {
 	Microcode:string;
 	CPUMHz:float;
 	CacheSize:string;
-	CPUCores:short;
+	CPUCores:int;
 	BogoMIPS:float;
 	Flags:[string];
 }
