@@ -18,8 +18,7 @@
 // may not exist on some systems. If the system doesn't have a particular file
 // within this path, the field's value will be the type's zero value.
 //
-// This package does not currently have a ticker implementation. It does not
-// provide flatbuffer or JSON implementations.
+// This package does not currently have a ticker implementation.
 package cpux
 
 import (
@@ -65,7 +64,7 @@ func (c *CPUs) GetCPU(pID, coreID int32) (cpu CPU, found bool) {
 	return CPU{}, false
 }
 
-// Profiler is used to process the frequency information.
+// Profiler is used to process the system's cpuX information.
 type Profiler struct {
 	// this is an exported fied for testing purposes. It should not be set in
 	// non-test usage
