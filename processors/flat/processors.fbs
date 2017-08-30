@@ -15,7 +15,8 @@ table Processor {
 	ModelName:string;
 	Stepping:string;
 	Microcode:string;
-	CPUMHz:float;
+	MHzMin:float;
+	MHzMax:float;
 	CacheSize:string;
 	CPUCores:int;
 	BogoMIPS:float;

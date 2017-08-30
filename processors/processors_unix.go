@@ -33,9 +33,12 @@ import (
 
 	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
+	"github.com/mohae/joefriday/cpu/cpux"
 )
 
-const procFile = "/proc/cpuinfo"
+const (
+	procFile = "/proc/cpuinfo"
+)
 
 // Processors holds information about a system's processors
 type Processors struct {
@@ -44,6 +47,7 @@ type Processors struct {
 	Sockets int32 `json:"sockets"`
 	// Information about each processor in each socket.
 	Socket []Processor `json:"socket"`
+	CPUs   int         `json:"cpus"` // number of cpus on the system
 }
 
 // Processor holds the /proc/cpuinfo for a single physical cpu.
@@ -55,7 +59,8 @@ type Processor struct {
 	ModelName  string   `json:"model_name"`
 	Stepping   string   `json:"stepping"`
 	Microcode  string   `json:"microcode"`
-	CPUMHz     float32  `json:"cpu_mhz"`
+	MHzMin     float32  `json:"mhz_min"`
+	MHzMax     float32  `json:"mhz_max"`
 	CacheSize  string   `json:"cache_size"`
 	CPUCores   int32    `json:"cpu_cores"`
 	BogoMIPS   float32  `json:"bogomips"`
@@ -67,6 +72,7 @@ type Processor struct {
 type Profiler struct {
 	joe.Procer
 	*joe.Buffer
+	*cpux.Profiler // This is created with the profiler for testability.
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -75,7 +81,11 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
+	p, err := cpux.NewProfiler()
+	if err != nil {
+		return nil, err
+	}
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer(), Profiler: p}, nil
 }
 
 // Reset resources: after reset, the profiler is ready to be used again.
@@ -86,14 +96,27 @@ func (prof *Profiler) Reset() error {
 
 // Get returns the processor information.
 func (prof *Profiler) Get() (procs *Processors, err error) {
+	procs, err = prof.getCPUInfo()
+	if err != nil {
+		return nil, err
+	}
+	// process the system cpu info
+	err = prof.getSysDevicesCPUInfo(procs)
+	if err != nil {
+		return nil, err
+	}
+	return procs, nil
+}
+
+func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 	var (
-		i, pos, nameLen int
-		priorID         int32
-		n               uint64
-		v               byte
-		proc            Processor
-		first           = true // set to false after first proc
-		add             bool
+		i, pos, nameLen, cpuCnt int
+		priorID                 int32
+		n                       uint64
+		v                       byte
+		proc                    Processor
+		first                   = true // set to false after first proc
+		add                     bool
 	)
 	err = prof.Reset()
 	if err != nil {
@@ -146,13 +169,6 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 					proc.CPUFamily = string(prof.Val[nameLen:])
 					continue
 				}
-				if v == 'M' { // cpu MHz
-					f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
-					if err != nil {
-						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
-					}
-					proc.CPUMHz = float32(f)
-				}
 				continue
 			}
 			if prof.Val[5] == ' ' { // cache size
@@ -197,6 +213,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 			// processor starts information about a logical processor; if there was a previously
 			// processed processor, only add it if it is a different physical processor.
 			if v == 'r' { // processor
+				cpuCnt++ // increment counter
 				if add {
 					procs.Socket = append(procs.Socket, proc)
 					add = false
@@ -231,7 +248,32 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 		procs.Socket = append(procs.Socket, proc)
 	}
 	procs.Sockets = int32(len(procs.Socket))
+	procs.CPUs = cpuCnt
 	return procs, nil
+}
+
+func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
+	// get the cpux profiler
+	cpus, err := prof.Profiler.Get()
+	if err != nil {
+		return err
+	}
+	var id int32
+	// go through the results and use the first match per physical id
+	for i := range cpus.CPU {
+		if id == cpus.CPU[i].PhysicalPackageID {
+			continue
+		}
+		id = cpus.CPU[i].PhysicalPackageID
+		//find the matching entry
+		for j := range procs.Socket {
+			if procs.Socket[j].PhysicalID == id {
+				procs.Socket[j].MHzMin = cpus.CPU[i].MHzMin
+				procs.Socket[j].MHzMax = cpus.CPU[i].MHzMax
+			}
+		}
+	}
+	return nil
 }
 
 var std *Profiler
