@@ -26,7 +26,7 @@
 // core, use joefriday/cpuinfo, which returns an entry per core.
 //
 // Note: the package name is processors and not the final element of the import
-// path (flat). 
+// path (flat).
 package processors
 
 import (
@@ -94,7 +94,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	procsV := p.Builder.EndVector(len(uoffs))
 	structs.ProcessorsStart(p.Builder)
 	structs.ProcessorsAddTimestamp(p.Builder, procs.Timestamp)
-	structs.ProcessorsAddCount(p.Builder, procs.Count)
+	structs.ProcessorsAddSockets(p.Builder, procs.Sockets)
 	structs.ProcessorsAddSocket(p.Builder, procsV)
 	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
@@ -158,7 +158,7 @@ func Deserialize(p []byte) *processors.Processors {
 	flatProc := &structs.Processor{}
 	proc := processors.Processor{}
 	procs.Timestamp = flatP.Timestamp()
-	procs.Socket = make([]processors.Processor, flatP.Count())
+	procs.Socket = make([]processors.Processor, flatP.Sockets())
 	for i := 0; i < len(procs.Socket); i++ {
 		if !flatP.Socket(flatProc, i) {
 			continue

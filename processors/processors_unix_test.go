@@ -23,8 +23,8 @@ func TestProcessors(t *testing.T) {
 	if procs.Timestamp == 0 {
 		t.Error("expected timestamp to have a nonzero value, it didn't")
 	}
-	if procs.Count == 0 {
-		t.Errorf("expected the processor count to be a nonzero value, it wasn't")
+	if procs.Sockets == 0 {
+		t.Errorf("expected the processor sockets to be a nonzero value, it wasn't")
 	}
 	if len(procs.Socket) == 0 {
 		t.Error("Expected at least 1 chip entry, got none")

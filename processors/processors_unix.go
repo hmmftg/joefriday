@@ -40,9 +40,10 @@ const procFile = "/proc/cpuinfo"
 // Processors holds information about a system's processors
 type Processors struct {
 	Timestamp int64 `json:"timestamp"`
-	// The number of physical processors.
-	Count  int32       `json:"count"`
-	Socket []Processor `json:"processor"`
+	// The number of sockets.
+	Sockets int32 `json:"sockets"`
+	// Information about each processor in each socket.
+	Socket []Processor `json:"socket"`
 }
 
 // Processor holds the /proc/cpuinfo for a single physical cpu.
@@ -229,7 +230,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 	if add {
 		procs.Socket = append(procs.Socket, proc)
 	}
-	procs.Count = int32(len(procs.Socket))
+	procs.Sockets = int32(len(procs.Socket))
 	return procs, nil
 }
 

@@ -29,7 +29,7 @@ func (rcv *Processors) Timestamp() int64 {
 	return 0
 }
 
-func (rcv *Processors) Count() int32 {
+func (rcv *Processors) Sockets() int32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
 		return rcv._tab.GetInt32(o + rcv._tab.Pos)
@@ -62,7 +62,7 @@ func (rcv *Processors) SocketLength() int {
 
 func ProcessorsStart(builder *flatbuffers.Builder) { builder.StartObject(3) }
 func ProcessorsAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
-func ProcessorsAddCount(builder *flatbuffers.Builder, Count int32) { builder.PrependInt32Slot(1, Count, 0) }
+func ProcessorsAddSockets(builder *flatbuffers.Builder, Sockets int32) { builder.PrependInt32Slot(1, Sockets, 0) }
 func ProcessorsAddSocket(builder *flatbuffers.Builder, Socket flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(Socket), 0) }
 func ProcessorsStartSocketVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
