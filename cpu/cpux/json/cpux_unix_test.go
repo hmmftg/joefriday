@@ -23,55 +23,132 @@ import (
 
 func TestCPUX(t *testing.T) {
 	// set up test stuff w/o freq
-	dir, err := testinfo.TempSysDevicesSystemCPU(false)
+	tcpu := testinfo.NewTempSysDevicesSystemCPU()
+	err := tcpu.Create()
 	if err != nil {
-		t.Fatalf("setting up tempdir: %s", err)
+		t.Fatalf("setting up cpux testing info: %s", err)
 	}
-	prof, err := NewProfiler()
-	if err != nil {
-		t.Fatalf("getting new profiler: %s", err)
-	}
-	prof.NumCPU = 4
-	prof.SystemCPUPath = dir
-
+	prof := &Profiler{Profiler: &cpux.Profiler{SystemCPUPath: tcpu.Dir, NumCPU: int(tcpu.CoresPerPhysicalPackage * tcpu.PhysicalPackageCount)}}
 	p, err := prof.Get()
 	if err != nil {
 		t.Error(err)
 	}
-
 	cpus, err := Deserialize(p)
 	if err != nil {
 		t.Error(err)
 	}
 
-	//compare results w/o cpufreq
-	err = testinfo.ValidateCPUX(cpus, false)
+	//compare results cpufreq
+	err = tcpu.ValidateCPUX(cpus)
+	if err != nil {
+		t.Error(err)
+	}
+	js, _ := json.MarshalIndent(cpus, "", "\t")
+	t.Log(string(js))
+
+	// cleanup for next
+	err = tcpu.Clean(false)
 	if err != nil {
 		t.Error(err)
 	}
 
-	js, _ := json.MarshalIndent(cpus, "", "\t")
-	t.Log(string(js))
-
-	// set up test stuff w freq
-	dir, err = testinfo.TempSysDevicesSystemCPU(true)
-	prof.SystemCPUPath = dir
+	// set up test stuff w/o freq
+	tcpu.Freq = false
+	err = tcpu.Create()
+	if err != nil {
+		t.Error("setting up cpux testing info: %s", err)
+		goto multiSocket
+	}
+	
 	p, err = prof.Get()
 	if err != nil {
 		t.Error(err)
 	}
-
 	cpus, err = Deserialize(p)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = testinfo.ValidateCPUX(cpus, true)
+	js, _ = json.MarshalIndent(cpus, "", "\t")
+	t.Log(string(js))
+	// compare results with frequency
+	err = tcpu.ValidateCPUX(cpus)
 	if err != nil {
 		t.Errorf("validate min/max: %s", err)
 	}
+
+	// cleanup for next
+	err = tcpu.Clean(false)
+	if err != nil {
+		t.Error(err)
+	}
+
+multiSocket:
+	// 2 sockets
+	tcpu.PhysicalPackageCount = 2
+	prof.NumCPU = int(tcpu.CoresPerPhysicalPackage * tcpu.PhysicalPackageCount)
+	tcpu.Freq = true
+	err = tcpu.Create()
+	if err != nil {
+		t.Error("setting up cpux testing info: %s", err)
+		goto noFreq
+	}
+	
+	p, err = prof.Get()
+	if err != nil {
+		t.Error(err)
+	}
+	cpus, err = Deserialize(p)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//compare results cpufreq
+	err = tcpu.ValidateCPUX(cpus)
+	if err != nil {
+		t.Error(err)
+	}
 	js, _ = json.MarshalIndent(cpus, "", "\t")
 	t.Log(string(js))
+
+	// cleanup for next
+	err = tcpu.Clean(false)
+	if err != nil {
+		t.Error(err)
+	}
+
+noFreq:
+	// set up test stuff w/o freq
+	tcpu.Freq = false
+	err = tcpu.Create()
+	if err != nil {
+		t.Error("setting up cpux testing info: %s", err)
+		goto clean
+	}
+	
+	p, err = prof.Get()
+	if err != nil {
+		t.Error(err)
+	}
+	cpus, err = Deserialize(p)
+	if err != nil {
+		t.Error(err)
+	}
+
+	js, _ = json.MarshalIndent(cpus, "", "\t")
+	t.Log(string(js))
+	// compare results with frequency
+	err = tcpu.ValidateCPUX(cpus)
+	if err != nil {
+		t.Errorf("validate min/max: %s", err)
+	}
+
+clean:
+	// cleanup everything
+	err = tcpu.Clean(true)
+	if err != nil {
+		t.Error(err)
+	}
 
 }
 
