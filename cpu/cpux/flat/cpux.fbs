@@ -1,0 +1,22 @@
+// cpux.fbs
+namespace structs;
+
+table CPUs {
+	Sockets:int;
+	CPU:[CPU];
+}
+
+table CPU {
+	PhysicalPackageID:int;
+	CoreID:int;
+	MHzMin:float;
+	MHzMax:float;
+	Cache:[CacheInf];
+}
+
+table CacheInf {
+	ID:string;
+	Size:string;
+}
+
+root_type CPUs;
