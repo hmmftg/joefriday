@@ -17,12 +17,12 @@ import (
 	"testing"
 
 	"github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/testinfo"
 	"github.com/mohae/joefriday/cpu/cpuinfo"
+	"github.com/mohae/joefriday/cpu/testinfo"
 )
 
 func TestGeti75600u(t *testing.T) {
-	tProc, err := joefriday.NewTempFileProc("intel", "i9700u", testinfo.I75600uCPUInfo)
+	tProc, err := joefriday.NewTempFileProc("intel", "i75600u", testinfo.I75600uCPUInfo)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func TestGeti75600u(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Procer = tProc
-	inf, err := prof.Get()	
+	inf, err := prof.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -42,7 +42,6 @@ func TestGeti75600u(t *testing.T) {
 	}
 	t.Logf("%#v", inf)
 }
-
 
 func TestGetR71800x(t *testing.T) {
 	tProc, err := joefriday.NewTempFileProc("amd", "r71800x", testinfo.R71800xCPUInfo)
@@ -55,7 +54,7 @@ func TestGetR71800x(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Procer = tProc
-	inf, err := prof.Get()	
+	inf, err := prof.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
