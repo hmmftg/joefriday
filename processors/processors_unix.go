@@ -112,11 +112,10 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 	var (
 		i, pos, nameLen, cpuCnt int
-		priorID                 int32
+		ids                     []int32
 		n                       uint64
 		v                       byte
 		proc                    Processor
-		first                   = true // set to false after first proc
 		add                     bool
 	)
 	err = prof.Reset()
@@ -201,11 +200,18 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				proc.PhysicalID = int32(n)
-				if first || proc.PhysicalID != priorID {
-					add = true
+				var exists bool
+				for _, v := range ids {
+					if v == int32(n) {
+						exists = true
+						break
+					}
 				}
-				priorID = proc.PhysicalID
+				if !exists {
+					add = true
+					ids = append(ids, int32(n))
+				}
+				proc.PhysicalID = int32(n)
 				continue
 			}
 			// processor starts information about a logical processor; if there was a previously
@@ -245,7 +251,6 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 	if add {
 		procs.Socket = append(procs.Socket, proc)
 	}
-	procs.Sockets = int32(len(procs.Socket))
 	procs.CPUs = cpuCnt
 	return procs, nil
 }
@@ -256,13 +261,21 @@ func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
 	if err != nil {
 		return err
 	}
-	var id int32
+	var ids []int32 // holds the encountered PhysicalIDs; each physicalID should only be processed once.
 	// go through the results and use the first match per physical id
 	for i := range cpus.CPU {
-		if id == cpus.CPU[i].PhysicalPackageID {
+		var exists bool
+		for _, v := range ids {
+			if v == cpus.CPU[i].PhysicalPackageID {
+				exists = true
+				break
+			}
+		}
+		if exists {
 			continue
 		}
-		id = cpus.CPU[i].PhysicalPackageID
+		id := cpus.CPU[i].PhysicalPackageID
+		ids = append(ids, id)
 		//find the matching entry
 		for j := range procs.Socket {
 			if procs.Socket[j].PhysicalID != id {
@@ -271,13 +284,14 @@ func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
 			procs.Socket[j].MHzMin = cpus.CPU[i].MHzMin
 			procs.Socket[j].MHzMax = cpus.CPU[i].MHzMax
 			procs.Socket[j].Cache = make(map[string]string, len(cpus.CPU[i].Cache))
-			procs.Socket[j].CacheIDs = make([]string, 0, len(cpus.CPU[i].CacheIDs))
+			procs.Socket[j].CacheIDs = make([]string, len(cpus.CPU[i].CacheIDs))
 			for k, id := range cpus.CPU[i].CacheIDs {
 				procs.Socket[j].CacheIDs[k] = id
 				procs.Socket[j].Cache[id] = cpus.CPU[i].Cache[id]
 			}
 		}
 	}
+	procs.Sockets = int32(len(ids))
 	return nil
 }
 

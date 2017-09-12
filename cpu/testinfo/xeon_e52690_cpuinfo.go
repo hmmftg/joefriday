@@ -6,7 +6,10 @@ import (
 
 	"github.com/mohae/joefriday/cpu/cpufreq"
 	"github.com/mohae/joefriday/cpu/cpuinfo"
+	"github.com/mohae/joefriday/processors"
 )
+
+const XeonE52690ModelName = "Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz"
 
 var XeonE52690CPUInfo = []byte(`processor	: 0
 vendor_id	: GenuineIntel
@@ -889,10 +892,9 @@ func ValidateXeonE52690CPUInfo(inf *cpuinfo.CPUInfo) error {
 	if inf.Sockets != 2 {
 		return fmt.Errorf("got %d socket; want 2", len(inf.CPU))
 	}
-	modelName := "Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz"
 	for i, cpu := range inf.CPU {
-		if cpu.VendorID != "GenuineIntel" {
-			return fmt.Errorf("%d: vendor_id: got %q; want \"GenuineIntel\"", i, cpu.VendorID)
+		if cpu.VendorID != GenuineIntel {
+			return fmt.Errorf("%d: vendor_id: got %q; want %q", i, cpu.VendorID, GenuineIntel)
 		}
 		if cpu.CPUFamily != "6" {
 			return fmt.Errorf("%d: cpu family: got %q; want \"6\"", i, cpu.CPUFamily)
@@ -900,8 +902,8 @@ func ValidateXeonE52690CPUInfo(inf *cpuinfo.CPUInfo) error {
 		if cpu.Model != "45" {
 			return fmt.Errorf("%d: model: got %q; want \"45\"", i, cpu.Model)
 		}
-		if cpu.ModelName != modelName {
-			return fmt.Errorf("%d: model name: got %q; want %q", i, cpu.ModelName, modelName)
+		if cpu.ModelName != XeonE52690ModelName {
+			return fmt.Errorf("%d: model name: got %q; want %q", i, cpu.ModelName, XeonE52690ModelName)
 		}
 		if cpu.Stepping != "7" {
 			return fmt.Errorf("%d: stepping: got %q; want \"7\"", i, cpu.Stepping)
@@ -945,10 +947,10 @@ func ValidateXeonE52690CPUInfo(inf *cpuinfo.CPUInfo) error {
 		}
 		if int(cpu.CLFlushSize) != 64 {
 			return fmt.Errorf("%d: clflush size: got %q; want 64", i, cpu.CLFlushSize)
-		} 
+		}
 		if int(cpu.CacheAlignment) != 64 {
 			return fmt.Errorf("%d: cache alignment size: got %q; want 64", i, cpu.CacheAlignment)
-		} 
+		}
 		if len(cpu.PowerManagement) != 0 {
 			return fmt.Errorf("%d: power management: got %d; wanted 0", i, len(cpu.PowerManagement))
 		}
@@ -977,5 +979,71 @@ func ValidateXeonE52690CPUFreq(f *cpufreq.Frequency) error {
 			return fmt.Errorf("%d: physical id: got %d; want 0 or 1", i, cpu.PhysicalID)
 		}
 	}
+	return nil
+}
+
+// ValidateXeonE52690Proc verifies that the info in the struct is consistent
+// with the above data and the generated test sys frequency info. If everything
+// verifies a nil is returned, otherwise an error is returned. This is used for
+// testing.
+func ValidateXeonE52690Proc(proc *processors.Processor, freq bool) error {
+	if proc.VendorID != GenuineIntel {
+		return fmt.Errorf("vendor_id: got %q; want %q", proc.VendorID, GenuineIntel)
+	}
+	if proc.CPUFamily != "6" {
+		return fmt.Errorf("cpu family: got %q; want \"6\"", proc.CPUFamily)
+	}
+	if proc.Model != "45" {
+		return fmt.Errorf("model: got %q; want \"45\"", proc.Model)
+	}
+	if proc.ModelName != XeonE52690ModelName {
+		return fmt.Errorf("model name: got %q; want %q", proc.ModelName, XeonE52690ModelName)
+	}
+	if proc.Stepping != "7" {
+		return fmt.Errorf("stepping: got %q; want \"7\"", proc.Stepping)
+	}
+	if proc.Microcode != "0x710" {
+		return fmt.Errorf("microcode: got %q; want \"0x710\"", proc.Microcode)
+	}
+	if freq {
+		if int(proc.MHzMin) != 1600 {
+			return fmt.Errorf("MHzMin: got %.3f; wanted 1600.000", proc.MHzMin)
+		}
+		if int(proc.MHzMax) != 2800 {
+			return fmt.Errorf("MHzMax: got %.3f; wanted 2800.000", proc.MHzMax)
+		}
+	} else {
+		if int(proc.MHzMin) != 0 {
+			return fmt.Errorf("MHzMin: got %.3f; wanted 0", proc.MHzMin)
+		}
+		if int(proc.MHzMax) != 0 {
+			return fmt.Errorf("MHzMax: got %.3f; wanted 0", proc.MHzMax)
+		}
+	}
+	if proc.CPUCores != 8 {
+		return fmt.Errorf("cpu cores: got %d; want 8", proc.CPUCores)
+	}
+	if len(proc.Flags) != 79 {
+		return fmt.Errorf("flags: got %d; want 99", len(proc.Flags))
+	}
+	if int(proc.BogoMIPS) < 5786 {
+		return fmt.Errorf("bogomips: got %.3f; want a value >= 5786", proc.BogoMIPS)
+	}
+	if len(proc.CacheIDs) != 4 {
+		return fmt.Errorf("CacheIDs: got %d elements; wanted 4", len(proc.CacheIDs))
+	}
+	if len(proc.Cache) != 4 {
+		return fmt.Errorf("Cache: got %d entries; wanted 4", len(proc.Cache))
+	}
+	for _, v := range proc.CacheIDs {
+		val, ok := proc.Cache[v]
+		if !ok {
+			return fmt.Errorf("Cache: expected information about %q; none found", v)
+		}
+		if val == "" {
+			return fmt.Errorf("Cache: expected information about %q; got an empty string", v)
+		}
+	}
+
 	return nil
 }
