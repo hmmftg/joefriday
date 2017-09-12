@@ -52,19 +52,20 @@ type Processors struct {
 
 // Processor holds the /proc/cpuinfo for a single physical cpu.
 type Processor struct {
-	PhysicalID int32    `json:"physical_id"`
-	VendorID   string   `json:"vendor_id"`
-	CPUFamily  string   `json:"cpu_family"`
-	Model      string   `json:"model"`
-	ModelName  string   `json:"model_name"`
-	Stepping   string   `json:"stepping"`
-	Microcode  string   `json:"microcode"`
-	MHzMin     float32  `json:"mhz_min"`
-	MHzMax     float32  `json:"mhz_max"`
-	CacheSize  string   `json:"cache_size"`
-	CPUCores   int32    `json:"cpu_cores"`
-	BogoMIPS   float32  `json:"bogomips"`
-	Flags      []string `json:"flags"`
+	PhysicalID int32             `json:"physical_id"`
+	VendorID   string            `json:"vendor_id"`
+	CPUFamily  string            `json:"cpu_family"`
+	Model      string            `json:"model"`
+	ModelName  string            `json:"model_name"`
+	Stepping   string            `json:"stepping"`
+	Microcode  string            `json:"microcode"`
+	MHzMin     float32           `json:"mhz_min"`
+	MHzMax     float32           `json:"mhz_max"`
+	Cache      map[string]string `json:"cache"`
+	CacheIDs   []string          `json:"-"`
+	CPUCores   int32             `json:"cpu_cores"`
+	BogoMIPS   float32           `json:"bogomips"`
+	Flags      []string          `json:"flags"`
 }
 
 // Profiler is used to get the processor information by processing the
@@ -171,9 +172,6 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 				}
 				continue
 			}
-			if prof.Val[5] == ' ' { // cache size
-				proc.CacheSize = string(prof.Val[nameLen:])
-			}
 			continue
 		}
 		if v == 'f' {
@@ -243,7 +241,7 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 		}
 
 	}
-	// append the current processor informatin
+	// append the current processor information
 	if add {
 		procs.Socket = append(procs.Socket, proc)
 	}
@@ -267,9 +265,16 @@ func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
 		id = cpus.CPU[i].PhysicalPackageID
 		//find the matching entry
 		for j := range procs.Socket {
-			if procs.Socket[j].PhysicalID == id {
-				procs.Socket[j].MHzMin = cpus.CPU[i].MHzMin
-				procs.Socket[j].MHzMax = cpus.CPU[i].MHzMax
+			if procs.Socket[j].PhysicalID != id {
+				continue
+			}
+			procs.Socket[j].MHzMin = cpus.CPU[i].MHzMin
+			procs.Socket[j].MHzMax = cpus.CPU[i].MHzMax
+			procs.Socket[j].Cache = make(map[string]string, len(cpus.CPU[i].Cache))
+			procs.Socket[j].CacheIDs = make([]string, 0, len(cpus.CPU[i].CacheIDs))
+			for k, id := range cpus.CPU[i].CacheIDs {
+				procs.Socket[j].CacheIDs[k] = id
+				procs.Socket[j].Cache[id] = cpus.CPU[i].Cache[id]
 			}
 		}
 	}
