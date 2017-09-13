@@ -14,40 +14,229 @@
 package processors
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
-	procs "github.com/mohae/joefriday/processors"
+	"github.com/mohae/joefriday"
+	"github.com/mohae/joefriday/cpu/testinfo"
+	ps "github.com/mohae/joefriday/processors"
 )
 
-func TestGet(t *testing.T) {
-	proc, err := Get()
+func Testi75600u(t *testing.T) {
+	// set up the cpuinfo
+	tProc, err := joefriday.NewTempFileProc("intel", "i75600", testinfo.I75600uCPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tProc.Remove()
+
+	// get a new struct for /sys/devices/system/cpux info
+	tCPU := testinfo.NewTempSysDevicesSystemCPU()
+	defer tCPU.Clean(true)
+
+	tCPU.Freq = true
+	tCPU.PhysicalPackageCount = 1
+	tCPU.CoresPerPhysicalPackage = 4
+	// create the /sys/devices/system/cpux info
+	err = tCPU.Create()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// get a new profiler and configure it
+	prof, err := NewProfiler()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	prof.Procer = tProc
+	prof.NumCPU = int(tCPU.CoresPerPhysicalPackage * tCPU.PhysicalPackageCount)
+	prof.SystemCPUPath = tCPU.Dir
+
+	// get the processor info.
+	p, err := prof.Get()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	procs, err := Unmarshal(p)
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	p, err := Unmarshal(proc)
+	// Verify results
+	t.Logf("%#v", procs)
+	err = ValidateI75600u(procs, tCPU)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// cleanup for next
+	err = tCPU.Clean(false)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// set up test stuff w/o freq
+	tCPU.Freq = false
+	err = tCPU.Create()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// get the processor info.
+	p, err = prof.Get()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	procs, err = Unmarshal(p)
 	if err != nil {
 		t.Errorf("got %s, want nil", err)
 		return
 	}
-	if p.Timestamp == 0 {
-		t.Error("expected timestamp to be a non-zero value; got 0")
+
+	// Verify results
+	t.Logf("%#v", procs)
+	err = ValidateI75600u(procs, tCPU)
+	if err != nil {
+		t.Error(err)
 	}
-	if len(p.Socket) == 0 {
-		t.Error("expected CPU to be a non-zero value; got 0")
+
+}
+
+func ValidateI75600u(procs *ps.Processors, tCPU testinfo.TempSysDevicesSystemCPU) error {
+	if procs.Timestamp <= 0 {
+		return errors.New("timestamp: expected a value > 0")
 	}
-	for i, v := range p.Socket {
-		if v.VendorID == "" {
-			t.Errorf("%d: expected vendor_id to have a value; it was empty", i)
-		}
-		if len(v.Flags) == 0 {
-			t.Errorf("%d: expected flags to have values; it was empty", i)
-		}
-		if int(v.BogoMIPS) == 0 {
-			t.Errorf("%d: expected a non-zero value for bogomips", i)
+	if procs.Sockets != tCPU.PhysicalPackageCount {
+		return fmt.Errorf("sockets: got %d; want %d", procs.Sockets, tCPU.PhysicalPackageCount)
+	}
+
+	if int(procs.Sockets) != len(procs.Socket) {
+		return fmt.Errorf("socket: got %d; want %d", len(procs.Socket), procs.Sockets)
+	}
+
+	if procs.CPUs != int(tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage) {
+		return fmt.Errorf("CPUs: got %d; want %d", procs.CPUs, tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage)
+	}
+
+	for i, proc := range procs.Socket {
+		err := testinfo.ValidateI75600uProc(&proc, tCPU.Freq)
+		if err != nil {
+			return fmt.Errorf("%d: %s", i, err)
 		}
 	}
-	t.Logf("%#v\n", p)
+	return nil
+}
+
+func TestXeonE52690(t *testing.T) {
+	// set up the cpuinfo
+	tProc, err := joefriday.NewTempFileProc("intel", "e52690", testinfo.XeonE52690CPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tProc.Remove()
+
+	// get a new struct for /sys/devices/system/cpux info
+	tCPU := testinfo.NewTempSysDevicesSystemCPU()
+	defer tCPU.Clean(true)
+
+	tCPU.Freq = true
+	tCPU.PhysicalPackageCount = 2
+	tCPU.CoresPerPhysicalPackage = 16
+	// create the /sys/devices/system/cpux info
+	err = tCPU.Create()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// get a new profiler and configure it
+	prof, err := NewProfiler()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	prof.Procer = tProc
+	prof.NumCPU = int(tCPU.CoresPerPhysicalPackage * tCPU.PhysicalPackageCount)
+	prof.SystemCPUPath = tCPU.Dir
+
+	// get the processor info.
+	p, err := prof.Get()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	procs, err := Unmarshal(p)
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+
+	// Verify results
+	t.Logf("%#v", procs)
+	err = ValidateXeonE52690(procs, tCPU)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// cleanup for next
+	err = tCPU.Clean(false)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// set up test stuff w/o freq
+	tCPU.Freq = false
+	err = tCPU.Create()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// get the processor info.
+	p, err = prof.Get()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	procs, err = Unmarshal(p)
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+
+	// Verify results
+	t.Logf("%#v", procs)
+	err = ValidateXeonE52690(procs, tCPU)
+	if err != nil {
+		t.Error(err)
+	}
+
+}
+
+func ValidateXeonE52690(procs *ps.Processors, tCPU testinfo.TempSysDevicesSystemCPU) error {
+	if procs.Timestamp <= 0 {
+		return errors.New("timestamp: expected a value > 0")
+	}
+	if procs.Sockets != tCPU.PhysicalPackageCount {
+		return fmt.Errorf("sockets: got %d; want %d", procs.Sockets, tCPU.PhysicalPackageCount)
+	}
+
+	if int(procs.Sockets) != len(procs.Socket) {
+		return fmt.Errorf("socket: got %d; want %d", len(procs.Socket), procs.Sockets)
+	}
+
+	if procs.CPUs != int(tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage) {
+		return fmt.Errorf("CPUs: got %d; want %d", procs.CPUs, tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage)
+	}
+
+	for i, proc := range procs.Socket {
+		err := testinfo.ValidateXeonE52690Proc(&proc, tCPU.Freq)
+		if err != nil {
+			return fmt.Errorf("%d: %s", i, err)
+		}
+	}
+	return nil
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -83,7 +272,7 @@ func BenchmarkMarshal(b *testing.B) {
 }
 
 func BenchmarkDeserialize(b *testing.B) {
-	var proc *procs.Processors
+	var proc *ps.Processors
 	p, _ := NewProfiler()
 	pB, _ := p.Get()
 	b.ResetTimer()
@@ -94,7 +283,7 @@ func BenchmarkDeserialize(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-	var proc *procs.Processors
+	var proc *ps.Processors
 	p, _ := NewProfiler()
 	procB, _ := p.Get()
 	b.ResetTimer()
