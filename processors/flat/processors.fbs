@@ -17,10 +17,15 @@ table Processor {
 	Microcode:string;
 	MHzMin:float;
 	MHzMax:float;
-	CacheSize:string;
+	Cache:[CacheInf];
 	CPUCores:int;
 	BogoMIPS:float;
 	Flags:[string];
+}
+
+table CacheInf {
+	ID:string;
+	Size:string;
 }
 
 root_type Processors;

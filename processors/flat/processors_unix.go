@@ -111,8 +111,21 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 	modelName := p.Builder.CreateString(proc.ModelName)
 	stepping := p.Builder.CreateString(proc.Stepping)
 	microcode := p.Builder.CreateString(proc.Microcode)
-	cacheSize := p.Builder.CreateString(proc.CacheSize)
-	uoffs := make([]fb.UOffsetT, len(proc.Flags))
+	uoffs := make([]fb.UOffsetT, len(proc.CacheIDs))
+	// serialize cache info in order; the flatbuffer table will have the info
+	// in order so a separate cache ID list isn't necessary for flatbuffers.
+	for i, id := range proc.CacheIDs {
+		// If the ID doesn't exist, the 0 value will be used
+		inf := proc.Cache[id]
+		uoffs[i] = p.SerializeCache(id, inf)
+	}
+	structs.ProcessorStartCacheVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
+	}
+	cache := p.Builder.EndVector(len(uoffs))
+
+	uoffs = make([]fb.UOffsetT, len(proc.Flags))
 	for i, flag := range proc.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
@@ -131,11 +144,22 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 	structs.ProcessorAddMicrocode(p.Builder, microcode)
 	structs.ProcessorAddMHzMin(p.Builder, proc.MHzMin)
 	structs.ProcessorAddMHzMax(p.Builder, proc.MHzMax)
-	structs.ProcessorAddCacheSize(p.Builder, cacheSize)
 	structs.ProcessorAddCPUCores(p.Builder, proc.CPUCores)
 	structs.ProcessorAddBogoMIPS(p.Builder, proc.BogoMIPS)
+	structs.ProcessorAddCache(p.Builder, cache)
 	structs.ProcessorAddFlags(p.Builder, flags)
 	return structs.ProcessorEnd(p.Builder)
+}
+
+// SerializeCache serializes a cache entry using flatbuffers and returns the
+// resulting UOffsetT.
+func (p *Profiler) SerializeCache(id, inf string) fb.UOffsetT {
+	cID := p.Builder.CreateString(id)
+	cInf := p.Builder.CreateString(inf)
+	structs.CacheInfStart(p.Builder)
+	structs.CacheInfAddID(p.Builder, cID)
+	structs.CacheInfAddSize(p.Builder, cInf)
+	return structs.CacheInfEnd(p.Builder)
 }
 
 // Serialize processors information.
@@ -157,6 +181,7 @@ func Deserialize(p []byte) *processors.Processors {
 	flatP := structs.GetRootAsProcessors(p, 0)
 	procs := &processors.Processors{}
 	flatProc := &structs.Processor{}
+	flatCache := &structs.CacheInf{}
 	proc := processors.Processor{}
 	procs.Timestamp = flatP.Timestamp()
 	procs.Socket = make([]processors.Processor, flatP.Sockets())
@@ -173,9 +198,17 @@ func Deserialize(p []byte) *processors.Processors {
 		proc.Microcode = string(flatProc.Microcode())
 		proc.MHzMin = flatProc.MHzMin()
 		proc.MHzMax = flatProc.MHzMax()
-		proc.CacheSize = string(flatProc.CacheSize())
 		proc.CPUCores = flatProc.CPUCores()
 		proc.BogoMIPS = flatProc.BogoMIPS()
+		proc.CacheIDs = make([]string, 0, flatProc.CacheLength())
+		proc.Cache = make(map[string]string, flatProc.CacheLength())
+		for j := 0; j < flatProc.CacheLength(); j++ {
+			if !flatProc.Cache(flatCache, j) {
+				continue
+			}
+			proc.CacheIDs = append(proc.CacheIDs, string(flatCache.ID()))
+			proc.Cache[proc.CacheIDs[j]] = string(flatCache.Size())
+		}
 		proc.Flags = make([]string, flatProc.FlagsLength())
 		for i := 0; i < len(proc.Flags); i++ {
 			proc.Flags[i] = string(flatProc.Flags(i))

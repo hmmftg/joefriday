@@ -86,12 +86,27 @@ func (rcv *Processor) MHzMax() float32 {
 	return 0.0
 }
 
-func (rcv *Processor) CacheSize() []byte {
+func (rcv *Processor) Cache(obj *CacheInf, j int) bool {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
 	if o != 0 {
-		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+	if obj == nil {
+		obj = new(CacheInf)
 	}
-	return nil
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Processor) CacheLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
 }
 
 func (rcv *Processor) CPUCores() int32 {
@@ -137,7 +152,9 @@ func ProcessorAddStepping(builder *flatbuffers.Builder, Stepping flatbuffers.UOf
 func ProcessorAddMicrocode(builder *flatbuffers.Builder, Microcode flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(6, flatbuffers.UOffsetT(Microcode), 0) }
 func ProcessorAddMHzMin(builder *flatbuffers.Builder, MHzMin float32) { builder.PrependFloat32Slot(7, MHzMin, 0.0) }
 func ProcessorAddMHzMax(builder *flatbuffers.Builder, MHzMax float32) { builder.PrependFloat32Slot(8, MHzMax, 0.0) }
-func ProcessorAddCacheSize(builder *flatbuffers.Builder, CacheSize flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(9, flatbuffers.UOffsetT(CacheSize), 0) }
+func ProcessorAddCache(builder *flatbuffers.Builder, Cache flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(9, flatbuffers.UOffsetT(Cache), 0) }
+func ProcessorStartCacheVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
+}
 func ProcessorAddCPUCores(builder *flatbuffers.Builder, CPUCores int32) { builder.PrependInt32Slot(10, CPUCores, 0) }
 func ProcessorAddBogoMIPS(builder *flatbuffers.Builder, BogoMIPS float32) { builder.PrependFloat32Slot(11, BogoMIPS, 0.0) }
 func ProcessorAddFlags(builder *flatbuffers.Builder, Flags flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(12, flatbuffers.UOffsetT(Flags), 0) }
