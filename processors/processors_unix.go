@@ -62,7 +62,7 @@ type Processor struct {
 	MHzMin     float32           `json:"mhz_min"`
 	MHzMax     float32           `json:"mhz_max"`
 	Cache      map[string]string `json:"cache"`
-	CacheIDs   []string          `json:"-"`
+	CacheIDs   []string          `json:"cache_ids"`
 	CPUCores   int32             `json:"cpu_cores"`
 	BogoMIPS   float32           `json:"bogomips"`
 	Flags      []string          `json:"flags"`
