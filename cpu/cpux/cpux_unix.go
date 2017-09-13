@@ -49,7 +49,7 @@ type CPU struct {
 	MHzMax            float32           `json:"mhz_max"`
 	Cache             map[string]string `json:"cache:`
 	// a sorted list of caches so that the cache info can be pulled out in order.
-	CacheIDs []string `json:"-"`
+	CacheIDs []string `json:"cache_id"`
 }
 
 // GetCPU returns the cpu information for the provided physical_package_id
