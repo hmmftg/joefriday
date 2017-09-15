@@ -94,6 +94,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	procsV := p.Builder.EndVector(len(uoffs))
 	structs.ProcessorsStart(p.Builder)
 	structs.ProcessorsAddTimestamp(p.Builder, procs.Timestamp)
+	structs.ProcessorsAddCPUs(p.Builder, int64(procs.CPUs))
 	structs.ProcessorsAddSockets(p.Builder, procs.Sockets)
 	structs.ProcessorsAddSocket(p.Builder, procsV)
 	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
@@ -184,6 +185,8 @@ func Deserialize(p []byte) *processors.Processors {
 	flatCache := &structs.CacheInf{}
 	proc := processors.Processor{}
 	procs.Timestamp = flatP.Timestamp()
+	procs.CPUs = int(flatP.CPUs())
+	procs.Sockets = flatP.Sockets()
 	procs.Socket = make([]processors.Processor, flatP.Sockets())
 	for i := 0; i < len(procs.Socket); i++ {
 		if !flatP.Socket(flatProc, i) {

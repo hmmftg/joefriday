@@ -3,6 +3,7 @@ namespace structs;
 
 table Processors {
 	Timestamp:long;
+	CPUs:long;
 	Sockets:int;
 	Socket:[Processor];
 }
