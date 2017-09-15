@@ -105,7 +105,9 @@ func ValidateI75600u(procs *processors.Processors, tCPU testinfo.TempSysDevicesS
 	if int(procs.Sockets) != len(procs.Socket) {
 		return fmt.Errorf("socket: got %d; want %d", len(procs.Socket), procs.Sockets)
 	}
-
+	if int(procs.CoresPerSocket) != 4 {
+		return fmt.Errorf("cores per socket: got %d; want 4", procs.CoresPerSocket)
+	}
 	if procs.CPUs != int(tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage) {
 		return fmt.Errorf("CPUs: got %d; want %d", procs.CPUs, tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage)
 	}
@@ -200,6 +202,9 @@ func ValidateXeonE52690(procs *processors.Processors, tCPU testinfo.TempSysDevic
 
 	if int(procs.Sockets) != len(procs.Socket) {
 		return fmt.Errorf("socket: got %d; want %d", len(procs.Socket), procs.Sockets)
+	}
+	if int(procs.CoresPerSocket) != 8 {
+		return fmt.Errorf("cores per socket: got %d; want 8", procs.CoresPerSocket)
 	}
 
 	if procs.CPUs != int(tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage) {

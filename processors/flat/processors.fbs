@@ -5,6 +5,7 @@ table Processors {
 	Timestamp:long;
 	CPUs:long;
 	Sockets:int;
+	CoresPerSocket:short;
 	Socket:[Processor];
 }
 

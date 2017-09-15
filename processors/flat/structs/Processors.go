@@ -45,8 +45,16 @@ func (rcv *Processors) Sockets() int32 {
 	return 0
 }
 
-func (rcv *Processors) Socket(obj *Processor, j int) bool {
+func (rcv *Processors) CoresPerSocket() int16 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
+	if o != 0 {
+		return rcv._tab.GetInt16(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *Processors) Socket(obj *Processor, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
 		x := rcv._tab.Vector(o)
 		x += flatbuffers.UOffsetT(j) * 4
@@ -61,18 +69,19 @@ func (rcv *Processors) Socket(obj *Processor, j int) bool {
 }
 
 func (rcv *Processors) SocketLength() int {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
 		return rcv._tab.VectorLen(o)
 	}
 	return 0
 }
 
-func ProcessorsStart(builder *flatbuffers.Builder) { builder.StartObject(4) }
+func ProcessorsStart(builder *flatbuffers.Builder) { builder.StartObject(5) }
 func ProcessorsAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
 func ProcessorsAddCPUs(builder *flatbuffers.Builder, CPUs int64) { builder.PrependInt64Slot(1, CPUs, 0) }
 func ProcessorsAddSockets(builder *flatbuffers.Builder, Sockets int32) { builder.PrependInt32Slot(2, Sockets, 0) }
-func ProcessorsAddSocket(builder *flatbuffers.Builder, Socket flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(Socket), 0) }
+func ProcessorsAddCoresPerSocket(builder *flatbuffers.Builder, CoresPerSocket int16) { builder.PrependInt16Slot(3, CoresPerSocket, 0) }
+func ProcessorsAddSocket(builder *flatbuffers.Builder, Socket flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(4, flatbuffers.UOffsetT(Socket), 0) }
 func ProcessorsStartSocketVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func ProcessorsEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

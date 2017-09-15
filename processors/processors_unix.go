@@ -44,7 +44,8 @@ const (
 type Processors struct {
 	Timestamp int64 `json:"timestamp"`
 	// The number of sockets.
-	Sockets int32 `json:"sockets"`
+	Sockets        int32 `json:"sockets"`
+	CoresPerSocket int16 `json:"cores_per_socket"`
 	// Information about each processor in each socket.
 	Socket []Processor `json:"socket"`
 	CPUs   int         `json:"cpus"` // number of cpus on the system
@@ -107,6 +108,12 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 	if err != nil {
 		return nil, err
 	}
+	// get the core count and calculate cores per socket
+	var cores int32
+	for i := range procs.Socket {
+		cores += procs.Socket[i].CPUCores
+	}
+	procs.CoresPerSocket = int16(cores / procs.Sockets)
 	return procs, nil
 }
 
