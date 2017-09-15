@@ -48,7 +48,7 @@ type CPU struct {
 	CPUMHz          float32  `json:"cpu_mhz"`
 	CacheSize       string   `json:"cache_size"`
 	PhysicalID      int32    `json:"physical_id"`
-	Siblings        int32    `json:"siblings"`
+	Siblings        int8     `json:"siblings"`
 	CoreID          int32    `json:"core_id"`
 	CPUCores        int32    `json:"cpu_cores"`
 	APICID          int32    `json:"apicid"`
@@ -289,7 +289,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				cpu.Siblings = int32(n)
+				cpu.Siblings = int8(n)
 				continue
 			}
 			if v == 't' { // stepping
