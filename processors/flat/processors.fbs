@@ -20,6 +20,7 @@ table Processor {
 	MHzMax:float;
 	Cache:[CacheInf];
 	CPUCores:int;
+	ThreadsPerCore:byte;
 	BogoMIPS:float;
 	Flags:[string];
 }

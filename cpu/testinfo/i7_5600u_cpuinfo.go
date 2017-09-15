@@ -278,6 +278,9 @@ func ValidateI75600uProc(proc *processors.Processor, freq bool) error {
 	if proc.CPUCores != 2 {
 		return fmt.Errorf("cpu cores: got %d; want 2", proc.CPUCores)
 	}
+	if proc.ThreadsPerCore != 2 {
+		fmt.Errorf("threads per core: got %d; want 2", proc.ThreadsPerCore)
+	}
 	if len(proc.Flags) != 99 {
 		return fmt.Errorf("flags: got %d; want 99", len(proc.Flags))
 	}

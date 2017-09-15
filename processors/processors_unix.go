@@ -52,20 +52,21 @@ type Processors struct {
 
 // Processor holds the /proc/cpuinfo for a single physical cpu.
 type Processor struct {
-	PhysicalID int32             `json:"physical_id"`
-	VendorID   string            `json:"vendor_id"`
-	CPUFamily  string            `json:"cpu_family"`
-	Model      string            `json:"model"`
-	ModelName  string            `json:"model_name"`
-	Stepping   string            `json:"stepping"`
-	Microcode  string            `json:"microcode"`
-	MHzMin     float32           `json:"mhz_min"`
-	MHzMax     float32           `json:"mhz_max"`
-	Cache      map[string]string `json:"cache"`
-	CacheIDs   []string          `json:"cache_ids"`
-	CPUCores   int32             `json:"cpu_cores"`
-	BogoMIPS   float32           `json:"bogomips"`
-	Flags      []string          `json:"flags"`
+	PhysicalID     int32             `json:"physical_id"`
+	VendorID       string            `json:"vendor_id"`
+	CPUFamily      string            `json:"cpu_family"`
+	Model          string            `json:"model"`
+	ModelName      string            `json:"model_name"`
+	Stepping       string            `json:"stepping"`
+	Microcode      string            `json:"microcode"`
+	MHzMin         float32           `json:"mhz_min"`
+	MHzMax         float32           `json:"mhz_max"`
+	Cache          map[string]string `json:"cache"`
+	CacheIDs       []string          `json:"cache_ids"`
+	CPUCores       int32             `json:"cpu_cores"`
+	ThreadsPerCore int8              `json:"threads_per_core"`
+	BogoMIPS       float32           `json:"bogomips"`
+	Flags          []string          `json:"flags"`
 }
 
 // Profiler is used to get the processor information by processing the
@@ -112,6 +113,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 	var (
 		i, pos, nameLen, cpuCnt int
+		siblings                int32
 		ids                     []int32
 		n                       uint64
 		v                       byte
@@ -219,6 +221,7 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 			if v == 'r' { // processor
 				cpuCnt++ // increment counter
 				if add {
+					proc.ThreadsPerCore = int8(siblings / proc.CPUCores)
 					procs.Socket = append(procs.Socket, proc)
 					add = false
 				}
@@ -229,9 +232,19 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 			}
 			continue
 		}
-		if v == 's' && prof.Val[1] == 't' { // stepping
-			proc.Stepping = string(prof.Val[nameLen:])
-			continue
+		if v == 's' {
+			if prof.Val[1] == 'i' { // siblings
+				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				if err != nil {
+					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}
+				siblings = int32(n)
+				continue
+			}
+			if prof.Val[1] == 't' { // stepping
+				proc.Stepping = string(prof.Val[nameLen:])
+				continue
+			}
 		}
 		if v == 'v' { // vendor_id
 			proc.VendorID = string(prof.Val[nameLen:])
@@ -249,6 +262,7 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 	}
 	// append the current processor information
 	if add {
+		proc.ThreadsPerCore = int8(siblings / proc.CPUCores)
 		procs.Socket = append(procs.Socket, proc)
 	}
 	procs.CPUs = cpuCnt
