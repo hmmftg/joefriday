@@ -70,7 +70,7 @@ func (rcv *Processor) Microcode() []byte {
 	return nil
 }
 
-func (rcv *Processor) MHzMin() float32 {
+func (rcv *Processor) CPUMHz() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(18))
 	if o != 0 {
 		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
@@ -78,7 +78,7 @@ func (rcv *Processor) MHzMin() float32 {
 	return 0.0
 }
 
-func (rcv *Processor) MHzMax() float32 {
+func (rcv *Processor) MHzMin() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(20))
 	if o != 0 {
 		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
@@ -86,8 +86,16 @@ func (rcv *Processor) MHzMax() float32 {
 	return 0.0
 }
 
-func (rcv *Processor) Cache(obj *CacheInf, j int) bool {
+func (rcv *Processor) MHzMax() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
+	}
+	return 0.0
+}
+
+func (rcv *Processor) Cache(obj *CacheInf, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(24))
 	if o != 0 {
 		x := rcv._tab.Vector(o)
 		x += flatbuffers.UOffsetT(j) * 4
@@ -102,7 +110,7 @@ func (rcv *Processor) Cache(obj *CacheInf, j int) bool {
 }
 
 func (rcv *Processor) CacheLength() int {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(24))
 	if o != 0 {
 		return rcv._tab.VectorLen(o)
 	}
@@ -110,7 +118,7 @@ func (rcv *Processor) CacheLength() int {
 }
 
 func (rcv *Processor) CPUCores() int32 {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(24))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(26))
 	if o != 0 {
 		return rcv._tab.GetInt32(o + rcv._tab.Pos)
 	}
@@ -118,7 +126,7 @@ func (rcv *Processor) CPUCores() int32 {
 }
 
 func (rcv *Processor) ThreadsPerCore() int8 {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(26))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(28))
 	if o != 0 {
 		return rcv._tab.GetInt8(o + rcv._tab.Pos)
 	}
@@ -126,7 +134,7 @@ func (rcv *Processor) ThreadsPerCore() int8 {
 }
 
 func (rcv *Processor) BogoMIPS() float32 {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(28))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(30))
 	if o != 0 {
 		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
 	}
@@ -134,7 +142,7 @@ func (rcv *Processor) BogoMIPS() float32 {
 }
 
 func (rcv *Processor) Flags(j int) []byte {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(30))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(32))
 	if o != 0 {
 		a := rcv._tab.Vector(o)
 		return rcv._tab.ByteVector(a + flatbuffers.UOffsetT(j * 4))
@@ -143,14 +151,14 @@ func (rcv *Processor) Flags(j int) []byte {
 }
 
 func (rcv *Processor) FlagsLength() int {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(30))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(32))
 	if o != 0 {
 		return rcv._tab.VectorLen(o)
 	}
 	return 0
 }
 
-func ProcessorStart(builder *flatbuffers.Builder) { builder.StartObject(14) }
+func ProcessorStart(builder *flatbuffers.Builder) { builder.StartObject(15) }
 func ProcessorAddPhysicalID(builder *flatbuffers.Builder, PhysicalID int32) { builder.PrependInt32Slot(0, PhysicalID, 0) }
 func ProcessorAddVendorID(builder *flatbuffers.Builder, VendorID flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(VendorID), 0) }
 func ProcessorAddCPUFamily(builder *flatbuffers.Builder, CPUFamily flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(CPUFamily), 0) }
@@ -158,15 +166,16 @@ func ProcessorAddModel(builder *flatbuffers.Builder, Model flatbuffers.UOffsetT)
 func ProcessorAddModelName(builder *flatbuffers.Builder, ModelName flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(4, flatbuffers.UOffsetT(ModelName), 0) }
 func ProcessorAddStepping(builder *flatbuffers.Builder, Stepping flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(5, flatbuffers.UOffsetT(Stepping), 0) }
 func ProcessorAddMicrocode(builder *flatbuffers.Builder, Microcode flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(6, flatbuffers.UOffsetT(Microcode), 0) }
-func ProcessorAddMHzMin(builder *flatbuffers.Builder, MHzMin float32) { builder.PrependFloat32Slot(7, MHzMin, 0.0) }
-func ProcessorAddMHzMax(builder *flatbuffers.Builder, MHzMax float32) { builder.PrependFloat32Slot(8, MHzMax, 0.0) }
-func ProcessorAddCache(builder *flatbuffers.Builder, Cache flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(9, flatbuffers.UOffsetT(Cache), 0) }
+func ProcessorAddCPUMHz(builder *flatbuffers.Builder, CPUMHz float32) { builder.PrependFloat32Slot(7, CPUMHz, 0.0) }
+func ProcessorAddMHzMin(builder *flatbuffers.Builder, MHzMin float32) { builder.PrependFloat32Slot(8, MHzMin, 0.0) }
+func ProcessorAddMHzMax(builder *flatbuffers.Builder, MHzMax float32) { builder.PrependFloat32Slot(9, MHzMax, 0.0) }
+func ProcessorAddCache(builder *flatbuffers.Builder, Cache flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(10, flatbuffers.UOffsetT(Cache), 0) }
 func ProcessorStartCacheVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
-func ProcessorAddCPUCores(builder *flatbuffers.Builder, CPUCores int32) { builder.PrependInt32Slot(10, CPUCores, 0) }
-func ProcessorAddThreadsPerCore(builder *flatbuffers.Builder, ThreadsPerCore int8) { builder.PrependInt8Slot(11, ThreadsPerCore, 0) }
-func ProcessorAddBogoMIPS(builder *flatbuffers.Builder, BogoMIPS float32) { builder.PrependFloat32Slot(12, BogoMIPS, 0.0) }
-func ProcessorAddFlags(builder *flatbuffers.Builder, Flags flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(13, flatbuffers.UOffsetT(Flags), 0) }
+func ProcessorAddCPUCores(builder *flatbuffers.Builder, CPUCores int32) { builder.PrependInt32Slot(11, CPUCores, 0) }
+func ProcessorAddThreadsPerCore(builder *flatbuffers.Builder, ThreadsPerCore int8) { builder.PrependInt8Slot(12, ThreadsPerCore, 0) }
+func ProcessorAddBogoMIPS(builder *flatbuffers.Builder, BogoMIPS float32) { builder.PrependFloat32Slot(13, BogoMIPS, 0.0) }
+func ProcessorAddFlags(builder *flatbuffers.Builder, Flags flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(14, flatbuffers.UOffsetT(Flags), 0) }
 func ProcessorStartFlagsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func ProcessorEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

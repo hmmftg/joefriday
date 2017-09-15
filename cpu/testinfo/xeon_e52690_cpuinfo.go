@@ -1005,6 +1005,9 @@ func ValidateXeonE52690Proc(proc *processors.Processor, freq bool) error {
 	if proc.Microcode != "0x710" {
 		return fmt.Errorf("microcode: got %q; want \"0x710\"", proc.Microcode)
 	}
+	if int(proc.CPUMHz) < 1200 {
+		return fmt.Errorf("cpu MHz: got %.3f; want a value >= 1200", proc.CPUMHz)
+	}
 	if freq {
 		if int(proc.MHzMin) != 1600 {
 			return fmt.Errorf("MHzMin: got %.3f; wanted 1600.000", proc.MHzMin)

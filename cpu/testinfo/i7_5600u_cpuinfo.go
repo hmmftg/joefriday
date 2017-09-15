@@ -260,6 +260,9 @@ func ValidateI75600uProc(proc *processors.Processor, freq bool) error {
 	if proc.Microcode != "0x24" {
 		return fmt.Errorf("microcode: got %q; want \"0x24\"", proc.Microcode)
 	}
+	if int(proc.CPUMHz) < 2500 {
+		return fmt.Errorf("cpu MHz: got %.3f; want a value >= 2500", proc.CPUMHz)
+	}
 	if freq {
 		if int(proc.MHzMin) != 1600 {
 			return fmt.Errorf("MHzMin: got %.3f; want 1600.000", proc.MHzMin)

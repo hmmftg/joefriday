@@ -60,6 +60,7 @@ type Processor struct {
 	ModelName      string            `json:"model_name"`
 	Stepping       string            `json:"stepping"`
 	Microcode      string            `json:"microcode"`
+	CPUMHz         float32           `json:"cpu_mhz"`
 	MHzMin         float32           `json:"mhz_min"`
 	MHzMax         float32           `json:"mhz_max"`
 	Cache          map[string]string `json:"cache"`
@@ -177,6 +178,13 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 				if v == 'f' { // cpu family
 					proc.CPUFamily = string(prof.Val[nameLen:])
 					continue
+				}
+				if v == 'M' { // cpu MHz
+					f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
+					if err != nil {
+						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+					}
+					proc.CPUMHz = float32(f)
 				}
 				continue
 			}

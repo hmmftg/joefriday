@@ -17,6 +17,7 @@ table Processor {
 	ModelName:string;
 	Stepping:string;
 	Microcode:string;
+	CPUMHz:float;
 	MHzMin:float;
 	MHzMax:float;
 	Cache:[CacheInf];
