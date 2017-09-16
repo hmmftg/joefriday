@@ -113,6 +113,7 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 	modelName := p.Builder.CreateString(proc.ModelName)
 	stepping := p.Builder.CreateString(proc.Stepping)
 	microcode := p.Builder.CreateString(proc.Microcode)
+	cacheSize := p.Builder.CreateString(proc.CacheSize)
 	uoffs := make([]fb.UOffsetT, len(proc.CacheIDs))
 	// serialize cache info in order; the flatbuffer table will have the info
 	// in order so a separate cache ID list isn't necessary for flatbuffers.
@@ -150,6 +151,7 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 	structs.ProcessorAddCPUCores(p.Builder, proc.CPUCores)
 	structs.ProcessorAddThreadsPerCore(p.Builder, proc.ThreadsPerCore)
 	structs.ProcessorAddBogoMIPS(p.Builder, proc.BogoMIPS)
+	structs.ProcessorAddCacheSize(p.Builder, cacheSize)
 	structs.ProcessorAddCache(p.Builder, cache)
 	structs.ProcessorAddFlags(p.Builder, flags)
 	return structs.ProcessorEnd(p.Builder)
@@ -209,6 +211,7 @@ func Deserialize(p []byte) *processors.Processors {
 		proc.CPUCores = flatProc.CPUCores()
 		proc.ThreadsPerCore = flatProc.ThreadsPerCore()
 		proc.BogoMIPS = flatProc.BogoMIPS()
+		proc.CacheSize = string(flatProc.CacheSize())
 		proc.CacheIDs = make([]string, 0, flatProc.CacheLength())
 		proc.Cache = make(map[string]string, flatProc.CacheLength())
 		for j := 0; j < flatProc.CacheLength(); j++ {

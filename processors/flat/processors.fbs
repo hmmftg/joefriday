@@ -20,6 +20,7 @@ table Processor {
 	CPUMHz:float;
 	MHzMin:float;
 	MHzMax:float;
+	CacheSize:string;
 	Cache:[CacheInf];
 	CPUCores:int;
 	ThreadsPerCore:byte;

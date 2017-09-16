@@ -263,6 +263,9 @@ func ValidateI75600uProc(proc *processors.Processor, freq bool) error {
 	if int(proc.CPUMHz) < 2500 {
 		return fmt.Errorf("cpu MHz: got %.3f; want a value >= 2500", proc.CPUMHz)
 	}
+	if proc.CacheSize != "4096 KB" {
+		return fmt.Errorf("cache size: got %q; want \"4096 KB\"", proc.CacheSize)
+	}
 	if freq {
 		if int(proc.MHzMin) != 1600 {
 			return fmt.Errorf("MHzMin: got %.3f; want 1600.000", proc.MHzMin)

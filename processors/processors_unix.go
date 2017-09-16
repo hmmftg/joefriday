@@ -64,6 +64,7 @@ type Processor struct {
 	MHzMin         float32           `json:"mhz_min"`
 	MHzMax         float32           `json:"mhz_max"`
 	Cache          map[string]string `json:"cache"`
+	CacheSize      string            `json:"cache_size"`
 	CacheIDs       []string          `json:"cache_ids"`
 	CPUCores       int32             `json:"cpu_cores"`
 	ThreadsPerCore int8              `json:"threads_per_core"`
@@ -187,6 +188,9 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 					proc.CPUMHz = float32(f)
 				}
 				continue
+			}
+			if v == 'a' && prof.Val[5] == ' ' {
+				proc.CacheSize = string(prof.Val[nameLen:])
 			}
 			continue
 		}

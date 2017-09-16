@@ -1038,6 +1038,9 @@ func ValidateXeonE52690Proc(proc *processors.Processor, freq bool) error {
 	if len(proc.CacheIDs) != 4 {
 		return fmt.Errorf("CacheIDs: got %d elements; wanted 4", len(proc.CacheIDs))
 	}
+	if proc.CacheSize != "20480 KB" {
+		return fmt.Errorf("cache size: got %q; want \"20480 KB\"", proc.CacheSize)
+	}
 	if len(proc.Cache) != 4 {
 		return fmt.Errorf("Cache: got %d entries; wanted 4", len(proc.Cache))
 	}
