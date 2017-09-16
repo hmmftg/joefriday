@@ -145,7 +145,7 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 	structs.ProcessorAddModelName(p.Builder, modelName)
 	structs.ProcessorAddStepping(p.Builder, stepping)
 	structs.ProcessorAddMicrocode(p.Builder, microcode)
-	structs.ProcessorAddCPUMhz(p.Builder, proc.CPUMHz)
+	structs.ProcessorAddCPUMHz(p.Builder, proc.CPUMHz)
 	structs.ProcessorAddMHzMin(p.Builder, proc.MHzMin)
 	structs.ProcessorAddMHzMax(p.Builder, proc.MHzMax)
 	structs.ProcessorAddCPUCores(p.Builder, proc.CPUCores)
