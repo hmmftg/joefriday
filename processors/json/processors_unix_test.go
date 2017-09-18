@@ -247,6 +247,116 @@ func ValidateXeonE52690(procs *ps.Processors, tCPU testinfo.TempSysDevicesSystem
 	return nil
 }
 
+func TestR71800x(t *testing.T) {
+	// set up the cpuinfo
+	tProc, err := joefriday.NewTempFileProc("intel", "r71800x", testinfo.R71800xCPUInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tProc.Remove()
+
+	// get a new struct for /sys/devices/system/cpux info
+	tCPU := testinfo.NewTempSysDevicesSystemCPU()
+	defer tCPU.Clean(true)
+
+	tCPU.Freq = true
+	tCPU.PhysicalPackageCount = 1
+	tCPU.CoresPerPhysicalPackage = 8
+	// create the /sys/devices/system/cpux info
+	err = tCPU.Create()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// get a new profiler and configure it
+	prof, err := NewProfiler()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	prof.Procer = tProc
+	prof.NumCPU = int(tCPU.CoresPerPhysicalPackage * tCPU.PhysicalPackageCount)
+	prof.SystemCPUPath = tCPU.Dir
+
+	// get the processor info.
+	p, err := prof.Get()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	procs, err := Unmarshal(p)
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+
+	// Verify results
+	t.Logf("%#v", procs)
+	err = ValidateR71800x(procs, tCPU)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// cleanup for next
+	err = tCPU.Clean(false)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// set up test stuff w/o freq
+	tCPU.Freq = false
+	err = tCPU.Create()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// get the processor info.
+	p, err = prof.Get()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	procs, err = Unmarshal(p)
+	if err != nil {
+		t.Errorf("got %s, want nil", err)
+		return
+	}
+
+	// Verify results
+	t.Logf("%#v", procs)
+	err = ValidateI75600u(procs, tCPU)
+	if err != nil {
+		t.Error(err)
+	}
+
+}
+
+func ValidateR71800x(procs *ps.Processors, tCPU testinfo.TempSysDevicesSystemCPU) error {
+	if procs.Timestamp <= 0 {
+		return errors.New("timestamp: expected a value > 0")
+	}
+	if procs.Sockets != tCPU.PhysicalPackageCount {
+		return fmt.Errorf("sockets: got %d; want %d", procs.Sockets, tCPU.PhysicalPackageCount)
+	}
+
+	if int(procs.Sockets) != len(procs.Socket) {
+		return fmt.Errorf("socket: got %d; want %d", len(procs.Socket), procs.Sockets)
+	}
+	if int(procs.CoresPerSocket) != 8 {
+		return fmt.Errorf("cores per socket: got %d; want 8", procs.CoresPerSocket)
+	}
+	if procs.CPUs != int(tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage) {
+		return fmt.Errorf("CPUs: got %d; want %d", procs.CPUs, tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage)
+	}
+
+	for i, proc := range procs.Socket {
+		err := testinfo.ValidateR71800xProc(&proc, tCPU.Freq)
+		if err != nil {
+			return fmt.Errorf("%d: %s", i, err)
+		}
+	}
+	return nil
+}
+
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
 	p, _ := NewProfiler()

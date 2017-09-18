@@ -6,6 +6,12 @@ import (
 
 	"github.com/mohae/joefriday/cpu/cpufreq"
 	"github.com/mohae/joefriday/cpu/cpuinfo"
+	"github.com/mohae/joefriday/processors"
+)
+
+const (
+	AuthenticAMD   = "AuthenticAMD"
+	R71800xTLBSize = "2560 4K pages"
 )
 
 var R71800xCPUInfo = []byte(`processor	: 0
@@ -468,8 +474,8 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 		return fmt.Errorf("got %d socket; want 1", len(inf.CPU))
 	}
 	for i, cpu := range inf.CPU {
-		if cpu.VendorID != "AuthenticAMD" {
-			return fmt.Errorf("%d: VendorID: got %q; want \"AuthenticAMD\"", i, cpu.VendorID)
+		if cpu.VendorID != AuthenticAMD {
+			return fmt.Errorf("%d: VendorID: got %q; want %q", i, cpu.VendorID, AuthenticAMD)
 		}
 		if cpu.CPUFamily != "23" {
 			return fmt.Errorf("%d: CPUFamily: got %q; want \"23\"", i, cpu.CPUFamily)
@@ -522,9 +528,8 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 		if int(cpu.CacheAlignment) != 64 {
 			return fmt.Errorf("%d: Siblings: got %d; want 64", i, cpu.CacheAlignment)
 		}
-		tlbSize := "2560 4K pages"
-		if cpu.TLBSize != tlbSize {
-			return fmt.Errorf("%d: tlb size: got %q; want %q", i, cpu.TLBSize, tlbSize)
+		if cpu.TLBSize != R71800xTLBSize {
+			return fmt.Errorf("%d: tlb size: got %q; want %q", i, cpu.TLBSize, R71800xTLBSize)
 		}
 		if len(cpu.PowerManagement) != 7 {
 			return fmt.Errorf("%d: power management: got %d; want 7", i, len(cpu.PowerManagement))
@@ -546,7 +551,7 @@ func ValidateR71800xCPUFreq(f *cpufreq.Frequency) error {
 	if len(f.CPU) != 16 {
 		return fmt.Errorf("Expected 16 CPU entries, got %d", len(f.CPU))
 	}
-	
+
 	for i, cpu := range f.CPU {
 		if int(cpu.CPUMHz) != 2200 {
 			return fmt.Errorf("%d: CPUMHz: got %d; want 2200", i, int(cpu.CPUMHz))
@@ -565,5 +570,91 @@ func ValidateR71800xCPUFreq(f *cpufreq.Frequency) error {
 			return fmt.Errorf("%d: core id: got %d; want %d", i, cpu.CoreID, i/2)
 		}
 	}
+	return nil
+}
+
+// ValidateR71800xProc verifies that the info in the struct is consistent with
+// the above data and the generated test sys frequency info. If everything
+// verifies a nil is returned, otherwise an error is returned. This is used for
+// testing.
+func ValidateR71800xProc(proc *processors.Processor, freq bool) error {
+	if proc.VendorID != AuthenticAMD {
+		return fmt.Errorf("vendor_id: got %q; want %q", proc.VendorID, AuthenticAMD)
+	}
+	if proc.CPUFamily != "23" {
+		return fmt.Errorf("CPUFamily: got %q; want \"23\"", proc.CPUFamily)
+	}
+	if proc.Model != "1" {
+		return fmt.Errorf("Model: got %q; want \"1\"", proc.Model)
+	}
+	if proc.ModelName != "AMD Ryzen 7 1800X Eight-Core Processor" {
+		return fmt.Errorf("ModelName: got %q; want \"AMD Ryzen 7 1800X Eight-Core Processor\"", proc.ModelName)
+	}
+	if proc.Stepping != "1" {
+		return fmt.Errorf("Stepping: got %q; want \"1\"", proc.Stepping)
+	}
+	if proc.Microcode != "0x800111c" {
+		return fmt.Errorf("MicroCode: got %q; want \"0x800111c\"", proc.Microcode)
+	}
+	if int(proc.CPUMHz) != 2200 {
+		return fmt.Errorf("CPUMHz: got %d; want 2200", int(proc.CPUMHz))
+	}
+	if proc.CPUCores != 8 {
+		return fmt.Errorf("CPUCores: got %d; want 16", proc.CPUCores)
+	}
+	if len(proc.Flags) != 103 {
+		return fmt.Errorf("Flags: got %q; want 103", len(proc.Flags))
+	}
+	/*
+		if len(cpu.Bugs) != 3 {
+			return fmt.Errorf("%d: Bugs: got %d; want 3", i, len(cpu.Bugs))
+		}
+	*/
+	if freq {
+		if int(proc.MHzMin) != 1600 {
+			return fmt.Errorf("MHzMin: got %.3f; wanted 1600.000", proc.MHzMin)
+		}
+		if int(proc.MHzMax) != 2800 {
+			return fmt.Errorf("MHzMax: got %.3f; wanted 2800.000", proc.MHzMax)
+		}
+	} else {
+		if int(proc.MHzMin) != 0 {
+			return fmt.Errorf("MHzMin: got %.3f; wanted 0", proc.MHzMin)
+		}
+		if int(proc.MHzMax) != 0 {
+			return fmt.Errorf("MHzMax: got %.3f; wanted 0", proc.MHzMax)
+		}
+	}
+	if proc.CacheSize != "512 KB" {
+		return fmt.Errorf("CacheSize: got %q; want \"512 KB\"", proc.CacheSize)
+	}
+	if len(proc.Cache) != 4 {
+		return fmt.Errorf("Cache: got %d entries; wanted 4", len(proc.Cache))
+	}
+	for _, v := range proc.CacheIDs {
+		val, ok := proc.Cache[v]
+		if !ok {
+			return fmt.Errorf("Cache: expected information about %q; none found", v)
+		}
+		if val == "" {
+			return fmt.Errorf("Cache: expected information about %q; got an empty string", v)
+		}
+	}
+	if proc.ThreadsPerCore != 2 {
+		fmt.Errorf("threads per core: got %d; want 2", proc.ThreadsPerCore)
+	}
+	if len(proc.OpModes) != 2 {
+		return fmt.Errorf("op modes: got %d; want 2", len(proc.OpModes))
+	}
+	if proc.OpModes[1] != "32-bit" {
+		return fmt.Errorf("OpModes: got %d; want \"32-bit\"", proc.OpModes[1])
+	}
+	if proc.OpModes[2] != "64-bit" {
+		return fmt.Errorf("OpModes: got %d; want \"64-bit\"", proc.OpModes[2])
+	}
+	if int(proc.BogoMIPS) < 5786 {
+		return fmt.Errorf("bogomips: got %.3f; want a value >= 5786", proc.BogoMIPS)
+	}
+
 	return nil
 }
