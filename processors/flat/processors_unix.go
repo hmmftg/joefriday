@@ -12,18 +12,20 @@
 // limitations under the License.
 
 // Package processors gathers information about the physical processors on a
-// system by parsing the information from /procs/cpuinfo. This package gathers
-// basic information about each physical processor, cpu, on the system, with
-// one entry per processor. Instead of returning a Go struct, it returns
-// Flatbuffer serialized bytes. A function to deserialize the Flatbuffer
-// serialized bytes into a processors.Processors struct is provided.
+// system by parsing the information from /procs/cpuinfo and sysfs. This
+// package gathers basic information about sockets, physical processors, etc.
+// on the system, with one entry per processor. Instead of returning a Go
+/// struct, Flatbuffer serialized bytes are returned. A function to deserialize
+// the Flatbuffer serialized bytes into a processors.Processors struct is
+// provided.
 //
-// The CPUMHz field shouldn't be relied on; the CPU data of the first CPU
-// processed for each processor is used. This value may be different than that
-// of other cores on the processor and may also be higher or lower than the
-// processor's base frequency because of dynamic frequency scaling and
-// frequency boosts, like turbo. For more detailed information about each cpu
-// core, use joefriday/cpuinfo, which returns an entry per core.
+// CPUMHz currently provides the current speed of the first core encountered
+// for each physical processor. Modern x86/x86-64 cores have the ability to
+// shift their speed so this is just a point in time data point for that core;
+// there may be other cores on the processor that are at higher and lower
+// speeds at the time the data is read. This field is more useful for other
+// architectures. For x86/x86-64 cores, the MHzMin and MHzMax fields provide
+// information about the range of speeds that are possible for the cores.
 //
 // Note: the package name is processors and not the final element of the import
 // path (flat).
