@@ -199,14 +199,15 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 		if v == 'f' {
 			if prof.Val[1] == 'l' { // flags
 				proc.Flags = strings.Split(string(prof.Val[nameLen:]), " ")
-			}
-			// for x86 stuff this is always true. This logic may need to be changed for other
-			// cpu architectures.
-			proc.OpModes = append(proc.OpModes, "32-bit")
-			// see if the lm flag exists for opmodes
-			for i := range proc.Flags {
-				if proc.Flags[i] == "lm" {
-					proc.OpModes = append(proc.OpModes, "64-bit")
+				// for x86 stuff this is always true. This logic may need to be changed for other
+				// cpu architectures.
+				proc.OpModes = append(proc.OpModes, "32-bit")
+				// see if the lm flag exists for opmodes
+				for i := range proc.Flags {
+					if proc.Flags[i] == "lm" {
+						proc.OpModes = append(proc.OpModes, "64-bit")
+						break
+					}
 				}
 			}
 			continue
@@ -259,6 +260,7 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
+				proc.OpModes = proc.OpModes[:0]
 			}
 			continue
 		}

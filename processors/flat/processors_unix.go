@@ -237,6 +237,10 @@ func Deserialize(p []byte) *processors.Processors {
 		for i := 0; i < len(proc.Flags); i++ {
 			proc.Flags[i] = string(flatProc.Flags(i))
 		}
+		proc.OpModes = make([]string, flatProc.OpModesLength())
+		for i := 0; i < len(proc.OpModes); i++ {
+			proc.OpModes[i] = string(flatProc.OpModes(i))
+		}
 		procs.Socket[i] = proc
 	}
 	return procs
