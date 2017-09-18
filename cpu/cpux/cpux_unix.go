@@ -11,12 +11,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpux provides information about each cpuX on the system, where X is
-// the integer of each CPU on the system, e.g. cpu0, cpu1, etc. On linux
-// systems this comes from /sys/devices/system/cpu. Not all paths are available
-// on all systems, e.g. /sys/devices/system/cpu/cpuX/cpufreq and its children
-// may not exist on some systems. If the system doesn't have a particular file
-// within this path, the field's value will be the type's zero value.
+// Package cpux provides information about a system's cpus, where X is the
+// integer of each CPU on the system, e.g. cpu0, cpu1, etc. On linux systems
+// this comes from the sysfs filesystem. Not all paths are available on all
+// systems, e.g. /sys/devices/system/cpu/cpuX/cpufreq and its children may not
+// exist on some systems. If the system doesn't have a particular path within
+// this path, the field's value will be the type's zero value.
 //
 // This package does not currently have a ticker implementation.
 package cpux

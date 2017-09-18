@@ -11,15 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cpux handles JSON based information about each cpuX on the system,
-// where X is the integer of each CPU on the system, e.g. cpu0, cpu1, etc. On
-// linux systems this comes from /sys/devices/system/cpu. Not all paths are
-// available on all systems, e.g. /sys/devices/system/cpu/cpuX/cpufreq and its
-// children may not exist on some systems. If the system doesn't have a
-// particular file within the path, the field's value will be the type's zero
-// value. Instead of returning a Go struct, it returns JSON serialized bytes. A
-// function to deserialize the JSON serialized bytes into a cpux.CPUs struct is
-// provided.
+// Package cpux provides information about a system's cpus, where X is the
+// integer of each CPU on the system, e.g. cpu0, cpu1, etc. On linux systems
+// this comes from the sysfs filesystem. Not all paths are available on all
+// systems, e.g. /sys/devices/system/cpu/cpuX/cpufreq and its children may not
+// exist on some systems. If the system doesn't have a particular path, the
+// field's value will be the type's zero value. Instead of returning a Go
+// struct, JSON serialized bytes are returned. A function to deserialize the
+// JSON serialized bytes into a cpux.CPUs struct is provided.
 //
 // Note: the package name is cpux and not the final element of the import path
 // (json).
