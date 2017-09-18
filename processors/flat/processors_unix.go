@@ -139,6 +139,15 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	flags := p.Builder.EndVector(len(uoffs))
+	uoffs = make([]fb.UOffsetT, len(proc.OpModes))
+	for i := range proc.OpModes {
+		uoffs[i] = p.Builder.CreateString(proc.OpModes[i])
+	}
+	structs.ProcessorStartOpModesVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
+	}
+	modes := p.Builder.EndVector(len(uoffs))
 	structs.ProcessorStart(p.Builder)
 	structs.ProcessorAddPhysicalID(p.Builder, proc.PhysicalID)
 	structs.ProcessorAddVendorID(p.Builder, vendorID)
@@ -156,6 +165,7 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 	structs.ProcessorAddCacheSize(p.Builder, cacheSize)
 	structs.ProcessorAddCache(p.Builder, cache)
 	structs.ProcessorAddFlags(p.Builder, flags)
+	structs.ProcessorAddOpModes(p.Builder, modes)
 	return structs.ProcessorEnd(p.Builder)
 }
 

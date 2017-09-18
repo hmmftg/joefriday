@@ -166,7 +166,24 @@ func (rcv *Processor) FlagsLength() int {
 	return 0
 }
 
-func ProcessorStart(builder *flatbuffers.Builder) { builder.StartObject(16) }
+func (rcv *Processor) OpModes(j int) []byte {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(36))
+	if o != 0 {
+		a := rcv._tab.Vector(o)
+		return rcv._tab.ByteVector(a + flatbuffers.UOffsetT(j * 4))
+	}
+	return nil
+}
+
+func (rcv *Processor) OpModesLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(36))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
+func ProcessorStart(builder *flatbuffers.Builder) { builder.StartObject(17) }
 func ProcessorAddPhysicalID(builder *flatbuffers.Builder, PhysicalID int32) { builder.PrependInt32Slot(0, PhysicalID, 0) }
 func ProcessorAddVendorID(builder *flatbuffers.Builder, VendorID flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(VendorID), 0) }
 func ProcessorAddCPUFamily(builder *flatbuffers.Builder, CPUFamily flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(CPUFamily), 0) }
@@ -186,5 +203,8 @@ func ProcessorAddThreadsPerCore(builder *flatbuffers.Builder, ThreadsPerCore int
 func ProcessorAddBogoMIPS(builder *flatbuffers.Builder, BogoMIPS float32) { builder.PrependFloat32Slot(14, BogoMIPS, 0.0) }
 func ProcessorAddFlags(builder *flatbuffers.Builder, Flags flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(15, flatbuffers.UOffsetT(Flags), 0) }
 func ProcessorStartFlagsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
+}
+func ProcessorAddOpModes(builder *flatbuffers.Builder, OpModes flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(16, flatbuffers.UOffsetT(OpModes), 0) }
+func ProcessorStartOpModesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func ProcessorEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

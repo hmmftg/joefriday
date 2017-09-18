@@ -26,6 +26,7 @@ table Processor {
 	ThreadsPerCore:byte;
 	BogoMIPS:float;
 	Flags:[string];
+	OpModes:[string];
 }
 
 table CacheInf {

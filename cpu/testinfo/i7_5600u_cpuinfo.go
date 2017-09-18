@@ -290,6 +290,15 @@ func ValidateI75600uProc(proc *processors.Processor, freq bool) error {
 	if len(proc.Flags) != 99 {
 		return fmt.Errorf("flags: got %d; want 99", len(proc.Flags))
 	}
+	if len(proc.OpModes) != 2 {
+		return fmt.Errorf("op modes: got %d; want 2", len(proc.OpModes))
+	}
+	if proc.OpModes[1] != "32-bit" {
+		return fmt.Errorf("OpModes: got %d; want \"32-bit\"", proc.OpModes[1])
+	}
+	if proc.OpModes[2] != "64-bit" {
+		return fmt.Errorf("OpModes: got %d; want \"64-bit\"", proc.OpModes[2])
+	}
 	if int(proc.BogoMIPS) < 5100 {
 		return fmt.Errorf("bogomips: got %.3f; want a value >= 5100", proc.BogoMIPS)
 	}

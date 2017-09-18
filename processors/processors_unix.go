@@ -14,7 +14,7 @@
 // Package processors gathers information about the physical processors on a
 // system by parsing the information from /procs/cpuinfo and sysfs. This
 // package gathers basic information about sockets, physical processors, etc.
-// on the system, with one entry per processor. 
+// on the system, with one entry per processor.
 //
 // CPUMHz currently provides the current speed of the first core encountered
 // for each physical processor. Modern x86/x86-64 cores have the ability to
@@ -71,6 +71,7 @@ type Processor struct {
 	ThreadsPerCore int8              `json:"threads_per_core"`
 	BogoMIPS       float32           `json:"bogomips"`
 	Flags          []string          `json:"flags"`
+	OpModes        []string          `json:"op_modes"`
 }
 
 // Profiler is used to get the processor information by processing the
@@ -198,6 +199,15 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 		if v == 'f' {
 			if prof.Val[1] == 'l' { // flags
 				proc.Flags = strings.Split(string(prof.Val[nameLen:]), " ")
+			}
+			// for x86 stuff this is always true. This logic may need to be changed for other
+			// cpu architectures.
+			proc.OpModes = append(proc.OpModes, "32-bit")
+			// see if the lm flag exists for opmodes
+			for i := range proc.Flags {
+				if proc.Flags[i] == "lm" {
+					proc.OpModes = append(proc.OpModes, "64-bit")
+				}
 			}
 			continue
 		}
