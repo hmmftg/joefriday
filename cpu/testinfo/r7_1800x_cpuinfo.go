@@ -537,6 +537,9 @@ func ValidateR71800xCPUInfo(inf *cpuinfo.CPUInfo) error {
 		if len(cpu.AddressSizes) != 2 {
 			return fmt.Errorf("%d: address sizes: got %d; want 2", i, len(cpu.AddressSizes))
 		}
+		if int(cpu.BogoMIPS) < 7100 {
+			return fmt.Errorf("bogomips: got %.3f; want a value >= 7100", cpu.BogoMIPS)
+		}
 	}
 	return nil
 }
@@ -652,8 +655,8 @@ func ValidateR71800xProc(proc *processors.Processor, freq bool) error {
 	if proc.OpModes[1] != "64-bit" {
 		return fmt.Errorf("OpModes: got %q; want \"64-bit\"", proc.OpModes[1])
 	}
-	if int(proc.BogoMIPS) < 5786 {
-		return fmt.Errorf("bogomips: got %.3f; want a value >= 5786", proc.BogoMIPS)
+	if int(proc.BogoMIPS) < 7100 {
+		return fmt.Errorf("bogomips: got %.3f; want a value >= 7100", proc.BogoMIPS)
 	}
 
 	return nil
