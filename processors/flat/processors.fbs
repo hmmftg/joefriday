@@ -3,14 +3,10 @@ namespace structs;
 
 table Processors {
 	Timestamp:long;
-	CPUs:long;
 	Sockets:int;
+	CPUs:int;
 	CoresPerSocket:short;
-	Socket:[Processor];
-}
-
-table Processor {
-	PhysicalID:int;
+	ThreadsPerCore:byte;
 	VendorID:string;
 	CPUFamily:string;
 	Model:string;
@@ -22,8 +18,6 @@ table Processor {
 	MHzMax:float;
 	CacheSize:string;
 	Cache:[CacheInf];
-	CPUCores:int;
-	ThreadsPerCore:byte;
 	BogoMIPS:float;
 	Flags:[string];
 	OpModes:[string];

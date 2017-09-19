@@ -14,10 +14,10 @@
 // Package processors gathers information about the physical processors on a
 // system by parsing the information from /procs/cpuinfo and sysfs. This
 // package gathers basic information about sockets, physical processors, etc.
-// on the system, with one entry per processor. Instead of returning a Go
-/// struct, Flatbuffer serialized bytes are returned. A function to deserialize
-// the Flatbuffer serialized bytes into a processors.Processors struct is
-// provided.
+// on the system. For multi-socket systems, it is assumed that all of the
+// processors are the same. Instead of returning a Go struct, Flatbuffer
+// serialized bytes are returned. A function to deserialize the Flatbuffer
+// serialized bytes into a processors.Processors struct is provided.
 //
 // CPUMHz currently provides the current speed of the first core encountered
 // for each physical processor. Modern x86/x86-64 cores have the ability to
@@ -85,43 +85,19 @@ func Get() (p []byte, err error) {
 func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	// ensure the Builder is in a usable state.
 	p.Builder.Reset()
-	uoffs := make([]fb.UOffsetT, len(procs.Socket))
-	for i, proc := range procs.Socket {
-		uoffs[i] = p.SerializeProcessor(&proc)
-	}
-	structs.ProcessorsStartSocketVector(p.Builder, len(uoffs))
-	for i := len(uoffs) - 1; i >= 0; i-- {
-		p.Builder.PrependUOffsetT(uoffs[i])
-	}
-	procsV := p.Builder.EndVector(len(uoffs))
-	structs.ProcessorsStart(p.Builder)
-	structs.ProcessorsAddTimestamp(p.Builder, procs.Timestamp)
-	structs.ProcessorsAddCPUs(p.Builder, int64(procs.CPUs))
-	structs.ProcessorsAddSockets(p.Builder, procs.Sockets)
-	structs.ProcessorsAddCoresPerSocket(p.Builder, procs.CoresPerSocket)
-	structs.ProcessorsAddSocket(p.Builder, procsV)
-	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
-	b := p.Builder.Bytes[p.Builder.Head():]
-	// copy them (otherwise gets lost in reset)
-	tmp := make([]byte, len(b))
-	copy(tmp, b)
-	return tmp
-}
-
-func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
-	vendorID := p.Builder.CreateString(proc.VendorID)
-	cpuFamily := p.Builder.CreateString(proc.CPUFamily)
-	model := p.Builder.CreateString(proc.Model)
-	modelName := p.Builder.CreateString(proc.ModelName)
-	stepping := p.Builder.CreateString(proc.Stepping)
-	microcode := p.Builder.CreateString(proc.Microcode)
-	cacheSize := p.Builder.CreateString(proc.CacheSize)
-	uoffs := make([]fb.UOffsetT, len(proc.CacheIDs))
+	vendorID := p.Builder.CreateString(procs.VendorID)
+	cpuFamily := p.Builder.CreateString(procs.CPUFamily)
+	model := p.Builder.CreateString(procs.Model)
+	modelName := p.Builder.CreateString(procs.ModelName)
+	stepping := p.Builder.CreateString(procs.Stepping)
+	microcode := p.Builder.CreateString(procs.Microcode)
+	cacheSize := p.Builder.CreateString(procs.CacheSize)
+	uoffs := make([]fb.UOffsetT, len(procs.CacheIDs))
 	// serialize cache info in order; the flatbuffer table will have the info
 	// in order so a separate cache ID list isn't necessary for flatbuffers.
-	for i, id := range proc.CacheIDs {
+	for i, id := range procs.CacheIDs {
 		// If the ID doesn't exist, the 0 value will be used
-		inf := proc.Cache[id]
+		inf := procs.Cache[id]
 		uoffs[i] = p.SerializeCache(id, inf)
 	}
 	structs.ProcessorStartCacheVector(p.Builder, len(uoffs))
@@ -130,8 +106,8 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 	}
 	cache := p.Builder.EndVector(len(uoffs))
 
-	uoffs = make([]fb.UOffsetT, len(proc.Flags))
-	for i, flag := range proc.Flags {
+	uoffs = make([]fb.UOffsetT, len(procs.Flags))
+	for i, flag := range procs.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
 	structs.ProcessorStartFlagsVector(p.Builder, len(uoffs))
@@ -139,34 +115,41 @@ func (p *Profiler) SerializeProcessor(proc *processors.Processor) fb.UOffsetT {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	flags := p.Builder.EndVector(len(uoffs))
-	uoffs = make([]fb.UOffsetT, len(proc.OpModes))
-	for i := range proc.OpModes {
-		uoffs[i] = p.Builder.CreateString(proc.OpModes[i])
+	uoffs = make([]fb.UOffsetT, len(procs.OpModes))
+	for i := range procs.OpModes {
+		uoffs[i] = p.Builder.CreateString(procs.OpModes[i])
 	}
 	structs.ProcessorStartOpModesVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	modes := p.Builder.EndVector(len(uoffs))
-	structs.ProcessorStart(p.Builder)
-	structs.ProcessorAddPhysicalID(p.Builder, proc.PhysicalID)
-	structs.ProcessorAddVendorID(p.Builder, vendorID)
-	structs.ProcessorAddCPUFamily(p.Builder, cpuFamily)
-	structs.ProcessorAddModel(p.Builder, model)
-	structs.ProcessorAddModelName(p.Builder, modelName)
-	structs.ProcessorAddStepping(p.Builder, stepping)
-	structs.ProcessorAddMicrocode(p.Builder, microcode)
-	structs.ProcessorAddCPUMHz(p.Builder, proc.CPUMHz)
-	structs.ProcessorAddMHzMin(p.Builder, proc.MHzMin)
-	structs.ProcessorAddMHzMax(p.Builder, proc.MHzMax)
-	structs.ProcessorAddCPUCores(p.Builder, proc.CPUCores)
-	structs.ProcessorAddThreadsPerCore(p.Builder, proc.ThreadsPerCore)
-	structs.ProcessorAddBogoMIPS(p.Builder, proc.BogoMIPS)
-	structs.ProcessorAddCacheSize(p.Builder, cacheSize)
-	structs.ProcessorAddCache(p.Builder, cache)
-	structs.ProcessorAddFlags(p.Builder, flags)
-	structs.ProcessorAddOpModes(p.Builder, modes)
-	return structs.ProcessorEnd(p.Builder)
+	structs.ProcessorsStart(p.Builder)
+	structs.ProcessorsAddTimestamp(p.Builder, procs.Timestamp)
+	structs.ProcessorsAddCPUs(p.Builder, int32(procs.CPUs))
+	structs.ProcessorsAddSockets(p.Builder, procs.Sockets)
+	structs.ProcessorsAddCoresPerSocket(p.Builder, procs.CoresPerSocket)
+	structs.ProcessorsAddThreadsPerCore(p.Builder, procs.ThreadsPerCore)
+	structs.ProcessorsAddVendorID(p.Builder, vendorID)
+	structs.ProcessorsAddCPUFamily(p.Builder, cpuFamily)
+	structs.ProcessorsAddModel(p.Builder, model)
+	structs.ProcessorsAddModelName(p.Builder, modelName)
+	structs.ProcessorsAddStepping(p.Builder, stepping)
+	structs.ProcessorsAddMicrocode(p.Builder, microcode)
+	structs.ProcessorsAddCPUMHz(p.Builder, procs.CPUMHz)
+	structs.ProcessorsAddMHzMin(p.Builder, procs.MHzMin)
+	structs.ProcessorsAddMHzMax(p.Builder, procs.MHzMax)
+	structs.ProcessorsAddBogoMIPS(p.Builder, procs.BogoMIPS)
+	structs.ProcessorsAddCacheSize(p.Builder, cacheSize)
+	structs.ProcessorsAddCache(p.Builder, cache)
+	structs.ProcessorsAddFlags(p.Builder, flags)
+	structs.ProcessorsAddOpModes(p.Builder, modes)
+	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
+	b := p.Builder.Bytes[p.Builder.Head():]
+	// copy them (otherwise gets lost in reset)
+	tmp := make([]byte, len(b))
+	copy(tmp, b)
+	return tmp
 }
 
 // SerializeCache serializes a cache entry using flatbuffers and returns the
@@ -198,50 +181,39 @@ func Serialize(proc *processors.Processors) (p []byte, err error) {
 func Deserialize(p []byte) *processors.Processors {
 	flatP := structs.GetRootAsProcessors(p, 0)
 	procs := &processors.Processors{}
-	flatProc := &structs.Processor{}
 	flatCache := &structs.CacheInf{}
-	proc := processors.Processor{}
 	procs.Timestamp = flatP.Timestamp()
-	procs.CPUs = int(flatP.CPUs())
+	procs.CPUs = flatP.CPUs()
 	procs.Sockets = flatP.Sockets()
 	procs.CoresPerSocket = flatP.CoresPerSocket()
-	procs.Socket = make([]processors.Processor, flatP.Sockets())
-	for i := 0; i < len(procs.Socket); i++ {
-		if !flatP.Socket(flatProc, i) {
+	procs.ThreadsPerCore = flatP.ThreadsPerCore()
+	procs.VendorID = string(flatP.VendorID())
+	procs.CPUFamily = string(flatP.CPUFamily())
+	procs.Model = string(flatP.Model())
+	procs.ModelName = string(flatP.ModelName())
+	procs.Stepping = string(flatP.Stepping())
+	procs.Microcode = string(flatP.Microcode())
+	procs.CPUMHz = flatP.CPUMHz()
+	procs.MHzMin = flatP.MHzMin()
+	procs.MHzMax = flatP.MHzMax()
+	procs.BogoMIPS = flatP.BogoMIPS()
+	procs.CacheSize = string(flatP.CacheSize())
+	procs.CacheIDs = make([]string, 0, flatP.CacheLength())
+	procs.Cache = make(map[string]string, flatP.CacheLength())
+	for j := 0; j < flatP.CacheLength(); j++ {
+		if !flatP.Cache(flatCache, j) {
 			continue
 		}
-		proc.PhysicalID = flatProc.PhysicalID()
-		proc.VendorID = string(flatProc.VendorID())
-		proc.CPUFamily = string(flatProc.CPUFamily())
-		proc.Model = string(flatProc.Model())
-		proc.ModelName = string(flatProc.ModelName())
-		proc.Stepping = string(flatProc.Stepping())
-		proc.Microcode = string(flatProc.Microcode())
-		proc.CPUMHz = flatProc.CPUMHz()
-		proc.MHzMin = flatProc.MHzMin()
-		proc.MHzMax = flatProc.MHzMax()
-		proc.CPUCores = flatProc.CPUCores()
-		proc.ThreadsPerCore = flatProc.ThreadsPerCore()
-		proc.BogoMIPS = flatProc.BogoMIPS()
-		proc.CacheSize = string(flatProc.CacheSize())
-		proc.CacheIDs = make([]string, 0, flatProc.CacheLength())
-		proc.Cache = make(map[string]string, flatProc.CacheLength())
-		for j := 0; j < flatProc.CacheLength(); j++ {
-			if !flatProc.Cache(flatCache, j) {
-				continue
-			}
-			proc.CacheIDs = append(proc.CacheIDs, string(flatCache.ID()))
-			proc.Cache[proc.CacheIDs[j]] = string(flatCache.Size())
-		}
-		proc.Flags = make([]string, flatProc.FlagsLength())
-		for i := 0; i < len(proc.Flags); i++ {
-			proc.Flags[i] = string(flatProc.Flags(i))
-		}
-		proc.OpModes = make([]string, flatProc.OpModesLength())
-		for i := 0; i < len(proc.OpModes); i++ {
-			proc.OpModes[i] = string(flatProc.OpModes(i))
-		}
-		procs.Socket[i] = proc
+		procs.CacheIDs = append(procs.CacheIDs, string(flatCache.ID()))
+		procs.Cache[procs.CacheIDs[j]] = string(flatCache.Size())
+	}
+	procs.Flags = make([]string, flatP.FlagsLength())
+	for i := 0; i < len(procs.Flags); i++ {
+		procs.Flags[i] = string(flatP.Flags(i))
+	}
+	procs.OpModes = make([]string, flatP.OpModesLength())
+	for i := 0; i < len(procs.OpModes); i++ {
+		procs.OpModes[i] = string(flatP.OpModes(i))
 	}
 	return procs
 }

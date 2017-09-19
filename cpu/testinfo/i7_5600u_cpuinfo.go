@@ -241,7 +241,18 @@ func ValidateI75600uCPUFreq(f *cpufreq.Frequency) error {
 // ValidateI75600uProc verifies that the info in the struct is consistent
 // with the above data and the test cpux data. If everything verifies a nil is
 // returned, otherwise an error is returned. This is used for testing.
-func ValidateI75600uProc(proc *processors.Processor, freq bool) error {
+func ValidateI75600uProc(proc *processors.Processors, freq bool) error {
+	if proc.Sockets != 1 {
+		return fmt.Errorf("sockets: got %d; want 1", proc.Sockets)
+	}
+
+	if int(proc.CoresPerSocket) != 2 {
+		return fmt.Errorf("cores per socket: got %d; want 2", proc.CoresPerSocket)
+	}
+	if proc.CPUs != 4 {
+		return fmt.Errorf("CPUs: got %d; want %d", proc.CPUs)
+	}
+
 	if proc.VendorID != GenuineIntel {
 		return fmt.Errorf("vendor_id: got %q; want %q", proc.VendorID, GenuineIntel)
 	}
@@ -280,9 +291,6 @@ func ValidateI75600uProc(proc *processors.Processor, freq bool) error {
 		if int(proc.MHzMax) != 0 {
 			return fmt.Errorf("MHzMax: got %.3f; want 0", proc.MHzMax)
 		}
-	}
-	if proc.CPUCores != 2 {
-		return fmt.Errorf("cpu cores: got %d; want 2", proc.CPUCores)
 	}
 	if proc.ThreadsPerCore != 2 {
 		fmt.Errorf("threads per core: got %d; want 2", proc.ThreadsPerCore)

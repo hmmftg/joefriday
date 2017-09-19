@@ -986,7 +986,18 @@ func ValidateXeonE52690CPUFreq(f *cpufreq.Frequency) error {
 // with the above data and the generated test sys frequency info. If everything
 // verifies a nil is returned, otherwise an error is returned. This is used for
 // testing.
-func ValidateXeonE52690Proc(proc *processors.Processor, freq bool) error {
+func ValidateXeonE52690Proc(proc *processors.Processors, freq bool) error {
+	if proc.Sockets != 2 {
+		return fmt.Errorf("sockets: got %d; want 2", proc.Sockets)
+	}
+	if int(proc.CoresPerSocket) != 8 {
+		return fmt.Errorf("cores per socket: got %d; want 8", proc.CoresPerSocket)
+	}
+
+	if proc.CPUs != 32 {
+		return fmt.Errorf("CPUs: got %d; want 32", proc.CPUs)
+	}
+
 	if proc.VendorID != GenuineIntel {
 		return fmt.Errorf("vendor_id: got %q; want %q", proc.VendorID, GenuineIntel)
 	}
@@ -1022,9 +1033,6 @@ func ValidateXeonE52690Proc(proc *processors.Processor, freq bool) error {
 		if int(proc.MHzMax) != 0 {
 			return fmt.Errorf("MHzMax: got %.3f; wanted 0", proc.MHzMax)
 		}
-	}
-	if proc.CPUCores != 8 {
-		return fmt.Errorf("cpu cores: got %d; want 8", proc.CPUCores)
 	}
 	if proc.ThreadsPerCore != 2 {
 		fmt.Errorf("threads per core: got %d; want 2", proc.ThreadsPerCore)

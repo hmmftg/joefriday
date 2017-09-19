@@ -580,7 +580,17 @@ func ValidateR71800xCPUFreq(f *cpufreq.Frequency) error {
 // the above data and the generated test sys frequency info. If everything
 // verifies a nil is returned, otherwise an error is returned. This is used for
 // testing.
-func ValidateR71800xProc(proc *processors.Processor, freq bool) error {
+func ValidateR71800xProc(proc *processors.Processors, freq bool) error {
+	if proc.Sockets != 1 {
+		return fmt.Errorf("sockets: got %d; want 1", proc.Sockets)
+	}
+	if int(proc.CoresPerSocket) != 8 {
+		return fmt.Errorf("cores per socket: got %d; want 8", proc.CoresPerSocket)
+	}
+	if proc.CPUs != 16 {
+		return fmt.Errorf("CPUs: got %d; want 16", proc.CPUs)
+	}
+
 	if proc.VendorID != AuthenticAMD {
 		return fmt.Errorf("vendor_id: got %q; want %q", proc.VendorID, AuthenticAMD)
 	}
@@ -601,9 +611,6 @@ func ValidateR71800xProc(proc *processors.Processor, freq bool) error {
 	}
 	if int(proc.CPUMHz) != 2200 {
 		return fmt.Errorf("CPUMHz: got %d; want 2200", int(proc.CPUMHz))
-	}
-	if proc.CPUCores != 8 {
-		return fmt.Errorf("CPUCores: got %d; want 16", proc.CPUCores)
 	}
 	if len(proc.Flags) != 103 {
 		return fmt.Errorf("Flags: got %q; want 103", len(proc.Flags))

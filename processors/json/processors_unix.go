@@ -14,9 +14,10 @@
 // Package processors gathers information about the physical processors on a
 // system by parsing the information from /procs/cpuinfo and sysfs. This
 // package gathers basic information about sockets, physical processors, etc.
-// on the system, with one entry per processor. Instead of returning a Go
-// struct, JSON serialized bytes are returned. A function to deserialize the
-// JSON serialized bytes into a processors.Processors struct is provided.
+// on the system. For multi-socket systems, it is assumed that all of the
+// processors are the same. Instead of returning a Go struct, JSON serialized
+// bytes are returned. A function to deserialize the JSON serialized bytes into
+// a processors.Processors struct is provided.
 //
 // CPUMHz currently provides the current speed of the first core encountered
 // for each physical processor. Modern x86/x86-64 cores have the ability to

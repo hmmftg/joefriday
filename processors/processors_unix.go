@@ -14,7 +14,8 @@
 // Package processors gathers information about the physical processors on a
 // system by parsing the information from /procs/cpuinfo and sysfs. This
 // package gathers basic information about sockets, physical processors, etc.
-// on the system, with one entry per processor.
+// on the system. For multi-socket systems, it is assumed that all of the
+// processors are the same.
 //
 // CPUMHz currently provides the current speed of the first core encountered
 // for each physical processor. Modern x86/x86-64 cores have the ability to
@@ -45,16 +46,10 @@ const (
 type Processors struct {
 	Timestamp int64 `json:"timestamp"`
 	// The number of sockets.
-	Sockets        int32 `json:"sockets"`
-	CoresPerSocket int16 `json:"cores_per_socket"`
-	// Information about each processor in each socket.
-	Socket []Processor `json:"socket"`
-	CPUs   int         `json:"cpus"` // number of cpus on the system
-}
-
-// Processor holds the /proc/cpuinfo for a single physical cpu.
-type Processor struct {
-	PhysicalID     int32             `json:"physical_id"`
+	Sockets        int32             `json:"sockets"`
+	CPUs           int32             `json:"cpus"`
+	CoresPerSocket int16             `json:"cores_per_socket"`
+	ThreadsPerCore int8              `json:"threads_per_core"`
 	VendorID       string            `json:"vendor_id"`
 	CPUFamily      string            `json:"cpu_family"`
 	Model          string            `json:"model"`
@@ -64,11 +59,9 @@ type Processor struct {
 	CPUMHz         float32           `json:"cpu_mhz"`
 	MHzMin         float32           `json:"mhz_min"`
 	MHzMax         float32           `json:"mhz_max"`
-	Cache          map[string]string `json:"cache"`
 	CacheSize      string            `json:"cache_size"`
+	Cache          map[string]string `json:"cache"`
 	CacheIDs       []string          `json:"cache_ids"`
-	CPUCores       int32             `json:"cpu_cores"`
-	ThreadsPerCore int8              `json:"threads_per_core"`
 	BogoMIPS       float32           `json:"bogomips"`
 	Flags          []string          `json:"flags"`
 	OpModes        []string          `json:"op_modes"`
@@ -112,24 +105,17 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// get the core count and calculate cores per socket
-	var cores int32
-	for i := range procs.Socket {
-		cores += procs.Socket[i].CPUCores
-	}
-	procs.CoresPerSocket = int16(cores / procs.Sockets)
+	procs.CPUs = procs.Sockets * int32(procs.CoresPerSocket) * int32(procs.ThreadsPerCore)
 	return procs, nil
 }
 
 func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 	var (
-		i, pos, nameLen, cpuCnt int
-		siblings                int32
-		ids                     []int32
-		n                       uint64
-		v                       byte
-		proc                    Processor
-		add                     bool
+		i, pos, nameLen int
+		siblings        int16
+		n               uint64
+		v               byte
+		xit             bool
 	)
 	err = prof.Reset()
 	if err != nil {
@@ -170,16 +156,16 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 			v = prof.Val[1]
 			if v == 'p' {
 				v = prof.Val[4]
-				if v == 'c' { // cpu cores
+				if v == 'c' {
 					n, err = helpers.ParseUint(prof.Val[nameLen:])
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					proc.CPUCores = int32(n)
-					continue
+
+					procs.CoresPerSocket = int16(n)
 				}
 				if v == 'f' { // cpu family
-					proc.CPUFamily = string(prof.Val[nameLen:])
+					procs.CPUFamily = string(prof.Val[nameLen:])
 					continue
 				}
 				if v == 'M' { // cpu MHz
@@ -187,25 +173,25 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
-					proc.CPUMHz = float32(f)
+					procs.CPUMHz = float32(f)
 				}
 				continue
 			}
 			if v == 'a' && prof.Val[5] == ' ' {
-				proc.CacheSize = string(prof.Val[nameLen:])
+				procs.CacheSize = string(prof.Val[nameLen:])
 			}
 			continue
 		}
 		if v == 'f' {
 			if prof.Val[1] == 'l' { // flags
-				proc.Flags = strings.Split(string(prof.Val[nameLen:]), " ")
+				procs.Flags = strings.Split(string(prof.Val[nameLen:]), " ")
 				// for x86 stuff this is always true. This logic may need to be changed for other
 				// cpu architectures.
-				proc.OpModes = append(proc.OpModes, "32-bit")
+				procs.OpModes = append(procs.OpModes, "32-bit")
 				// see if the lm flag exists for opmodes
-				for i := range proc.Flags {
-					if proc.Flags[i] == "lm" {
-						proc.OpModes = append(proc.OpModes, "64-bit")
+				for i := range procs.Flags {
+					if procs.Flags[i] == "lm" {
+						procs.OpModes = append(procs.OpModes, "64-bit")
 						break
 					}
 				}
@@ -215,52 +201,29 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 		if v == 'm' {
 			if prof.Val[1] == 'o' {
 				if nameLen == 5 { // model
-					proc.Model = string(prof.Val[nameLen:])
+					procs.Model = string(prof.Val[nameLen:])
 					continue
 				}
-				proc.ModelName = string(prof.Val[nameLen:])
+				procs.ModelName = string(prof.Val[nameLen:])
 				continue
 			}
 			if prof.Val[1] == 'i' {
-				proc.Microcode = string(prof.Val[nameLen:])
+				procs.Microcode = string(prof.Val[nameLen:])
 			}
 			continue
 		}
 		if v == 'p' {
-			v = prof.Val[1]
-			if v == 'h' { // physical id
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
-				if err != nil {
-					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
-				}
-				var exists bool
-				for _, v := range ids {
-					if v == int32(n) {
-						exists = true
-						break
-					}
-				}
-				if !exists {
-					add = true
-					ids = append(ids, int32(n))
-				}
-				proc.PhysicalID = int32(n)
-				continue
-			}
-			// processor starts information about a logical processor; if there was a previously
-			// processed processor, only add it if it is a different physical processor.
-			if v == 'r' { // processor
-				cpuCnt++ // increment counter
-				if add {
-					proc.ThreadsPerCore = int8(siblings / proc.CPUCores)
-					procs.Socket = append(procs.Socket, proc)
-					add = false
+			// processor starts information about a logical processor; we only process the
+			// first entry
+			if prof.Val[1] == 'r' { // processor
+				if xit {
+					break
 				}
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				proc.OpModes = proc.OpModes[:0]
+				xit = true
 			}
 			continue
 		}
@@ -270,16 +233,16 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
-				siblings = int32(n)
+				siblings = int16(n)
 				continue
 			}
 			if prof.Val[1] == 't' { // stepping
-				proc.Stepping = string(prof.Val[nameLen:])
+				procs.Stepping = string(prof.Val[nameLen:])
 				continue
 			}
 		}
 		if v == 'v' { // vendor_id
-			proc.VendorID = string(prof.Val[nameLen:])
+			procs.VendorID = string(prof.Val[nameLen:])
 		}
 		// also check 2nd name pos for o as some output also have a bugs line.
 		if v == 'b' && prof.Val[1] == 'o' { // bogomips
@@ -287,17 +250,11 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 			if err != nil {
 				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}
-			proc.BogoMIPS = float32(f)
+			procs.BogoMIPS = float32(f)
 			continue
 		}
-
 	}
-	// append the current processor information
-	if add {
-		proc.ThreadsPerCore = int8(siblings / proc.CPUCores)
-		procs.Socket = append(procs.Socket, proc)
-	}
-	procs.CPUs = cpuCnt
+	procs.ThreadsPerCore = int8(siblings / procs.CoresPerSocket)
 	return procs, nil
 }
 
@@ -307,37 +264,16 @@ func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
 	if err != nil {
 		return err
 	}
-	var ids []int32 // holds the encountered PhysicalIDs; each physicalID should only be processed once.
-	// go through the results and use the first match per physical id
-	for i := range cpus.CPU {
-		var exists bool
-		for _, v := range ids {
-			if v == cpus.CPU[i].PhysicalPackageID {
-				exists = true
-				break
-			}
-		}
-		if exists {
-			continue
-		}
-		id := cpus.CPU[i].PhysicalPackageID
-		ids = append(ids, id)
-		//find the matching entry
-		for j := range procs.Socket {
-			if procs.Socket[j].PhysicalID != id {
-				continue
-			}
-			procs.Socket[j].MHzMin = cpus.CPU[i].MHzMin
-			procs.Socket[j].MHzMax = cpus.CPU[i].MHzMax
-			procs.Socket[j].Cache = make(map[string]string, len(cpus.CPU[i].Cache))
-			procs.Socket[j].CacheIDs = make([]string, len(cpus.CPU[i].CacheIDs))
-			for k, id := range cpus.CPU[i].CacheIDs {
-				procs.Socket[j].CacheIDs[k] = id
-				procs.Socket[j].Cache[id] = cpus.CPU[i].Cache[id]
-			}
-		}
+	// just check cpu0
+	procs.MHzMin = cpus.CPU[0].MHzMin
+	procs.MHzMax = cpus.CPU[0].MHzMax
+	procs.Cache = make(map[string]string, len(cpus.CPU[0].Cache))
+	procs.CacheIDs = make([]string, len(cpus.CPU[0].CacheIDs))
+	for k, id := range cpus.CPU[0].CacheIDs {
+		procs.CacheIDs[k] = id
+		procs.Cache[id] = cpus.CPU[0].Cache[id]
 	}
-	procs.Sockets = int32(len(ids))
+	procs.Sockets = cpus.Sockets
 	return nil
 }
 

@@ -14,8 +14,6 @@
 package processors
 
 import (
-	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/mohae/joefriday"
@@ -65,7 +63,7 @@ func Testi75600u(t *testing.T) {
 
 	// Verify results
 	t.Logf("%#v", procs)
-	err = ValidateI75600u(procs, tCPU)
+	err = testinfo.ValidateI75600uProc(procs, tCPU.Freq)
 	if err != nil {
 		t.Error(err)
 	}
@@ -92,40 +90,11 @@ func Testi75600u(t *testing.T) {
 
 	// Verify results
 	t.Logf("%#v", procs)
-	err = ValidateI75600u(procs, tCPU)
+	err = testinfo.ValidateI75600uProc(procs, tCPU.Freq)
 	if err != nil {
 		t.Error(err)
 	}
 
-}
-
-func ValidateI75600u(procs *ps.Processors, tCPU testinfo.TempSysDevicesSystemCPU) error {
-	if procs.Timestamp <= 0 {
-		return errors.New("timestamp: expected a value > 0")
-	}
-	if procs.Sockets != tCPU.PhysicalPackageCount {
-		return fmt.Errorf("sockets: got %d; want %d", procs.Sockets, tCPU.PhysicalPackageCount)
-	}
-
-	if int(procs.Sockets) != len(procs.Socket) {
-		return fmt.Errorf("socket: got %d; want %d", len(procs.Socket), procs.Sockets)
-	}
-
-	if int(procs.CoresPerSocket) != 4 {
-		return fmt.Errorf("cores per socket: got %d; want 4", procs.CoresPerSocket)
-	}
-
-	if procs.CPUs != int(tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage) {
-		return fmt.Errorf("CPUs: got %d; want %d", procs.CPUs, tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage)
-	}
-
-	for i, proc := range procs.Socket {
-		err := testinfo.ValidateI75600uProc(&proc, tCPU.Freq)
-		if err != nil {
-			return fmt.Errorf("%d: %s", i, err)
-		}
-	}
-	return nil
 }
 
 func TestXeonE52690(t *testing.T) {
@@ -169,7 +138,7 @@ func TestXeonE52690(t *testing.T) {
 
 	// Verify results
 	t.Logf("%#v", procs)
-	err = ValidateXeonE52690(procs, tCPU)
+	err = testinfo.ValidateXeonE52690Proc(procs, tCPU.Freq)
 	if err != nil {
 		t.Error(err)
 	}
@@ -196,40 +165,11 @@ func TestXeonE52690(t *testing.T) {
 
 	// Verify results
 	t.Logf("%#v", procs)
-	err = ValidateXeonE52690(procs, tCPU)
+	err = testinfo.ValidateXeonE52690Proc(procs, tCPU.Freq)
 	if err != nil {
 		t.Error(err)
 	}
 
-}
-
-func ValidateXeonE52690(procs *ps.Processors, tCPU testinfo.TempSysDevicesSystemCPU) error {
-	if procs.Timestamp <= 0 {
-		return errors.New("timestamp: expected a value > 0")
-	}
-	if procs.Sockets != tCPU.PhysicalPackageCount {
-		return fmt.Errorf("sockets: got %d; want %d", procs.Sockets, tCPU.PhysicalPackageCount)
-	}
-
-	if int(procs.Sockets) != len(procs.Socket) {
-		return fmt.Errorf("socket: got %d; want %d", len(procs.Socket), procs.Sockets)
-	}
-
-	if int(procs.CoresPerSocket) != 8 {
-		return fmt.Errorf("cores per socket: got %d; want 8", procs.CoresPerSocket)
-	}
-
-	if procs.CPUs != int(tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage) {
-		return fmt.Errorf("CPUs: got %d; want %d", procs.CPUs, tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage)
-	}
-
-	for i, proc := range procs.Socket {
-		err := testinfo.ValidateXeonE52690Proc(&proc, tCPU.Freq)
-		if err != nil {
-			return fmt.Errorf("%d: %s", i, err)
-		}
-	}
-	return nil
 }
 
 func TestR71800x(t *testing.T) {
@@ -273,7 +213,7 @@ func TestR71800x(t *testing.T) {
 
 	// Verify results
 	t.Logf("%#v", procs)
-	err = ValidateR71800x(procs, tCPU)
+	err = testinfo.ValidateR71800xProc(procs, tCPU.Freq)
 	if err != nil {
 		t.Error(err)
 	}
@@ -300,38 +240,11 @@ func TestR71800x(t *testing.T) {
 
 	// Verify results
 	t.Logf("%#v", procs)
-	err = ValidateI75600u(procs, tCPU)
+	err = testinfo.ValidateR71800xProc(procs, tCPU.Freq)
 	if err != nil {
 		t.Error(err)
 	}
 
-}
-
-func ValidateR71800x(procs *ps.Processors, tCPU testinfo.TempSysDevicesSystemCPU) error {
-	if procs.Timestamp <= 0 {
-		return errors.New("timestamp: expected a value > 0")
-	}
-	if procs.Sockets != tCPU.PhysicalPackageCount {
-		return fmt.Errorf("sockets: got %d; want %d", procs.Sockets, tCPU.PhysicalPackageCount)
-	}
-
-	if int(procs.Sockets) != len(procs.Socket) {
-		return fmt.Errorf("socket: got %d; want %d", len(procs.Socket), procs.Sockets)
-	}
-	if int(procs.CoresPerSocket) != 8 {
-		return fmt.Errorf("cores per socket: got %d; want 4", procs.CoresPerSocket)
-	}
-	if procs.CPUs != int(tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage) {
-		return fmt.Errorf("CPUs: got %d; want %d", procs.CPUs, tCPU.PhysicalPackageCount*tCPU.CoresPerPhysicalPackage)
-	}
-
-	for i, proc := range procs.Socket {
-		err := testinfo.ValidateR71800xProc(&proc, tCPU.Freq)
-		if err != nil {
-			return fmt.Errorf("%d: %s", i, err)
-		}
-	}
-	return nil
 }
 
 func BenchmarkGet(b *testing.B) {
