@@ -3,6 +3,7 @@ namespace structs;
 
 table Processors {
 	Timestamp:long;
+	Architecture:string;
 	Sockets:int;
 	CPUs:int;
 	CoresPerSocket:short;

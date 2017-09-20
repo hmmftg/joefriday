@@ -987,6 +987,10 @@ func ValidateXeonE52690CPUFreq(f *cpufreq.Frequency) error {
 // verifies a nil is returned, otherwise an error is returned. This is used for
 // testing.
 func ValidateXeonE52690Proc(proc *processors.Processors, freq bool) error {
+	// arch relies on a syscall so just check that it's not empty
+	if proc.Architecture == "" {
+		return errors.New("architecture: got an empty string; want a non-empty string")
+	}
 	if proc.Sockets != 2 {
 		return fmt.Errorf("sockets: got %d; want 2", proc.Sockets)
 	}

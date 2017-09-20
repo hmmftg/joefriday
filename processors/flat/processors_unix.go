@@ -85,6 +85,7 @@ func Get() (p []byte, err error) {
 func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	// ensure the Builder is in a usable state.
 	p.Builder.Reset()
+	architecture := p.Builder.CreateString(procs.Architecture)
 	vendorID := p.Builder.CreateString(procs.VendorID)
 	cpuFamily := p.Builder.CreateString(procs.CPUFamily)
 	model := p.Builder.CreateString(procs.Model)
@@ -126,6 +127,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	modes := p.Builder.EndVector(len(uoffs))
 	structs.ProcessorsStart(p.Builder)
 	structs.ProcessorsAddTimestamp(p.Builder, procs.Timestamp)
+	structs.ProcessorsAddArchitecture(p.Builder, architecture)
 	structs.ProcessorsAddCPUs(p.Builder, int32(procs.CPUs))
 	structs.ProcessorsAddSockets(p.Builder, procs.Sockets)
 	structs.ProcessorsAddCoresPerSocket(p.Builder, procs.CoresPerSocket)
@@ -183,6 +185,7 @@ func Deserialize(p []byte) *processors.Processors {
 	procs := &processors.Processors{}
 	flatCache := &structs.CacheInf{}
 	procs.Timestamp = flatP.Timestamp()
+	procs.Architecture = string(flatP.Architecture())
 	procs.CPUs = flatP.CPUs()
 	procs.Sockets = flatP.Sockets()
 	procs.CoresPerSocket = flatP.CoresPerSocket()

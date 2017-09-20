@@ -31,6 +31,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/SermoDigital/helpers"
@@ -44,8 +45,8 @@ const (
 
 // Processors holds information about a system's processors
 type Processors struct {
-	Timestamp int64 `json:"timestamp"`
-	// The number of sockets.
+	Timestamp      int64             `json:"timestamp"`
+	Architecture   string            `json:"architecture"`
 	Sockets        int32             `json:"sockets"`
 	CPUs           int32             `json:"cpus"`
 	CoresPerSocket int16             `json:"cores_per_socket"`
@@ -106,6 +107,21 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 		return nil, err
 	}
 	procs.CPUs = procs.Sockets * int32(procs.CoresPerSocket) * int32(procs.ThreadsPerCore)
+
+	uname := syscall.Utsname{}
+	err = syscall.Uname(&uname)
+	if err != nil {
+		return nil, err
+	}
+	// convert [65]int8 to []uint8 so othat we can use it as a string
+	var arch []uint8
+	for _, v := range uname.Machine {
+		if v == 0x00 {
+			break
+		}
+		arch = append(arch, uint8(v))
+	}
+	procs.Architecture = string(arch)
 	return procs, nil
 }
 

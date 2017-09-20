@@ -581,6 +581,10 @@ func ValidateR71800xCPUFreq(f *cpufreq.Frequency) error {
 // verifies a nil is returned, otherwise an error is returned. This is used for
 // testing.
 func ValidateR71800xProc(proc *processors.Processors, freq bool) error {
+	// arch relies on a syscall so just check that it's not empty
+	if proc.Architecture == "" {
+		return errors.New("architecture: got an empty string; want a non-empty string")
+	}
 	if proc.Sockets != 1 {
 		return fmt.Errorf("sockets: got %d; want 1", proc.Sockets)
 	}
