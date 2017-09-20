@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/mohae/joefriday/cpu/cpux"
-	"github.com/mohae/joefriday/cpu/testinfo"
+	"github.com/mohae/joefriday/testinfo"
 )
 
 func TestCPUX(t *testing.T) {
@@ -59,7 +59,7 @@ func TestCPUX(t *testing.T) {
 		t.Error("setting up cpux testing info: %s", err)
 		goto multiSocket
 	}
-	
+
 	p, err = prof.Get()
 	if err != nil {
 		t.Error(err)
@@ -93,7 +93,7 @@ multiSocket:
 		t.Error("setting up cpux testing info: %s", err)
 		goto noFreq
 	}
-	
+
 	p, err = prof.Get()
 	if err != nil {
 		t.Error(err)
@@ -125,7 +125,7 @@ noFreq:
 		t.Error("setting up cpux testing info: %s", err)
 		goto clean
 	}
-	
+
 	p, err = prof.Get()
 	if err != nil {
 		t.Error(err)

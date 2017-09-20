@@ -17,7 +17,7 @@ import (
 	"testing"
 
 	"github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/testinfo"
+	"github.com/mohae/joefriday/testinfo"
 	"github.com/mohae/joefriday/processors"
 )
 

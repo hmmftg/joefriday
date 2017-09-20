@@ -17,8 +17,8 @@ import (
 	"testing"
 
 	"github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/testinfo"
 	ps "github.com/mohae/joefriday/processors"
+	"github.com/mohae/joefriday/testinfo"
 )
 
 func TestI75600u(t *testing.T) {

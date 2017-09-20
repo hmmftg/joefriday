@@ -17,9 +17,9 @@ import (
 	"testing"
 	"time"
 
-	freq "github.com/mohae/joefriday/cpu/cpufreq"
 	"github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/testinfo"
+	freq "github.com/mohae/joefriday/cpu/cpufreq"
+	"github.com/mohae/joefriday/testinfo"
 )
 
 func TestGeti75600u(t *testing.T) {
@@ -60,7 +60,7 @@ func TestGetR71800xJSON(t *testing.T) {
 	}
 	prof.Procer = tProc
 	err = prof.InitFrequency()
-	f, err := prof.Get()	
+	f, err := prof.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -74,7 +74,6 @@ func TestGetR71800xJSON(t *testing.T) {
 	}
 	t.Log(ff)
 }
-
 
 func TestGetXeonE52690(t *testing.T) {
 	tProc, err := joefriday.NewTempFileProc("intel", "xeon_e52690", testinfo.XeonE52690CPUInfo)
@@ -121,7 +120,7 @@ func TestTicker(t *testing.T) {
 	err = prof.InitFrequency()
 	tk := tkr.(*Ticker)
 	tk.Profiler = prof
-	
+
 	for i := 0; i < 5; i++ {
 		select {
 		case <-tk.Done:

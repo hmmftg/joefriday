@@ -19,7 +19,7 @@ import (
 
 	fb "github.com/google/flatbuffers/go"
 	"github.com/mohae/joefriday/cpu/cpux"
-	"github.com/mohae/joefriday/cpu/testinfo"
+	"github.com/mohae/joefriday/testinfo"
 )
 
 func TestCPUX(t *testing.T) {

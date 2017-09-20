@@ -16,9 +16,9 @@ package cpuinfo
 import (
 	"testing"
 
-	"github.com/mohae/joefriday/cpu/cpuinfo"
 	"github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/testinfo"
+	"github.com/mohae/joefriday/cpu/cpuinfo"
+	"github.com/mohae/joefriday/testinfo"
 )
 
 func TestGeti75600u(t *testing.T) {
@@ -57,7 +57,7 @@ func TestGetR71800xFlat(t *testing.T) {
 		t.Fatal(err)
 	}
 	prof.Procer = tProc
-	inf, err := prof.Get()	
+	inf, err := prof.Get()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -84,7 +84,7 @@ func TestSerialize(t *testing.T) {
 	}
 	prof.Profiler.Procer = tProc
 	inf, err := prof.Get()
-	
+
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

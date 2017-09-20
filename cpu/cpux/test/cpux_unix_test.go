@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/mohae/joefriday/cpu/cpux"
-	"github.com/mohae/joefriday/cpu/testinfo"
+	"github.com/mohae/joefriday/testinfo"
 )
 
 func TestCPUX(t *testing.T) {
@@ -82,31 +82,31 @@ multiSocket:
 	js, _ = json.MarshalIndent(cpus, "", "\t")
 	t.Log(string(js))
 
-		// cleanup for next
-		err = tcpu.Clean(false)
-		if err != nil {
-			t.Error(err)
-		}
+	// cleanup for next
+	err = tcpu.Clean(false)
+	if err != nil {
+		t.Error(err)
+	}
 
 noFreq:
-		// set up test stuff w/o freq
-		tcpu.Freq = false
-		err = tcpu.Create()
+	// set up test stuff w/o freq
+	tcpu.Freq = false
+	err = tcpu.Create()
 	if err != nil {
 		t.Error("setting up cpux testing info: %s", err)
 		goto clean
 	}
-		cpus, err = prof.Get()
-		if err != nil {
-			t.Error(err)
-		}
-		js, _ = json.MarshalIndent(cpus, "", "\t")
-		t.Log(string(js))
-		// compare results with frequency
-		err = tcpu.ValidateCPUX(cpus)
-		if err != nil {
-			t.Errorf("validate min/max: %s", err)
-		}
+	cpus, err = prof.Get()
+	if err != nil {
+		t.Error(err)
+	}
+	js, _ = json.MarshalIndent(cpus, "", "\t")
+	t.Log(string(js))
+	// compare results with frequency
+	err = tcpu.ValidateCPUX(cpus)
+	if err != nil {
+		t.Errorf("validate min/max: %s", err)
+	}
 
 clean:
 	// cleanup everything
