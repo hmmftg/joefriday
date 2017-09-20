@@ -4,6 +4,7 @@ namespace structs;
 table Processors {
 	Timestamp:long;
 	Architecture:string;
+	ByteOrder:string;
 	Sockets:int;
 	CPUs:int;
 	CoresPerSocket:short;

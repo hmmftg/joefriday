@@ -33,6 +33,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
@@ -40,13 +41,16 @@ import (
 )
 
 const (
-	procFile = "/proc/cpuinfo"
+	procFile     = "/proc/cpuinfo"
+	BigEndian    = "Big Endian"
+	LittleEndian = "Little Endian"
 )
 
 // Processors holds information about a system's processors
 type Processors struct {
 	Timestamp      int64             `json:"timestamp"`
 	Architecture   string            `json:"architecture"`
+	ByteOrder      string            `json:"byte_order"`
 	Sockets        int32             `json:"sockets"`
 	CPUs           int32             `json:"cpus"`
 	CoresPerSocket int16             `json:"cores_per_socket"`
@@ -66,6 +70,12 @@ type Processors struct {
 	BogoMIPS       float32           `json:"bogomips"`
 	Flags          []string          `json:"flags"`
 	OpModes        []string          `json:"op_modes"`
+}
+
+// This returns a *Processor ready to use. If a Processors struct isn't created
+// using the New func, the ByteOrder field will not be set.
+func New() *Processors {
+	return &Processors{Timestamp: time.Now().UTC().UnixNano(), ByteOrder: Endianness()}
 }
 
 // Profiler is used to get the processor information by processing the
@@ -97,7 +107,8 @@ func (prof *Profiler) Reset() error {
 
 // Get returns the processor information.
 func (prof *Profiler) Get() (procs *Processors, err error) {
-	procs, err = prof.getCPUInfo()
+	procs = New()
+	err = prof.getCPUInfo(procs)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +136,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 	return procs, nil
 }
 
-func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
+func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 	var (
 		i, pos, nameLen int
 		siblings        int16
@@ -135,16 +146,16 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 	)
 	err = prof.Reset()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	procs = &Processors{Timestamp: time.Now().UTC().UnixNano()}
+
 	for {
 		prof.Line, err = prof.ReadSlice('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return nil, &joe.ReadError{Err: err}
+			return &joe.ReadError{Err: err}
 		}
 		prof.Val = prof.Val[:0]
 		// First grab the attribute name; everything up to the ':'.  The key may have
@@ -175,7 +186,7 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 				if v == 'c' {
 					n, err = helpers.ParseUint(prof.Val[nameLen:])
 					if err != nil {
-						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+						return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
 
 					procs.CoresPerSocket = int16(n)
@@ -187,7 +198,7 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 				if v == 'M' { // cpu MHz
 					f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
 					if err != nil {
-						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+						return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
 					procs.CPUMHz = float32(f)
 				}
@@ -237,7 +248,7 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 				}
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
-					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
 				xit = true
 			}
@@ -247,7 +258,7 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 			if prof.Val[1] == 'i' { // siblings
 				n, err = helpers.ParseUint(prof.Val[nameLen:])
 				if err != nil {
-					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
 				siblings = int16(n)
 				continue
@@ -264,14 +275,14 @@ func (prof *Profiler) getCPUInfo() (procs *Processors, err error) {
 		if v == 'b' && prof.Val[1] == 'o' { // bogomips
 			f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
 			if err != nil {
-				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}
 			procs.BogoMIPS = float32(f)
 			continue
 		}
 	}
 	procs.ThreadsPerCore = int8(siblings / procs.CoresPerSocket)
-	return procs, nil
+	return nil
 }
 
 func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
@@ -308,4 +319,17 @@ func Get() (procs *Processors, err error) {
 		}
 	}
 	return std.Get()
+}
+
+// Endianness returns the endianness.
+func Endianness() string {
+	var x uint32 = 0x01020304
+	switch *(*byte)(unsafe.Pointer(&x)) {
+	case 0x01:
+		return BigEndian
+	case 0x04:
+		return LittleEndian
+	}
+	// This should never happen!
+	return ""
 }
