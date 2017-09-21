@@ -42,13 +42,14 @@ type TempSysDevicesSystemCPU struct {
 	Freq                    bool
 	PhysicalPackageCount    int32
 	CoresPerPhysicalPackage int32
+	ThreadsPerCore          int32
 }
 
 // NewTempSysDevicesSystemCPU returns a new TempSysDevicesSystemCPU set to use
 // the system's temp dir, populate cpufreq information, and have 4 cores for a
 // 1 socket system.
 func NewTempSysDevicesSystemCPU() TempSysDevicesSystemCPU {
-	return TempSysDevicesSystemCPU{Dir: "", Freq: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 4}
+	return TempSysDevicesSystemCPU{Dir: "", Freq: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
 }
 
 // Create creates the tempdir and cpu info for /sys/devices/system/cpu tests.
@@ -75,6 +76,8 @@ func (t *TempSysDevicesSystemCPU) Create() (err error) {
 		}
 	}
 
+	// add Possible information:
+	ioutil.WriteFile(filepath.Join(t.Dir, "possible"), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
 	var x int // tracks current cpu X value
 
 	// Add CPU info for each physical package count
@@ -155,6 +158,10 @@ func (t *TempSysDevicesSystemCPU) ValidateCPUX(cpus *cpux.CPUs) error {
 	if cpus.Sockets != t.PhysicalPackageCount {
 		return fmt.Errorf("Sockets: got %d; want %d", cpus.Sockets, t.PhysicalPackageCount)
 	}
+	if cpus.Possible != t.Possible() {
+		return fmt.Errorf("possible: got %q; want %q", cpus.Possible, t.Possible())
+	}
+
 	for i, cpu := range cpus.CPU {
 		if int(cpu.PhysicalPackageID) != 0 && cpu.PhysicalPackageID != 1 {
 			return fmt.Errorf("%d: physical package id: got %d; want 0 or 1", i, cpu.PhysicalPackageID)
@@ -222,4 +229,9 @@ func (t *TempSysDevicesSystemCPU) Clean(delDir bool) error {
 		}
 	}
 	return nil
+}
+
+// Possible generates the possible string
+func (t *TempSysDevicesSystemCPU) Possible() string {
+	return fmt.Sprintf("0-%d", (t.PhysicalPackageCount*t.CoresPerPhysicalPackage*t.ThreadsPerCore)-1)
 }

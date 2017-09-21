@@ -78,6 +78,7 @@ func Get() (p []byte, err error) {
 func (p *Profiler) Serialize(cpus *cpux.CPUs) []byte {
 	// ensure the Builder is in a usable state.
 	p.Builder.Reset()
+	possible := p.Builder.CreateString(cpus.Possible)
 	uoffs := make([]fb.UOffsetT, len(cpus.CPU))
 	for i, cpu := range cpus.CPU {
 		uoffs[i] = p.SerializeCPU(&cpu)
@@ -89,6 +90,7 @@ func (p *Profiler) Serialize(cpus *cpux.CPUs) []byte {
 	cpusV := p.Builder.EndVector(len(uoffs))
 	structs.CPUsStart(p.Builder)
 	structs.CPUsAddSockets(p.Builder, cpus.Sockets)
+	structs.CPUsAddPossible(p.Buider, possible)
 	structs.CPUsAddCPU(p.Builder, cpusV)
 	p.Builder.Finish(structs.CPUsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
@@ -158,6 +160,7 @@ func Deserialize(p []byte) *cpux.CPUs {
 	fCache := &structs.CacheInf{}
 	cpu := cpux.CPU{}
 	cpus.Sockets = fcpus.Sockets()
+	cpus.Possible = string(fcpus.Possible())
 	for i := 0; i < l; i++ {
 		if !fcpus.CPU(fCPU, i) {
 			continue

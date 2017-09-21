@@ -38,8 +38,9 @@ const (
 )
 
 type CPUs struct {
-	Sockets int32 `json:"sockets"`
-	CPU     []CPU `json:"cpu"`
+	Sockets  int32  `json:"sockets"`
+	Possible string `json:"possible"`
+	CPU      []CPU  `json:"cpu"`
 }
 
 type CPU struct {
@@ -134,6 +135,10 @@ func (prof *Profiler) Get() (*CPUs, error) {
 		cpus.CPU[x] = cpu
 	}
 	cpus.Sockets = int32(len(pids))
+	cpus.Possible, err = prof.Possible()
+	if err != nil {
+		return nil, err
+	}
 	return cpus, nil
 }
 
@@ -283,4 +288,12 @@ func (prof *Profiler) cache(x int, cpu *CPU) error {
 	sort.Strings(cpu.CacheIDs)
 
 	return nil
+}
+
+func (prof *Profiler) Possible() (string, error) {
+	p, err := ioutil.ReadFile(filepath.Join(prof.SystemCPUPath, "possible"))
+	if err != nil {
+		return "", err
+	}
+	return string(p[:len(p)-1]), nil
 }

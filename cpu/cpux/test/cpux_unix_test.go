@@ -51,7 +51,7 @@ func TestCPUX(t *testing.T) {
 	// compare results with frequency
 	err = tcpu.ValidateCPUX(cpus)
 	if err != nil {
-		t.Errorf("validate min/max: %s", err)
+		t.Error(err)
 	}
 
 	// cleanup for next
@@ -105,7 +105,7 @@ noFreq:
 	// compare results with frequency
 	err = tcpu.ValidateCPUX(cpus)
 	if err != nil {
-		t.Errorf("validate min/max: %s", err)
+		t.Error(err)
 	}
 
 clean:

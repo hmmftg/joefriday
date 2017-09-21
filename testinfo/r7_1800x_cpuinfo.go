@@ -588,6 +588,7 @@ func ValidateR71800xProc(proc *processors.Processors, freq bool) error {
 	if proc.Sockets != 1 {
 		return fmt.Errorf("sockets: got %d; want 1", proc.Sockets)
 	}
+
 	if int(proc.CoresPerSocket) != 8 {
 		return fmt.Errorf("cores per socket: got %d; want 8", proc.CoresPerSocket)
 	}

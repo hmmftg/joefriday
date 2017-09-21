@@ -892,6 +892,7 @@ func ValidateXeonE52690CPUInfo(inf *cpuinfo.CPUInfo) error {
 	if inf.Sockets != 2 {
 		return fmt.Errorf("got %d socket; want 2", len(inf.CPU))
 	}
+
 	for i, cpu := range inf.CPU {
 		if cpu.VendorID != GenuineIntel {
 			return fmt.Errorf("%d: vendor_id: got %q; want %q", i, cpu.VendorID, GenuineIntel)
@@ -994,6 +995,7 @@ func ValidateXeonE52690Proc(proc *processors.Processors, freq bool) error {
 	if proc.Sockets != 2 {
 		return fmt.Errorf("sockets: got %d; want 2", proc.Sockets)
 	}
+
 	if int(proc.CoresPerSocket) != 8 {
 		return fmt.Errorf("cores per socket: got %d; want 8", proc.CoresPerSocket)
 	}
