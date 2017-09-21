@@ -52,6 +52,12 @@ func NewTempSysDevicesSystemCPU() TempSysDevicesSystemCPU {
 	return TempSysDevicesSystemCPU{Dir: "", Freq: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
 }
 
+// returns the number of CPUs per configuration:
+//   PhysicalPackageCount * CoresPerPhysicalPackage * ThreadsPerCore
+func (t *TempSysDevicesSystemCPU) CPUs() int32 {
+	return t.PhysicalPackageCount * t.CoresPerPhysicalPackage * t.ThreadsPerCore
+}
+
 // Create creates the tempdir and cpu info for /sys/devices/system/cpu tests.
 // If Dir is an empty string, the information will be written to a randomly
 // named subdir within the temp dir and Dir will be set to this path. The
@@ -82,7 +88,8 @@ func (t *TempSysDevicesSystemCPU) Create() (err error) {
 
 	// Add CPU info for each physical package count
 	for i := 0; i < int(t.PhysicalPackageCount); i++ {
-		for j := 0; j < int(t.CoresPerPhysicalPackage); j++ {
+		cpusPerSocket := int(t.CoresPerPhysicalPackage * t.ThreadsPerCore)
+		for j := 0; j < cpusPerSocket; j++ {
 			cpuX := fmt.Sprintf("cpu%d", x)
 			x++
 			// set the topology core id is in reverse order of cpuX
@@ -91,7 +98,7 @@ func (t *TempSysDevicesSystemCPU) Create() (err error) {
 			if err != nil {
 				goto cleanup
 			}
-			err = ioutil.WriteFile(filepath.Join(tmp, "core_id"), []byte(fmt.Sprintf("%d\n", int(t.CoresPerPhysicalPackage)-j)), 0777)
+			err = ioutil.WriteFile(filepath.Join(tmp, "core_id"), []byte(fmt.Sprintf("%d\n", cpusPerSocket-j)), 0777)
 			if err != nil {
 				goto cleanup
 			}
@@ -151,9 +158,8 @@ cleanup:
 // ValidateCPUX verifies that the info in the struct for cpuX processing is
 // consistent with the test data.
 func (t *TempSysDevicesSystemCPU) ValidateCPUX(cpus *cpux.CPUs) error {
-	cores := int(t.PhysicalPackageCount * t.CoresPerPhysicalPackage)
-	if len(cpus.CPU) != cores {
-		return fmt.Errorf("CPU: got %d; want %d", len(cpus.CPU), cores)
+	if len(cpus.CPU) != int(t.CPUs()) {
+		return fmt.Errorf("CPU: got %d; want %d", len(cpus.CPU), t.CPUs())
 	}
 	if cpus.Sockets != t.PhysicalPackageCount {
 		return fmt.Errorf("Sockets: got %d; want %d", cpus.Sockets, t.PhysicalPackageCount)
@@ -163,12 +169,9 @@ func (t *TempSysDevicesSystemCPU) ValidateCPUX(cpus *cpux.CPUs) error {
 	}
 
 	for i, cpu := range cpus.CPU {
-		if int(cpu.PhysicalPackageID) != 0 && cpu.PhysicalPackageID != 1 {
-			return fmt.Errorf("%d: physical package id: got %d; want 0 or 1", i, cpu.PhysicalPackageID)
-		}
 		// find the core_id
-		if cpu.CoreID < 0 || cpu.CoreID > t.CoresPerPhysicalPackage {
-			return fmt.Errorf("%d: core_id: got %d; want [0-%d]", i, cpu.CoreID, t.CoresPerPhysicalPackage)
+		if cpu.CoreID < 0 || cpu.CoreID >= t.CPUs() {
+			return fmt.Errorf("%d: core_id: got %d; want [0-%d]", i, cpu.CoreID, t.CPUs())
 		}
 		// get the cache info
 		for i, v := range cpu.CacheIDs {

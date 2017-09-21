@@ -1003,6 +1003,9 @@ func ValidateXeonE52690Proc(proc *processors.Processors, freq bool) error {
 	if proc.CPUs != 32 {
 		return fmt.Errorf("CPUs: got %d; want 32", proc.CPUs)
 	}
+	if proc.Possible != "0-31" {
+		return fmt.Errorf("possible: got %q; want \"0-31\"", proc.Possible)
+	}
 
 	if proc.VendorID != GenuineIntel {
 		return fmt.Errorf("vendor_id: got %q; want %q", proc.VendorID, GenuineIntel)

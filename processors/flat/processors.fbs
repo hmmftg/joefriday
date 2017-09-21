@@ -7,6 +7,7 @@ table Processors {
 	ByteOrder:string;
 	Sockets:int;
 	CPUs:int;
+	Possible:string;
 	CoresPerSocket:short;
 	ThreadsPerCore:byte;
 	VendorID:string;

@@ -595,6 +595,9 @@ func ValidateR71800xProc(proc *processors.Processors, freq bool) error {
 	if proc.CPUs != 16 {
 		return fmt.Errorf("CPUs: got %d; want 16", proc.CPUs)
 	}
+	if proc.Possible != "0-15" {
+		return fmt.Errorf("possible: got %q; want \"0-15\"", proc.Possible)
+	}
 
 	if proc.VendorID != AuthenticAMD {
 		return fmt.Errorf("vendor_id: got %q; want %q", proc.VendorID, AuthenticAMD)

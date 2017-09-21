@@ -53,6 +53,7 @@ type Processors struct {
 	ByteOrder      string            `json:"byte_order"`
 	Sockets        int32             `json:"sockets"`
 	CPUs           int32             `json:"cpus"`
+	Possible       string            `json:"possible"`
 	CoresPerSocket int16             `json:"cores_per_socket"`
 	ThreadsPerCore int8              `json:"threads_per_core"`
 	VendorID       string            `json:"vendor_id"`
@@ -301,6 +302,7 @@ func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
 		procs.Cache[id] = cpus.CPU[0].Cache[id]
 	}
 	procs.Sockets = cpus.Sockets
+	procs.Possible = cpus.Possible
 	return nil
 }
 

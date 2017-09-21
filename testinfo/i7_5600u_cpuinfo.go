@@ -255,6 +255,9 @@ func ValidateI75600uProc(proc *processors.Processors, freq bool) error {
 	if proc.CPUs != 4 {
 		return fmt.Errorf("CPUs: got %d; want %d", proc.CPUs)
 	}
+	if proc.Possible != "0-3" {
+		return fmt.Errorf("possible: got %q; want \"0-3\"", proc.Possible)
+	}
 
 	if proc.VendorID != GenuineIntel {
 		return fmt.Errorf("vendor_id: got %q; want %q", proc.VendorID, GenuineIntel)

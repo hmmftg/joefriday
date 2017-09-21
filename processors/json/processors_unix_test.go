@@ -35,7 +35,8 @@ func TestI75600u(t *testing.T) {
 
 	tCPU.Freq = true
 	tCPU.PhysicalPackageCount = 1
-	tCPU.CoresPerPhysicalPackage = 4
+	tCPU.CoresPerPhysicalPackage = 2
+	tCPU.ThreadsPerCore = 2
 	// create the /sys/devices/system/cpux info
 	err = tCPU.Create()
 	if err != nil {
@@ -50,7 +51,7 @@ func TestI75600u(t *testing.T) {
 		return
 	}
 	prof.Procer = tProc
-	prof.NumCPU = int(tCPU.CoresPerPhysicalPackage * tCPU.PhysicalPackageCount)
+	prof.NumCPU = int(tCPU.CPUs())
 	prof.SystemCPUPath = tCPU.Dir
 
 	// get the processor info.
@@ -118,7 +119,8 @@ func TestXeonE52690(t *testing.T) {
 
 	tCPU.Freq = true
 	tCPU.PhysicalPackageCount = 2
-	tCPU.CoresPerPhysicalPackage = 16
+	tCPU.CoresPerPhysicalPackage = 8
+	tCPU.ThreadsPerCore = 2
 	// create the /sys/devices/system/cpux info
 	err = tCPU.Create()
 	if err != nil {
@@ -133,7 +135,7 @@ func TestXeonE52690(t *testing.T) {
 		return
 	}
 	prof.Procer = tProc
-	prof.NumCPU = int(tCPU.CoresPerPhysicalPackage * tCPU.PhysicalPackageCount)
+	prof.NumCPU = int(tCPU.CPUs())
 	prof.SystemCPUPath = tCPU.Dir
 
 	// get the processor info.
@@ -202,6 +204,7 @@ func TestR71800x(t *testing.T) {
 	tCPU.Freq = true
 	tCPU.PhysicalPackageCount = 1
 	tCPU.CoresPerPhysicalPackage = 8
+	tCPU.ThreadsPerCore = 2
 	// create the /sys/devices/system/cpux info
 	err = tCPU.Create()
 	if err != nil {
@@ -216,7 +219,7 @@ func TestR71800x(t *testing.T) {
 		return
 	}
 	prof.Procer = tProc
-	prof.NumCPU = int(tCPU.CoresPerPhysicalPackage * tCPU.PhysicalPackageCount)
+	prof.NumCPU = int(tCPU.CPUs())
 	prof.SystemCPUPath = tCPU.Dir
 
 	// get the processor info.
