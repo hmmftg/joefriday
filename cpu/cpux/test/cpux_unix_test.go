@@ -11,11 +11,14 @@ import (
 func TestCPUX(t *testing.T) {
 	// set up test stuff w/o freq
 	tcpu := testinfo.NewTempSysDevicesSystemCPU()
+	tcpu.PhysicalPackageCount = 1
+	tcpu.CoresPerPhysicalPackage = 2
+	tcpu.ThreadsPerCore = 2
 	err := tcpu.Create()
 	if err != nil {
 		t.Fatalf("setting up cpux testing info: %s", err)
 	}
-	prof := &cpux.Profiler{SystemCPUPath: tcpu.Dir, NumCPU: int(tcpu.CoresPerPhysicalPackage * tcpu.PhysicalPackageCount)}
+	prof := &cpux.Profiler{SystemCPUPath: tcpu.Dir, NumCPU: int(tcpu.CPUs())}
 	cpus, err := prof.Get()
 	if err != nil {
 		t.Error(err)
@@ -63,7 +66,7 @@ func TestCPUX(t *testing.T) {
 multiSocket:
 	// 2 sockets
 	tcpu.PhysicalPackageCount = 2
-	prof.NumCPU = int(tcpu.CoresPerPhysicalPackage * tcpu.PhysicalPackageCount)
+	prof.NumCPU = int(tcpu.CPUs())
 	tcpu.Freq = true
 	err = tcpu.Create()
 	if err != nil {

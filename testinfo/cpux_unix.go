@@ -107,7 +107,7 @@ func (t *TempSysDevicesSystemCPU) Create() (err error) {
 			if err != nil {
 				goto cleanup
 			}
-			err = ioutil.WriteFile(filepath.Join(tmp, "core_id"), []byte(fmt.Sprintf("%d\n", cpusPerSocket-j)), 0777)
+			err = ioutil.WriteFile(filepath.Join(tmp, "core_id"), []byte(fmt.Sprintf("%d\n", j/2)), 0777)
 			if err != nil {
 				goto cleanup
 			}
