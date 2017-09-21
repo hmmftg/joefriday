@@ -23,7 +23,7 @@ import (
 
 func TestCPUX(t *testing.T) {
 	// set up test stuff w/o freq
-	tcpu := testinfo.NewTempSysDevicesSystemCPU()
+	tcpu := testinfo.NewTempSysFSCPU()
 	tcpu.PhysicalPackageCount = 1
 	tcpu.CoresPerPhysicalPackage = 2
 	tcpu.ThreadsPerCore = 2
@@ -31,7 +31,7 @@ func TestCPUX(t *testing.T) {
 	if err != nil {
 		t.Fatalf("setting up cpux testing info: %s", err)
 	}
-	prof := &Profiler{Profiler: &cpux.Profiler{SystemCPUPath: tcpu.Dir, NumCPU: int(tcpu.CPUs())}}
+	prof := &Profiler{Profiler: &cpux.Profiler{SysFSCPUPath: tcpu.Dir, NumCPU: int(tcpu.CPUs())}}
 	p, err := prof.Get()
 	if err != nil {
 		t.Error(err)

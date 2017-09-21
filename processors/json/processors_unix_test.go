@@ -30,7 +30,7 @@ func TestI75600u(t *testing.T) {
 	defer tProc.Remove()
 
 	// get a new struct for /sys/devices/system/cpux info
-	tCPU := testinfo.NewTempSysDevicesSystemCPU()
+	tCPU := testinfo.NewTempSysFSCPU()
 	defer tCPU.Clean(true)
 
 	tCPU.Freq = true
@@ -52,7 +52,7 @@ func TestI75600u(t *testing.T) {
 	}
 	prof.Procer = tProc
 	prof.NumCPU = int(tCPU.CPUs())
-	prof.SystemCPUPath = tCPU.Dir
+	prof.SysFSCPUPath = tCPU.Dir
 
 	// get the processor info.
 	p, err := prof.Get()
@@ -114,7 +114,7 @@ func TestXeonE52690(t *testing.T) {
 	defer tProc.Remove()
 
 	// get a new struct for /sys/devices/system/cpux info
-	tCPU := testinfo.NewTempSysDevicesSystemCPU()
+	tCPU := testinfo.NewTempSysFSCPU()
 	defer tCPU.Clean(true)
 
 	tCPU.Freq = true
@@ -136,7 +136,7 @@ func TestXeonE52690(t *testing.T) {
 	}
 	prof.Procer = tProc
 	prof.NumCPU = int(tCPU.CPUs())
-	prof.SystemCPUPath = tCPU.Dir
+	prof.SysFSCPUPath = tCPU.Dir
 
 	// get the processor info.
 	p, err := prof.Get()
@@ -198,7 +198,7 @@ func TestR71800x(t *testing.T) {
 	defer tProc.Remove()
 
 	// get a new struct for /sys/devices/system/cpux info
-	tCPU := testinfo.NewTempSysDevicesSystemCPU()
+	tCPU := testinfo.NewTempSysFSCPU()
 	defer tCPU.Clean(true)
 
 	tCPU.Freq = true
@@ -220,7 +220,7 @@ func TestR71800x(t *testing.T) {
 	}
 	prof.Procer = tProc
 	prof.NumCPU = int(tCPU.CPUs())
-	prof.SystemCPUPath = tCPU.Dir
+	prof.SysFSCPUPath = tCPU.Dir
 
 	// get the processor info.
 	p, err := prof.Get()

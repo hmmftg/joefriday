@@ -20,24 +20,24 @@ var (
 	cacheLevels = []string{"1", "1", "2", "3"}
 )
 
-// TempSysDevicesSystemCPU handles the creation of a /sys/devices/system/cpu
-// tree in a temp directory for testing purposes. When usage of the temp info
-// is done, Clean() should be called to remove everything that was created by
-// Create(). By default, the information will be created in its own temp
-// directory within the system's temp dir. If the information is to be created
-// in a specific location, set the Dir explicitly prior to calling Create. When
-// the path is empty when Create is called, Dir will be populated with the path
-// to the temp dir within shich the CPUx tree can be found.
+// TempSysFSCPU handles the creation of a  sysfs cpu tree in a temp directory
+// for testing purposes. When usage of the temp info is done, Clean() should be
+// called to remove everything that was created by Create(). By default, the
+// information will be created in its own temp directory within the system's
+// temp dir. If the information is to be created in a specific location, set
+// the Dir explicitly prior to calling Create. When the path is empty when
+// Create is called, Dir will be populated with the path to the temp dir
+// within which the CPUx tree can be found.
 //
-// PhysicalPackageCount and CoresPerPhysicalPackage should be set if anything
-// other than their default values are desired. Each of these values are
-// required to be > 0. Create will not check to see if they are > 0; no CPUx
-// directories will be created as the product of multiplying by 0 is 0.
+// PhysicalPackageCount, CoresPerPhysicalPackage, and ThreadsPerCore should be
+// set if anything other than their default values are desired. Each of these
+// values are required to be > 0. Create will not check to see if they are > 0;
+// no CPUx directories will be created as the product of multiplying by 0 is 0.
 //
-// The Freq flag is true, cpufreq information will be written. This information
-// is not available on all systems so tests should cover both the cpufreq path
-// existing and not existing.
-type TempSysDevicesSystemCPU struct {
+// IF the Freq flag is true, cpufreq information will be written. This
+// information is not available on all systems so tests should cover both the
+// cpufreq path existing and not existing.
+type TempSysFSCPU struct {
 	Dir                     string
 	Freq                    bool
 	PhysicalPackageCount    int32
@@ -48,24 +48,24 @@ type TempSysDevicesSystemCPU struct {
 // NewTempSysDevicesSystemCPU returns a new TempSysDevicesSystemCPU set to use
 // the system's temp dir, populate cpufreq information, and have 4 cores for a
 // 1 socket system.
-func NewTempSysDevicesSystemCPU() TempSysDevicesSystemCPU {
-	return TempSysDevicesSystemCPU{Dir: "", Freq: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
+func NewTempSysFSCPU() TempSysFSCPU {
+	return TempSysFSCPU{Dir: "", Freq: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
 }
 
 // returns the number of CPUs per configuration:
 //   PhysicalPackageCount * CoresPerPhysicalPackage * ThreadsPerCore
-func (t *TempSysDevicesSystemCPU) CPUs() int32 {
+func (t *TempSysFSCPU) CPUs() int32 {
 	return t.PhysicalPackageCount * t.CoresPerPhysicalPackage * t.ThreadsPerCore
 }
 
-// Create creates the tempdir and cpu info for /sys/devices/system/cpu tests.
-// If Dir is an empty string, the information will be written to a randomly
-// named subdir within the temp dir and Dir will be set to this path. The
-// created dir will be prefixed with cpux. If Dir has a non-empty value, the
-// cpuX information will be written to that directory.  The number of cpuX
-// entries is the product of PhysicalPackageCount and CoresPerPhysicalPackage.
-// If an error occurs that is returned along with an empty string.
-func (t *TempSysDevicesSystemCPU) Create() (err error) {
+// Create creates the tempdir and cpu info for sysfs cpu tests. If Dir is an
+// empty string, the information will be written to a randomly named subdir
+// within the temp dir and Dir will be set to this path. The created dir will
+// be prefixed with cpux. If Dir has a non-empty value, the cpuX information
+// will be written to that directory. The number of cpuX entries is the product
+// of PhysicalPackageCount, CoresPerPhysicalPackage, and ThreadsPerCore. If an
+// error occurs that is returned along with an empty string.
+func (t *TempSysFSCPU) Create() (err error) {
 	if t.Dir == "" {
 		t.Dir, err = ioutil.TempDir("", "cpux")
 		if err != nil {
@@ -166,7 +166,7 @@ cleanup:
 
 // ValidateCPUX verifies that the info in the struct for cpuX processing is
 // consistent with the test data.
-func (t *TempSysDevicesSystemCPU) ValidateCPUX(cpus *cpux.CPUs) error {
+func (t *TempSysFSCPU) ValidateCPUX(cpus *cpux.CPUs) error {
 	if len(cpus.CPU) != int(t.CPUs()) {
 		return fmt.Errorf("CPU: got %d; want %d", len(cpus.CPU), t.CPUs())
 	}
@@ -218,9 +218,9 @@ func (t *TempSysDevicesSystemCPU) ValidateCPUX(cpus *cpux.CPUs) error {
 }
 
 // Clean cleans up the information that the struct created during Create. If TRUE
-// is passed, the TempSysDevicesSystemCPU.Dir will also be deleted. This can
-// also be used to clean up the directory so that Create can be re-run.
-func (t *TempSysDevicesSystemCPU) Clean(delDir bool) error {
+// is passed, the TempSysFSCPU.Dir will also be deleted. This can also be used to
+// clean up the directory so that Create can be re-run (delDir == false).
+func (t *TempSysFSCPU) Clean(delDir bool) error {
 	if delDir {
 		return os.RemoveAll(t.Dir)
 	}
@@ -247,6 +247,6 @@ func (t *TempSysDevicesSystemCPU) Clean(delDir bool) error {
 }
 
 // Possible generates the possible string
-func (t *TempSysDevicesSystemCPU) Possible() string {
+func (t *TempSysFSCPU) Possible() string {
 	return fmt.Sprintf("0-%d", (t.PhysicalPackageCount*t.CoresPerPhysicalPackage*t.ThreadsPerCore)-1)
 }

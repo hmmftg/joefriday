@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	SystemCPUPath = "/sys/devices/system/cpu"
-	CPUFreq       = "cpufreq"
+	SysFSCPUPath = "/sys/devices/system/cpu"
+	CPUFreq      = "cpufreq"
 )
 
 type CPUs struct {
@@ -73,7 +73,7 @@ type Profiler struct {
 	NumCPU int
 	// this is an exported fied for testing purposes. It should not be set in
 	// non-test usage
-	SystemCPUPath string
+	SysFSCPUPath string
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -81,7 +81,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	// NumCPU provides the number of logical cpus usable by the current process.
 	// Is this sufficient, or will there ever be a delta between that and either
 	// what /proc/cpuinfo reports or what is available on /sys/devices/system/cpu/
-	return &Profiler{NumCPU: runtime.NumCPU(), SystemCPUPath: SystemCPUPath}, nil
+	return &Profiler{NumCPU: runtime.NumCPU(), SysFSCPUPath: SysFSCPUPath}, nil
 }
 
 // Reset resources: this does nothing for this implemenation.
@@ -150,7 +150,7 @@ func (prof *Profiler) Get() (*CPUs, error) {
 
 // cpuXPath returns the system's cpuX path for a given cpu number.
 func (prof *Profiler) cpuXPath(x int) string {
-	return fmt.Sprintf("%s/cpu%d", prof.SystemCPUPath, x)
+	return fmt.Sprintf("%s/cpu%d", prof.SysFSCPUPath, x)
 }
 
 // coreIDPath returns the path of the core_id file for the given cpuX.
@@ -183,7 +183,7 @@ func (prof *Profiler) cachePath(x int) string {
 
 // hasCPUFreq returns if the system has cpufreq information:
 func (prof *Profiler) hasCPUFreq() bool {
-	_, err := os.Stat(filepath.Join(prof.SystemCPUPath, CPUFreq))
+	_, err := os.Stat(filepath.Join(prof.SysFSCPUPath, CPUFreq))
 	if err == nil {
 		return true
 	}
@@ -297,7 +297,7 @@ func (prof *Profiler) cache(x int, cpu *CPU) error {
 }
 
 func (prof *Profiler) Possible() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SystemCPUPath, "possible"))
+	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, "possible"))
 	if err != nil {
 		return "", err
 	}
@@ -305,7 +305,7 @@ func (prof *Profiler) Possible() (string, error) {
 }
 
 func (prof *Profiler) Online() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SystemCPUPath, "online"))
+	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, "online"))
 	if err != nil {
 		return "", err
 	}
