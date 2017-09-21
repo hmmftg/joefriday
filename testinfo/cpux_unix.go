@@ -83,7 +83,16 @@ func (t *TempSysDevicesSystemCPU) Create() (err error) {
 	}
 
 	// add Possible information:
-	ioutil.WriteFile(filepath.Join(t.Dir, "possible"), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	err = ioutil.WriteFile(filepath.Join(t.Dir, "possible"), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	if err != nil {
+		return err
+	}
+	// add online info; use the same value as possible.
+	err = ioutil.WriteFile(filepath.Join(t.Dir, "online"), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	if err != nil {
+		return err
+	}
+
 	var x int // tracks current cpu X value
 
 	// Add CPU info for each physical package count
@@ -168,6 +177,9 @@ func (t *TempSysDevicesSystemCPU) ValidateCPUX(cpus *cpux.CPUs) error {
 		return fmt.Errorf("possible: got %q; want %q", cpus.Possible, t.Possible())
 	}
 
+	if cpus.Online != t.Possible() {
+		return fmt.Errorf("online: got %q; want %q", cpus.Online, t.Possible())
+	}
 	for i, cpu := range cpus.CPU {
 		// find the core_id
 		if cpu.CoreID < 0 || cpu.CoreID >= t.CPUs() {

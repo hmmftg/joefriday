@@ -4,6 +4,7 @@ namespace structs;
 table CPUs {
 	Sockets:int;
 	Possible:string;
+	Online:string;
 	CPU:[CPU];
 }
 
