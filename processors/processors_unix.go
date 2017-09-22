@@ -115,7 +115,7 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 		return nil, err
 	}
 	// process the system cpu info
-	err = prof.getSysDevicesCPUInfo(procs)
+	err = prof.getSysFSCPU(procs)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +287,7 @@ func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 	return nil
 }
 
-func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
+func (prof *Profiler) getSysFSCPU(procs *Processors) error {
 	// get the cpux profiler
 	cpus, err := prof.Profiler.Get()
 	if err != nil {
