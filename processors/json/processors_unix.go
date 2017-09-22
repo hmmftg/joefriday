@@ -12,7 +12,7 @@
 // limitations under the License.
 
 // Package processors gathers information about the physical processors on a
-// system by parsing the information from /procs/cpuinfo and sysfs. This
+// system by parsing the information from /procs/cpuinfo and the sysfs. This
 // package gathers basic information about sockets, physical processors, etc.
 // on the system. For multi-socket systems, it is assumed that all of the
 // processors are the same. Instead of returning a Go struct, JSON serialized
