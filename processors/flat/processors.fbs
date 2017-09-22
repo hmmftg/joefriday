@@ -10,6 +10,7 @@ table Processors {
 	Possible:string;
 	Present:string;
 	Offline:string;
+	Online:string;
 	CoresPerSocket:short;
 	ThreadsPerCore:byte;
 	VendorID:string;

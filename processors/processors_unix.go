@@ -56,6 +56,7 @@ type Processors struct {
 	Possible       string            `json:"possible"`
 	Present        string            `json:"present"`
 	Offline        string            `json:"offline"`
+	Online         string            `json:"online"`
 	CoresPerSocket int16             `json:"cores_per_socket"`
 	ThreadsPerCore int8              `json:"threads_per_core"`
 	VendorID       string            `json:"vendor_id"`
@@ -307,6 +308,7 @@ func (prof *Profiler) getSysFSCPU(procs *Processors) error {
 	procs.Possible = cpus.Possible
 	procs.Present = cpus.Present
 	procs.Offline = cpus.Offline
+	procs.Online = cpus.Online
 	return nil
 }
 

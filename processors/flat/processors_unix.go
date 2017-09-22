@@ -96,6 +96,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	possible := p.Builder.CreateString(procs.Possible)
 	present := p.Builder.CreateString(procs.Present)
 	offline := p.Builder.CreateString(procs.Offline)
+	online := p.Builder.CreateString(procs.Online)
 	uoffs := make([]fb.UOffsetT, len(procs.CacheIDs))
 	// serialize cache info in order; the flatbuffer table will have the info
 	// in order so a separate cache ID list isn't necessary for flatbuffers.
@@ -135,6 +136,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	structs.ProcessorsAddPossible(p.Builder, possible)
 	structs.ProcessorsAddPresent(p.Builder, present)
 	structs.ProcessorsAddOffline(p.Builder, offline)
+	structs.ProcessorsAddOnline(p.Builder, online)
 	structs.ProcessorsAddSockets(p.Builder, procs.Sockets)
 	structs.ProcessorsAddCoresPerSocket(p.Builder, procs.CoresPerSocket)
 	structs.ProcessorsAddThreadsPerCore(p.Builder, procs.ThreadsPerCore)
@@ -196,6 +198,7 @@ func Deserialize(p []byte) *processors.Processors {
 	procs.Possible = string(flatP.Possible())
 	procs.Present = string(flatP.Present())
 	procs.Offline = string(flatP.Offline())
+	procs.Online = string(flatP.Online())
 	procs.Sockets = flatP.Sockets()
 	procs.CoresPerSocket = flatP.CoresPerSocket()
 	procs.ThreadsPerCore = flatP.ThreadsPerCore()
