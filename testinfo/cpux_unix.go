@@ -84,19 +84,19 @@ func (t *TempSysFSCPU) Create() (err error) {
 	}
 
 	// add Possible information:
-	err = ioutil.WriteFile(filepath.Join(t.Dir, "possible"), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Possible), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
 	if err != nil {
 		return err
 	}
 	// add online info; use the same value as possible.
-	err = ioutil.WriteFile(filepath.Join(t.Dir, "online"), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Online), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
 	if err != nil {
 		return err
 	}
 
 	// if OfflineFile; create one with only a newline char.
 	if t.OfflineFile {
-		err = ioutil.WriteFile(filepath.Join(t.Dir, "offline"), []byte("\n"), 0777)
+		err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Offline), []byte("\n"), 0777)
 		if err != nil {
 			return err
 		}

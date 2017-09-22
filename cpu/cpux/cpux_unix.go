@@ -35,6 +35,9 @@ import (
 const (
 	SysFSCPUPath = "/sys/devices/system/cpu"
 	CPUFreq      = "cpufreq"
+	Offline      = "offline"
+	Online       = "online"
+	Possible     = "possible"
 )
 
 type CPUs struct {
@@ -303,7 +306,7 @@ func (prof *Profiler) cache(x int, cpu *CPU) error {
 }
 
 func (prof *Profiler) Possible() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, "possible"))
+	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Possible))
 	if err != nil {
 		return "", err
 	}
@@ -311,7 +314,7 @@ func (prof *Profiler) Possible() (string, error) {
 }
 
 func (prof *Profiler) Online() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, "online"))
+	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Online))
 	if err != nil {
 		return "", err
 	}
@@ -322,7 +325,7 @@ func (prof *Profiler) Online() (string, error) {
 // contains a '\n', or may not exist; neither of those conditions are an error
 // condition.
 func (prof *Profiler) Offline() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, "offline"))
+	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Offline))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", nil
