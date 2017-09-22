@@ -45,8 +45,16 @@ func (rcv *CPUs) Online() []byte {
 	return nil
 }
 
-func (rcv *CPUs) CPU(obj *CPU, j int) bool {
+func (rcv *CPUs) Offline() []byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
+	if o != 0 {
+		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+	}
+	return nil
+}
+
+func (rcv *CPUs) CPU(obj *CPU, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
 		x := rcv._tab.Vector(o)
 		x += flatbuffers.UOffsetT(j) * 4
@@ -61,18 +69,19 @@ func (rcv *CPUs) CPU(obj *CPU, j int) bool {
 }
 
 func (rcv *CPUs) CPULength() int {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
 		return rcv._tab.VectorLen(o)
 	}
 	return 0
 }
 
-func CPUsStart(builder *flatbuffers.Builder) { builder.StartObject(4) }
+func CPUsStart(builder *flatbuffers.Builder) { builder.StartObject(5) }
 func CPUsAddSockets(builder *flatbuffers.Builder, Sockets int32) { builder.PrependInt32Slot(0, Sockets, 0) }
 func CPUsAddPossible(builder *flatbuffers.Builder, Possible flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(Possible), 0) }
 func CPUsAddOnline(builder *flatbuffers.Builder, Online flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(Online), 0) }
-func CPUsAddCPU(builder *flatbuffers.Builder, CPU flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(CPU), 0) }
+func CPUsAddOffline(builder *flatbuffers.Builder, Offline flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(Offline), 0) }
+func CPUsAddCPU(builder *flatbuffers.Builder, CPU flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(4, flatbuffers.UOffsetT(CPU), 0) }
 func CPUsStartCPUVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func CPUsEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

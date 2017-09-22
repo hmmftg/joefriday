@@ -43,13 +43,14 @@ type TempSysFSCPU struct {
 	PhysicalPackageCount    int32
 	CoresPerPhysicalPackage int32
 	ThreadsPerCore          int32
+	OfflineFile             bool
 }
 
 // NewTempSysDevicesSystemCPU returns a new TempSysDevicesSystemCPU set to use
 // the system's temp dir, populate cpufreq information, and have 4 cores for a
 // 1 socket system.
 func NewTempSysFSCPU() TempSysFSCPU {
-	return TempSysFSCPU{Dir: "", Freq: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
+	return TempSysFSCPU{Dir: "", Freq: true, OfflineFile: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
 }
 
 // returns the number of CPUs per configuration:
@@ -91,6 +92,14 @@ func (t *TempSysFSCPU) Create() (err error) {
 	err = ioutil.WriteFile(filepath.Join(t.Dir, "online"), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
 	if err != nil {
 		return err
+	}
+
+	// if OfflineFile; create one with only a newline char.
+	if t.OfflineFile {
+		err = ioutil.WriteFile(filepath.Join(t.Dir, "offline"), []byte("\n"), 0777)
+		if err != nil {
+			return err
+		}
 	}
 
 	var x int // tracks current cpu X value
@@ -179,6 +188,10 @@ func (t *TempSysFSCPU) ValidateCPUX(cpus *cpux.CPUs) error {
 
 	if cpus.Online != t.Possible() {
 		return fmt.Errorf("online: got %q; want %q", cpus.Online, t.Possible())
+	}
+	// should always be empty; this will need to change if offline files with values in them are tested.
+	if cpus.Offline != "" {
+		return fmt.Errorf("offline: got %q; want an empty string", cpus.Offline)
 	}
 	for i, cpu := range cpus.CPU {
 		// find the core_id

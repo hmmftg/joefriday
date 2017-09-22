@@ -97,6 +97,33 @@ noFreq:
 	err = tcpu.Create()
 	if err != nil {
 		t.Error("setting up cpux testing info: %s", err)
+		goto noOffline
+	}
+	cpus, err = prof.Get()
+	if err != nil {
+		t.Error(err)
+	}
+	js, _ = json.MarshalIndent(cpus, "", "\t")
+	t.Log(string(js))
+	// compare results with frequency
+	err = tcpu.ValidateCPUX(cpus)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// cleanup for next
+	err = tcpu.Clean(false)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// no offline file
+noOffline:
+	tcpu.OfflineFile = false
+	// set up test stuff w/o freq
+	err = tcpu.Create()
+	if err != nil {
+		t.Error("setting up cpux testing info: %s", err)
 		goto clean
 	}
 	cpus, err = prof.Get()

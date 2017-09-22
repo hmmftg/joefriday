@@ -41,6 +41,7 @@ type CPUs struct {
 	Sockets  int32  `json:"sockets"`
 	Possible string `json:"possible"`
 	Online   string `json:"online"`
+	Offline  string `json:"offline"`
 	CPU      []CPU  `json:"cpu"`
 }
 
@@ -142,6 +143,11 @@ func (prof *Profiler) Get() (*CPUs, error) {
 	}
 
 	cpus.Online, err = prof.Online()
+	if err != nil {
+		return nil, err
+	}
+
+	cpus.Offline, err = prof.Offline()
 	if err != nil {
 		return nil, err
 	}
@@ -307,6 +313,20 @@ func (prof *Profiler) Possible() (string, error) {
 func (prof *Profiler) Online() (string, error) {
 	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, "online"))
 	if err != nil {
+		return "", err
+	}
+	return string(p[:len(p)-1]), nil
+}
+
+// Offline: information about offline cpus. This file may be empty, i.e. only
+// contains a '\n', or may not exist; neither of those conditions are an error
+// condition.
+func (prof *Profiler) Offline() (string, error) {
+	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, "offline"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
 		return "", err
 	}
 	return string(p[:len(p)-1]), nil

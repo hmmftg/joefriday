@@ -5,6 +5,7 @@ table CPUs {
 	Sockets:int;
 	Possible:string;
 	Online:string;
+	Offline:string;
 	CPU:[CPU];
 }
 
