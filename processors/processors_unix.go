@@ -287,7 +287,10 @@ func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 				continue
 			}
 			if prof.Val[1] == 'u' { // bugs
-				procs.Bugs = strings.Split(string(prof.Val[nameLen:]), " ")
+				tmp := string(prof.Val[nameLen:])
+				if tmp != "" {
+					procs.Bugs = strings.Split(tmp, " ")
+				}
 			}
 			continue
 		}

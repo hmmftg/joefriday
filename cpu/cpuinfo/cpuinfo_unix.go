@@ -96,6 +96,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 		physIDs                 []int32 // tracks unique physical IDs encountered
 		pidFound                bool
 		v                       byte
+		tmp                     string
 		cpu                     CPU
 	)
 	err = prof.Reset()
@@ -261,7 +262,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				continue
 			}
 			if v == 'o' { // power management
-				tmp := string(prof.Val[nameLen:])
+				tmp = string(prof.Val[nameLen:])
 				if tmp == "" {
 					continue
 				}
@@ -307,7 +308,10 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				continue
 			}
 			if prof.Val[1] == 'u' { // bugs
-				cpu.Bugs = strings.Split(string(prof.Val[nameLen:]), " ")
+				tmp = string(prof.Val[nameLen:])
+				if tmp != "" {
+					cpu.Bugs = strings.Split(tmp, " ")
+				}
 			}
 			continue
 		}

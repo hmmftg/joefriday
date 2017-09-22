@@ -943,6 +943,9 @@ func ValidateXeonE52690CPUInfo(inf *cpuinfo.CPUInfo) error {
 		if len(cpu.Flags) != 99 {
 			return fmt.Errorf("%d: flags: got %d; want 99", i, len(cpu.Flags))
 		}
+		if len(cpu.Bugs) != 0 {
+			return fmt.Errorf("%d: bugs: got %d; want 0", i, len(cpu.Bugs))
+		}
 		if int(cpu.BogoMIPS) < 5786 {
 			return fmt.Errorf("%d: bogomips: got %.3f; want a value >= 5786", i, cpu.BogoMIPS)
 		}

@@ -125,7 +125,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	for i, bug := range procs.Bugs {
 		uoffs[i] = p.Builder.CreateString(bug)
 	}
-	structs.ProcessorStartBugsVector(p.Builder, len(uoffs))
+	structs.ProcessorsStartBugsVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
