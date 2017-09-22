@@ -38,6 +38,7 @@ const (
 	Offline      = "offline"
 	Online       = "online"
 	Possible     = "possible"
+	Present      = "present"
 )
 
 type CPUs struct {
@@ -45,6 +46,7 @@ type CPUs struct {
 	Possible string `json:"possible"`
 	Online   string `json:"online"`
 	Offline  string `json:"offline"`
+	Present  string `json:"present"`
 	CPU      []CPU  `json:"cpu"`
 }
 
@@ -154,6 +156,12 @@ func (prof *Profiler) Get() (*CPUs, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	cpus.Present, err = prof.Present()
+	if err != nil {
+		return nil, err
+	}
+
 	return cpus, nil
 }
 
@@ -307,6 +315,16 @@ func (prof *Profiler) cache(x int, cpu *CPU) error {
 
 func (prof *Profiler) Possible() (string, error) {
 	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Possible))
+	if err != nil {
+		return "", err
+	}
+	return string(p[:len(p)-1]), nil
+}
+
+// Present: CPUs that have been identified as being present in the system.
+// [cpu_present_mask]
+func (prof *Profiler) Present() (string, error) {
+	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Present))
 	if err != nil {
 		return "", err
 	}

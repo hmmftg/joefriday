@@ -81,6 +81,7 @@ func (p *Profiler) Serialize(cpus *cpux.CPUs) []byte {
 	possible := p.Builder.CreateString(cpus.Possible)
 	online := p.Builder.CreateString(cpus.Online)
 	offline := p.Builder.CreateString(cpus.Offline)
+	present := p.Builder.CreateString(cpus.Present)
 	uoffs := make([]fb.UOffsetT, len(cpus.CPU))
 	for i, cpu := range cpus.CPU {
 		uoffs[i] = p.SerializeCPU(&cpu)
@@ -95,6 +96,7 @@ func (p *Profiler) Serialize(cpus *cpux.CPUs) []byte {
 	structs.CPUsAddPossible(p.Builder, possible)
 	structs.CPUsAddOnline(p.Builder, online)
 	structs.CPUsAddOffline(p.Builder, offline)
+	structs.CPUsAddPresent(p.Builder, present)
 	structs.CPUsAddCPU(p.Builder, cpusV)
 	p.Builder.Finish(structs.CPUsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
@@ -166,6 +168,7 @@ func Deserialize(p []byte) *cpux.CPUs {
 	cpus.Sockets = fcpus.Sockets()
 	cpus.Possible = string(fcpus.Possible())
 	cpus.Online = string(fcpus.Online())
+	cpus.Present = string(fcpus.Present())
 	for i := 0; i < l; i++ {
 		if !fcpus.CPU(fCPU, i) {
 			continue

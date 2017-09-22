@@ -94,6 +94,12 @@ func (t *TempSysFSCPU) Create() (err error) {
 		return err
 	}
 
+	// add prsent info; use the same value as possible.
+	err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Present), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	if err != nil {
+		return err
+	}
+
 	// if OfflineFile; create one with only a newline char.
 	if t.OfflineFile {
 		err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Offline), []byte("\n"), 0777)
@@ -188,6 +194,10 @@ func (t *TempSysFSCPU) ValidateCPUX(cpus *cpux.CPUs) error {
 
 	if cpus.Online != t.Possible() {
 		return fmt.Errorf("online: got %q; want %q", cpus.Online, t.Possible())
+	}
+
+	if cpus.Present != t.Possible() {
+		return fmt.Errorf("present: got %q; want %q", cpus.Present, t.Possible())
 	}
 	// should always be empty; this will need to change if offline files with values in them are tested.
 	if cpus.Offline != "" {
