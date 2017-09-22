@@ -313,6 +313,9 @@ func (prof *Profiler) cache(x int, cpu *CPU) error {
 	return nil
 }
 
+// Possible: CPUs that have been allocated resources and can be brought online
+// if they are present. [cpu_possible_mask]
+// from: Documentation/cputopology.txt
 func (prof *Profiler) Possible() (string, error) {
 	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Possible))
 	if err != nil {
@@ -323,6 +326,7 @@ func (prof *Profiler) Possible() (string, error) {
 
 // Present: CPUs that have been identified as being present in the system.
 // [cpu_present_mask]
+// from: Documentation/cputopology.txt
 func (prof *Profiler) Present() (string, error) {
 	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Present))
 	if err != nil {
@@ -331,6 +335,8 @@ func (prof *Profiler) Present() (string, error) {
 	return string(p[:len(p)-1]), nil
 }
 
+// Online: CPUs that are online and being scheduled [cpu_online_mask]
+// from: Documentation/cputopology.txt
 func (prof *Profiler) Online() (string, error) {
 	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Online))
 	if err != nil {
@@ -339,9 +345,13 @@ func (prof *Profiler) Online() (string, error) {
 	return string(p[:len(p)-1]), nil
 }
 
-// Offline: information about offline cpus. This file may be empty, i.e. only
-// contains a '\n', or may not exist; neither of those conditions are an error
-// condition.
+// Offline: CPUs that are not online because they have been HOTPLUGGED off
+// (see cpu-hotplug.txt) or exceed the limit of CPUs allowed by the kernel
+// configuration (kernel_max above). [~cpu_online_mask + cpus >= NR_CPUS].
+// from: Documentation/cputopology.txt
+//
+// This file may not exist or may only contain a new line char, '\n', neither
+// of these conditions are error states and will result in an empty string.
 func (prof *Profiler) Offline() (string, error) {
 	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Offline))
 	if err != nil {
