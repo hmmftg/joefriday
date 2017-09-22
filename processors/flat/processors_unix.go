@@ -105,7 +105,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 		inf := procs.Cache[id]
 		uoffs[i] = p.SerializeCache(id, inf)
 	}
-	structs.ProcessorStartCacheVector(p.Builder, len(uoffs))
+	structs.ProcessorsStartCacheVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
@@ -115,7 +115,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	for i, flag := range procs.Flags {
 		uoffs[i] = p.Builder.CreateString(flag)
 	}
-	structs.ProcessorStartFlagsVector(p.Builder, len(uoffs))
+	structs.ProcessorsStartFlagsVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
@@ -135,7 +135,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	for i := range procs.OpModes {
 		uoffs[i] = p.Builder.CreateString(procs.OpModes[i])
 	}
-	structs.ProcessorStartOpModesVector(p.Builder, len(uoffs))
+	structs.ProcessorsStartOpModesVector(p.Builder, len(uoffs))
 	for i := len(uoffs) - 1; i >= 0; i-- {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
