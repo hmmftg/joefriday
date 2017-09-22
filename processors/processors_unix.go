@@ -12,7 +12,7 @@
 // limitations under the License.
 
 // Package processors gathers information about the physical processors on a
-// system by parsing the information from /procs/cpuinfo and sysfs. This
+// system by parsing the information from /procs/cpuinfo and the sysfs. This
 // package gathers basic information about sockets, physical processors, etc.
 // on the system. For multi-socket systems, it is assumed that all of the
 // processors are the same.
@@ -54,6 +54,7 @@ type Processors struct {
 	Sockets        int32             `json:"sockets"`
 	CPUs           int32             `json:"cpus"`
 	Possible       string            `json:"possible"`
+	Present        string            `json:"present"`
 	CoresPerSocket int16             `json:"cores_per_socket"`
 	ThreadsPerCore int8              `json:"threads_per_core"`
 	VendorID       string            `json:"vendor_id"`
@@ -303,6 +304,7 @@ func (prof *Profiler) getSysDevicesCPUInfo(procs *Processors) error {
 	}
 	procs.Sockets = cpus.Sockets
 	procs.Possible = cpus.Possible
+	procs.Present = cpus.Present
 	return nil
 }
 
