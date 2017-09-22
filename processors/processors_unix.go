@@ -324,6 +324,8 @@ func Get() (procs *Processors, err error) {
 }
 
 // Endianness returns the endianness.
+// Code from Rob Pike's response in thread about endianness detection:
+//   https://groups.google.com/d/msg/golang-nuts/zmh64YkqOV8/iJe-TrTTeREJ
 func Endianness() string {
 	var x uint32 = 0x01020304
 	switch *(*byte)(unsafe.Pointer(&x)) {
