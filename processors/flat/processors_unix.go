@@ -120,6 +120,17 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	flags := p.Builder.EndVector(len(uoffs))
+
+	uoffs = make([]fb.UOffsetT, len(procs.Bugs))
+	for i, bug := range procs.Bugs {
+		uoffs[i] = p.Builder.CreateString(bug)
+	}
+	structs.ProcessorStartBugsVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
+	}
+	bugs := p.Builder.EndVector(len(uoffs))
+
 	uoffs = make([]fb.UOffsetT, len(procs.OpModes))
 	for i := range procs.OpModes {
 		uoffs[i] = p.Builder.CreateString(procs.OpModes[i])
@@ -153,6 +164,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	structs.ProcessorsAddCacheSize(p.Builder, cacheSize)
 	structs.ProcessorsAddCache(p.Builder, cache)
 	structs.ProcessorsAddFlags(p.Builder, flags)
+	structs.ProcessorsAddBugs(p.Builder, bugs)
 	structs.ProcessorsAddOpModes(p.Builder, modes)
 	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
@@ -225,6 +237,10 @@ func Deserialize(p []byte) *processors.Processors {
 	procs.Flags = make([]string, flatP.FlagsLength())
 	for i := 0; i < len(procs.Flags); i++ {
 		procs.Flags[i] = string(flatP.Flags(i))
+	}
+	procs.Bugs = make([]string, flatP.BugsLength())
+	for i := 0; i < len(procs.Bugs); i++ {
+		procs.Bugs[i] = string(flatP.Bugs(i))
 	}
 	procs.OpModes = make([]string, flatP.OpModesLength())
 	for i := 0; i < len(procs.OpModes); i++ {

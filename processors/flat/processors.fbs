@@ -26,6 +26,7 @@ table Processors {
 	Cache:[CacheInf];
 	BogoMIPS:float;
 	Flags:[string];
+	Bugs:[string];
 	OpModes:[string];
 }
 

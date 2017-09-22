@@ -1049,6 +1049,9 @@ func ValidateXeonE52690Proc(proc *processors.Processors, freq bool) error {
 	if len(proc.Flags) != 79 {
 		return fmt.Errorf("flags: got %d; want 99", len(proc.Flags))
 	}
+	if len(proc.Bugs) > 0 {
+		return fmt.Errorf("bugs: got %d elements; wanted 0", len(proc.Bugs))
+	}
 	if len(proc.OpModes) != 2 {
 		return fmt.Errorf("op modes: got %d; want 2", len(proc.OpModes))
 	}

@@ -623,11 +623,9 @@ func ValidateR71800xProc(proc *processors.Processors, freq bool) error {
 	if len(proc.Flags) != 103 {
 		return fmt.Errorf("Flags: got %q; want 103", len(proc.Flags))
 	}
-	/*
-		if len(cpu.Bugs) != 3 {
-			return fmt.Errorf("%d: Bugs: got %d; want 3", i, len(cpu.Bugs))
-		}
-	*/
+	if len(proc.Bugs) != 3 {
+		return fmt.Errorf("Bugs: got %d; want 3", len(proc.Bugs))
+	}
 	if freq {
 		if int(proc.MHzMin) != 1600 {
 			return fmt.Errorf("MHzMin: got %.3f; wanted 1600.000", proc.MHzMin)

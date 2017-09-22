@@ -73,6 +73,7 @@ type Processors struct {
 	CacheIDs       []string          `json:"cache_ids"`
 	BogoMIPS       float32           `json:"bogomips"`
 	Flags          []string          `json:"flags"`
+	Bugs           []string          `json:"bugs"`
 	OpModes        []string          `json:"op_modes"`
 }
 
@@ -276,12 +277,18 @@ func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 			procs.VendorID = string(prof.Val[nameLen:])
 		}
 		// also check 2nd name pos for o as some output also have a bugs line.
-		if v == 'b' && prof.Val[1] == 'o' { // bogomips
-			f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
-			if err != nil {
-				return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+		if v == 'b' {
+			if prof.Val[1] == 'o' { // bogomips
+				f, err := strconv.ParseFloat(string(prof.Val[nameLen:]), 32)
+				if err != nil {
+					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
+				}
+				procs.BogoMIPS = float32(f)
+				continue
 			}
-			procs.BogoMIPS = float32(f)
+			if prof.Val[1] == 'u' { // bugs
+				procs.Bugs = strings.Split(string(prof.Val[nameLen:]), " ")
+			}
 			continue
 		}
 	}
