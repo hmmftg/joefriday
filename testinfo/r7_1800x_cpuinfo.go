@@ -671,6 +671,9 @@ func ValidateR71800xProc(proc *processors.Processors, freq bool) error {
 	if int(proc.BogoMIPS) < 7100 {
 		return fmt.Errorf("bogomips: got %.3f; want a value >= 7100", proc.BogoMIPS)
 	}
+	if proc.Virtualization != processors.AMDV {
+		return fmt.Errorf("virtualization: got %q; want %q", proc.Virtualization, processors.AMDV)
+	}
 
 	return nil
 }

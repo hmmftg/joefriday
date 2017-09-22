@@ -44,6 +44,8 @@ const (
 	procFile     = "/proc/cpuinfo"
 	BigEndian    = "Big Endian"
 	LittleEndian = "Little Endian"
+	VTx          = "VT-x"
+	AMDV         = "AMD-V"
 )
 
 // Processors holds information about a system's processors
@@ -75,6 +77,7 @@ type Processors struct {
 	Flags          []string          `json:"flags"`
 	Bugs           []string          `json:"bugs"`
 	OpModes        []string          `json:"op_modes"`
+	Virtualization string            `json:"virtualization"`
 }
 
 // This returns a *Processor ready to use. If a Processors struct isn't created
@@ -222,9 +225,13 @@ func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 				procs.OpModes = append(procs.OpModes, "32-bit")
 				// see if the lm flag exists for opmodes
 				for i := range procs.Flags {
-					if procs.Flags[i] == "lm" {
+					switch procs.Flags[i] {
+					case "lm":
 						procs.OpModes = append(procs.OpModes, "64-bit")
-						break
+					case "vmx":
+						procs.Virtualization = VTx
+					case "svm":
+						procs.Virtualization = AMDV
 					}
 				}
 			}

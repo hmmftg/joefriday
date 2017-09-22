@@ -97,6 +97,8 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	present := p.Builder.CreateString(procs.Present)
 	offline := p.Builder.CreateString(procs.Offline)
 	online := p.Builder.CreateString(procs.Online)
+	virtualization := p.Builder.CreateString(procs.Virtualization)
+
 	uoffs := make([]fb.UOffsetT, len(procs.CacheIDs))
 	// serialize cache info in order; the flatbuffer table will have the info
 	// in order so a separate cache ID list isn't necessary for flatbuffers.
@@ -166,6 +168,7 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	structs.ProcessorsAddFlags(p.Builder, flags)
 	structs.ProcessorsAddBugs(p.Builder, bugs)
 	structs.ProcessorsAddOpModes(p.Builder, modes)
+	structs.ProcessorsAddVirtualization(p.Builder, virtualization)
 	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -246,5 +249,6 @@ func Deserialize(p []byte) *processors.Processors {
 	for i := 0; i < len(procs.OpModes); i++ {
 		procs.OpModes[i] = string(flatP.OpModes(i))
 	}
+	procs.Virtualization = string(flatP.Virtualization())
 	return procs
 }

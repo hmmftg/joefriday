@@ -28,6 +28,7 @@ table Processors {
 	Flags:[string];
 	Bugs:[string];
 	OpModes:[string];
+	Virtualization:string;
 }
 
 table CacheInf {

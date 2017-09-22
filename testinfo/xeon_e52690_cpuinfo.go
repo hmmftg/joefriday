@@ -1085,6 +1085,9 @@ func ValidateXeonE52690Proc(proc *processors.Processors, freq bool) error {
 			return fmt.Errorf("Cache: expected information about %q; got an empty string", v)
 		}
 	}
+	if proc.Virtualization != processors.VTx {
+		return fmt.Errorf("virtualization: got %q; want %q", proc.Virtualization, processors.VTx)
+	}
 
 	return nil
 }

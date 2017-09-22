@@ -271,7 +271,15 @@ func (rcv *Processors) OpModesLength() int {
 	return 0
 }
 
-func ProcessorsStart(builder *flatbuffers.Builder) { builder.StartObject(26) }
+func (rcv *Processors) Virtualization() []byte {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(56))
+	if o != 0 {
+		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+	}
+	return nil
+}
+
+func ProcessorsStart(builder *flatbuffers.Builder) { builder.StartObject(27) }
 func ProcessorsAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
 func ProcessorsAddArchitecture(builder *flatbuffers.Builder, Architecture flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(Architecture), 0) }
 func ProcessorsAddByteOrder(builder *flatbuffers.Builder, ByteOrder flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(ByteOrder), 0) }
@@ -306,4 +314,5 @@ func ProcessorsStartBugsVector(builder *flatbuffers.Builder, numElems int) flatb
 func ProcessorsAddOpModes(builder *flatbuffers.Builder, OpModes flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(25, flatbuffers.UOffsetT(OpModes), 0) }
 func ProcessorsStartOpModesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
+func ProcessorsAddVirtualization(builder *flatbuffers.Builder, Virtualization flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(26, flatbuffers.UOffsetT(Virtualization), 0) }
 func ProcessorsEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }
