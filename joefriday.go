@@ -35,6 +35,8 @@ import (
 	"github.com/mohae/randchars"
 )
 
+const SysFSSystem = "/sys/devices/system"
+
 type ResetError struct {
 	Err error
 }
@@ -112,10 +114,11 @@ type Procer interface {
 	ReadSlice(byte) ([]byte, error)
 	Reset() error
 }
+
 // A Proc holds everything related to a proc file and some processing vars.
 type Proc struct {
 	*os.File
-	Buf  *bufio.Reader
+	Buf *bufio.Reader
 }
 
 // NewProc Creates a Proc using the file handle.
@@ -291,7 +294,7 @@ func (p *TempFileProc) Remove() error {
 // Buffer is used to hold lines and values being processed.
 type Buffer struct {
 	Line []byte
-	Val []byte
+	Val  []byte
 }
 
 // NewBuffer returns an initialized Buffer.

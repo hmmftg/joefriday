@@ -30,15 +30,16 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/mohae/joefriday"
 )
 
 const (
-	SysFSSystem = "/sys/devices/system"
-	CPUFreq     = "cpufreq"
-	Offline     = "offline"
-	Online      = "online"
-	Possible    = "possible"
-	Present     = "present"
+	CPUFreq  = "cpufreq"
+	Offline  = "offline"
+	Online   = "online"
+	Possible = "possible"
+	Present  = "present"
 )
 
 type CPUs struct {
@@ -89,7 +90,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	// Is this sufficient, or will there ever be a delta between that and either
 	// what /proc/cpuinfo reports or what is available on /sys/devices/system/cpu/
 	prof = &Profiler{NumCPU: runtime.NumCPU()}
-	prof.SysFSSystemPath(SysFSSystem)
+	prof.SysFSSystemPath(joefriday.SysFSSystem)
 	return prof, nil
 }
 
