@@ -33,12 +33,12 @@ import (
 )
 
 const (
-	SysFSCPUPath = "/sys/devices/system/cpu"
-	CPUFreq      = "cpufreq"
-	Offline      = "offline"
-	Online       = "online"
-	Possible     = "possible"
-	Present      = "present"
+	SysFSSystem = "/sys/devices/system"
+	CPUFreq     = "cpufreq"
+	Offline     = "offline"
+	Online      = "online"
+	Possible    = "possible"
+	Present     = "present"
 )
 
 type CPUs struct {
@@ -76,10 +76,11 @@ func (c *CPUs) GetCPU(pID, coreID int32) (cpu CPU, found bool) {
 type Profiler struct {
 	// this is an exported fied for testing purposes. It should not be set in
 	// non-test usage
-	NumCPU int
-	// this is an exported fied for testing purposes. It should not be set in
-	// non-test usage
-	SysFSCPUPath string
+	NumCPU          int
+	sysFSSystemPath string
+	// path of the sysfs cpu tree; cached so it doesn't need to be constantly
+	// redone.
+	cpuPath string
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -87,7 +88,9 @@ func NewProfiler() (prof *Profiler, err error) {
 	// NumCPU provides the number of logical cpus usable by the current process.
 	// Is this sufficient, or will there ever be a delta between that and either
 	// what /proc/cpuinfo reports or what is available on /sys/devices/system/cpu/
-	return &Profiler{NumCPU: runtime.NumCPU(), SysFSCPUPath: SysFSCPUPath}, nil
+	prof = &Profiler{NumCPU: runtime.NumCPU()}
+	prof.SysFSSystemPath(SysFSSystem)
+	return prof, nil
 }
 
 // Reset resources: this does nothing for this implemenation.
@@ -167,7 +170,7 @@ func (prof *Profiler) Get() (*CPUs, error) {
 
 // cpuXPath returns the system's cpuX path for a given cpu number.
 func (prof *Profiler) cpuXPath(x int) string {
-	return fmt.Sprintf("%s/cpu%d", prof.SysFSCPUPath, x)
+	return filepath.Join(prof.cpuPath, fmt.Sprintf("cpu%d", x))
 }
 
 // coreIDPath returns the path of the core_id file for the given cpuX.
@@ -200,7 +203,7 @@ func (prof *Profiler) cachePath(x int) string {
 
 // hasCPUFreq returns if the system has cpufreq information:
 func (prof *Profiler) hasCPUFreq() bool {
-	_, err := os.Stat(filepath.Join(prof.SysFSCPUPath, CPUFreq))
+	_, err := os.Stat(filepath.Join(prof.cpuPath, CPUFreq))
 	if err == nil {
 		return true
 	}
@@ -317,7 +320,7 @@ func (prof *Profiler) cache(x int, cpu *CPU) error {
 // if they are present. [cpu_possible_mask]
 // from: Documentation/cputopology.txt
 func (prof *Profiler) Possible() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Possible))
+	p, err := ioutil.ReadFile(filepath.Join(prof.cpuPath, Possible))
 	if err != nil {
 		return "", err
 	}
@@ -328,7 +331,7 @@ func (prof *Profiler) Possible() (string, error) {
 // [cpu_present_mask]
 // from: Documentation/cputopology.txt
 func (prof *Profiler) Present() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Present))
+	p, err := ioutil.ReadFile(filepath.Join(prof.cpuPath, Present))
 	if err != nil {
 		return "", err
 	}
@@ -338,7 +341,7 @@ func (prof *Profiler) Present() (string, error) {
 // Online: CPUs that are online and being scheduled [cpu_online_mask]
 // from: Documentation/cputopology.txt
 func (prof *Profiler) Online() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Online))
+	p, err := ioutil.ReadFile(filepath.Join(prof.cpuPath, Online))
 	if err != nil {
 		return "", err
 	}
@@ -353,7 +356,7 @@ func (prof *Profiler) Online() (string, error) {
 // This file may not exist or may only contain a new line char, '\n', neither
 // of these conditions are error states and will result in an empty string.
 func (prof *Profiler) Offline() (string, error) {
-	p, err := ioutil.ReadFile(filepath.Join(prof.SysFSCPUPath, Offline))
+	p, err := ioutil.ReadFile(filepath.Join(prof.cpuPath, Offline))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", nil
@@ -361,4 +364,17 @@ func (prof *Profiler) Offline() (string, error) {
 		return "", err
 	}
 	return string(p[:len(p)-1]), nil
+}
+
+// SysFSSystemPath enables overriding the default value. This is for testing
+// and should be used outside of tests.
+func (prof *Profiler) SysFSSystemPath(s string) {
+	prof.sysFSSystemPath = s
+	prof.setCPUPath()
+}
+
+// the path to the sysfs cpu tree is cached so that it doesn't need to be
+// regenerated for each use.
+func (prof *Profiler) setCPUPath() {
+	prof.cpuPath = filepath.Join(prof.sysFSSystemPath, "cpu")
 }

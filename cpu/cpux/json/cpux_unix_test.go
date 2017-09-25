@@ -23,15 +23,16 @@ import (
 
 func TestCPUX(t *testing.T) {
 	// set up test stuff w/o freq
-	tcpu := testinfo.NewTempSysFSCPU()
-	tcpu.PhysicalPackageCount = 1
-	tcpu.CoresPerPhysicalPackage = 2
-	tcpu.ThreadsPerCore = 2
-	err := tcpu.Create()
+	tSysFS := testinfo.NewTempSysFS()
+	tSysFS.PhysicalPackageCount = 1
+	tSysFS.CoresPerPhysicalPackage = 2
+	tSysFS.ThreadsPerCore = 2
+	err := tSysFS.Create()
 	if err != nil {
 		t.Fatalf("setting up cpux testing info: %s", err)
 	}
-	prof := &Profiler{Profiler: &cpux.Profiler{SysFSCPUPath: tcpu.Dir, NumCPU: int(tcpu.CPUs())}}
+	prof := &Profiler{Profiler: &cpux.Profiler{NumCPU: int(tSysFS.CPUs())}}
+	prof.SysFSSystemPath(tSysFS.Dir)
 	p, err := prof.Get()
 	if err != nil {
 		t.Error(err)
@@ -42,7 +43,7 @@ func TestCPUX(t *testing.T) {
 	}
 
 	//compare results cpufreq
-	err = tcpu.ValidateCPUX(cpus)
+	err = tSysFS.ValidateCPUX(cpus)
 	if err != nil {
 		t.Error(err)
 	}
@@ -50,14 +51,14 @@ func TestCPUX(t *testing.T) {
 	t.Log(string(js))
 
 	// cleanup for next
-	err = tcpu.Clean(false)
+	err = tSysFS.Clean(false)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// set up test stuff w/o freq
-	tcpu.Freq = false
-	err = tcpu.Create()
+	tSysFS.Freq = false
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error("setting up cpux testing info: %s", err)
 		goto multiSocket
@@ -75,23 +76,23 @@ func TestCPUX(t *testing.T) {
 	js, _ = json.MarshalIndent(cpus, "", "\t")
 	t.Log(string(js))
 	// compare results with frequency
-	err = tcpu.ValidateCPUX(cpus)
+	err = tSysFS.ValidateCPUX(cpus)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// cleanup for next
-	err = tcpu.Clean(false)
+	err = tSysFS.Clean(false)
 	if err != nil {
 		t.Error(err)
 	}
 
 multiSocket:
 	// 2 sockets
-	tcpu.PhysicalPackageCount = 2
-	prof.NumCPU = int(tcpu.CPUs())
-	tcpu.Freq = true
-	err = tcpu.Create()
+	tSysFS.PhysicalPackageCount = 2
+	prof.NumCPU = int(tSysFS.CPUs())
+	tSysFS.Freq = true
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error("setting up cpux testing info: %s", err)
 		goto noFreq
@@ -107,7 +108,7 @@ multiSocket:
 	}
 
 	//compare results cpufreq
-	err = tcpu.ValidateCPUX(cpus)
+	err = tSysFS.ValidateCPUX(cpus)
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,15 +116,15 @@ multiSocket:
 	t.Log(string(js))
 
 	// cleanup for next
-	err = tcpu.Clean(false)
+	err = tSysFS.Clean(false)
 	if err != nil {
 		t.Error(err)
 	}
 
 noFreq:
 	// set up test stuff w/o freq
-	tcpu.Freq = false
-	err = tcpu.Create()
+	tSysFS.Freq = false
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error("setting up cpux testing info: %s", err)
 		goto clean
@@ -141,14 +142,14 @@ noFreq:
 	js, _ = json.MarshalIndent(cpus, "", "\t")
 	t.Log(string(js))
 	// compare results with frequency
-	err = tcpu.ValidateCPUX(cpus)
+	err = tSysFS.ValidateCPUX(cpus)
 	if err != nil {
 		t.Error(err)
 	}
 
 clean:
 	// cleanup everything
-	err = tcpu.Clean(true)
+	err = tSysFS.Clean(true)
 	if err != nil {
 		t.Error(err)
 	}

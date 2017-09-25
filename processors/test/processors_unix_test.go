@@ -29,16 +29,16 @@ func TestI75600u(t *testing.T) {
 	}
 	defer tProc.Remove()
 
-	// get a new struct for /sys/devices/system/cpux info
-	tCPU := testinfo.NewTempSysFSCPU()
-	defer tCPU.Clean(true)
+	// get a new struct for the sysfs tree
+	tSysFS := testinfo.NewTempSysFS()
+	defer tSysFS.Clean(true)
 
-	tCPU.Freq = true
-	tCPU.PhysicalPackageCount = 1
-	tCPU.CoresPerPhysicalPackage = 2
-	tCPU.ThreadsPerCore = 2
-	// create the /sys/devices/system/cpux info
-	err = tCPU.Create()
+	tSysFS.Freq = true
+	tSysFS.PhysicalPackageCount = 1
+	tSysFS.CoresPerPhysicalPackage = 2
+	tSysFS.ThreadsPerCore = 2
+	// create the sysfs tree
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error(err)
 		return
@@ -50,9 +50,9 @@ func TestI75600u(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	prof.SysFSSystemPath(tSysFS.Dir)
 	prof.Procer = tProc
-	prof.NumCPU = int(tCPU.CPUs())
-	prof.SysFSCPUPath = tCPU.Dir
+	prof.NumCPU = int(tSysFS.CPUs())
 
 	// get the processor info.
 	procs, err := prof.Get()
@@ -61,20 +61,20 @@ func TestI75600u(t *testing.T) {
 	}
 	// Verify results
 	t.Logf("%#v", procs)
-	err = testinfo.ValidateI75600uProc(procs, tCPU.Freq)
+	err = testinfo.ValidateI75600uProc(procs, tSysFS.Freq)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// cleanup for next
-	err = tCPU.Clean(false)
+	err = tSysFS.Clean(false)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// set up test stuff w/o freq
-	tCPU.Freq = false
-	err = tCPU.Create()
+	tSysFS.Freq = false
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error(err)
 	}
@@ -86,7 +86,7 @@ func TestI75600u(t *testing.T) {
 	}
 	// Verify results
 	t.Logf("%#v", procs)
-	err = testinfo.ValidateI75600uProc(procs, tCPU.Freq)
+	err = testinfo.ValidateI75600uProc(procs, tSysFS.Freq)
 	if err != nil {
 		t.Error(err)
 	}
@@ -101,16 +101,16 @@ func TestXeonE52690(t *testing.T) {
 	}
 	defer tProc.Remove()
 
-	// get a new struct for /sys/devices/system/cpux info
-	tCPU := testinfo.NewTempSysFSCPU()
-	defer tCPU.Clean(true)
+	// get a new struct for the sysfs tree
+	tSysFS := testinfo.NewTempSysFS()
+	defer tSysFS.Clean(true)
 
-	tCPU.Freq = true
-	tCPU.PhysicalPackageCount = 2
-	tCPU.CoresPerPhysicalPackage = 8
-	tCPU.ThreadsPerCore = 2
-	// create the /sys/devices/system/cpux info
-	err = tCPU.Create()
+	tSysFS.Freq = true
+	tSysFS.PhysicalPackageCount = 2
+	tSysFS.CoresPerPhysicalPackage = 8
+	tSysFS.ThreadsPerCore = 2
+	// create the sysfs tree
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error(err)
 		return
@@ -123,8 +123,8 @@ func TestXeonE52690(t *testing.T) {
 		return
 	}
 	prof.Procer = tProc
-	prof.NumCPU = int(tCPU.CPUs())
-	prof.SysFSCPUPath = tCPU.Dir
+	prof.NumCPU = int(tSysFS.CPUs())
+	prof.SysFSSystemPath(tSysFS.Dir)
 
 	// get the processor info.
 	procs, err := prof.Get()
@@ -133,20 +133,20 @@ func TestXeonE52690(t *testing.T) {
 	}
 	// Verify results
 	t.Logf("%#v", procs)
-	err = testinfo.ValidateXeonE52690Proc(procs, tCPU.Freq)
+	err = testinfo.ValidateXeonE52690Proc(procs, tSysFS.Freq)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// cleanup for next
-	err = tCPU.Clean(false)
+	err = tSysFS.Clean(false)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// set up test stuff w/o freq
-	tCPU.Freq = false
-	err = tCPU.Create()
+	tSysFS.Freq = false
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error(err)
 	}
@@ -158,7 +158,7 @@ func TestXeonE52690(t *testing.T) {
 	}
 	// Verify results
 	t.Logf("%#v", procs)
-	err = testinfo.ValidateXeonE52690Proc(procs, tCPU.Freq)
+	err = testinfo.ValidateXeonE52690Proc(procs, tSysFS.Freq)
 	if err != nil {
 		t.Error(err)
 	}
@@ -173,16 +173,16 @@ func TestR71800x(t *testing.T) {
 	}
 	defer tProc.Remove()
 
-	// get a new struct for /sys/devices/system/cpux info
-	tCPU := testinfo.NewTempSysFSCPU()
-	defer tCPU.Clean(true)
+	// get a new struct for the sysfs tree
+	tSysFS := testinfo.NewTempSysFS()
+	defer tSysFS.Clean(true)
 
-	tCPU.Freq = true
-	tCPU.PhysicalPackageCount = 1
-	tCPU.CoresPerPhysicalPackage = 8
-	tCPU.ThreadsPerCore = 2
-	// create the /sys/devices/system/cpux info
-	err = tCPU.Create()
+	tSysFS.Freq = true
+	tSysFS.PhysicalPackageCount = 1
+	tSysFS.CoresPerPhysicalPackage = 8
+	tSysFS.ThreadsPerCore = 2
+	// create the sysfs tree
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error(err)
 		return
@@ -195,8 +195,8 @@ func TestR71800x(t *testing.T) {
 		return
 	}
 	prof.Procer = tProc
-	prof.NumCPU = int(tCPU.CPUs())
-	prof.SysFSCPUPath = tCPU.Dir
+	prof.NumCPU = int(tSysFS.CPUs())
+	prof.SysFSSystemPath(tSysFS.Dir)
 
 	// get the processor info.
 	procs, err := prof.Get()
@@ -205,20 +205,20 @@ func TestR71800x(t *testing.T) {
 	}
 	// Verify results
 	t.Logf("%#v", procs)
-	err = testinfo.ValidateR71800xProc(procs, tCPU.Freq)
+	err = testinfo.ValidateR71800xProc(procs, tSysFS.Freq)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// cleanup for next
-	err = tCPU.Clean(false)
+	err = tSysFS.Clean(false)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// set up test stuff w/o freq
-	tCPU.Freq = false
-	err = tCPU.Create()
+	tSysFS.Freq = false
+	err = tSysFS.Create()
 	if err != nil {
 		t.Error(err)
 	}
@@ -230,7 +230,7 @@ func TestR71800x(t *testing.T) {
 	}
 	// Verify results
 	t.Logf("%#v", procs)
-	err = testinfo.ValidateR71800xProc(procs, tCPU.Freq)
+	err = testinfo.ValidateR71800xProc(procs, tSysFS.Freq)
 	if err != nil {
 		t.Error(err)
 	}

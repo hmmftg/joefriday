@@ -20,42 +20,49 @@ var (
 	cacheLevels = []string{"1", "1", "2", "3"}
 )
 
-// TempSysFSCPU handles the creation of a  sysfs cpu tree in a temp directory
-// for testing purposes. When usage of the temp info is done, Clean() should be
-// called to remove everything that was created by Create(). By default, the
-// information will be created in its own temp directory within the system's
-// temp dir. If the information is to be created in a specific location, set
-// the Dir explicitly prior to calling Create. When the path is empty when
-// Create is called, Dir will be populated with the path to the temp dir
-// within which the CPUx tree can be found.
+// TempSysFS handles the creation of sysfs trees related to cpus and nodes in a
+// temp directory for testing purposes. When usage of the temp info is done,
+// Clean() should be called to remove everything that was created by Create().
+// By default, the information will be created in its own temp directory within
+// the system's temp dir. If the information is to be created in a specific
+// location, set the Dir explicitly prior to calling Create. When the path is
+// empty when Create is called, Dir will be populated with the path to the temp
+// dir that represents the temp SysFS.
 //
 // PhysicalPackageCount, CoresPerPhysicalPackage, and ThreadsPerCore should be
 // set if anything other than their default values are desired. Each of these
 // values are required to be > 0. Create will not check to see if they are > 0;
 // no CPUx directories will be created as the product of multiplying by 0 is 0.
 //
-// IF the Freq flag is true, cpufreq information will be written. This
+// The number of nodes created will be equal to the PhysicalPackageCount.
+//
+// If the Freq flag is true, cpufreq information will be written. This
 // information is not available on all systems so tests should cover both the
 // cpufreq path existing and not existing.
-type TempSysFSCPU struct {
+type TempSysFS struct {
 	Dir                     string
 	Freq                    bool
 	PhysicalPackageCount    int32
 	CoresPerPhysicalPackage int32
 	ThreadsPerCore          int32
 	OfflineFile             bool
+	cpuPath                 string
 }
 
-// NewTempSysDevicesSystemCPU returns a new TempSysDevicesSystemCPU set to use
-// the system's temp dir, populate cpufreq information, and have 4 cores for a
-// 1 socket system.
-func NewTempSysFSCPU() TempSysFSCPU {
-	return TempSysFSCPU{Dir: "", Freq: true, OfflineFile: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
+// NewTempSysFS returns a new TempSysFS set to use the system's temp dir,
+// populate cpufreq information with defaults of:
+//   PhysicalPackageCount: 1
+//   CoresPerPhysicalPackage: 2
+//   ThreadsPerCore: 2
+//   OfflineFile: true
+//   Freq: true
+func NewTempSysFS() TempSysFS {
+	return TempSysFS{Dir: "", Freq: true, OfflineFile: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
 }
 
 // returns the number of CPUs per configuration:
 //   PhysicalPackageCount * CoresPerPhysicalPackage * ThreadsPerCore
-func (t *TempSysFSCPU) CPUs() int32 {
+func (t *TempSysFS) CPUs() int32 {
 	return t.PhysicalPackageCount * t.CoresPerPhysicalPackage * t.ThreadsPerCore
 }
 
@@ -66,43 +73,48 @@ func (t *TempSysFSCPU) CPUs() int32 {
 // will be written to that directory. The number of cpuX entries is the product
 // of PhysicalPackageCount, CoresPerPhysicalPackage, and ThreadsPerCore. If an
 // error occurs that is returned along with an empty string.
-func (t *TempSysFSCPU) Create() (err error) {
+func (t *TempSysFS) Create() (err error) {
 	if t.Dir == "" {
-		t.Dir, err = ioutil.TempDir("", "cpux")
+		t.Dir, err = ioutil.TempDir("", "joefriday")
 		if err != nil {
 			return err
 		}
+	}
+	t.cpuPath = filepath.Join(t.Dir, "cpu")
+	err = os.MkdirAll(t.cpuPath, 0777)
+	if err != nil {
+		return err
 	}
 	if t.Freq {
 		// instead of always checking each cpuX dir for cpufreq information, cpuX
 		// processing looks for the existence of the cpufreq path for determining
 		// if cpu frequency information is available for processing
-		err = os.MkdirAll(filepath.Join(t.Dir, cpux.CPUFreq), 0777)
+		err = os.MkdirAll(filepath.Join(t.cpuPath, cpux.CPUFreq), 0777)
 		if err != nil {
 			return err
 		}
 	}
 
 	// add Possible information:
-	err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Possible), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	err = ioutil.WriteFile(filepath.Join(t.cpuPath, cpux.Possible), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
 	if err != nil {
 		return err
 	}
 	// add online info; use the same value as possible.
-	err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Online), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	err = ioutil.WriteFile(filepath.Join(t.cpuPath, cpux.Online), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
 	if err != nil {
 		return err
 	}
 
 	// add prsent info; use the same value as possible.
-	err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Present), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
+	err = ioutil.WriteFile(filepath.Join(t.cpuPath, cpux.Present), []byte(fmt.Sprintf("%s\n", t.Possible())), 0777)
 	if err != nil {
 		return err
 	}
 
 	// if OfflineFile; create one with only a newline char.
 	if t.OfflineFile {
-		err = ioutil.WriteFile(filepath.Join(t.Dir, cpux.Offline), []byte("\n"), 0777)
+		err = ioutil.WriteFile(filepath.Join(t.cpuPath, cpux.Offline), []byte("\n"), 0777)
 		if err != nil {
 			return err
 		}
@@ -117,7 +129,7 @@ func (t *TempSysFSCPU) Create() (err error) {
 			cpuX := fmt.Sprintf("cpu%d", x)
 			x++
 			// set the topology core id is in reverse order of cpuX
-			tmp := filepath.Join(t.Dir, cpuX, topology)
+			tmp := filepath.Join(t.cpuPath, cpuX, topology)
 			err = os.MkdirAll(tmp, 0777)
 			if err != nil {
 				goto cleanup
@@ -133,7 +145,7 @@ func (t *TempSysFSCPU) Create() (err error) {
 
 			// cache entries
 			for k := range cacheLevels {
-				cD := filepath.Join(t.Dir, cpuX, "cache", fmt.Sprintf("index%d", k))
+				cD := filepath.Join(t.cpuPath, cpuX, "cache", fmt.Sprintf("index%d", k))
 				err = os.MkdirAll(cD, 0777)
 				if err != nil {
 					goto cleanup
@@ -155,7 +167,7 @@ func (t *TempSysFSCPU) Create() (err error) {
 			if !t.Freq {
 				continue
 			}
-			tmp = filepath.Join(t.Dir, cpuX, cpux.CPUFreq)
+			tmp = filepath.Join(t.cpuPath, cpuX, cpux.CPUFreq)
 			err = os.MkdirAll(tmp, 0777)
 			if err != nil {
 				goto cleanup
@@ -172,6 +184,7 @@ func (t *TempSysFSCPU) Create() (err error) {
 			}
 		}
 	}
+
 	return nil
 
 cleanup:
@@ -181,7 +194,7 @@ cleanup:
 
 // ValidateCPUX verifies that the info in the struct for cpuX processing is
 // consistent with the test data.
-func (t *TempSysFSCPU) ValidateCPUX(cpus *cpux.CPUs) error {
+func (t *TempSysFS) ValidateCPUX(cpus *cpux.CPUs) error {
 	if len(cpus.CPU) != int(t.CPUs()) {
 		return fmt.Errorf("CPU: got %d; want %d", len(cpus.CPU), t.CPUs())
 	}
@@ -243,7 +256,7 @@ func (t *TempSysFSCPU) ValidateCPUX(cpus *cpux.CPUs) error {
 // Clean cleans up the information that the struct created during Create. If TRUE
 // is passed, the TempSysFSCPU.Dir will also be deleted. This can also be used to
 // clean up the directory so that Create can be re-run (delDir == false).
-func (t *TempSysFSCPU) Clean(delDir bool) error {
+func (t *TempSysFS) Clean(delDir bool) error {
 	if delDir {
 		return os.RemoveAll(t.Dir)
 	}
@@ -270,6 +283,6 @@ func (t *TempSysFSCPU) Clean(delDir bool) error {
 }
 
 // Possible generates the possible string
-func (t *TempSysFSCPU) Possible() string {
+func (t *TempSysFS) Possible() string {
 	return fmt.Sprintf("0-%d", (t.PhysicalPackageCount*t.CoresPerPhysicalPackage*t.ThreadsPerCore)-1)
 }
