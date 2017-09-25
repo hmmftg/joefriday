@@ -31,14 +31,18 @@ func TestI75600u(t *testing.T) {
 
 	// get a new struct for the sysfs tree
 	tSysFS := testinfo.NewTempSysFS()
-	defer tSysFS.Clean(true)
+	err = tSysFS.SetSysFS("")
+	if err != nil {
+		t.Fatalf("setting up sysfs tree: %s", err)
+	}
+	defer tSysFS.Clean()
 
 	tSysFS.Freq = true
 	tSysFS.PhysicalPackageCount = 1
 	tSysFS.CoresPerPhysicalPackage = 2
 	tSysFS.ThreadsPerCore = 2
-	// create the sysfs tree
-	err = tSysFS.Create()
+	// create the sysfs cpu tree
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error(err)
 		return
@@ -50,7 +54,7 @@ func TestI75600u(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	prof.SysFSSystemPath(tSysFS.Dir)
+	prof.SysFSSystemPath(tSysFS.Path())
 	prof.Procer = tProc
 	prof.NumCPU = int(tSysFS.CPUs())
 
@@ -67,14 +71,14 @@ func TestI75600u(t *testing.T) {
 	}
 
 	// cleanup for next
-	err = tSysFS.Clean(false)
+	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
 	}
 
 	// set up test stuff w/o freq
 	tSysFS.Freq = false
-	err = tSysFS.Create()
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error(err)
 	}
@@ -103,14 +107,18 @@ func TestXeonE52690(t *testing.T) {
 
 	// get a new struct for the sysfs tree
 	tSysFS := testinfo.NewTempSysFS()
-	defer tSysFS.Clean(true)
+	err = tSysFS.SetSysFS("")
+	if err != nil {
+		t.Fatalf("setting up sysfs tree: %s", err)
+	}
+	defer tSysFS.Clean()
 
 	tSysFS.Freq = true
 	tSysFS.PhysicalPackageCount = 2
 	tSysFS.CoresPerPhysicalPackage = 8
 	tSysFS.ThreadsPerCore = 2
-	// create the sysfs tree
-	err = tSysFS.Create()
+	// create the sysfs cpu tree
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error(err)
 		return
@@ -124,7 +132,7 @@ func TestXeonE52690(t *testing.T) {
 	}
 	prof.Procer = tProc
 	prof.NumCPU = int(tSysFS.CPUs())
-	prof.SysFSSystemPath(tSysFS.Dir)
+	prof.SysFSSystemPath(tSysFS.Path())
 
 	// get the processor info.
 	procs, err := prof.Get()
@@ -139,14 +147,14 @@ func TestXeonE52690(t *testing.T) {
 	}
 
 	// cleanup for next
-	err = tSysFS.Clean(false)
+	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
 	}
 
 	// set up test stuff w/o freq
 	tSysFS.Freq = false
-	err = tSysFS.Create()
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error(err)
 	}
@@ -175,14 +183,18 @@ func TestR71800x(t *testing.T) {
 
 	// get a new struct for the sysfs tree
 	tSysFS := testinfo.NewTempSysFS()
-	defer tSysFS.Clean(true)
+	err = tSysFS.SetSysFS("")
+	if err != nil {
+		t.Fatalf("setting up sysfs tree: %s", err)
+	}
+	defer tSysFS.Clean()
 
 	tSysFS.Freq = true
 	tSysFS.PhysicalPackageCount = 1
 	tSysFS.CoresPerPhysicalPackage = 8
 	tSysFS.ThreadsPerCore = 2
-	// create the sysfs tree
-	err = tSysFS.Create()
+	// create the sysfs cpu tree
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error(err)
 		return
@@ -196,7 +208,7 @@ func TestR71800x(t *testing.T) {
 	}
 	prof.Procer = tProc
 	prof.NumCPU = int(tSysFS.CPUs())
-	prof.SysFSSystemPath(tSysFS.Dir)
+	prof.SysFSSystemPath(tSysFS.Path())
 
 	// get the processor info.
 	procs, err := prof.Get()
@@ -211,14 +223,14 @@ func TestR71800x(t *testing.T) {
 	}
 
 	// cleanup for next
-	err = tSysFS.Clean(false)
+	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
 	}
 
 	// set up test stuff w/o freq
 	tSysFS.Freq = false
-	err = tSysFS.Create()
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error(err)
 	}

@@ -40,13 +40,14 @@ var (
 // information is not available on all systems so tests should cover both the
 // cpufreq path existing and not existing.
 type TempSysFS struct {
-	Dir                     string
+	path                    string
 	Freq                    bool
 	PhysicalPackageCount    int32
 	CoresPerPhysicalPackage int32
 	ThreadsPerCore          int32
 	OfflineFile             bool
 	cpuPath                 string
+	tmpDir                  bool // set if the path is a randomly generated temp dir
 }
 
 // NewTempSysFS returns a new TempSysFS set to use the system's temp dir,
@@ -57,7 +58,32 @@ type TempSysFS struct {
 //   OfflineFile: true
 //   Freq: true
 func NewTempSysFS() TempSysFS {
-	return TempSysFS{Dir: "", Freq: true, OfflineFile: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
+	return TempSysFS{Freq: true, OfflineFile: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
+}
+
+// SetSysFS sets the directory to use for generation of sysfs tree stuff. If an
+// empty string is passed, a randomly generated temp dir with the prefix of
+// "sysfs" will be created in the system's temp directory. If the passed string
+// is not empty, it is assumed that the dir already exists.
+//
+// If the sysfs path was already set; calling this again will not remove the
+// prior sysfs path or its contents.
+func (t *TempSysFS) SetSysFS(s string) (err error) {
+	if s == "" {
+		s, err = ioutil.TempDir("", "sysfs")
+		if err != nil {
+			return err
+		}
+		t.tmpDir = true
+	}
+	t.path = s
+	t.cpuPath = filepath.Join(s, "cpu")
+	return nil
+}
+
+// Returns the currently configured path
+func (t *TempSysFS) Path() string {
+	return t.path
 }
 
 // returns the number of CPUs per configuration:
@@ -66,21 +92,20 @@ func (t *TempSysFS) CPUs() int32 {
 	return t.PhysicalPackageCount * t.CoresPerPhysicalPackage * t.ThreadsPerCore
 }
 
-// Create creates the tempdir and cpu info for sysfs cpu tests. If Dir is an
-// empty string, the information will be written to a randomly named subdir
-// within the temp dir and Dir will be set to this path. The created dir will
-// be prefixed with cpux. If Dir has a non-empty value, the cpuX information
-// will be written to that directory. The number of cpuX entries is the product
-// of PhysicalPackageCount, CoresPerPhysicalPackage, and ThreadsPerCore. If an
+// CreateCPU creates the cpu tree for sysfs cpu tests. If Dir is an empty
+// string, the information will be written to a randomly named subdir within
+// the temp dir and Dir will be set to this path. The created dir will be
+// prefixed with cpux. If Dir has a non-empty value, the cpuX information will
+// be written to that directory. The number of cpuX entries is the product of
+// PhysicalPackageCount, CoresPerPhysicalPackage, and ThreadsPerCore. If an
 // error occurs that is returned along with an empty string.
-func (t *TempSysFS) Create() (err error) {
-	if t.Dir == "" {
-		t.Dir, err = ioutil.TempDir("", "joefriday")
+func (t *TempSysFS) CreateCPU() (err error) {
+	if t.path == "" {
+		err = t.SetSysFS("")
 		if err != nil {
 			return err
 		}
 	}
-	t.cpuPath = filepath.Join(t.Dir, "cpu")
 	err = os.MkdirAll(t.cpuPath, 0777)
 	if err != nil {
 		return err
@@ -188,7 +213,7 @@ func (t *TempSysFS) Create() (err error) {
 	return nil
 
 cleanup:
-	os.RemoveAll(t.Dir)
+	os.RemoveAll(t.cpuPath)
 	return err
 }
 
@@ -253,30 +278,42 @@ func (t *TempSysFS) ValidateCPUX(cpus *cpux.CPUs) error {
 	return nil
 }
 
-// Clean cleans up the information that the struct created during Create. If TRUE
-// is passed, the TempSysFSCPU.Dir will also be deleted. This can also be used to
-// clean up the directory so that Create can be re-run (delDir == false).
-func (t *TempSysFS) Clean(delDir bool) error {
-	if delDir {
-		return os.RemoveAll(t.Dir)
+// Clean removes the temp sysfs tree that was created during Create or
+// CreateCPU. If TempSysFS created a randomly generated tmp dir, this will
+// remove everything including the temp sysfs dir. If the directory to use for
+// the sysfs was passed, that directory already existed and should not be
+// removed; only the child trees that TempSysFS created.
+//
+// If you only want to clean the test data for another test, use CleanCPU
+// instead.
+func (t *TempSysFS) Clean() error {
+	if t.tmpDir {
+		return os.RemoveAll(t.path)
 	}
+	// The dir was passed; TempSysFS didn't create it.
+	return os.RemoveAll(t.cpuPath)
+}
+
+// CleanCPU cleans up the CPU tree that was created during CreateCPU. To clean
+// everything, call Clean instead.
+func (t *TempSysFS) CleanCPU() error {
 	// otherwise get the contents of t.Dir and delete that
-	fis, err := ioutil.ReadDir(t.Dir)
+	fis, err := ioutil.ReadDir(t.cpuPath)
 	if err != nil {
-		return fmt.Errorf("Clean %s: nothing deleted: %s", t.Dir, err)
+		return fmt.Errorf("Clean %s: nothing deleted: %s", t.cpuPath, err)
 	}
 	for _, fi := range fis {
-		p := filepath.Join(t.Dir, fi.Name())
+		p := filepath.Join(t.cpuPath, fi.Name())
 		if fi.IsDir() {
 			err = os.RemoveAll(p)
 			if err != nil {
-				return fmt.Errorf("Clean %s: not all files were deleted: %s", t.Dir, err)
+				return fmt.Errorf("Clean %s: not all files were deleted: %s", t.cpuPath, err)
 			}
 			continue
 		}
 		err = os.Remove(p)
 		if err != nil {
-			return fmt.Errorf("Clean %s: not all files were deleted: %s", t.Dir, err)
+			return fmt.Errorf("Clean %s: not all files were deleted: %s", t.cpuPath, err)
 		}
 	}
 	return nil

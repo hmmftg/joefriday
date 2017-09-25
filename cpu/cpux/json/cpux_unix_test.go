@@ -24,15 +24,24 @@ import (
 func TestCPUX(t *testing.T) {
 	// set up test stuff w/o freq
 	tSysFS := testinfo.NewTempSysFS()
+	// use a randomly generated temp dir
+	err := tSysFS.SetSysFS("")
+	if err != nil {
+		t.Fatalf("setting up sysfs tree: %s", err)
+	}
+	defer tSysFS.Clean()
+
 	tSysFS.PhysicalPackageCount = 1
 	tSysFS.CoresPerPhysicalPackage = 2
 	tSysFS.ThreadsPerCore = 2
-	err := tSysFS.Create()
+	err = tSysFS.CreateCPU()
 	if err != nil {
-		t.Fatalf("setting up cpux testing info: %s", err)
+		t.Errorf("setting up cpux testing info: %s", err)
+		return
 	}
+
 	prof := &Profiler{Profiler: &cpux.Profiler{NumCPU: int(tSysFS.CPUs())}}
-	prof.SysFSSystemPath(tSysFS.Dir)
+	prof.SysFSSystemPath(tSysFS.Path())
 	p, err := prof.Get()
 	if err != nil {
 		t.Error(err)
@@ -51,14 +60,14 @@ func TestCPUX(t *testing.T) {
 	t.Log(string(js))
 
 	// cleanup for next
-	err = tSysFS.Clean(false)
+	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
 	}
 
 	// set up test stuff w/o freq
 	tSysFS.Freq = false
-	err = tSysFS.Create()
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error("setting up cpux testing info: %s", err)
 		goto multiSocket
@@ -82,7 +91,7 @@ func TestCPUX(t *testing.T) {
 	}
 
 	// cleanup for next
-	err = tSysFS.Clean(false)
+	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
 	}
@@ -92,7 +101,7 @@ multiSocket:
 	tSysFS.PhysicalPackageCount = 2
 	prof.NumCPU = int(tSysFS.CPUs())
 	tSysFS.Freq = true
-	err = tSysFS.Create()
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error("setting up cpux testing info: %s", err)
 		goto noFreq
@@ -116,7 +125,7 @@ multiSocket:
 	t.Log(string(js))
 
 	// cleanup for next
-	err = tSysFS.Clean(false)
+	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
 	}
@@ -124,10 +133,10 @@ multiSocket:
 noFreq:
 	// set up test stuff w/o freq
 	tSysFS.Freq = false
-	err = tSysFS.Create()
+	err = tSysFS.CreateCPU()
 	if err != nil {
 		t.Error("setting up cpux testing info: %s", err)
-		goto clean
+		return
 	}
 
 	p, err = prof.Get()
@@ -146,14 +155,6 @@ noFreq:
 	if err != nil {
 		t.Error(err)
 	}
-
-clean:
-	// cleanup everything
-	err = tSysFS.Clean(true)
-	if err != nil {
-		t.Error(err)
-	}
-
 }
 
 func BenchmarkGet(b *testing.B) {
