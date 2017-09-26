@@ -91,7 +91,7 @@ func New() *Processors {
 type Profiler struct {
 	joe.Procer
 	*joe.Buffer
-	*cpux.Profiler // This is created with the profiler for testability.
+	CPUProf *cpux.Profiler // This is created with the profiler for testability.
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -100,11 +100,11 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	p, err := cpux.NewProfiler()
+	cpuProf, err := cpux.NewProfiler()
 	if err != nil {
 		return nil, err
 	}
-	return &Profiler{Procer: proc, Buffer: joe.NewBuffer(), Profiler: p}, nil
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer(), CPUProf: cpuProf}, nil
 }
 
 // Reset resources: after reset, the profiler is ready to be used again.
@@ -308,7 +308,7 @@ func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 
 func (prof *Profiler) getSysFSCPU(procs *Processors) error {
 	// get the cpux profiler
-	cpus, err := prof.Profiler.Get()
+	cpus, err := prof.CPUProf.Get()
 	if err != nil {
 		return err
 	}

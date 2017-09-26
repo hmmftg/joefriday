@@ -54,9 +54,9 @@ func TestI75600u(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	prof.SysFSSystemPath(tSysFS.Path())
+	prof.CPUProf.SysFSSystemPath(tSysFS.Path())
 	prof.Procer = tProc
-	prof.NumCPU = int(tSysFS.CPUs())
+	prof.CPUProf.NumCPU = int(tSysFS.CPUs())
 
 	// get the processor info.
 	procs, err := prof.Get()
@@ -131,8 +131,8 @@ func TestXeonE52690(t *testing.T) {
 		return
 	}
 	prof.Procer = tProc
-	prof.NumCPU = int(tSysFS.CPUs())
-	prof.SysFSSystemPath(tSysFS.Path())
+	prof.CPUProf.NumCPU = int(tSysFS.CPUs())
+	prof.CPUProf.SysFSSystemPath(tSysFS.Path())
 
 	// get the processor info.
 	procs, err := prof.Get()
@@ -207,8 +207,8 @@ func TestR71800x(t *testing.T) {
 		return
 	}
 	prof.Procer = tProc
-	prof.NumCPU = int(tSysFS.CPUs())
-	prof.SysFSSystemPath(tSysFS.Path())
+	prof.CPUProf.NumCPU = int(tSysFS.CPUs())
+	prof.CPUProf.SysFSSystemPath(tSysFS.Path())
 
 	// get the processor info.
 	procs, err := prof.Get()
