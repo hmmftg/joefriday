@@ -69,7 +69,7 @@ func TestNodeX(t *testing.T) {
 			continue
 		}
 		n := Deserialize(p)
-		
+
 		if int32(len(n.Node)) != test.sockets {
 			t.Errorf("%d sockets: got %d nodes; want %d", test.sockets, len(n.Node), test.sockets)
 			continue
@@ -78,6 +78,9 @@ func TestNodeX(t *testing.T) {
 		for i, v := range n.Node {
 			if v.CPUList != test.expectedList[i] {
 				t.Errorf("%d socket test: node %d: got %q; want %q", test.sockets, i, v.CPUList, test.expectedList[i])
+			}
+			if v.ID != int32(i) {
+				t.Errorf("%d socket test: node %d: ID: got %d; want %d", test.sockets, i, v.ID, i)
 			}
 		}
 

@@ -78,6 +78,9 @@ func TestNodeX(t *testing.T) {
 			if v.CPUList != test.expectedList[i] {
 				t.Errorf("%d socket test: node %d: got %q; want %q", test.sockets, i, v.CPUList, test.expectedList[i])
 			}
+			if v.ID != int32(i) {
+				t.Errorf("%d socket test: node %d: ID: got %d; want %d", test.sockets, i, v.ID, i)
+			}
 		}
 
 		tSysFS.CleanNode()
