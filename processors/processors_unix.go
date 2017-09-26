@@ -100,10 +100,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-	cpuProf, err := cpux.NewProfiler()
-	if err != nil {
-		return nil, err
-	}
+	cpuProf := cpux.NewProfiler()
 	return &Profiler{Procer: proc, Buffer: joe.NewBuffer(), CPUProf: cpuProf}, nil
 }
 

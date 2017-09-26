@@ -85,13 +85,13 @@ type Profiler struct {
 }
 
 // Returns an initialized Profiler; ready to use.
-func NewProfiler() (prof *Profiler, err error) {
+func NewProfiler() (prof *Profiler) {
 	// NumCPU provides the number of logical cpus usable by the current process.
 	// Is this sufficient, or will there ever be a delta between that and either
 	// what /proc/cpuinfo reports or what is available on /sys/devices/system/cpu/
 	prof = &Profiler{NumCPU: runtime.NumCPU()}
 	prof.SysFSSystemPath(joefriday.SysFSSystem)
-	return prof, nil
+	return prof
 }
 
 // Reset resources: this does nothing for this implemenation.

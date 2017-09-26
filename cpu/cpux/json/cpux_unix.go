@@ -37,12 +37,9 @@ type Profiler struct {
 }
 
 // Initializes and returns a cpuinfo profiler.
-func NewProfiler() (prof *Profiler, err error) {
-	p, err := x.NewProfiler()
-	if err != nil {
-		return nil, err
-	}
-	return &Profiler{Profiler: p}, nil
+func NewProfiler() *Profiler {
+	p := x.NewProfiler()
+	return &Profiler{Profiler: p}
 }
 
 // Get returns the current cpuinfo as JSON serialized bytes.
@@ -63,10 +60,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = NewProfiler()
-		if err != nil {
-			return nil, err
-		}
+		std = NewProfiler()
 	}
 	return std.Get()
 }
@@ -81,10 +75,7 @@ func Serialize(cpus *x.CPUs) (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = NewProfiler()
-		if err != nil {
-			return nil, err
-		}
+		std = NewProfiler()
 	}
 	return std.Serialize(cpus)
 }

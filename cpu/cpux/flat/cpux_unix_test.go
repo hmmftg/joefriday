@@ -146,7 +146,7 @@ noFreq:
 
 func BenchmarkGet(b *testing.B) {
 	var jsn []byte
-	p, _ := NewProfiler()
+	p := NewProfiler()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		jsn, _ = p.Get()
@@ -156,7 +156,7 @@ func BenchmarkGet(b *testing.B) {
 
 func BenchmarkSerialize(b *testing.B) {
 	var f []byte
-	p, _ := NewProfiler()
+	p := NewProfiler()
 	v, _ := p.Profiler.Get()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -167,7 +167,7 @@ func BenchmarkSerialize(b *testing.B) {
 
 func BenchmarkDeserialize(b *testing.B) {
 	var cpus *cpux.CPUs
-	p, _ := NewProfiler()
+	p := NewProfiler()
 	cpusb, _ := p.Get()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

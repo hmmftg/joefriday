@@ -40,12 +40,9 @@ type Profiler struct {
 }
 
 // Initializes and returns a cpux profiler.
-func NewProfiler() (p *Profiler, err error) {
-	prof, err := cpux.NewProfiler()
-	if err != nil {
-		return nil, err
-	}
-	return &Profiler{Profiler: prof, Builder: fb.NewBuilder(0)}, nil
+func NewProfiler() *Profiler {
+	prof := cpux.NewProfiler()
+	return &Profiler{Profiler: prof, Builder: fb.NewBuilder(0)}
 }
 
 // Get returns the cpux information as Flatbuffer serialized bytes.
@@ -66,10 +63,7 @@ func Get() (p []byte, err error) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = NewProfiler()
-		if err != nil {
-			return nil, err
-		}
+		std = NewProfiler()
 	}
 	return std.Get()
 }
@@ -144,16 +138,13 @@ func (p *Profiler) SerializeCache(id, inf string) fb.UOffsetT {
 }
 
 // Serialize cpux.CPUs using the package global profiler.
-func Serialize(cpus *cpux.CPUs) (p []byte, err error) {
+func Serialize(cpus *cpux.CPUs) (p []byte) {
 	stdMu.Lock()
 	defer stdMu.Unlock()
 	if std == nil {
-		std, err = NewProfiler()
-		if err != nil {
-			return nil, err
-		}
+		std = NewProfiler()
 	}
-	return std.Serialize(cpus), nil
+	return std.Serialize(cpus)
 }
 
 // Deserialize takes some Flatbuffer serialized bytes and deserializes them
