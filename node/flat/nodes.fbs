@@ -1,0 +1,13 @@
+// nodes.fbs
+namespace structs;
+
+table Nodes {
+	Node:[Node];
+}
+
+table Node {
+	ID:int;
+	CPUList:string;
+}
+
+root_type Nodes;

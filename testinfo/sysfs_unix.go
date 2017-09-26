@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/mohae/joefriday/cpu/cpux"
+	"github.com/mohae/joefriday/node"
 )
 
 const (
@@ -47,6 +48,7 @@ type TempSysFS struct {
 	ThreadsPerCore          int32
 	OfflineFile             bool
 	cpuPath                 string
+	nodePath                string
 	tmpDir                  bool // set if the path is a randomly generated temp dir
 }
 
@@ -78,6 +80,7 @@ func (t *TempSysFS) SetSysFS(s string) (err error) {
 	}
 	t.path = s
 	t.cpuPath = filepath.Join(s, "cpu")
+	t.nodePath = filepath.Join(s, "node")
 	return nil
 }
 
@@ -92,13 +95,9 @@ func (t *TempSysFS) CPUs() int32 {
 	return t.PhysicalPackageCount * t.CoresPerPhysicalPackage * t.ThreadsPerCore
 }
 
-// CreateCPU creates the cpu tree for sysfs cpu tests. If Dir is an empty
-// string, the information will be written to a randomly named subdir within
-// the temp dir and Dir will be set to this path. The created dir will be
-// prefixed with cpux. If Dir has a non-empty value, the cpuX information will
-// be written to that directory. The number of cpuX entries is the product of
-// PhysicalPackageCount, CoresPerPhysicalPackage, and ThreadsPerCore. If an
-// error occurs that is returned along with an empty string.
+// CreateCPU creates the cpu tree for sysfs cpu tests. If the SysFS path wasn't
+// set, a randomly generated directory, prefixed with sysfs, will be created in
+// the system's temp directory.
 func (t *TempSysFS) CreateCPU() (err error) {
 	if t.path == "" {
 		err = t.SetSysFS("")
@@ -288,32 +287,59 @@ func (t *TempSysFS) ValidateCPUX(cpus *cpux.CPUs) error {
 // instead.
 func (t *TempSysFS) Clean() error {
 	if t.tmpDir {
-		return os.RemoveAll(t.path)
+		err := os.RemoveAll(t.path)
+		return fmt.Errorf("TempSysFS.Clean: %s: %s", t.path, err)
 	}
 	// The dir was passed; TempSysFS didn't create it.
-	return os.RemoveAll(t.cpuPath)
+	err := os.RemoveAll(t.nodePath)
+	if err != nil {
+		return fmt.Errorf("TempSysFS.Clean: %s: %s", t.nodePath, err)
+	}
+	err = os.RemoveAll(t.cpuPath)
+	if err != nil {
+		return fmt.Errorf("TempSysFS.Clean: %s: %s", t.cpuPath, err)
+	}
+	return nil
 }
 
 // CleanCPU cleans up the CPU tree that was created during CreateCPU. To clean
 // everything, call Clean instead.
 func (t *TempSysFS) CleanCPU() error {
-	// otherwise get the contents of t.Dir and delete that
-	fis, err := ioutil.ReadDir(t.cpuPath)
+	err := t.clean(t.cpuPath)
 	if err != nil {
-		return fmt.Errorf("Clean %s: nothing deleted: %s", t.cpuPath, err)
+		return fmt.Errorf("TempSysFS.CleanCPU: %s", err)
+	}
+	return nil
+}
+
+// CleanNode cleans up the node tree that was created during CreateNode. To
+// clean everything, call Clean instead.
+func (t *TempSysFS) CleanNode() error {
+	err := t.clean(t.nodePath)
+	if err != nil {
+		return fmt.Errorf("TempSysFS.CleanNode: %s", err)
+	}
+	return nil
+}
+
+func (t *TempSysFS) clean(path string) error {
+	// otherwise get the contents of t.Dir and delete that
+	fis, err := ioutil.ReadDir(path)
+	if err != nil {
+		return fmt.Errorf("%s: nothing deleted: %s", path, err)
 	}
 	for _, fi := range fis {
-		p := filepath.Join(t.cpuPath, fi.Name())
+		p := filepath.Join(path, fi.Name())
 		if fi.IsDir() {
 			err = os.RemoveAll(p)
 			if err != nil {
-				return fmt.Errorf("Clean %s: not all files were deleted: %s", t.cpuPath, err)
+				return fmt.Errorf("%s: not all files were deleted: %s", path, err)
 			}
 			continue
 		}
 		err = os.Remove(p)
 		if err != nil {
-			return fmt.Errorf("Clean %s: not all files were deleted: %s", t.cpuPath, err)
+			return fmt.Errorf("%s: not all files were deleted: %s", path, err)
 		}
 	}
 	return nil
@@ -322,4 +348,47 @@ func (t *TempSysFS) CleanCPU() error {
 // Possible generates the possible string
 func (t *TempSysFS) Possible() string {
 	return fmt.Sprintf("0-%d", (t.PhysicalPackageCount*t.CoresPerPhysicalPackage*t.ThreadsPerCore)-1)
+}
+
+// CreateNode creates the sysfs node tree.  If the SysFS path wasn't set, a
+// randomly generated directory, prefixed with sysfs, will be created in the
+// system's temp directory.
+func (t *TempSysFS) CreateNode() error {
+	if t.path == "" {
+		err := t.SetSysFS("")
+		if err != nil {
+			return err
+		}
+	}
+	err := os.MkdirAll(t.nodePath, 0777)
+	if err != nil {
+		return err
+	}
+	var low int // the low end of the cpulist range
+	cpusPerSocket := int(t.CoresPerPhysicalPackage * t.ThreadsPerCore)
+
+	for i := 0; i < int(t.PhysicalPackageCount); i++ {
+		nodeX := fmt.Sprintf("node%d", i)
+		// set the topology core id is in reverse order of cpuX
+		tmp := filepath.Join(t.nodePath, nodeX)
+		err = os.MkdirAll(tmp, 0777)
+		if err != nil {
+			goto cleanup
+		}
+		err = ioutil.WriteFile(filepath.Join(tmp, node.CPUList), []byte(fmt.Sprintf("%s\n", t.cpuListString(low, (i+1)*cpusPerSocket))), 0777)
+		if err != nil {
+			return err
+		}
+		low = (i + 1) * cpusPerSocket
+	}
+
+	return nil
+
+cleanup:
+	os.RemoveAll(t.nodePath)
+	return err
+}
+
+func (t *TempSysFS) cpuListString(x, y int) string {
+	return fmt.Sprintf("%d-%d", x, y-1)
 }
