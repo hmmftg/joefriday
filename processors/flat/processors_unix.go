@@ -35,6 +35,7 @@ import (
 	"sync"
 
 	fb "github.com/google/flatbuffers/go"
+	"github.com/mohae/joefriday/node"
 	"github.com/mohae/joefriday/processors"
 	"github.com/mohae/joefriday/processors/flat/structs"
 )
@@ -142,6 +143,15 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	modes := p.Builder.EndVector(len(uoffs))
+	uoffs = make([]fb.UOffsetT, len(procs.NumaNodeCPUs))
+	for i := range procs.NumaNodeCPUs {
+		uoffs[i] = p.SerializeNumaNodeCPUs(&procs.NumaNodeCPUs[i])
+	}
+	structs.ProcessorsStartNumaNodeCPUsVector(p.Builder, len(uoffs))
+	for i := len(uoffs) - 1; i >= 0; i-- {
+		p.Builder.PrependUOffsetT(uoffs[i])
+	}
+	nodeCPUs := p.Builder.EndVector(len(uoffs))
 	structs.ProcessorsStart(p.Builder)
 	structs.ProcessorsAddTimestamp(p.Builder, procs.Timestamp)
 	structs.ProcessorsAddArchitecture(p.Builder, architecture)
@@ -169,6 +179,8 @@ func (p *Profiler) Serialize(procs *processors.Processors) []byte {
 	structs.ProcessorsAddBugs(p.Builder, bugs)
 	structs.ProcessorsAddOpModes(p.Builder, modes)
 	structs.ProcessorsAddVirtualization(p.Builder, virtualization)
+	structs.ProcessorsAddNumaNodes(p.Builder, procs.NumaNodes)
+	structs.ProcessorsAddNumaNodeCPUs(p.Builder, nodeCPUs)
 	p.Builder.Finish(structs.ProcessorsEnd(p.Builder))
 	b := p.Builder.Bytes[p.Builder.Head():]
 	// copy them (otherwise gets lost in reset)
@@ -186,6 +198,14 @@ func (p *Profiler) SerializeCache(id, inf string) fb.UOffsetT {
 	structs.CacheInfAddID(p.Builder, cID)
 	structs.CacheInfAddSize(p.Builder, cInf)
 	return structs.CacheInfEnd(p.Builder)
+}
+
+func (p *Profiler) SerializeNumaNodeCPUs(n *node.Node) fb.UOffsetT {
+	list := p.Builder.CreateString(n.CPUList)
+	structs.NodeStart(p.Builder)
+	structs.NodeAddID(p.Builder, n.ID)
+	structs.NodeAddCPUList(p.Builder, list)
+	return structs.NodeEnd(p.Builder)
 }
 
 // Serialize processors information.
@@ -250,5 +270,15 @@ func Deserialize(p []byte) *processors.Processors {
 		procs.OpModes[i] = string(flatP.OpModes(i))
 	}
 	procs.Virtualization = string(flatP.Virtualization())
+	procs.NumaNodes = flatP.NumaNodes()
+	var n structs.Node
+	procs.NumaNodeCPUs = make([]node.Node, flatP.NumaNodeCPUsLength())
+	for i := 0; i < len(procs.NumaNodeCPUs); i++ {
+		if !flatP.NumaNodeCPUs(&n, i) {
+			continue
+		}
+		procs.NumaNodeCPUs[i].ID = n.ID()
+		procs.NumaNodeCPUs[i].CPUList = string(n.CPUList())
+	}
 	return procs
 }

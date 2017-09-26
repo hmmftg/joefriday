@@ -674,6 +674,19 @@ func ValidateR71800xProc(proc *processors.Processors, freq bool) error {
 	if proc.Virtualization != processors.AMDV {
 		return fmt.Errorf("virtualization: got %q; want %q", proc.Virtualization, processors.AMDV)
 	}
+	if proc.NumaNodes != 1 {
+		return fmt.Errorf("numa nodes: got %d; want 1", proc.NumaNodes)
+	}
+
+	if len(proc.NumaNodeCPUs) != 1 {
+		return fmt.Errorf("numa node cpus: got %d elements; wanted 1", len(proc.NumaNodeCPUs))
+	}
+	if proc.NumaNodeCPUs[0].ID != int32(0) {
+		return fmt.Errorf("numa node id: got %d; want 0", proc.NumaNodeCPUs[0].ID)
+	}
+	if proc.NumaNodeCPUs[0].CPUList != "0-15" {
+		return fmt.Errorf("numa node cpulist: got %s; want \"0-15\"", proc.NumaNodeCPUs[0].CPUList)
+	}
 
 	return nil
 }

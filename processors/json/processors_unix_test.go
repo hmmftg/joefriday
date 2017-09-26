@@ -48,6 +48,13 @@ func TestI75600u(t *testing.T) {
 		return
 	}
 
+	// create the sysfs node tree
+	err = tSysFS.CreateNode()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	// get a new profiler and configure it
 	prof, err := NewProfiler()
 	if err != nil {
@@ -57,6 +64,7 @@ func TestI75600u(t *testing.T) {
 	prof.Procer = tProc
 	prof.CPUProf.NumCPU = int(tSysFS.CPUs())
 	prof.CPUProf.SysFSSystemPath(tSysFS.Path())
+	prof.NodeProf.SysFSSystemPath(tSysFS.Path())
 
 	// get the processor info.
 	p, err := prof.Get()
@@ -80,6 +88,19 @@ func TestI75600u(t *testing.T) {
 	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
+	}
+
+	// clean up for next
+	err = tSysFS.CleanNode()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// create the sysfs node tree
+	err = tSysFS.CreateNode()
+	if err != nil {
+		t.Error(err)
+		return
 	}
 
 	// set up test stuff w/o freq
@@ -136,6 +157,13 @@ func TestXeonE52690(t *testing.T) {
 		return
 	}
 
+	// create the sysfs node tree
+	err = tSysFS.CreateNode()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	// get a new profiler and configure it
 	prof, err := NewProfiler()
 	if err != nil {
@@ -145,6 +173,7 @@ func TestXeonE52690(t *testing.T) {
 	prof.Procer = tProc
 	prof.CPUProf.NumCPU = int(tSysFS.CPUs())
 	prof.CPUProf.SysFSSystemPath(tSysFS.Path())
+	prof.NodeProf.SysFSSystemPath(tSysFS.Path())
 
 	// get the processor info.
 	p, err := prof.Get()
@@ -168,6 +197,19 @@ func TestXeonE52690(t *testing.T) {
 	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
+	}
+
+	// clean up for next
+	err = tSysFS.CleanNode()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// create the sysfs node tree
+	err = tSysFS.CreateNode()
+	if err != nil {
+		t.Error(err)
+		return
 	}
 
 	// set up test stuff w/o freq
@@ -224,6 +266,13 @@ func TestR71800x(t *testing.T) {
 		return
 	}
 
+	// create the sysfs node tree
+	err = tSysFS.CreateNode()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	// get a new profiler and configure it
 	prof, err := NewProfiler()
 	if err != nil {
@@ -233,6 +282,7 @@ func TestR71800x(t *testing.T) {
 	prof.Procer = tProc
 	prof.CPUProf.NumCPU = int(tSysFS.CPUs())
 	prof.CPUProf.SysFSSystemPath(tSysFS.Path())
+	prof.NodeProf.SysFSSystemPath(tSysFS.Path())
 
 	// get the processor info.
 	p, err := prof.Get()
@@ -256,6 +306,19 @@ func TestR71800x(t *testing.T) {
 	err = tSysFS.CleanCPU()
 	if err != nil {
 		t.Error(err)
+	}
+
+	// clean up for next
+	err = tSysFS.CleanNode()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// create the sysfs node tree
+	err = tSysFS.CreateNode()
+	if err != nil {
+		t.Error(err)
+		return
 	}
 
 	// set up test stuff w/o freq

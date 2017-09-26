@@ -279,7 +279,38 @@ func (rcv *Processors) Virtualization() []byte {
 	return nil
 }
 
-func ProcessorsStart(builder *flatbuffers.Builder) { builder.StartObject(27) }
+func (rcv *Processors) NumaNodes() int32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(58))
+	if o != 0 {
+		return rcv._tab.GetInt32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *Processors) NumaNodeCPUs(obj *Node, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(60))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+	if obj == nil {
+		obj = new(Node)
+	}
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Processors) NumaNodeCPUsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(60))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
+func ProcessorsStart(builder *flatbuffers.Builder) { builder.StartObject(29) }
 func ProcessorsAddTimestamp(builder *flatbuffers.Builder, Timestamp int64) { builder.PrependInt64Slot(0, Timestamp, 0) }
 func ProcessorsAddArchitecture(builder *flatbuffers.Builder, Architecture flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(Architecture), 0) }
 func ProcessorsAddByteOrder(builder *flatbuffers.Builder, ByteOrder flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(ByteOrder), 0) }
@@ -315,4 +346,8 @@ func ProcessorsAddOpModes(builder *flatbuffers.Builder, OpModes flatbuffers.UOff
 func ProcessorsStartOpModesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
 }
 func ProcessorsAddVirtualization(builder *flatbuffers.Builder, Virtualization flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(26, flatbuffers.UOffsetT(Virtualization), 0) }
+func ProcessorsAddNumaNodes(builder *flatbuffers.Builder, NumaNodes int32) { builder.PrependInt32Slot(27, NumaNodes, 0) }
+func ProcessorsAddNumaNodeCPUs(builder *flatbuffers.Builder, NumaNodeCPUs flatbuffers.UOffsetT) { builder.PrependUOffsetTSlot(28, flatbuffers.UOffsetT(NumaNodeCPUs), 0) }
+func ProcessorsStartNumaNodeCPUsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT { return builder.StartVector(4, numElems, 4)
+}
 func ProcessorsEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT { return builder.EndObject() }

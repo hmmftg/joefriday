@@ -38,6 +38,7 @@ import (
 	"github.com/SermoDigital/helpers"
 	joe "github.com/mohae/joefriday"
 	"github.com/mohae/joefriday/cpu/cpux"
+	"github.com/mohae/joefriday/node"
 )
 
 const (
@@ -78,6 +79,8 @@ type Processors struct {
 	Bugs           []string          `json:"bugs"`
 	OpModes        []string          `json:"op_modes"`
 	Virtualization string            `json:"virtualization"`
+	NumaNodes      int32             `json:"numa_nodes"`
+	NumaNodeCPUs   []node.Node       `json:"numa_node_cpus"`
 }
 
 // This returns a *Processor ready to use. If a Processors struct isn't created
@@ -91,7 +94,8 @@ func New() *Processors {
 type Profiler struct {
 	joe.Procer
 	*joe.Buffer
-	CPUProf *cpux.Profiler // This is created with the profiler for testability.
+	CPUProf  *cpux.Profiler // This is created with the profiler for testing purposes.
+	NodeProf *node.Profiler // This is created with the profiler for testing purposes.
 }
 
 // Returns an initialized Profiler; ready to use.
@@ -101,7 +105,8 @@ func NewProfiler() (prof *Profiler, err error) {
 		return nil, err
 	}
 	cpuProf := cpux.NewProfiler()
-	return &Profiler{Procer: proc, Buffer: joe.NewBuffer(), CPUProf: cpuProf}, nil
+	nodeProf := node.NewProfiler()
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer(), CPUProf: cpuProf, NodeProf: nodeProf}, nil
 }
 
 // Reset resources: after reset, the profiler is ready to be used again.
@@ -138,6 +143,12 @@ func (prof *Profiler) Get() (procs *Processors, err error) {
 		arch = append(arch, uint8(v))
 	}
 	procs.Architecture = string(arch)
+
+	// get numa information
+	err = prof.getNodeInfo(procs)
+	if err != nil {
+		return nil, err
+	}
 	return procs, nil
 }
 
@@ -323,6 +334,17 @@ func (prof *Profiler) getSysFSCPU(procs *Processors) error {
 	procs.Present = cpus.Present
 	procs.Offline = cpus.Offline
 	procs.Online = cpus.Online
+	return nil
+}
+
+func (prof *Profiler) getNodeInfo(procs *Processors) error {
+	nodes, err := prof.NodeProf.Get()
+	if err != nil {
+		return err
+	}
+	procs.NumaNodes = int32(nodes.NumaNodes())
+	procs.NumaNodeCPUs = make([]node.Node, nodes.NumaNodes())
+	copy(procs.NumaNodeCPUs, nodes.Node)
 	return nil
 }
 

@@ -1088,6 +1088,31 @@ func ValidateXeonE52690Proc(proc *processors.Processors, freq bool) error {
 	if proc.Virtualization != processors.VTx {
 		return fmt.Errorf("virtualization: got %q; want %q", proc.Virtualization, processors.VTx)
 	}
+	if proc.NumaNodes != 2 {
+		return fmt.Errorf("numa nodes: got %d; want 2", proc.NumaNodes)
+	}
+
+	if len(proc.NumaNodeCPUs) != 2 {
+		return fmt.Errorf("numa node cpus: got %d elements; wanted 2", len(proc.NumaNodeCPUs))
+	}
+	for i, v := range proc.NumaNodeCPUs {
+		if v.ID != int32(i) {
+			return fmt.Errorf("numa node id: got %d; want %d", v.ID, i)
+		}
+		switch i {
+		case 0:
+			if v.CPUList != "0-15" {
+				return fmt.Errorf("numa node cpulist: got %s; want \"0-15\"", v.CPUList)
+			}
+		case 1:
+			if v.CPUList != "16-31" {
+				return fmt.Errorf("numa node cpulist: got %s; want \"16-31\"", v.CPUList)
+			}
+		default:
+			return fmt.Errorf("numa node cpus: unexpected index: %d", i)
+		}
+
+	}
 
 	return nil
 }

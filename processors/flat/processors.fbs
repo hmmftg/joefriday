@@ -29,11 +29,18 @@ table Processors {
 	Bugs:[string];
 	OpModes:[string];
 	Virtualization:string;
+	NumaNodes:int;
+	NumaNodeCPUs:[Node];
 }
 
 table CacheInf {
 	ID:string;
 	Size:string;
+}
+
+table Node {
+	ID:int;
+	CPUList:string;
 }
 
 root_type Processors;
