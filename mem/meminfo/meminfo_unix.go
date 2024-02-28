@@ -210,7 +210,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 				inf.HardwareCorrupted = n
 				continue
 			}
-			if prof.Val[9] == 'i' {
+			if len(prof.Val) >= 9 && prof.Val[9] == 'i' {
 				inf.HugePagesSize = n
 				continue
 			}
@@ -222,7 +222,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 				inf.Inactive = n
 				continue
 			}
-			if prof.Val[9] == 'a' {
+			if len(prof.Val) >= 9 && prof.Val[9] == 'a' {
 				inf.InactiveAnon = n
 				continue
 			}
@@ -279,11 +279,11 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 			continue
 		}
 		if v == 'V' {
-			if prof.Val[8] == 'C' {
+			if len(prof.Val) >= 8 && prof.Val[8] == 'C' {
 				inf.VmallocChunk = n
 				continue
 			}
-			if prof.Val[8] == 'T' {
+			if len(prof.Val) >= 8 && prof.Val[8] == 'T' {
 				inf.VmallocTotal = n
 				continue
 			}
