@@ -16,10 +16,10 @@ package main
 import (
 	"testing"
 
+	"github.com/hmmftg/joefriday/mem/meminfo"
+	mfb "github.com/hmmftg/joefriday/mem/meminfo/flat"
+	mjson "github.com/hmmftg/joefriday/mem/meminfo/json"
 	"github.com/mohae/benchutil"
-	"github.com/mohae/joefriday/mem/meminfo"
-	mfb "github.com/mohae/joefriday/mem/meminfo/flat"
-	mjson "github.com/mohae/joefriday/mem/meminfo/json"
 )
 
 const (

@@ -17,7 +17,7 @@
 // provided.
 //
 // Note: the package name is uptime and not the final element of the import
-// path (json). 
+// path (json).
 package uptime
 
 import (
@@ -25,8 +25,8 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	u "github.com/mohae/joefriday/system/uptime"
+	joe "github.com/hmmftg/joefriday"
+	u "github.com/hmmftg/joefriday/system/uptime"
 )
 
 // Profiler processes uptime information, /proc/uptime, using JSON.

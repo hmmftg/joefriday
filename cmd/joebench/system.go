@@ -16,26 +16,25 @@ package main
 import (
 	"testing"
 
+	"github.com/hmmftg/joefriday/system/loadavg"
+	lfb "github.com/hmmftg/joefriday/system/loadavg/flat"
+	ljson "github.com/hmmftg/joefriday/system/loadavg/json"
+	"github.com/hmmftg/joefriday/system/os"
+	osfb "github.com/hmmftg/joefriday/system/os/flat"
+	osjson "github.com/hmmftg/joefriday/system/os/json"
+	"github.com/hmmftg/joefriday/system/uptime"
+	ufb "github.com/hmmftg/joefriday/system/uptime/flat"
+	ujson "github.com/hmmftg/joefriday/system/uptime/json"
+	"github.com/hmmftg/joefriday/system/version"
+	vfb "github.com/hmmftg/joefriday/system/version/flat"
+	vjson "github.com/hmmftg/joefriday/system/version/json"
 	"github.com/mohae/benchutil"
-	"github.com/mohae/joefriday/system/loadavg"
-	lfb "github.com/mohae/joefriday/system/loadavg/flat"
-	ljson "github.com/mohae/joefriday/system/loadavg/json"
-	"github.com/mohae/joefriday/system/os"
-	osfb "github.com/mohae/joefriday/system/os/flat"
-	osjson "github.com/mohae/joefriday/system/os/json"
-	"github.com/mohae/joefriday/system/uptime"
-	ufb "github.com/mohae/joefriday/system/uptime/flat"
-	ujson "github.com/mohae/joefriday/system/uptime/json"
-	"github.com/mohae/joefriday/system/version"
-	vfb "github.com/mohae/joefriday/system/version/flat"
-	vjson "github.com/mohae/joefriday/system/version/json"
-	
 )
 
 const (
-	SystemVersion  = "System Version"
+	SystemVersion = "System Version"
 	SystemLoadAvg = "System LoadAvg"
-	SystemOS = "System OS"
+	SystemOS      = "System OS"
 	SystemUptime  = "System Uptime"
 )
 

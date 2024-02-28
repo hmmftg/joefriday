@@ -16,7 +16,7 @@
 // deserialize the JSON serialized bytes into a mem.Info struct is provided.
 //
 // Note: the package name is meminfo and not the final element of the import
-// path (flat). 
+// path (flat).
 package meminfo
 
 import (
@@ -24,8 +24,8 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	mem "github.com/mohae/joefriday/mem/meminfo"
+	joe "github.com/hmmftg/joefriday"
+	mem "github.com/hmmftg/joefriday/mem/meminfo"
 )
 
 // Profiler is used to get the memory information, as JSON, by processing the

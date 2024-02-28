@@ -16,15 +16,15 @@
 // deserialize the Flatbuffer serialized bytes into an os.OS struct is provided.
 //
 // Note: the package name is os and not the final element of the import path
-// (flat). 
+// (flat).
 package os
 
 import (
 	"sync"
 
 	fb "github.com/google/flatbuffers/go"
-	o "github.com/mohae/joefriday/system/os"
-	"github.com/mohae/joefriday/system/os/flat/structs"
+	o "github.com/hmmftg/joefriday/system/os"
+	"github.com/hmmftg/joefriday/system/os/flat/structs"
 )
 
 // Profiler processes the OS release information, /etc/os-release,

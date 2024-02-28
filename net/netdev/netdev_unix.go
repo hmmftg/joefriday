@@ -20,9 +20,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/net/structs"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/net/structs"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 // ProcFile is the file used by the netdev Profiler.
@@ -56,7 +56,7 @@ func (prof *Profiler) Get() (*structs.DevInfo, error) {
 		i, pos, line, fieldNum int
 		n                      uint64
 		v                      byte
-		dev                  structs.Device
+		dev                    structs.Device
 	)
 	err := prof.Reset()
 	if err != nil {
@@ -109,7 +109,7 @@ func (prof *Profiler) Get() (*structs.DevInfo, error) {
 				}
 			}
 			// any conversion error results in 0
-			n, err = helpers.ParseUint(prof.Line[pos : pos+i])
+			n, err = tools.ParseUint(prof.Line[pos : pos+i])
 			pos += i
 			if err != nil {
 				return nil, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}

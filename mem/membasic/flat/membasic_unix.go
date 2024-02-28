@@ -18,7 +18,7 @@
 // meminfo package.
 //
 // Note: the package name is membasic and not the final element of the import
-// path (flat). 
+// path (flat).
 package membasic
 
 import (
@@ -26,11 +26,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	basic "github.com/mohae/joefriday/mem/membasic"
-	"github.com/mohae/joefriday/mem/membasic/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	basic "github.com/hmmftg/joefriday/mem/membasic"
+	"github.com/hmmftg/joefriday/mem/membasic/flat/structs"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 // Profiler is used to get the basic memory information as Flatbuffer
@@ -213,7 +213,7 @@ Tick:
 					t.Val = append(t.Val, v)
 				}
 				// any conversion error results in 0
-				n, err = helpers.ParseUint(t.Val[nameLen:])
+				n, err = tools.ParseUint(t.Val[nameLen:])
 				if err != nil {
 					t.Errs <- &joe.ParseError{Info: string(t.Val[:nameLen]), Err: err}
 					continue

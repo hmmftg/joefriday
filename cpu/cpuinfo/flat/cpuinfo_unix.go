@@ -17,15 +17,15 @@
 // cpuinfo.CPUInfo struct is provided.
 //
 // Note: the package name is cpuinfo and not the final element of the import
-// path (flat). 
+// path (flat).
 package cpuinfo
 
 import (
 	"sync"
 
 	fb "github.com/google/flatbuffers/go"
-	info "github.com/mohae/joefriday/cpu/cpuinfo"
-	"github.com/mohae/joefriday/cpu/cpuinfo/flat/structs"
+	info "github.com/hmmftg/joefriday/cpu/cpuinfo"
+	"github.com/hmmftg/joefriday/cpu/cpuinfo/flat/structs"
 )
 
 // Profiler is used to process the /proc/cpuinfo file as Flatbuffers serialized
@@ -119,7 +119,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	flags := p.Builder.EndVector(len(uoffs))
-	
+
 	uoffs = make([]fb.UOffsetT, len(cpu.Bugs))
 	for i, bug := range cpu.Bugs {
 		uoffs[i] = p.Builder.CreateString(bug)
@@ -129,7 +129,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	bugs := p.Builder.EndVector(len(uoffs))
-	
+
 	uoffs = make([]fb.UOffsetT, len(cpu.AddressSizes))
 	for i, addr := range cpu.AddressSizes {
 		uoffs[i] = p.Builder.CreateString(addr)
@@ -139,7 +139,7 @@ func (p *Profiler) SerializeCPU(cpu *info.CPU) fb.UOffsetT {
 		p.Builder.PrependUOffsetT(uoffs[i])
 	}
 	addressSizes := p.Builder.EndVector(len(uoffs))
-	
+
 	uoffs = make([]fb.UOffsetT, len(cpu.PowerManagement))
 	for i, pm := range cpu.PowerManagement {
 		uoffs[i] = p.Builder.CreateString(pm)

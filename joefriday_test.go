@@ -293,9 +293,9 @@ func BenchmarkTrimSpaceString(b *testing.B) {
 
 func TestNewTempFileProc(t *testing.T) {
 	data := "abcdefghijklmnopqrstuvwxyz"
-	tests := []struct{
+	tests := []struct {
 		prefix string
-		name string
+		name   string
 	}{
 		{"", ""},
 		{"", "abc"},
@@ -310,7 +310,7 @@ func TestNewTempFileProc(t *testing.T) {
 		}
 		if test.prefix == "" {
 			if p.Dir != os.TempDir() {
-				t.Errorf("%d: Dir: got %q; want %q", i, p.Dir, os.TempDir)
+				t.Errorf("%d: Dir: got %s; want %s", i, p.Dir, os.TempDir())
 			}
 		} else {
 			dir := filepath.Base(p.Dir)

@@ -16,14 +16,14 @@ package main
 import (
 	"testing"
 
+	stats "github.com/hmmftg/joefriday/disk/diskstats"
+	sfb "github.com/hmmftg/joefriday/disk/diskstats/flat"
+	sjson "github.com/hmmftg/joefriday/disk/diskstats/json"
+	usage "github.com/hmmftg/joefriday/disk/diskusage"
+	ufb "github.com/hmmftg/joefriday/disk/diskusage/flat"
+	ujson "github.com/hmmftg/joefriday/disk/diskusage/json"
+	"github.com/hmmftg/joefriday/disk/structs"
 	"github.com/mohae/benchutil"
-	stats "github.com/mohae/joefriday/disk/diskstats"
-	sfb "github.com/mohae/joefriday/disk/diskstats/flat"
-	sjson "github.com/mohae/joefriday/disk/diskstats/json"
-	"github.com/mohae/joefriday/disk/structs"
-	usage "github.com/mohae/joefriday/disk/diskusage"
-	ufb "github.com/mohae/joefriday/disk/diskusage/flat"
-	ujson "github.com/mohae/joefriday/disk/diskusage/json"
 )
 
 const (

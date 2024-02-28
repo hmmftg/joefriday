@@ -17,7 +17,7 @@
 // into a structs.DiskStats struct is provided.
 //
 // Note: the package name is diskstats and not the final element of the import
-// path (flat). 
+// path (flat).
 package diskstats
 
 import (
@@ -25,10 +25,10 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	stats "github.com/mohae/joefriday/disk/diskstats"
-	"github.com/mohae/joefriday/disk/structs"
-	"github.com/mohae/joefriday/disk/structs/flat"
+	joe "github.com/hmmftg/joefriday"
+	stats "github.com/hmmftg/joefriday/disk/diskstats"
+	"github.com/hmmftg/joefriday/disk/structs"
+	"github.com/hmmftg/joefriday/disk/structs/flat"
 )
 
 // Profiler is used to process the /proc/diskstast file.

@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	load "github.com/mohae/joefriday/sysinfo/loadavg"
+	load "github.com/hmmftg/joefriday/sysinfo/loadavg"
 )
 
 func TestSerializeDeserialize(t *testing.T) {

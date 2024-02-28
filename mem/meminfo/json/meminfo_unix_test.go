@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	mem "github.com/mohae/joefriday/mem/meminfo"
+	mem "github.com/hmmftg/joefriday/mem/meminfo"
 )
 
 func TestGet(t *testing.T) {

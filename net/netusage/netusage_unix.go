@@ -23,10 +23,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/net/netdev"
-	"github.com/mohae/joefriday/net/structs"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/net/netdev"
+	"github.com/hmmftg/joefriday/net/structs"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 // Profiler is used to process the network device usage.
@@ -90,9 +90,9 @@ func Get() (u *structs.DevUsage, err error) {
 // snapshot and the prior one.
 func (prof *Profiler) CalculateUsage(cur *structs.DevInfo) *structs.DevUsage {
 	u := &structs.DevUsage{
-		Timestamp:  cur.Timestamp,
-		TimeDelta:  cur.Timestamp - prof.prior.Timestamp,
-		Device: make([]structs.Device, len(cur.Device)),
+		Timestamp: cur.Timestamp,
+		TimeDelta: cur.Timestamp - prof.prior.Timestamp,
+		Device:    make([]structs.Device, len(cur.Device)),
 	}
 	for i := 0; i < len(cur.Device); i++ {
 		u.Device[i].Name = cur.Device[i].Name
@@ -146,7 +146,7 @@ func (t *Ticker) Run() {
 		v                      byte
 		err                    error
 		cur                    structs.DevInfo
-		dev                 structs.Device
+		dev                    structs.Device
 	)
 	// ticker
 	for {
@@ -155,7 +155,7 @@ func (t *Ticker) Run() {
 			return
 		case <-t.C:
 			cur.Timestamp = time.Now().UTC().UnixNano()
-			err = t.Reset()
+			err = t.Procer.Reset()
 			if err != nil {
 				t.Errs <- err
 				break
@@ -208,7 +208,7 @@ func (t *Ticker) Run() {
 						}
 					}
 					// any conversion error results in 0
-					n, err = helpers.ParseUint(t.Line[pos : pos+1])
+					n, err = tools.ParseUint(t.Line[pos : pos+1])
 					pos += i
 					if err != nil {
 						t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}

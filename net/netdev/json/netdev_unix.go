@@ -17,7 +17,7 @@
 // struct is provided.
 //
 // Note: the package name is netdev and not the final element of the import
-// path (json). 
+// path (json).
 package netdev
 
 import (
@@ -25,9 +25,9 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	dev "github.com/mohae/joefriday/net/netdev"
-	"github.com/mohae/joefriday/net/structs"
+	joe "github.com/hmmftg/joefriday"
+	dev "github.com/hmmftg/joefriday/net/netdev"
+	"github.com/hmmftg/joefriday/net/structs"
 )
 
 // Profiler is used to process the network device information as JSON using the

@@ -16,7 +16,6 @@ package cpustats
 import (
 	"testing"
 	"time"
-
 )
 
 func TestClkTck(t *testing.T) {
@@ -64,7 +63,7 @@ func TestTicker(t *testing.T) {
 
 func checkStats(n string, s *CPUStats, t *testing.T) {
 	if int16(CLK_TCK) != s.ClkTck {
-		t.Errorf("%s: ClkTck: got %s; want %s", n, s.ClkTck, CLK_TCK)
+		t.Errorf("%s: ClkTck: got %d; want %d", n, s.ClkTck, CLK_TCK)
 	}
 	if s.Timestamp == 0 {
 		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)

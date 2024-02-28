@@ -21,9 +21,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/disk/structs"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/disk/structs"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 const procFile = "/proc/diskstats"
@@ -94,7 +94,7 @@ func (prof *Profiler) Get() (stats *structs.DiskStats, err error) {
 				}
 			}
 			if fieldNum != 3 {
-				n, err = helpers.ParseUint(prof.Line[pos : pos+i])
+				n, err = tools.ParseUint(prof.Line[pos : pos+i])
 				if err != nil {
 					return stats, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}

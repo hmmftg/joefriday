@@ -16,16 +16,16 @@ package main
 import (
 	"testing"
 
+	load "github.com/hmmftg/joefriday/sysinfo/loadavg"
+	lfb "github.com/hmmftg/joefriday/sysinfo/loadavg/flat"
+	ljson "github.com/hmmftg/joefriday/sysinfo/loadavg/json"
+	"github.com/hmmftg/joefriday/sysinfo/mem"
+	mfb "github.com/hmmftg/joefriday/sysinfo/mem/flat"
+	mjson "github.com/hmmftg/joefriday/sysinfo/mem/json"
+	"github.com/hmmftg/joefriday/sysinfo/uptime"
+	ufb "github.com/hmmftg/joefriday/sysinfo/uptime/flat"
+	ujson "github.com/hmmftg/joefriday/sysinfo/uptime/json"
 	"github.com/mohae/benchutil"
-	load "github.com/mohae/joefriday/sysinfo/loadavg"
-	lfb "github.com/mohae/joefriday/sysinfo/loadavg/flat"
-	ljson "github.com/mohae/joefriday/sysinfo/loadavg/json"
-	"github.com/mohae/joefriday/sysinfo/mem"
-	mfb "github.com/mohae/joefriday/sysinfo/mem/flat"
-	mjson "github.com/mohae/joefriday/sysinfo/mem/json"
-	"github.com/mohae/joefriday/sysinfo/uptime"
-	ufb "github.com/mohae/joefriday/sysinfo/uptime/flat"
-	ujson "github.com/mohae/joefriday/sysinfo/uptime/json"
 )
 
 const (

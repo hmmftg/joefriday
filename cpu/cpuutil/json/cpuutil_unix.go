@@ -20,7 +20,7 @@
 // serialized bytes into a cpuutil.CPUUtil struct is provided.
 //
 // Note: the package name is cpuutil and not the final element of the import
-// path (json). 
+// path (json).
 package cpuutil
 
 import (
@@ -28,8 +28,8 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	util "github.com/mohae/joefriday/cpu/cpuutil"
+	joe "github.com/hmmftg/joefriday"
+	util "github.com/hmmftg/joefriday/cpu/cpuutil"
 )
 
 // Profiler is used to process the /proc/stats file and calculate utilization

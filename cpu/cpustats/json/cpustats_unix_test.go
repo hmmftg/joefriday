@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	stats "github.com/mohae/joefriday/cpu/cpustats"
+	stats "github.com/hmmftg/joefriday/cpu/cpustats"
 )
 
 func TestGet(t *testing.T) {
@@ -66,7 +66,7 @@ func TestTicker(t *testing.T) {
 
 func checkStats(n string, s *stats.CPUStats, t *testing.T) {
 	if int16(stats.CLK_TCK) != s.ClkTck {
-		t.Errorf("%s: ClkTck: got %s; want %s", n, s.ClkTck, stats.CLK_TCK)
+		t.Errorf("%s: ClkTck: got %d; want %d", n, s.ClkTck, stats.CLK_TCK)
 	}
 	if s.Timestamp == 0 {
 		t.Errorf("%s: Timestamp: wanted non-zero value; got 0", n)

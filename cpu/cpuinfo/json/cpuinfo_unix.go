@@ -17,14 +17,14 @@
 // struct is provided.
 //
 // Note: the package name is cpuinfo and not the final element of the import
-// path (json). 
+// path (json).
 package cpuinfo
 
 import (
 	"encoding/json"
 	"sync"
 
-	info "github.com/mohae/joefriday/cpu/cpuinfo"
+	info "github.com/hmmftg/joefriday/cpu/cpuinfo"
 )
 
 // Profiler is used to process the /proc/cpuinfo file as JSON serialized bytes.

@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 const procFile = "/proc/cpuinfo"
@@ -141,7 +141,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				continue
 			}
 			if v == 'p' { // apicid
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -154,7 +154,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			if v == 'p' {
 				v = prof.Val[4]
 				if v == 'c' { // cpu cores
-					n, err = helpers.ParseUint(prof.Val[nameLen:])
+					n, err = tools.ParseUint(prof.Val[nameLen:])
 					if err != nil {
 						return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
@@ -180,7 +180,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			}
 			v = prof.Val[5]
 			if v == '_' { // cache_alignment
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -193,7 +193,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				continue
 			}
 			if v == 's' { // clflush size
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -201,7 +201,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 				continue
 			}
 			if v == 'i' { // core id
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -242,7 +242,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 		if v == 'p' {
 			v = prof.Val[1]
 			if v == 'h' { // physical id
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -275,7 +275,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 					inf.CPU = append(inf.CPU, cpu)
 				}
 				cpuCnt++
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -286,7 +286,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 		if v == 's' {
 			v = prof.Val[1]
 			if v == 'i' { // siblings
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -316,7 +316,7 @@ func (prof *Profiler) Get() (inf *CPUInfo, err error) {
 			continue
 		}
 		if v == 'i' { // initial apicid
-			n, err = helpers.ParseUint(prof.Val[nameLen:])
+			n, err = tools.ParseUint(prof.Val[nameLen:])
 			if err != nil {
 				return nil, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 			}

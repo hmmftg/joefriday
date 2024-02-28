@@ -19,7 +19,7 @@ import (
 	"io"
 	"sync"
 
-	joe "github.com/mohae/joefriday"
+	joe "github.com/hmmftg/joefriday"
 )
 
 const procFile = "/proc/version"
@@ -48,7 +48,7 @@ func NewProfiler() (prof *Profiler, err error) {
 	if err != nil {
 		return nil, err
 	}
-		return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
+	return &Profiler{Procer: proc, Buffer: joe.NewBuffer()}, nil
 }
 
 // Reset resources: after reset, the profiler is ready to be used again.

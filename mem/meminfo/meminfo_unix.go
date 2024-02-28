@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 const procFile = "/proc/meminfo"
@@ -143,7 +143,7 @@ func (prof *Profiler) Get() (inf *Info, err error) {
 			prof.Val = append(prof.Val, v)
 		}
 		// any conversion error results in 0
-		n, err = helpers.ParseUint(prof.Val[nameLen:])
+		n, err = tools.ParseUint(prof.Val[nameLen:])
 		if err != nil {
 			return inf, &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 		}
@@ -418,7 +418,7 @@ func (t *Ticker) Run() {
 					t.Val = append(t.Val, v)
 				}
 				// any conversion error results in 0
-				n, err = helpers.ParseUint(t.Val[nameLen:])
+				n, err = tools.ParseUint(t.Val[nameLen:])
 				if err != nil {
 					t.Errs <- &joe.ParseError{Info: string(t.Val[:nameLen]), Err: err}
 				}

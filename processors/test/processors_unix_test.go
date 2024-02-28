@@ -16,9 +16,9 @@ package processors
 import (
 	"testing"
 
-	"github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/processors"
-	"github.com/mohae/joefriday/testinfo"
+	"github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/processors"
+	"github.com/hmmftg/joefriday/testinfo"
 )
 
 func TestI75600u(t *testing.T) {
@@ -55,7 +55,6 @@ func TestI75600u(t *testing.T) {
 		return
 	}
 
-
 	// get a new profiler and configure it
 	prof, err := processors.NewProfiler()
 	if err != nil {
@@ -85,7 +84,7 @@ func TestI75600u(t *testing.T) {
 		t.Error(err)
 	}
 
-// clean up for next
+	// clean up for next
 	err = tSysFS.CleanNode()
 	if err != nil {
 		t.Error(err)
@@ -182,7 +181,7 @@ func TestXeonE52690(t *testing.T) {
 		t.Error(err)
 	}
 
-// clean up for next
+	// clean up for next
 	err = tSysFS.CleanNode()
 	if err != nil {
 		t.Error(err)
@@ -249,7 +248,6 @@ func TestR71800x(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
 
 	// get a new profiler and configure it
 	prof, err := processors.NewProfiler()

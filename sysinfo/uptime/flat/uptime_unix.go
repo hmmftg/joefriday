@@ -17,7 +17,7 @@
 // provided.
 //
 // Note: the package name is uptime and not the final element of the import
-// path (flat). 
+// path (flat).
 package uptime
 
 import (
@@ -25,9 +25,9 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	up "github.com/mohae/joefriday/sysinfo/uptime"
-	"github.com/mohae/joefriday/sysinfo/uptime/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	up "github.com/hmmftg/joefriday/sysinfo/uptime"
+	"github.com/hmmftg/joefriday/sysinfo/uptime/flat/structs"
 )
 
 var builder = fb.NewBuilder(0)

@@ -22,9 +22,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
-	stats "github.com/mohae/joefriday/cpu/cpustats"
+	joe "github.com/hmmftg/joefriday"
+	stats "github.com/hmmftg/joefriday/cpu/cpustats"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 // CPUUtil holds information about cpu, kernel, utilization. The first CPU
@@ -116,7 +116,8 @@ func Get() (*CPUUtil, error) {
 }
 
 // utilizaton =
-//   (Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
+//
+//	(Δuser + Δnice + Δsystem)/(Δuser+Δnice+Δsystem+Δidle)) * CLK_TCK
 func (prof *Profiler) calculateUtilization(cur *stats.CPUStats) *CPUUtil {
 	u := &CPUUtil{
 		Timestamp:  cur.Timestamp,
@@ -178,7 +179,7 @@ func (t *Ticker) Run() {
 		stop                bool
 		err                 error
 		cur                 stats.CPUStats
-		cpu                stats.CPU
+		cpu                 stats.CPU
 	)
 	for {
 		select {
@@ -186,7 +187,7 @@ func (t *Ticker) Run() {
 			return
 		case <-t.C:
 			cur.Timestamp = time.Now().UTC().UnixNano()
-			err = t.Reset()
+			err = t.Procer.Reset()
 			if err != nil {
 				t.Errs <- err
 				break
@@ -234,7 +235,7 @@ func (t *Ticker) Run() {
 							}
 							if v == 0x20 || stop {
 								fieldNum++
-								n, err = helpers.ParseUint(t.Line[j : pos+i])
+								n, err = tools.ParseUint(t.Line[j : pos+i])
 								if err != nil {
 									t.Errs <- &joe.ParseError{Info: string(t.Val[:]), Err: err}
 									continue
@@ -284,7 +285,7 @@ func (t *Ticker) Run() {
 						continue
 					}
 					// Otherwise it's ctxt info; rest of the line is the data.
-					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])
+					n, err = tools.ParseUint(t.Line[pos : len(t.Line)-1])
 					if err != nil {
 						t.Errs <- &joe.ParseError{Info: string(t.Val[:]), Err: err}
 						continue
@@ -294,7 +295,7 @@ func (t *Ticker) Run() {
 				}
 				if t.Val[0] == 'b' {
 					// rest of the line is the data
-					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])
+					n, err = tools.ParseUint(t.Line[pos : len(t.Line)-1])
 					if err != nil {
 						t.Errs <- &joe.ParseError{Info: string(t.Val[:]), Err: err}
 						continue
@@ -304,7 +305,7 @@ func (t *Ticker) Run() {
 				}
 				if t.Val[0] == 'p' && t.Val[4] == 'e' { // processes info
 					// rest of the line is the data
-					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])
+					n, err = tools.ParseUint(t.Line[pos : len(t.Line)-1])
 					if err != nil {
 						t.Errs <- &joe.ParseError{Info: string(t.Val[:]), Err: err}
 						continue

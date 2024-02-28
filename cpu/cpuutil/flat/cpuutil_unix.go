@@ -19,9 +19,9 @@
 // the data as Flatbuffer serialized bytes. For convenience, a function to
 // deserialize the Flatbuffer serialized bytes into a cpuutil.CPUUtil struct is
 // provided.
-// 
+//
 // Note: the package name is cpuutil and not the final element of the import
-// path (flat). 
+// path (flat).
 package cpuutil
 
 import (
@@ -29,9 +29,9 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	util "github.com/mohae/joefriday/cpu/cpuutil"
-	"github.com/mohae/joefriday/cpu/cpuutil/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	util "github.com/hmmftg/joefriday/cpu/cpuutil"
+	"github.com/hmmftg/joefriday/cpu/cpuutil/flat/structs"
 )
 
 // Profiler is used to process the /proc/stats file and calculate utilization

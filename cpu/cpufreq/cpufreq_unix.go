@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 const procFile = "/proc/cpuinfo"
@@ -120,7 +120,7 @@ func (prof *Profiler) InitFrequency() error {
 		}
 		if prof.Val[0] == 'a' {
 			if prof.Val[1] == 'p' { // apicid
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -130,7 +130,7 @@ func (prof *Profiler) InitFrequency() error {
 		}
 		if prof.Val[0] == 'c' {
 			if prof.Val[1] == 'o' { // core id
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -140,7 +140,7 @@ func (prof *Profiler) InitFrequency() error {
 		}
 		if prof.Val[0] == 'p' {
 			if prof.Val[1] == 'h' { // physical id
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -165,7 +165,7 @@ func (prof *Profiler) InitFrequency() error {
 					prof.Frequency.CPU = append(prof.Frequency.CPU, cpu)
 				}
 				cpuCnt++
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}

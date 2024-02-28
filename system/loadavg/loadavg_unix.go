@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 const procFile = "/proc/loadavg"
@@ -113,19 +113,19 @@ func (prof *Profiler) Get() (la LoadAvg, err error) {
 						break
 					}
 				}
-				n, err = helpers.ParseUint(prof.Line[priorPos : priorPos+i])
+				n, err = tools.ParseUint(prof.Line[priorPos : priorPos+i])
 				if err != nil {
 					return la, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
 				la.Running = int32(n)
-				n, err = helpers.ParseUint(prof.Line[priorPos+i+1 : pos-1])
+				n, err = tools.ParseUint(prof.Line[priorPos+i+1 : pos-1])
 				if err != nil {
 					return la, &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 				}
 				la.Total = int32(n)
 				continue
 			}
-			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
+			n, err = tools.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
 				return la, err
 			}
@@ -181,7 +181,7 @@ func (t *Ticker) Run() {
 		n                                uint64
 		f                                float64
 		v                                byte
-		la                              LoadAvg
+		la                               LoadAvg
 		err                              error
 	)
 	// ticker
@@ -237,13 +237,13 @@ func (t *Ticker) Run() {
 								break
 							}
 						}
-						n, err = helpers.ParseUint(t.Line[priorPos : priorPos+i])
+						n, err = tools.ParseUint(t.Line[priorPos : priorPos+i])
 						if err != nil {
 							t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break tick
 						}
 						la.Running = int32(n)
-						n, err = helpers.ParseUint(t.Line[priorPos+i+1 : pos-1])
+						n, err = tools.ParseUint(t.Line[priorPos+i+1 : pos-1])
 						if err != nil {
 							t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							break tick
@@ -251,7 +251,7 @@ func (t *Ticker) Run() {
 						la.Total = int32(n)
 						continue
 					}
-					n, err = helpers.ParseUint(t.Line[pos : len(t.Line)-1])
+					n, err = tools.ParseUint(t.Line[pos : len(t.Line)-1])
 					if err != nil {
 						t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 						break tick

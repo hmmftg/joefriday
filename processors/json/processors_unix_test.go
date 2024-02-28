@@ -16,9 +16,9 @@ package processors
 import (
 	"testing"
 
-	"github.com/mohae/joefriday"
-	ps "github.com/mohae/joefriday/processors"
-	"github.com/mohae/joefriday/testinfo"
+	"github.com/hmmftg/joefriday"
+	ps "github.com/hmmftg/joefriday/processors"
+	"github.com/hmmftg/joefriday/testinfo"
 )
 
 func TestI75600u(t *testing.T) {

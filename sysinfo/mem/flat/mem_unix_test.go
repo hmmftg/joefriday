@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	m "github.com/mohae/joefriday/sysinfo/mem"
+	m "github.com/hmmftg/joefriday/sysinfo/mem"
 )
 
 func TestSerializeDeserialize(t *testing.T) {

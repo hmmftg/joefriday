@@ -19,7 +19,7 @@
 // JSON serialized bytes into a struct.DiskUsage struct is provided.
 //
 // Note: the package name is diskusage and not the final element of the import
-// path (json). 
+// path (json).
 package diskusage
 
 import (
@@ -27,9 +27,9 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/disk/structs"
-	usage "github.com/mohae/joefriday/disk/diskusage"
+	joe "github.com/hmmftg/joefriday"
+	usage "github.com/hmmftg/joefriday/disk/diskusage"
+	"github.com/hmmftg/joefriday/disk/structs"
 )
 
 // Profiler is used to process IO usage of the block devices using JSON.

@@ -17,7 +17,7 @@
 // structs.DiskStats struct is provided.
 //
 // Note: the package name is diskstats and not the final element of the import
-// path (json). 
+// path (json).
 package diskstats
 
 import (
@@ -25,9 +25,9 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	stats "github.com/mohae/joefriday/disk/diskstats"
-	"github.com/mohae/joefriday/disk/structs"
+	joe "github.com/hmmftg/joefriday"
+	stats "github.com/hmmftg/joefriday/disk/diskstats"
+	"github.com/hmmftg/joefriday/disk/structs"
 )
 
 // Profiler is used to process the /proc/diskstats file.
@@ -115,7 +115,7 @@ func Unmarshal(p []byte) (*structs.DiskStats, error) {
 	return Deserialize(p)
 }
 
-// Ticker delivers the system's IO statistics of the block devices at 
+// Ticker delivers the system's IO statistics of the block devices at
 // intervals.
 type Ticker struct {
 	*joe.Ticker

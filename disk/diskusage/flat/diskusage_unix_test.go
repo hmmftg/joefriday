@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mohae/joefriday/disk/structs"
+	"github.com/hmmftg/joefriday/disk/structs"
 )
 
 func TestSerializeDeserialize(t *testing.T) {

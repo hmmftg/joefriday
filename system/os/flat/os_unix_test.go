@@ -16,7 +16,7 @@ package os
 import (
 	"testing"
 
-	o "github.com/mohae/joefriday/system/os"
+	o "github.com/hmmftg/joefriday/system/os"
 )
 
 func TestSerializeDeserialize(t *testing.T) {

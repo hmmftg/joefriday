@@ -17,15 +17,15 @@
 // into a version.Kernel struct is provided.
 //
 // Note: the package name is version and not the final element of the import
-// path (flat). 
+// path (flat).
 package version
 
 import (
 	"sync"
 
 	fb "github.com/google/flatbuffers/go"
-	v "github.com/mohae/joefriday/system/version"
-	"github.com/mohae/joefriday/system/version/flat/structs"
+	v "github.com/hmmftg/joefriday/system/version"
+	"github.com/hmmftg/joefriday/system/version/flat/structs"
 )
 
 // Profiler processes the version information, /proc/version, using

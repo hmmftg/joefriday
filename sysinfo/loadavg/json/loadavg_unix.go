@@ -17,15 +17,15 @@
 // struct is provided.
 //
 // Note: the package name is loadavg and not the final element of the import
-// path (json). 
+// path (json).
 package loadavg
 
 import (
 	"encoding/json"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	load "github.com/mohae/joefriday/sysinfo/loadavg"
+	joe "github.com/hmmftg/joefriday"
+	load "github.com/hmmftg/joefriday/sysinfo/loadavg"
 )
 
 // Get returns the current LoadAvg as JSON serialized bytes.

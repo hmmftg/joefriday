@@ -17,7 +17,7 @@
 // structs.DevInfo struct is provided.
 //
 // Note: the package name is netdev and not the final element of the import
-// path (flat). 
+// path (flat).
 package netdev
 
 import (
@@ -25,10 +25,10 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	dev "github.com/mohae/joefriday/net/netdev"
-	"github.com/mohae/joefriday/net/structs"
-	"github.com/mohae/joefriday/net/structs/flat"
+	joe "github.com/hmmftg/joefriday"
+	dev "github.com/hmmftg/joefriday/net/netdev"
+	"github.com/hmmftg/joefriday/net/structs"
+	"github.com/hmmftg/joefriday/net/structs/flat"
 )
 
 // Profiler is used to process the network device information as Flatbuffer

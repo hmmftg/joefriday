@@ -17,14 +17,14 @@
 // version.Kernel struct is provided.
 //
 // Note: the package name is version and not the final element of the import
-// path (json). 
+// path (json).
 package version
 
 import (
 	"encoding/json"
 	"sync"
 
-	v "github.com/mohae/joefriday/system/version"
+	v "github.com/hmmftg/joefriday/system/version"
 )
 
 // Profiler processes the version information, /proc/version, using

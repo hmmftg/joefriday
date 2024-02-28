@@ -16,15 +16,15 @@
 // JSON serialized bytes into a uptime.Uptime struct is provided.
 //
 // Note: the package name is uptime and not the final element of the import
-// path (json). 
+// path (json).
 package uptime
 
 import (
 	"encoding/json"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	up "github.com/mohae/joefriday/sysinfo/uptime"
+	joe "github.com/hmmftg/joefriday"
+	up "github.com/hmmftg/joefriday/sysinfo/uptime"
 )
 
 // Get returns the current uptime as JSON serialized bytes.

@@ -26,8 +26,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 const procFile = "/proc/stat"
@@ -62,11 +62,11 @@ func ClkTck() error {
 // element's values are the aggregates of all other CPU elements. The stats are
 // aggregated from sytem boot.
 type CPUStats struct {
-	ClkTck    int16  `json:"clk_tck"`
-	Timestamp int64  `json:"timestamp"`
-	Ctxt      int64  `json:"ctxt"`
-	BTime     int64  `json:"btime"`
-	Processes int64  `json:"processes"`
+	ClkTck    int16 `json:"clk_tck"`
+	Timestamp int64 `json:"timestamp"`
+	Ctxt      int64 `json:"ctxt"`
+	BTime     int64 `json:"btime"`
+	Processes int64 `json:"processes"`
 	CPU       []CPU `json:"cpu"`
 }
 
@@ -171,7 +171,7 @@ func (prof *Profiler) Get() (stats *CPUStats, err error) {
 					}
 					if v == 0x20 || stop {
 						fieldNum++
-						n, err = helpers.ParseUint(prof.Line[j : pos+i])
+						n, err = tools.ParseUint(prof.Line[j : pos+i])
 						if err != nil {
 							return stats, &joe.ParseError{Info: string(prof.Val[:]), Err: err}
 						}
@@ -220,7 +220,7 @@ func (prof *Profiler) Get() (stats *CPUStats, err error) {
 				continue
 			}
 			// Otherwise it's ctxt info; rest of the line is the data.
-			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
+			n, err = tools.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
 				return stats, &joe.ParseError{Info: string(prof.Val[:]), Err: err}
 			}
@@ -229,7 +229,7 @@ func (prof *Profiler) Get() (stats *CPUStats, err error) {
 		}
 		if prof.Val[0] == 'b' {
 			// rest of the line is the data
-			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
+			n, err = tools.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
 				return stats, &joe.ParseError{Info: string(prof.Val[:]), Err: err}
 			}
@@ -238,7 +238,7 @@ func (prof *Profiler) Get() (stats *CPUStats, err error) {
 		}
 		if prof.Val[0] == 'p' && prof.Val[4] == 'e' { // processes info
 			// rest of the line is the data
-			n, err = helpers.ParseUint(prof.Line[pos : len(prof.Line)-1])
+			n, err = tools.ParseUint(prof.Line[pos : len(prof.Line)-1])
 			if err != nil {
 				return stats, &joe.ParseError{Info: string(prof.Val[:]), Err: err}
 			}

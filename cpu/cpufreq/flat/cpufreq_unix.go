@@ -17,7 +17,7 @@
 // into a cpufreq.Frequency struct is provided.
 //
 // Note: the package name is cpufreq and not the final element of the import
-// path (flat). 
+// path (flat).
 package cpufreq
 
 import (
@@ -25,9 +25,9 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	freq "github.com/mohae/joefriday/cpu/cpufreq"
-	"github.com/mohae/joefriday/cpu/cpufreq/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	freq "github.com/hmmftg/joefriday/cpu/cpufreq"
+	"github.com/hmmftg/joefriday/cpu/cpufreq/flat/structs"
 )
 
 // Profiler is used to process the frequency information as Flatbuffers

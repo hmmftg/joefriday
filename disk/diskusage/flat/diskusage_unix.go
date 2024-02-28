@@ -19,7 +19,7 @@
 // the Flatbuffer serialized bytes into a struct.DiskUsage struct is provided.
 //
 // Note: the package name is diskusage and not the final element of the import
-// path (flat). 
+// path (flat).
 package diskusage
 
 import (
@@ -27,10 +27,10 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/disk/structs"
-	"github.com/mohae/joefriday/disk/structs/flat"
-	usage "github.com/mohae/joefriday/disk/diskusage"
+	joe "github.com/hmmftg/joefriday"
+	usage "github.com/hmmftg/joefriday/disk/diskusage"
+	"github.com/hmmftg/joefriday/disk/structs"
+	"github.com/hmmftg/joefriday/disk/structs/flat"
 )
 
 // Profiler is used to process IO usage of the block devices using Flatbuffers.

@@ -23,10 +23,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
-	stats "github.com/mohae/joefriday/disk/diskstats"
-	"github.com/mohae/joefriday/disk/structs"
+	joe "github.com/hmmftg/joefriday"
+	stats "github.com/hmmftg/joefriday/disk/diskstats"
+	"github.com/hmmftg/joefriday/disk/structs"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 // Profiler is used to process the IO usage of the block devices.
@@ -149,7 +149,7 @@ func (t *Ticker) Run() {
 			return
 		case <-t.C:
 			cur.Timestamp = time.Now().UTC().UnixNano()
-			err = t.Reset()
+			err = t.Procer.Reset()
 			if err != nil {
 				t.Errs <- err
 				break
@@ -187,7 +187,7 @@ func (t *Ticker) Run() {
 						}
 					}
 					if fieldNum != 3 {
-						n, err = helpers.ParseUint(t.Line[pos : pos+i])
+						n, err = tools.ParseUint(t.Line[pos : pos+i])
 						if err != nil {
 							t.Errs <- &joe.ParseError{Info: fmt.Sprintf("line %d: field %d", line, fieldNum), Err: err}
 							continue

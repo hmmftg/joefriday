@@ -19,7 +19,7 @@
 // is provided.
 //
 // Note: the package name is cpustats and not the final element of the import
-// path (flat). 
+// path (flat).
 package cpustats
 
 import (
@@ -27,9 +27,9 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	stats "github.com/mohae/joefriday/cpu/cpustats"
-	"github.com/mohae/joefriday/cpu/cpustats/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	stats "github.com/hmmftg/joefriday/cpu/cpustats"
+	"github.com/hmmftg/joefriday/cpu/cpustats/flat/structs"
 )
 
 // Profiler is used to process the /proc/stats file as Flatbuffer serialized

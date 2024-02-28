@@ -16,18 +16,18 @@ package main
 import (
 	"testing"
 
+	"github.com/hmmftg/joefriday/net/netdev"
+	dfb "github.com/hmmftg/joefriday/net/netdev/flat"
+	djson "github.com/hmmftg/joefriday/net/netdev/json"
+	"github.com/hmmftg/joefriday/net/netusage"
+	ufb "github.com/hmmftg/joefriday/net/netusage/flat"
+	ujson "github.com/hmmftg/joefriday/net/netusage/json"
+	"github.com/hmmftg/joefriday/net/structs"
 	"github.com/mohae/benchutil"
-	"github.com/mohae/joefriday/net/netdev"
-	dfb "github.com/mohae/joefriday/net/netdev/flat"
-	djson "github.com/mohae/joefriday/net/netdev/json"
-	"github.com/mohae/joefriday/net/structs"
-	"github.com/mohae/joefriday/net/netusage"
-	ufb "github.com/mohae/joefriday/net/netusage/flat"
-	ujson "github.com/mohae/joefriday/net/netusage/json"
 )
 
 const (
-	NetDev  = "Network Devices"
+	NetDev   = "Network Devices"
 	NetUsage = "Network Usage"
 )
 

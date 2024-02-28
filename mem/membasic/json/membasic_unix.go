@@ -18,7 +18,7 @@
 // meminfo package.
 //
 // Note: the package name is membasic and not the final element of the import
-// path (json). 
+// path (json).
 package membasic
 
 import (
@@ -26,8 +26,8 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	basic "github.com/mohae/joefriday/mem/membasic"
+	joe "github.com/hmmftg/joefriday"
+	basic "github.com/hmmftg/joefriday/mem/membasic"
 )
 
 // Profiler is used to get the basic memory information, as JSON, by processing

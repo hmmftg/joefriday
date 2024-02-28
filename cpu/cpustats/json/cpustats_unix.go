@@ -19,7 +19,7 @@
 // provided.
 //
 // Note: the package name is cpustats and not the final element of the import
-// path (json). 
+// path (json).
 package cpustats
 
 import (
@@ -27,8 +27,8 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	stats "github.com/mohae/joefriday/cpu/cpustats"
+	joe "github.com/hmmftg/joefriday"
+	stats "github.com/hmmftg/joefriday/cpu/cpustats"
 )
 
 // Profiler is used to process the /proc/stats file as JSON serialized bytes.

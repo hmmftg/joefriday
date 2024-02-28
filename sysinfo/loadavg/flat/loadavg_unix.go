@@ -17,7 +17,7 @@
 // loadavg.Info struct is provided.
 //
 // Note: the package name is loadavg and not the final element of the import
-// path (flat). 
+// path (flat).
 package loadavg
 
 import (
@@ -25,9 +25,9 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	load "github.com/mohae/joefriday/sysinfo/loadavg"
-	"github.com/mohae/joefriday/sysinfo/loadavg/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	load "github.com/hmmftg/joefriday/sysinfo/loadavg"
+	"github.com/hmmftg/joefriday/sysinfo/loadavg/flat/structs"
 )
 
 var builder = fb.NewBuilder(0)

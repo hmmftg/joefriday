@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
+	joe "github.com/hmmftg/joefriday"
 )
 
 const procFile = "/proc/uptime"

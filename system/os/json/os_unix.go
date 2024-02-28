@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	o "github.com/mohae/joefriday/system/os"
+	o "github.com/hmmftg/joefriday/system/os"
 )
 
 // Profiler processes the OS release information, /etc/os-release,

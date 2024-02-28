@@ -16,8 +16,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mohae/joefriday/node"
-	"github.com/mohae/joefriday/testinfo"
+	"github.com/hmmftg/joefriday/node"
+	"github.com/hmmftg/joefriday/testinfo"
 )
 
 func TestNoNode(t *testing.T) {

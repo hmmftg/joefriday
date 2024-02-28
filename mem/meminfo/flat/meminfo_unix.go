@@ -17,7 +17,7 @@
 // provided.
 //
 // Note: the package name is meminfo and not the final element of the import
-// path (flat). 
+// path (flat).
 package meminfo
 
 import (
@@ -25,11 +25,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SermoDigital/helpers"
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	mem "github.com/mohae/joefriday/mem/meminfo"
-	"github.com/mohae/joefriday/mem/meminfo/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	mem "github.com/hmmftg/joefriday/mem/meminfo"
+	"github.com/hmmftg/joefriday/mem/meminfo/flat/structs"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 // Profiler is used to get the memory information as Flatbuffer serialized
@@ -279,7 +279,7 @@ Tick:
 					t.Val = append(t.Val, v)
 				}
 				// any conversion error results in 0
-				n, err = helpers.ParseUint(t.Val[nameLen:])
+				n, err = tools.ParseUint(t.Val[nameLen:])
 				if err != nil {
 					t.Errs <- &joe.ParseError{Info: string(t.Val[:nameLen]), Err: err}
 					continue

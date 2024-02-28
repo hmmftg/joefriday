@@ -35,10 +35,10 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/SermoDigital/helpers"
-	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/cpux"
-	"github.com/mohae/joefriday/node"
+	joe "github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/cpu/cpux"
+	"github.com/hmmftg/joefriday/node"
+	"github.com/hmmftg/joefriday/tools"
 )
 
 const (
@@ -200,7 +200,7 @@ func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 			if v == 'p' {
 				v = prof.Val[4]
 				if v == 'c' {
-					n, err = helpers.ParseUint(prof.Val[nameLen:])
+					n, err = tools.ParseUint(prof.Val[nameLen:])
 					if err != nil {
 						return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 					}
@@ -266,7 +266,7 @@ func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 				if xit {
 					break
 				}
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -276,7 +276,7 @@ func (prof *Profiler) getCPUInfo(procs *Processors) (err error) {
 		}
 		if v == 's' {
 			if prof.Val[1] == 'i' { // siblings
-				n, err = helpers.ParseUint(prof.Val[nameLen:])
+				n, err = tools.ParseUint(prof.Val[nameLen:])
 				if err != nil {
 					return &joe.ParseError{Info: string(prof.Val[:nameLen]), Err: err}
 				}
@@ -367,7 +367,8 @@ func Get() (procs *Processors, err error) {
 
 // Endianness returns the endianness.
 // Code from Rob Pike's response in thread about endianness detection:
-//   https://groups.google.com/d/msg/golang-nuts/zmh64YkqOV8/iJe-TrTTeREJ
+//
+//	https://groups.google.com/d/msg/golang-nuts/zmh64YkqOV8/iJe-TrTTeREJ
 func Endianness() string {
 	var x uint32 = 0x01020304
 	switch *(*byte)(unsafe.Pointer(&x)) {

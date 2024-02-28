@@ -17,7 +17,7 @@
 // is provided.
 //
 // Note: the package name is uptime and not the final element of the import
-// path (flat). 
+// path (flat).
 package uptime
 
 import (
@@ -25,9 +25,9 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	u "github.com/mohae/joefriday/system/uptime"
-	"github.com/mohae/joefriday/system/uptime/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	u "github.com/hmmftg/joefriday/system/uptime"
+	"github.com/hmmftg/joefriday/system/uptime/flat/structs"
 )
 
 // Profiler processes the uptime information, /proc/uptime, using

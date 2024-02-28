@@ -27,10 +27,10 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/net/structs"
-	"github.com/mohae/joefriday/net/structs/flat"
-	usage "github.com/mohae/joefriday/net/netusage"
+	joe "github.com/hmmftg/joefriday"
+	usage "github.com/hmmftg/joefriday/net/netusage"
+	"github.com/hmmftg/joefriday/net/structs"
+	"github.com/hmmftg/joefriday/net/structs/flat"
 )
 
 // Profiler is used to process the network device usage.
@@ -152,9 +152,9 @@ func Deserialize(p []byte) *structs.DevUsage {
 	// get the # of interfaces
 	iLen := uFlat.DeviceLength()
 	u := &structs.DevUsage{
-		Timestamp:  uFlat.Timestamp(),
-		TimeDelta:  uFlat.TimeDelta(),
-		Device: make([]structs.Device, iLen),
+		Timestamp: uFlat.Timestamp(),
+		TimeDelta: uFlat.TimeDelta(),
+		Device:    make([]structs.Device, iLen),
 	}
 	fDev := &flat.Device{}
 	sDev := structs.Device{}

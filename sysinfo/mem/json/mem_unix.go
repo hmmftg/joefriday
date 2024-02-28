@@ -16,15 +16,15 @@
 // JSON serialized bytes into a mem.MemInfo struct is provided.
 //
 // Note: the package name is mem and not the final element of the import path
-// (json). 
+// (json).
 package mem
 
 import (
 	"encoding/json"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	m "github.com/mohae/joefriday/sysinfo/mem"
+	joe "github.com/hmmftg/joefriday"
+	m "github.com/hmmftg/joefriday/sysinfo/mem"
 )
 
 // Get returns the system's memory information as JSON serialized bytes.

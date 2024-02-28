@@ -28,8 +28,8 @@ import (
 	"sync"
 
 	fb "github.com/google/flatbuffers/go"
-	"github.com/mohae/joefriday/cpu/cpux"
-	"github.com/mohae/joefriday/cpu/cpux/flat/structs"
+	"github.com/hmmftg/joefriday/cpu/cpux"
+	"github.com/hmmftg/joefriday/cpu/cpux/flat/structs"
 )
 
 // Profiler is used to process the cpux information as Flatbuffers serialized

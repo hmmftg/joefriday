@@ -17,7 +17,7 @@
 // loadavg.LoadAvg struct is provided.
 //
 // Note: the package name is loadavg and not the final element of the import
-// path (flat). 
+// path (flat).
 package loadavg
 
 import (
@@ -25,9 +25,9 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	l "github.com/mohae/joefriday/system/loadavg"
-	"github.com/mohae/joefriday/system/loadavg/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	l "github.com/hmmftg/joefriday/system/loadavg"
+	"github.com/hmmftg/joefriday/system/loadavg/flat/structs"
 )
 
 // Profiler is used to process the loadavg information, /proc/loadavg, using

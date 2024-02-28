@@ -17,7 +17,7 @@
 // cpufreq.Frequency struct is provided.
 //
 // Note: the package name is cpufreq and not the final element of the import
-// path (json). 
+// path (json).
 package cpufreq
 
 import (
@@ -25,8 +25,8 @@ import (
 	"sync"
 	"time"
 
-	joe "github.com/mohae/joefriday"
-	freq "github.com/mohae/joefriday/cpu/cpufreq"
+	joe "github.com/hmmftg/joefriday"
+	freq "github.com/hmmftg/joefriday/cpu/cpufreq"
 )
 
 // Profiler is used to process the frequency information as JSON serialized

@@ -17,7 +17,7 @@
 // provided.
 //
 // Note: the package name is mem and not the final element of the import path
-// (flat). 
+// (flat).
 package mem
 
 import (
@@ -25,9 +25,9 @@ import (
 	"time"
 
 	fb "github.com/google/flatbuffers/go"
-	joe "github.com/mohae/joefriday"
-	m "github.com/mohae/joefriday/sysinfo/mem"
-	"github.com/mohae/joefriday/sysinfo/mem/flat/structs"
+	joe "github.com/hmmftg/joefriday"
+	m "github.com/hmmftg/joefriday/sysinfo/mem"
+	"github.com/hmmftg/joefriday/sysinfo/mem/flat/structs"
 )
 
 var builder = fb.NewBuilder(0)

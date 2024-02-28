@@ -16,9 +16,9 @@ package cpuinfo
 import (
 	"testing"
 
-	"github.com/mohae/joefriday"
-	"github.com/mohae/joefriday/cpu/cpuinfo"
-	"github.com/mohae/joefriday/testinfo"
+	"github.com/hmmftg/joefriday"
+	"github.com/hmmftg/joefriday/cpu/cpuinfo"
+	"github.com/hmmftg/joefriday/testinfo"
 )
 
 func TestGeti75600u(t *testing.T) {

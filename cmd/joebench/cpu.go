@@ -16,19 +16,19 @@ package main
 import (
 	"testing"
 
+	"github.com/hmmftg/joefriday/cpu/cpufreq"
+	freqfb "github.com/hmmftg/joefriday/cpu/cpufreq/flat"
+	freqjson "github.com/hmmftg/joefriday/cpu/cpufreq/json"
+	"github.com/hmmftg/joefriday/cpu/cpuinfo"
+	infofb "github.com/hmmftg/joefriday/cpu/cpuinfo/flat"
+	infojson "github.com/hmmftg/joefriday/cpu/cpuinfo/json"
+	"github.com/hmmftg/joefriday/cpu/cpustats"
+	statsfb "github.com/hmmftg/joefriday/cpu/cpustats/flat"
+	statsjson "github.com/hmmftg/joefriday/cpu/cpustats/json"
+	"github.com/hmmftg/joefriday/cpu/cpuutil"
+	utilfb "github.com/hmmftg/joefriday/cpu/cpuutil/flat"
+	utiljson "github.com/hmmftg/joefriday/cpu/cpuutil/json"
 	"github.com/mohae/benchutil"
-	"github.com/mohae/joefriday/cpu/cpufreq"
-	freqfb "github.com/mohae/joefriday/cpu/cpufreq/flat"
-	freqjson "github.com/mohae/joefriday/cpu/cpufreq/json"
-	"github.com/mohae/joefriday/cpu/cpuinfo"
-	infofb "github.com/mohae/joefriday/cpu/cpuinfo/flat"
-	infojson "github.com/mohae/joefriday/cpu/cpuinfo/json"
-	"github.com/mohae/joefriday/cpu/cpustats"
-	statsfb "github.com/mohae/joefriday/cpu/cpustats/flat"
-	statsjson "github.com/mohae/joefriday/cpu/cpustats/json"
-	"github.com/mohae/joefriday/cpu/cpuutil"
-	utilfb "github.com/mohae/joefriday/cpu/cpuutil/flat"
-	utiljson "github.com/mohae/joefriday/cpu/cpuutil/json"
 )
 
 const (

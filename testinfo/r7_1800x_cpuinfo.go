@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mohae/joefriday/cpu/cpufreq"
-	"github.com/mohae/joefriday/cpu/cpuinfo"
-	"github.com/mohae/joefriday/processors"
+	"github.com/hmmftg/joefriday/cpu/cpufreq"
+	"github.com/hmmftg/joefriday/cpu/cpuinfo"
+	"github.com/hmmftg/joefriday/processors"
 )
 
 const (

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mohae/joefriday/cpu/cpux"
-	"github.com/mohae/joefriday/node"
+	"github.com/hmmftg/joefriday/cpu/cpux"
+	"github.com/hmmftg/joefriday/node"
 )
 
 const (
@@ -54,11 +54,12 @@ type TempSysFS struct {
 
 // NewTempSysFS returns a new TempSysFS set to use the system's temp dir,
 // populate cpufreq information with defaults of:
-//   PhysicalPackageCount: 1
-//   CoresPerPhysicalPackage: 2
-//   ThreadsPerCore: 2
-//   OfflineFile: true
-//   Freq: true
+//
+//	PhysicalPackageCount: 1
+//	CoresPerPhysicalPackage: 2
+//	ThreadsPerCore: 2
+//	OfflineFile: true
+//	Freq: true
 func NewTempSysFS() TempSysFS {
 	return TempSysFS{Freq: true, OfflineFile: true, PhysicalPackageCount: 1, CoresPerPhysicalPackage: 2, ThreadsPerCore: 2}
 }
@@ -90,7 +91,8 @@ func (t *TempSysFS) Path() string {
 }
 
 // returns the number of CPUs per configuration:
-//   PhysicalPackageCount * CoresPerPhysicalPackage * ThreadsPerCore
+//
+//	PhysicalPackageCount * CoresPerPhysicalPackage * ThreadsPerCore
 func (t *TempSysFS) CPUs() int32 {
 	return t.PhysicalPackageCount * t.CoresPerPhysicalPackage * t.ThreadsPerCore
 }
